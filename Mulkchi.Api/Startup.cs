@@ -30,6 +30,7 @@ using Mulkchi.Api.Services.Foundations.Auth;
 using Mulkchi.Api.Services.Foundations.Bookings;
 using Mulkchi.Api.Services.Foundations.Boosts;
 using Mulkchi.Api.Services.Foundations.Subscriptions;
+using Mulkchi.Api.Services.Foundations.Geo;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Mulkchi.Api.Services.Foundations.AI;
@@ -65,6 +66,12 @@ public class Startup
         services.AddEndpointsApiExplorer();
         services.AddHttpContextAccessor(); // Add HttpContextAccessor
         services.AddHttpClient(); // Add IHttpClientFactory
+        services.AddHttpClient("OpenStreetMap", client =>
+        {
+            client.BaseAddress = new Uri("https://overpass-api.de/api/");
+            client.Timeout = TimeSpan.FromSeconds(30);
+            client.DefaultRequestHeaders.Add("User-Agent", "Mulkchi Real Estate Platform");
+        });
         
         // In-process response cache for public analytics / search endpoints
         services.AddResponseCaching();
@@ -317,6 +324,7 @@ public class Startup
         services.AddScoped<IBookingService, BookingService>();
         services.AddScoped<IBoostService, BoostService>();
         services.AddScoped<ISubscriptionService, SubscriptionService>();
+        services.AddScoped<IGeoService, GeoService>();
         services.AddScoped<IAnalyticsService, AnalyticsService>();
         // Singleton: connection tracker must outlive individual HTTP requests
         services.AddSingleton<IUserConnectionTracker, UserConnectionTracker>();
