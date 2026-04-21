@@ -9,6 +9,7 @@ using Mulkchi.Api.Models.Foundations.Bookings;
 using Mulkchi.Api.Models.Foundations.Boosts;
 using Mulkchi.Api.Models.Foundations.Discounts;
 using Mulkchi.Api.Models.Foundations.Subscriptions;
+using Mulkchi.Api.Models.Foundations.Amenities;
 using Mulkchi.Api.Models.Foundations.Favorites;
 using Mulkchi.Api.Models.Foundations.HomeRequests;
 using Mulkchi.Api.Models.Foundations.Messages;
@@ -197,6 +198,19 @@ public partial class StorageBroker : DbContext, IStorageBroker
         modelBuilder.Entity<Announcement>().HasQueryFilter(e => e.DeletedDate == null);
         modelBuilder.Entity<Boost>().HasQueryFilter(e => e.DeletedDate == null);
         modelBuilder.Entity<UserSubscription>().HasQueryFilter(e => e.DeletedDate == null);
+        modelBuilder.Entity<Amenity>().HasQueryFilter(e => e.IsActive);
+        modelBuilder.Entity<Amenity>(entity =>
+        {
+            entity.HasIndex(a => a.IsActive);
+            entity.HasIndex(a => a.Category);
+            entity.HasIndex(a => a.DisplayOrder);
+        });
+        modelBuilder.Entity<PropertyAmenity>(entity =>
+        {
+            entity.HasKey(pa => new { pa.PropertyId, pa.AmenityId });
+            entity.HasIndex(pa => pa.PropertyId);
+            entity.HasIndex(pa => pa.AmenityId);
+        });
         modelBuilder.Entity<Discount>().HasQueryFilter(e => e.DeletedDate == null);
         modelBuilder.Entity<DiscountUsage>().HasQueryFilter(e => e.DeletedDate == null);
         modelBuilder.Entity<Favorite>().HasQueryFilter(e => e.DeletedDate == null);
