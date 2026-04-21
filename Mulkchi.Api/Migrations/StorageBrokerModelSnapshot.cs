@@ -329,6 +329,58 @@ namespace Mulkchi.Api.Migrations
                     b.ToTable("BookingHolds");
                 });
 
+            modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Boosts.Boost", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("EndDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Plan")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("PropertyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("StartDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("UpdatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EndDate");
+
+                    b.HasIndex("PropertyId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("Status", "EndDate");
+
+                    b.ToTable("Boosts");
+                });
+
             modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Discounts.Discount", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1278,6 +1330,25 @@ namespace Mulkchi.Api.Migrations
                     b.Navigation("Guest");
 
                     b.Navigation("Property");
+                });
+
+            modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Boosts.Boost", b =>
+                {
+                    b.HasOne("Mulkchi.Api.Models.Foundations.Properties.Property", "Property")
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Mulkchi.Api.Models.Foundations.Users.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Property");
+
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }
