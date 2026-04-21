@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Mulkchi.Api.Brokers.Storages;
 using Mulkchi.Api.Hubs;
@@ -330,6 +331,131 @@ public class MessagesController : ControllerBase
         catch (MessageServiceException)
         {
             return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+        }
+    }
+
+    // Read status endpoints
+    [HttpPut("{id:guid}/read")]
+    [Authorize]
+    public async ValueTask<ActionResult> MarkAsReadAsync(Guid id)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim, out Guid userId))
+                return Unauthorized();
+
+            var message = await this.storageBroker.SelectMessageByIdAsync(id);
+            if (message is null)
+                return NotFound(new { message = "Message not found." });
+
+            // Only receiver can mark as read
+            if (message.ReceiverId != userId)
+                return Forbid();
+
+            if (!message.IsRead)
+            {
+                message.IsRead = true;
+                message.ReadAt = DateTimeOffset.UtcNow;
+                message.UpdatedDate = DateTimeOffset.UtcNow;
+                await this.storageBroker.UpdateMessageAsync(message);
+            }
+
+            return Ok(new { isRead = true, readAt = message.ReadAt });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpPut("conversations/{userId:guid}/read-all")]
+    [Authorize]
+    public async ValueTask<ActionResult> MarkConversationAsReadAsync(Guid userId)
+    {
+        try
+        {
+            var currentUserIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (currentUserIdClaim is null || !Guid.TryParse(currentUserIdClaim, out Guid currentUserId))
+                return Unauthorized();
+
+            var messages = await this.storageBroker.SelectAllMessages()
+                .Where(m => ((m.SenderId == userId && m.ReceiverId == currentUserId) ||
+                            (m.SenderId == currentUserId && m.ReceiverId == userId)) &&
+                            !m.IsRead && m.ReceiverId == currentUserId)
+                .ToListAsync();
+
+            int markedCount = 0;
+            var now = DateTimeOffset.UtcNow;
+            foreach (var message in messages)
+            {
+                message.IsRead = true;
+                message.ReadAt = now;
+                message.UpdatedDate = now;
+                await this.storageBroker.UpdateMessageAsync(message);
+                markedCount++;
+            }
+
+            return Ok(new { markedCount, message = $"{markedCount} messages marked as read." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("unread/count")]
+    [Authorize]
+    public async ValueTask<ActionResult> GetUnreadCountAsync()
+    {
+        try
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim, out Guid userId))
+                return Unauthorized();
+
+            var unreadCount = await this.storageBroker.SelectAllMessages()
+                .CountAsync(m => m.ReceiverId == userId && !m.IsRead && m.DeletedDate == null);
+
+            var conversations = await this.storageBroker.SelectAllMessages()
+                .Where(m => m.ReceiverId == userId && !m.IsRead && m.DeletedDate == null)
+                .GroupBy(m => m.SenderId)
+                .Select(g => new { senderId = g.Key, count = g.Count() })
+                .ToListAsync();
+
+            return Ok(new
+            {
+                totalUnread = unreadCount,
+                conversations = conversations
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("conversations/{userId:guid}/unread")]
+    [Authorize]
+    public async ValueTask<ActionResult> GetUnreadCountForConversationAsync(Guid userId)
+    {
+        try
+        {
+            var currentUserIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (currentUserIdClaim is null || !Guid.TryParse(currentUserIdClaim, out Guid currentUserId))
+                return Unauthorized();
+
+            var unreadCount = await this.storageBroker.SelectAllMessages()
+                .CountAsync(m => m.SenderId == userId &&
+                                 m.ReceiverId == currentUserId &&
+                                 !m.IsRead &&
+                                 m.DeletedDate == null);
+
+            return Ok(new { senderId = userId, unreadCount });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
         }
     }
 }
