@@ -18,9 +18,14 @@ public interface IPropertyService
 
     // Existing base methods format preserved where necessary
     IQueryable<Property> RetrieveAllProperties();
-    ValueTask<Property> RetrievePropertyByIdAsync(Guid propertyId);
+    ValueTask<Property?> RetrievePropertyByIdAsync(Guid propertyId);
+    ValueTask<Property?> RetrievePropertyEntityByIdAsync(Guid propertyId);
     ValueTask<Property> ModifyPropertyAsync(Property property);
     ValueTask<Property> RemovePropertyByIdAsync(Guid propertyId);
 
     ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> SearchPropertiesAsync(PropertySearchParams searchParams);
+
+    // New enhancement methods
+    ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> RetrieveMyPropertiesAsync(PropertyQueryParams queryParams);
+    ValueTask<IEnumerable<PropertyResponse>> RetrieveNewListingsAsync(int days, int count);
 }

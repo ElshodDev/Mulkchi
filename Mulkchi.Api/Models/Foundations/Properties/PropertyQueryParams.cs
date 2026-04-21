@@ -15,6 +15,8 @@ namespace Mulkchi.Api.Models.Foundations.Properties
         
         public string? SearchQuery { get; set; }
         public string? SortBy { get; set; }
+        public bool SortDescending { get; set; } = true;
+        public string? Status { get; set; }
         public bool? HasWifi { get; set; }
         public bool? HasParking { get; set; }
         public bool? HasPool { get; set; }

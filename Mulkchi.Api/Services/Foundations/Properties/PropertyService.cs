@@ -419,4 +419,57 @@ public partial class PropertyService : IPropertyService
 
         return featured.Select(ToPropertyResponse);
     }
+
+    public async ValueTask<Property?> RetrievePropertyEntityByIdAsync(Guid propertyId)
+    {
+        return await this.storageBroker.SelectPropertyByIdAsync(propertyId);
+    }
+
+    public async ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> RetrieveMyPropertiesAsync(PropertyQueryParams queryParams)
+    {
+        var currentUserId = this.currentUserService.GetCurrentUserId();
+        if (!currentUserId.HasValue)
+            throw new UnauthorizedAccessException("User not authenticated.");
+
+        var query = this.storageBroker.SelectAllProperties()
+            .Where(p => p.HostId == currentUserId.Value);
+
+        // Apply status filter if specified
+        if (!string.IsNullOrEmpty(queryParams.Status))
+        {
+            if (Enum.TryParse<PropertyStatus>(queryParams.Status, out var status))
+                query = query.Where(p => p.Status == status);
+        }
+
+        // Apply sorting
+        query = queryParams.SortBy?.ToLower() switch
+        {
+            "price" => queryParams.SortDescending ? query.OrderByDescending(p => p.SalePrice ?? p.MonthlyRent ?? 0) : query.OrderBy(p => p.SalePrice ?? p.MonthlyRent ?? 0),
+            "date" => queryParams.SortDescending ? query.OrderByDescending(p => p.CreatedDate) : query.OrderBy(p => p.CreatedDate),
+            "views" => queryParams.SortDescending ? query.OrderByDescending(p => p.ViewsCount) : query.OrderBy(p => p.ViewsCount),
+            _ => query.OrderByDescending(p => p.CreatedDate)
+        };
+
+        var total = await query.CountAsync();
+
+        var items = await query
+            .Skip((queryParams.Page - 1) * queryParams.PageSize)
+            .Take(queryParams.PageSize)
+            .ToListAsync();
+
+        return (items.Select(ToPropertyResponse), total);
+    }
+
+    public async ValueTask<IEnumerable<PropertyResponse>> RetrieveNewListingsAsync(int days, int count)
+    {
+        var cutoffDate = this.dateTimeBroker.GetCurrentDateTimeOffset().AddDays(-days);
+
+        var properties = await this.storageBroker.SelectAllProperties()
+            .Where(p => p.Status == PropertyStatus.Active && p.CreatedDate >= cutoffDate)
+            .OrderByDescending(p => p.CreatedDate)
+            .Take(count)
+            .ToListAsync();
+
+        return properties.Select(ToPropertyResponse);
+    }
 }
