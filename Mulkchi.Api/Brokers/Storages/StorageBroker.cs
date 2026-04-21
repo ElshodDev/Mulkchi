@@ -10,6 +10,7 @@ using Mulkchi.Api.Models.Foundations.Boosts;
 using Mulkchi.Api.Models.Foundations.Discounts;
 using Mulkchi.Api.Models.Foundations.Subscriptions;
 using Mulkchi.Api.Models.Foundations.Amenities;
+using Mulkchi.Api.Models.Foundations.Chat;
 using Mulkchi.Api.Models.Foundations.Favorites;
 using Mulkchi.Api.Models.Foundations.HomeRequests;
 using Mulkchi.Api.Models.Foundations.Messages;
@@ -210,6 +211,17 @@ public partial class StorageBroker : DbContext, IStorageBroker
             entity.HasKey(pa => new { pa.PropertyId, pa.AmenityId });
             entity.HasIndex(pa => pa.PropertyId);
             entity.HasIndex(pa => pa.AmenityId);
+        });
+        modelBuilder.Entity<ChatSession>(entity =>
+        {
+            entity.HasKey(s => s.Id);
+            entity.HasIndex(s => s.UserId);
+            entity.HasIndex(s => s.IsActive);
+        });
+        modelBuilder.Entity<ChatMessage>(entity =>
+        {
+            entity.HasIndex(m => m.SessionId);
+            entity.HasIndex(m => m.CreatedDate);
         });
         modelBuilder.Entity<Discount>().HasQueryFilter(e => e.DeletedDate == null);
         modelBuilder.Entity<DiscountUsage>().HasQueryFilter(e => e.DeletedDate == null);

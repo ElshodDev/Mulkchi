@@ -449,6 +449,72 @@ namespace Mulkchi.Api.Migrations
                     b.ToTable("Boosts");
                 });
 
+            modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Chat.ChatMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Intent")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.PrimitiveCollection<string>("RelatedPropertyIds")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SenderType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SessionId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedDate");
+
+                    b.HasIndex("SessionId");
+
+                    b.ToTable("ChatMessages");
+                });
+
+            modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Chat.ChatSession", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("EndedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ChatSessions");
+                });
+
             modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Discounts.Discount", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1569,6 +1635,26 @@ namespace Mulkchi.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Chat.ChatMessage", b =>
+                {
+                    b.HasOne("Mulkchi.Api.Models.Foundations.Chat.ChatSession", "Session")
+                        .WithMany("Messages")
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Session");
+                });
+
+            modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Chat.ChatSession", b =>
+                {
+                    b.HasOne("Mulkchi.Api.Models.Foundations.Users.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Subscriptions.UserSubscription", b =>
                 {
                     b.HasOne("Mulkchi.Api.Models.Foundations.Subscriptions.SubscriptionPlan", "Plan")
@@ -1586,6 +1672,11 @@ namespace Mulkchi.Api.Migrations
                     b.Navigation("Plan");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Chat.ChatSession", b =>
+                {
+                    b.Navigation("Messages");
                 });
 #pragma warning restore 612, 618
         }
