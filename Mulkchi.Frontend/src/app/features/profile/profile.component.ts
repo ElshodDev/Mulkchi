@@ -265,8 +265,8 @@ import { Gender, UserRole, User, HostBadge } from '../../core/models';
                         </p>
                         @if (currentUser()?.role === 'Guest') {
                           <button 
-                            mat-raised-button 
-                            color="accent"
+                            mat-raised-button
+                            class="host-mode-btn"
                             (click)="switchToHostMode()"
                             [disabled]="isSwitchingMode()">
                             @if (isSwitchingMode()) {
