@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MockQueryable.Moq;
 using Moq;
 using Mulkchi.Api.Models.Foundations.Bookings;
 using Mulkchi.Api.Models.Foundations.Properties;
@@ -55,6 +56,18 @@ public partial class BookingServiceTests
         this.emailBrokerMock.Setup(broker =>
             broker.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(Task.CompletedTask);
+
+        // Mock async queryables for conflict checking
+        var emptyBookingHolds = new List<BookingHold>().AsQueryable().BuildMock();
+        var emptyBookings = new List<Booking>().AsQueryable().BuildMock();
+
+        this.storageBrokerMock.Setup(broker =>
+            broker.SelectActiveBookingHolds(It.IsAny<Guid>()))
+                .Returns(emptyBookingHolds);
+
+        this.storageBrokerMock.Setup(broker =>
+            broker.SelectAllBookings())
+                .Returns(emptyBookings);
 
         // when
         BookingResponse actualBooking = await this.bookingService.AddBookingAsync(inputBooking);
