@@ -1,10 +1,10 @@
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Mulkchi.Api.Hubs;
 using Mulkchi.Api.Models.Foundations.Notifications;
-using Mulkchi.Api.Services.Notifications;
 
 namespace Mulkchi.Api.Controllers;
 
@@ -14,16 +14,13 @@ namespace Mulkchi.Api.Controllers;
 public class SseNotificationsController : ControllerBase
 {
     private readonly IHubContext<NotificationHub> _hubContext;
-    private readonly INotificationService _notificationService;
     private readonly ILogger<SseNotificationsController> _logger;
 
     public SseNotificationsController(
         IHubContext<NotificationHub> hubContext,
-        INotificationService notificationService,
         ILogger<SseNotificationsController> logger)
     {
         _hubContext = hubContext;
-        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -53,30 +50,25 @@ public class SseNotificationsController : ControllerBase
             Message = "SSE stream established"
         };
 
-        // Poll for new notifications every 5 seconds
-        while (!cancellationToken.IsCancellationRequested)
+        // Keep connection alive with heartbeat every 30 seconds
+        try
         {
-            try
+            while (!cancellationToken.IsCancellationRequested)
             {
-                var notifications = await _notificationService
-                    .GetUnreadNotificationsAsync(Guid.Parse(userId), cancellationToken);
+                await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
                 
-                foreach (var notification in notifications)
-                {
-                    yield return notification;
-                }
-
-                await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+                // Send heartbeat to keep connection alive
+                yield return new Notification 
+                { 
+                    Type = NotificationType.System,
+                    Title = "Heartbeat",
+                    Message = DateTime.UtcNow.ToString("O")
+                };
             }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error in SSE notification stream");
-                break;
-            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Normal cancellation
         }
 
         _logger.LogInformation("SSE connection closed for user {UserId}", userId);
