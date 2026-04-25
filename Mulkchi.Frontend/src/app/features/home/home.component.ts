@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, Signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -1664,7 +1664,7 @@ export class HomeComponent implements OnInit {
   ) {}
 
   onFreeListingClick(): void {
-    if (this.authService.isAuthenticated) {
+    if (this.authService.isAuthenticated()) {
       this.router.navigate(['/host/properties/create']);
     } else {
       this.router.navigate(['/auth/register']);
@@ -1674,8 +1674,8 @@ export class HomeComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private snackBar = inject(MatSnackBar);
 
-  featuredProperties!: Signal<any[]>;
-  loading!: Signal<boolean>;
+  featuredProperties: any[] = [];
+  loading: boolean = false;
 
   error = signal<string | null>(null);
   listingTypeEnum = ListingType;
@@ -1684,8 +1684,6 @@ export class HomeComponent implements OnInit {
   listingType: 'Sale' | 'Rent' | 'ShortTermRent' = 'Rent';
 
   ngOnInit(): void {
-    this.featuredProperties = this.propertyService.featuredProperties;
-    this.loading = this.propertyService.loading;
     this.loadFeaturedProperties();
     this.checkModeSwitchRequired();
   }
@@ -1731,10 +1729,16 @@ export class HomeComponent implements OnInit {
 
   loadFeaturedProperties(): void {
     this.error.set(null);
+    this.loading = true;
     
     this.propertyService.getFeaturedProperties(6).subscribe({
+      next: (properties) => {
+        this.featuredProperties = properties;
+        this.loading = false;
+      },
       error: () => {
         this.error.set('Mulklarni yuklashda xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.');
+        this.loading = false;
       }
     });
   }
