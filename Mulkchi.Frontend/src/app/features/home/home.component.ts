@@ -448,7 +448,9 @@ import { ListingType, UserRole } from '../../core/models';
               Bepul e'lon joylashtiring va minglab mijozlarga yetib boring
             </p>
             <div class="cta-buttons">
-              <button mat-raised-button class="btn-primary" routerLink="/auth/register">
+              <button mat-flat-button
+                 class="btn-primary"
+                 (click)="onFreeListingClick()">
                 <mat-icon>add_home</mat-icon>
                 Bepul e'lon berish
               </button>
@@ -1648,6 +1650,23 @@ import { ListingType, UserRole } from '../../core/models';
   `]
 })
 export class HomeComponent implements OnInit {
+  constructor(
+    private authService: AuthService,
+    private propertyService: PropertyService,
+    private reviewService: ReviewService,
+    private notificationService: NotificationService,
+    private dialog: MatDialog,
+    private router: Router
+  ) {}
+
+  onFreeListingClick(): void {
+    if (this.authService.isAuthenticated) {
+      this.router.navigate(['/host/properties/create']);
+    } else {
+      this.router.navigate(['/auth/register']);
+    }
+  }
+
   private propertyService = inject(PropertyService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
