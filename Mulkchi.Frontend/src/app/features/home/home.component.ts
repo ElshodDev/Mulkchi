@@ -194,7 +194,7 @@ import { ListingType, UserRole } from '../../core/models';
             <p class="section-subtitle">Eng mashhur va sifatli e'lonlar</p>
           </div>
           
-          @if (loading()) {
+          @if (loading) {
             <div class="skeleton-grid">
               @for (item of [1,2,3]; track item) {
                 <div class="skeleton-card">
@@ -216,7 +216,7 @@ import { ListingType, UserRole } from '../../core/models';
                 Qayta yuklash
               </button>
             </div>
-          } @else if (featuredProperties().length === 0) {
+          } @else if (featuredProperties.length === 0) {
             <div class="empty-state">
               <mat-icon class="empty-icon">home_work</mat-icon>
               <h3>Hozircha e'lonlar yo'q</h3>
@@ -227,7 +227,7 @@ import { ListingType, UserRole } from '../../core/models';
             </div>
           } @else {
             <div class="properties-grid">
-              @for (property of featuredProperties(); track property.id) {
+              @for (property of featuredProperties; track property.id) {
                 <mat-card class="property-card" (click)="navigateToProperty(property.id)">
                   <div class="property-image-wrapper">
                     @if (property.images && property.images.length > 0) {
@@ -303,12 +303,12 @@ import { ListingType, UserRole } from '../../core/models';
                     
                     <div class="property-footer">
                       <div class="property-price">
-                        @if (property.listingType === ListingType.Sale && property.salePrice) {
+                        @if (property.listingType === listingTypeEnum.Sale && property.salePrice) {
                           <span class="price">{{ property.salePrice | number }} {{ property.currency }}</span>
-                        } @else if (property.listingType === ListingType.Rent && property.monthlyRent) {
+                        } @else if (property.listingType === listingTypeEnum.Rent && property.monthlyRent) {
                           <span class="price">{{ property.monthlyRent | number }} {{ property.currency }}</span>
                           <span class="period">/oy</span>
-                        } @else if (property.listingType === ListingType.ShortTermRent && property.pricePerNight) {
+                        } @else if (property.listingType === listingTypeEnum.ShortTermRent && property.pricePerNight) {
                           <span class="price">{{ property.pricePerNight | number }} {{ property.currency }}</span>
                           <span class="period">/tun</span>
                         }
