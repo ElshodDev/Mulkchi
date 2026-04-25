@@ -51,26 +51,24 @@ public class SseNotificationsController : ControllerBase
         };
 
         // Keep connection alive with heartbeat every 30 seconds
-        try
+        while (!cancellationToken.IsCancellationRequested)
         {
-            while (!cancellationToken.IsCancellationRequested)
+            try
             {
                 await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
-                
-                // Send heartbeat to keep connection alive
-                // Send heartbeat
-                var heartbeat = new Notification
-                {
-                    Type = NotificationType.SystemAlert,
-                    TitleUz = "Heartbeat",
-                    BodyUz = DateTime.UtcNow.ToString("O")
-                };
-                yield return heartbeat;
             }
-        }
-        catch (OperationCanceledException)
-        {
-            // Normal cancellation
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            
+            // Send heartbeat to keep connection alive
+            yield return new Notification
+            {
+                Type = NotificationType.SystemAlert,
+                TitleUz = "Heartbeat",
+                BodyUz = DateTime.UtcNow.ToString("O")
+            };
         }
 
         _logger.LogInformation("SSE connection closed for user {UserId}", userId);
