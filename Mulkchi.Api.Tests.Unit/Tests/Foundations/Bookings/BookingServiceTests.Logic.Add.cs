@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MockQueryable;
 using MockQueryable.Moq;
 using Moq;
 using Mulkchi.Api.Models.Foundations.Bookings;
