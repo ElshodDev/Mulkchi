@@ -88,6 +88,15 @@ public partial class BookingServiceTests
             broker.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()),
             Times.Never);
 
+        // Verify conflict checking mocks were called
+        this.storageBrokerMock.Verify(broker =>
+            broker.SelectActiveBookingHolds(inputBooking.PropertyId),
+            Times.Once);
+
+        this.storageBrokerMock.Verify(broker =>
+            broker.SelectAllBookings(),
+            Times.Once);
+
         this.storageBrokerMock.VerifyNoOtherCalls();
         this.emailBrokerMock.VerifyNoOtherCalls();
     }
