@@ -45,9 +45,9 @@ public class SseNotificationsController : ControllerBase
         // Send initial heartbeat
         yield return new Notification 
         { 
-            Type = NotificationType.System,
-            Title = "Connected",
-            Message = "SSE stream established"
+            Type = NotificationType.SystemAlert,
+            TitleUz = "Connected",
+            BodyUz = "SSE stream established"
         };
 
         // Keep connection alive with heartbeat every 30 seconds
@@ -58,12 +58,14 @@ public class SseNotificationsController : ControllerBase
                 await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
                 
                 // Send heartbeat to keep connection alive
-                yield return new Notification 
-                { 
-                    Type = NotificationType.System,
-                    Title = "Heartbeat",
-                    Message = DateTime.UtcNow.ToString("O")
+                // Send heartbeat
+                var heartbeat = new Notification
+                {
+                    Type = NotificationType.SystemAlert,
+                    TitleUz = "Heartbeat",
+                    BodyUz = DateTime.UtcNow.ToString("O")
                 };
+                yield return heartbeat;
             }
         }
         catch (OperationCanceledException)
