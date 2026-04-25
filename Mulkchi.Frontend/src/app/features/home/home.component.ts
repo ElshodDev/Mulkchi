@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, Signal } from '@angular/core';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -11,9 +11,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
 import { PropertyService } from '../../core/services/property.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ReviewService } from '../../core/services/review.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { ListingType, UserRole } from '../../core/models';
 
 @Component({
@@ -30,6 +33,7 @@ import { ListingType, UserRole } from '../../core/models';
     MatFormFieldModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
+    MatDialogModule,
     MatChipsModule,
     MatDividerModule
   ],
@@ -1670,8 +1674,9 @@ export class HomeComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private snackBar = inject(MatSnackBar);
 
-  featuredProperties = this.propertyService.featuredProperties;
-  loading = this.propertyService.loading;
+  featuredProperties!: Signal<any[]>;
+  loading!: Signal<boolean>;
+
   error = signal<string | null>(null);
   listingTypeEnum = ListingType;
 
@@ -1679,6 +1684,8 @@ export class HomeComponent implements OnInit {
   listingType: 'Sale' | 'Rent' | 'ShortTermRent' = 'Rent';
 
   ngOnInit(): void {
+    this.featuredProperties = this.propertyService.featuredProperties;
+    this.loading = this.propertyService.loading;
     this.loadFeaturedProperties();
     this.checkModeSwitchRequired();
   }
