@@ -45,12 +45,13 @@ namespace Mulkchi.Api.Services.Foundations.Bookings
             var now = DateTimeOffset.UtcNow;
 
             // Conflict check: active holds by other users
-            bool holdConflict = await this.storageBroker
+            var holdConflictEntity = await this.storageBroker
                 .SelectActiveBookingHolds(dto.PropertyId)
-                .AnyAsync(h =>
+                .FirstOrDefaultAsync(h =>
                     h.CheckInDate < dto.CheckOutDate &&
                     h.CheckOutDate > dto.CheckInDate &&
                     h.UserId != currentUserId.Value);
+            bool holdConflict = holdConflictEntity != null;
 
             if (holdConflict)
                 throw new InvalidOperationException("Ushbu sana boshqa foydalanuvchi tomonidan vaqtincha band qilingan.");
