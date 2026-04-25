@@ -11,9 +11,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
 import { PropertyService } from '../../core/services/property.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ReviewService } from '../../core/services/review.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { ListingType, UserRole } from '../../core/models';
 
 @Component({
@@ -30,6 +33,7 @@ import { ListingType, UserRole } from '../../core/models';
     MatFormFieldModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
+    MatDialogModule,
     MatChipsModule,
     MatDividerModule
   ],
@@ -190,7 +194,7 @@ import { ListingType, UserRole } from '../../core/models';
             <p class="section-subtitle">Eng mashhur va sifatli e'lonlar</p>
           </div>
           
-          @if (loading()) {
+          @if (loading) {
             <div class="skeleton-grid">
               @for (item of [1,2,3]; track item) {
                 <div class="skeleton-card">
@@ -212,7 +216,7 @@ import { ListingType, UserRole } from '../../core/models';
                 Qayta yuklash
               </button>
             </div>
-          } @else if (featuredProperties().length === 0) {
+          } @else if (featuredProperties.length === 0) {
             <div class="empty-state">
               <mat-icon class="empty-icon">home_work</mat-icon>
               <h3>Hozircha e'lonlar yo'q</h3>
@@ -223,7 +227,7 @@ import { ListingType, UserRole } from '../../core/models';
             </div>
           } @else {
             <div class="properties-grid">
-              @for (property of featuredProperties(); track property.id) {
+              @for (property of featuredProperties; track property.id) {
                 <mat-card class="property-card" (click)="navigateToProperty(property.id)">
                   <div class="property-image-wrapper">
                     @if (property.images && property.images.length > 0) {
@@ -299,12 +303,12 @@ import { ListingType, UserRole } from '../../core/models';
                     
                     <div class="property-footer">
                       <div class="property-price">
-                        @if (property.listingType === ListingType.Sale && property.salePrice) {
+                        @if (property.listingType === listingTypeEnum.Sale && property.salePrice) {
                           <span class="price">{{ property.salePrice | number }} {{ property.currency }}</span>
-                        } @else if (property.listingType === ListingType.Rent && property.monthlyRent) {
+                        } @else if (property.listingType === listingTypeEnum.Rent && property.monthlyRent) {
                           <span class="price">{{ property.monthlyRent | number }} {{ property.currency }}</span>
                           <span class="period">/oy</span>
-                        } @else if (property.listingType === ListingType.ShortTermRent && property.pricePerNight) {
+                        } @else if (property.listingType === listingTypeEnum.ShortTermRent && property.pricePerNight) {
                           <span class="price">{{ property.pricePerNight | number }} {{ property.currency }}</span>
                           <span class="period">/tun</span>
                         }
@@ -1660,23 +1664,21 @@ export class HomeComponent implements OnInit {
   ) {}
 
   onFreeListingClick(): void {
-    if (this.authService.isAuthenticated) {
+    if (this.authService.isAuthenticated()) {
       this.router.navigate(['/host/properties/create']);
     } else {
       this.router.navigate(['/auth/register']);
     }
   }
 
-  private propertyService = inject(PropertyService);
-  private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
 
-  featuredProperties = this.propertyService.featuredProperties;
-  loading = this.propertyService.loading;
+  featuredProperties: any[] = [];
+  loading: boolean = false;
+
   error = signal<string | null>(null);
-  ListingType = ListingType;
+  listingTypeEnum = ListingType;
 
   searchQuery = '';
   listingType: 'Sale' | 'Rent' | 'ShortTermRent' = 'Rent';
@@ -1727,10 +1729,16 @@ export class HomeComponent implements OnInit {
 
   loadFeaturedProperties(): void {
     this.error.set(null);
+    this.loading = true;
     
     this.propertyService.getFeaturedProperties(6).subscribe({
+      next: (properties) => {
+        this.featuredProperties = properties;
+        this.loading = false;
+      },
       error: () => {
         this.error.set('Mulklarni yuklashda xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.');
+        this.loading = false;
       }
     });
   }
