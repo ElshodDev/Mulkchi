@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, inject, signal, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -12,6 +12,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatBadgeModule } from '@angular/material/badge';
 import { PropertyService } from '../../../core/services/property.service';
 import { Property, PropertyType, ListingType, PropertySearchParams } from '../../../core/models';
 import * as L from 'leaflet';
@@ -31,152 +33,232 @@ import * as L from 'leaflet';
     MatChipsModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
-    MatExpansionModule
+    MatExpansionModule,
+    MatDividerModule,
+    MatBadgeModule
   ],
   template: `
     <div class="property-list-container">
-      <!-- Header -->
-      <div class="page-header">
+      <!-- Hero Header -->
+      <section class="page-header">
         <div class="container">
-          <h1>Ko'chmas mulk e'lonlari</h1>
-          <p>O'zbekistondagi eng yaxshi mulk e'lonlarini qidirib toping</p>
+          <div class="breadcrumb">
+            <a routerLink="/">Bosh sahifa</a>
+            <mat-icon>chevron_right</mat-icon>
+            <span>Ko'chmas mulk</span>
+          </div>
+          <h1 class="page-title">Barcha e'lonlar</h1>
+          <p class="page-subtitle">O'zbekistondagi eng yaxshi mulk e'lonlarini qidirib toping</p>
           
           <!-- Hero Search -->
           <div class="hero-search">
-            <mat-icon class="search-icon">search</mat-icon>
-            <input 
-              type="text" 
-              class="hero-search-input" 
-              placeholder="Shahar yoki tuman qidiring..."
-              [value]="heroSearchValue()"
-              (input)="heroSearchValue.set($any($event).target.value)"
-              (keyup.enter)="onHeroSearch()">
-            <button mat-raised-button color="primary" class="hero-search-btn" (click)="onHeroSearch()">
+            <div class="search-input-wrapper">
+              <mat-icon class="search-icon">search</mat-icon>
+              <input 
+                type="text" 
+                class="hero-search-input" 
+                placeholder="Shahar, tuman yoki ko'cha..."
+                [value]="heroSearchValue()"
+                (input)="heroSearchValue.set($any($event).target.value)"
+                (keyup.enter)="onHeroSearch()">
+            </div>
+            <button mat-raised-button class="hero-search-btn" (click)="onHeroSearch()">
+              <mat-icon>search</mat-icon>
               Qidirish
             </button>
           </div>
         </div>
-      </div>
+      </section>
 
       <div class="container main-content">
         <!-- Filters Sidebar -->
         <aside class="filters-sidebar">
-          <mat-expansion-panel expanded>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                <mat-icon>filter_list</mat-icon>
-                Filterlar
-              </mat-panel-title>
-            </mat-expansion-panel-header>
+          <div class="filters-card">
+            <div class="filters-header">
+              <mat-icon>filter_list</mat-icon>
+              <h3>Filterlar</h3>
+            </div>
+
+            <mat-divider></mat-divider>
 
             <form [formGroup]="filterForm" (ngSubmit)="applyFilters()">
               <!-- Location -->
               <div class="filter-section">
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Joylashuv</mat-label>
-                  <input matInput formControlName="location" placeholder="Shahar, tuman">
-                  <mat-icon matPrefix>location_on</mat-icon>
-                </mat-form-field>
+                <label class="filter-label">
+                  <mat-icon>location_on</mat-icon>
+                  Joylashuv
+                </label>
+                <div class="custom-input-wrapper">
+                  <input 
+                    type="text" 
+                    class="custom-input" 
+                    formControlName="location" 
+                    placeholder="Shahar, tuman">
+                </div>
               </div>
 
               <!-- Property Type -->
               <div class="filter-section">
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Mulk turi</mat-label>
-                  <mat-select formControlName="propertyType">
-                    <mat-option value="">Barcha turlar</mat-option>
+                <label class="filter-label">
+                  <mat-icon>home</mat-icon>
+                  Mulk turi
+                </label>
+                <div class="custom-select-wrapper">
+                  <select formControlName="propertyType" class="custom-select">
+                    <option value="">Barcha turlar</option>
                     @for (type of propertyTypes; track type.value) {
-                      <mat-option [value]="type.value">{{ type.label }}</mat-option>
+                      <option [value]="type.value">{{ type.label }}</option>
                     }
-                  </mat-select>
-                </mat-form-field>
+                  </select>
+                  <mat-icon class="select-arrow">expand_more</mat-icon>
+                </div>
               </div>
 
               <!-- Listing Type -->
               <div class="filter-section">
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>E'lon turi</mat-label>
-                  <mat-select formControlName="listingType">
-                    <mat-option value="">Barcha turlar</mat-option>
-                    @for (type of listingTypes; track type.value) {
-                      <mat-option [value]="type.value">{{ type.label }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
+                <label class="filter-label">
+                  <mat-icon>category</mat-icon>
+                  E'lon turi
+                </label>
+                <div class="listing-type-chips">
+                  <button 
+                    type="button"
+                    class="type-chip"
+                    [class.active]="filterForm.value.listingType === ''"
+                    (click)="filterForm.patchValue({ listingType: '' }); applyFilters()">
+                    Barcha
+                  </button>
+                  @for (type of listingTypes; track type.value) {
+                    <button 
+                      type="button"
+                      class="type-chip"
+                      [class.active]="filterForm.value.listingType === type.value"
+                      (click)="filterForm.patchValue({ listingType: type.value }); applyFilters()">
+                      {{ type.label }}
+                    </button>
+                  }
+                </div>
               </div>
 
               <!-- Price Range -->
               <div class="filter-section">
-                <label class="filter-label">Narx oralig'i</label>
+                <label class="filter-label">
+                  <mat-icon>payments</mat-icon>
+                  Narx oralig'i
+                </label>
                 <div class="price-inputs">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Min</mat-label>
-                    <input matInput type="number" formControlName="minPrice">
-                  </mat-form-field>
-                  <mat-form-field appearance="outline">
-                    <mat-label>Max</mat-label>
-                    <input matInput type="number" formControlName="maxPrice">
-                  </mat-form-field>
+                  <div class="custom-input-wrapper">
+                    <span class="input-prefix">$</span>
+                    <input 
+                      type="number" 
+                      class="custom-input with-prefix" 
+                      formControlName="minPrice" 
+                      placeholder="Min">
+                  </div>
+                  <div class="custom-input-wrapper">
+                    <span class="input-prefix">$</span>
+                    <input 
+                      type="number" 
+                      class="custom-input with-prefix" 
+                      formControlName="maxPrice" 
+                      placeholder="Max">
+                  </div>
                 </div>
               </div>
 
               <!-- Bedrooms -->
               <div class="filter-section">
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Xonalar soni</mat-label>
-                  <mat-select formControlName="bedrooms">
-                    <mat-option value="">Barcha</mat-option>
-                    @for (num of bedroomOptions; track num) {
-                      <mat-option [value]="num">{{ num }}+</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
-              </div>
-
-              <!-- Amenities -->
-              <div class="filter-section">
-                <label class="filter-label">Qulayliklar</label>
-                <div class="amenities-chips">
-                  @for (amenity of amenitiesList; track amenity.value) {
-                    <mat-chip-option 
-                      [selected]="isAmenitySelected(amenity.value)"
-                      (selectionChange)="toggleAmenity(amenity.value)">
-                      <mat-icon>{{ amenity.icon }}</mat-icon>
-                      {{ amenity.label }}
-                    </mat-chip-option>
+                <label class="filter-label">
+                  <mat-icon>bed</mat-icon>
+                  Xonalar soni
+                </label>
+                <div class="bedroom-options">
+                  <button 
+                    type="button"
+                    class="bedroom-btn"
+                    [class.active]="filterForm.value.bedrooms === ''"
+                    (click)="filterForm.patchValue({ bedrooms: '' })">
+                    Barcha
+                  </button>
+                  @for (num of bedroomOptions; track num) {
+                    <button 
+                      type="button"
+                      class="bedroom-btn"
+                      [class.active]="filterForm.value.bedrooms === num.toString()"
+                      (click)="filterForm.patchValue({ bedrooms: num.toString() })">
+                      {{ num }}+
+                    </button>
                   }
                 </div>
               </div>
 
-              <button mat-raised-button color="primary" type="submit" class="full-width apply-btn">
+              <!-- Amenities -->
+              <div class="filter-section">
+                <label class="filter-label">
+                  <mat-icon>check_circle</mat-icon>
+                  Qulayliklar
+                </label>
+                <div class="amenities-chips">
+                  @for (amenity of amenitiesList; track amenity.value) {
+                    <button 
+                      type="button"
+                      class="amenity-chip"
+                      [class.selected]="isAmenitySelected(amenity.value)"
+                      (click)="toggleAmenity(amenity.value)">
+                      <mat-icon>{{ amenity.icon }}</mat-icon>
+                      {{ amenity.label }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <button mat-raised-button type="submit" class="apply-btn">
                 <mat-icon>search</mat-icon>
                 Qidirish
               </button>
 
-              <button mat-button type="button" class="full-width" (click)="resetFilters()">
+              <button mat-button type="button" class="reset-btn" (click)="resetFilters()">
+                <mat-icon>refresh</mat-icon>
                 Filterlarni tozalash
               </button>
             </form>
-          </mat-expansion-panel>
+          </div>
         </aside>
 
         <!-- Results Section -->
         <div class="results-section">
           <!-- Results Header -->
           <div class="results-header">
-            <p class="results-count">
-              @if (!loading()) {
-                <strong>{{ totalCount() }}</strong> ta natija topildi
-              }
-            </p>
+            <div class="results-info">
+              <h2 class="results-title">Natijalar</h2>
+              <p class="results-count">
+                @if (!loading()) {
+                  <strong>{{ totalCount() }}</strong> ta e'lon topildi
+                } @else {
+                  Yuklanmoqda...
+                }
+              </p>
+            </div>
             <div class="view-toggle">
-              <button mat-icon-button [color]="viewMode() === 'grid' ? 'primary' : ''" (click)="setViewMode('grid')">
+              <button 
+                class="view-btn" 
+                [class.active]="viewMode() === 'grid'"
+                (click)="setViewMode('grid')"
+                matTooltip="Grid ko'rinish">
                 <mat-icon>grid_view</mat-icon>
               </button>
-              <button mat-icon-button [color]="viewMode() === 'list' ? 'primary' : ''" (click)="setViewMode('list')">
+              <button 
+                class="view-btn" 
+                [class.active]="viewMode() === 'list'"
+                (click)="setViewMode('list')"
+                matTooltip="Ro'yxat ko'rinish">
                 <mat-icon>view_list</mat-icon>
               </button>
-              <button mat-icon-button [color]="viewMode() === 'map' ? 'primary' : ''" (click)="setViewMode('map')">
+              <button 
+                class="view-btn" 
+                [class.active]="viewMode() === 'map'"
+                (click)="setViewMode('map')"
+                matTooltip="Xarita ko'rinish">
                 <mat-icon>map</mat-icon>
               </button>
             </div>
@@ -184,16 +266,17 @@ import * as L from 'leaflet';
 
           <!-- Loading State with Skeleton Cards -->
           @if (loading()) {
-            <div class="skeleton-grid">
+            <div class="skeleton-grid" [class]="viewMode()">
               @for (i of [1,2,3,4,5,6]; track i) {
                 <div class="skeleton-card">
-                  <div class="skeleton-image shimmer"></div>
+                  <div class="skeleton-image"></div>
                   <div class="skeleton-content">
-                    <div class="skeleton-title shimmer"></div>
-                    <div class="skeleton-text shimmer"></div>
-                    <div class="skeleton-row">
-                      <div class="skeleton-badge shimmer"></div>
-                      <div class="skeleton-price shimmer"></div>
+                    <div class="skeleton-title"></div>
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-line short"></div>
+                    <div class="skeleton-footer">
+                      <div class="skeleton-badge"></div>
+                      <div class="skeleton-price"></div>
                     </div>
                   </div>
                 </div>
@@ -337,139 +420,408 @@ import * as L from 'leaflet';
     </div>
   `,
   styles: [`
+    /* ===== CSS Variables ===== */
+    :host {
+      --color-navy: #1B3A6B;
+      --color-navy-light: #2a4a7c;
+      --color-navy-dark: #122a4d;
+      --color-gold: #C9A84C;
+      --color-gold-light: #d4b86a;
+      --color-gold-dark: #a88a3d;
+      --color-white: #ffffff;
+      --color-gray-50: #f8fafc;
+      --color-gray-100: #f1f5f9;
+      --color-gray-200: #e2e8f0;
+      --color-gray-300: #cbd5e1;
+      --color-gray-400: #94a3b8;
+      --color-gray-500: #64748b;
+      --color-gray-600: #475569;
+      --color-gray-700: #334155;
+      --color-gray-800: #1e293b;
+      --color-gray-900: #0f172a;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+      --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+    }
+
+    /* ===== Layout ===== */
     .property-list-container {
       min-height: 100vh;
-      background: #f5f5f5;
+      background: var(--color-gray-50);
     }
 
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ===== Page Header ===== */
     .page-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 60px 20px;
-      text-align: center;
+      background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-dark) 100%);
+      color: var(--color-white);
+      padding: 48px 0 64px;
     }
 
-    .page-header h1 {
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .breadcrumb a {
+      color: var(--color-gold);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .breadcrumb a:hover {
+      color: var(--color-gold-light);
+    }
+
+    .breadcrumb mat-icon {
+      font-size: 18px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .page-title {
       font-size: 2.5rem;
-      margin-bottom: 12px;
+      font-weight: 700;
+      margin: 0 0 8px 0;
     }
 
-    .page-header p {
-      font-size: 1.1rem;
-      opacity: 0.9;
-      margin-bottom: 24px;
+    .page-subtitle {
+      font-size: 1.125rem;
+      opacity: 0.85;
+      margin: 0 0 32px 0;
     }
 
     /* Hero Search */
     .hero-search {
       display: flex;
-      align-items: center;
       gap: 12px;
-      background: white;
-      border-radius: 12px;
-      padding: 8px;
-      max-width: 500px;
-      margin: 0 auto;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      max-width: 600px;
     }
 
-    .hero-search .search-icon {
-      color: #667eea;
-      margin-left: 12px;
+    .search-input-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: var(--color-white);
+      border-radius: var(--radius);
+      padding: 0 20px;
+    }
+
+    .search-icon {
+      color: var(--color-gray-400);
+      margin-right: 12px;
     }
 
     .hero-search-input {
       flex: 1;
       border: none;
       outline: none;
-      padding: 14px 12px;
+      padding: 16px 0;
       font-size: 1rem;
+      color: var(--color-gray-800);
       background: transparent;
-      min-width: 0;
     }
 
     .hero-search-input::placeholder {
-      color: #999;
+      color: var(--color-gray-400);
     }
 
     .hero-search-btn {
-      border-radius: 8px !important;
-      padding: 8px 24px !important;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 32px;
+      background: var(--color-gold);
+      color: var(--color-navy);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
     }
 
-    @media (max-width: 600px) {
-      .hero-search {
-        flex-direction: column;
-        gap: 8px;
-        padding: 12px;
-      }
-
-      .hero-search-btn {
-        width: 100%;
-      }
+    .hero-search-btn:hover {
+      background: var(--color-gold-light);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
     }
 
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0 20px;
-    }
-
+    /* ===== Main Content ===== */
     .main-content {
       display: grid;
-      grid-template-columns: 300px 1fr;
-      gap: 24px;
-      padding: 24px 20px;
+      grid-template-columns: 320px 1fr;
+      gap: 32px;
+      padding: 32px 0;
     }
 
+    /* ===== Filters Sidebar ===== */
     .filters-sidebar {
       position: sticky;
       top: 24px;
       height: fit-content;
     }
 
-    .filters-sidebar mat-panel-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .filters-card {
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
     }
 
     .full-width {
       width: 100%;
     }
 
+    .filters-card form {
+      padding: 0 24px 24px;
+    }
+
     .filter-section {
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
 
     .filter-label {
-      display: block;
-      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
       font-weight: 500;
-      color: #333;
+      color: var(--color-gray-700);
+      margin-bottom: 10px;
     }
 
+    .filter-label mat-icon {
+      font-size: 18px;
+      color: var(--color-navy);
+    }
+
+    /* Custom Input */
+    .custom-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-prefix {
+      position: absolute;
+      left: 16px;
+      color: var(--color-gray-500);
+      font-weight: 500;
+    }
+
+    .custom-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--color-gray-200);
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      color: var(--color-gray-800);
+      background: var(--color-white);
+      transition: all 0.3s ease;
+    }
+
+    .custom-input.with-prefix {
+      padding-left: 32px;
+    }
+
+    .custom-input:focus {
+      outline: none;
+      border-color: var(--color-navy);
+      box-shadow: 0 0 0 3px rgba(27, 58, 107, 0.1);
+    }
+
+    .custom-input::placeholder {
+      color: var(--color-gray-400);
+    }
+
+    /* Custom Select */
+    .custom-select-wrapper {
+      position: relative;
+    }
+
+    .custom-select {
+      width: 100%;
+      padding: 12px 40px 12px 16px;
+      border: 1px solid var(--color-gray-200);
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      color: var(--color-gray-800);
+      background: var(--color-white);
+      appearance: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .custom-select:focus {
+      outline: none;
+      border-color: var(--color-navy);
+      box-shadow: 0 0 0 3px rgba(27, 58, 107, 0.1);
+    }
+
+    .select-arrow {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-gray-500);
+      pointer-events: none;
+    }
+
+    /* Price Inputs */
     .price-inputs {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
 
+    /* Listing Type Chips */
+    .listing-type-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .type-chip {
+      padding: 8px 16px;
+      background: var(--color-gray-100);
+      border: 1px solid var(--color-gray-200);
+      border-radius: 20px;
+      font-size: 0.875rem;
+      color: var(--color-gray-600);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .type-chip:hover {
+      background: var(--color-gray-200);
+    }
+
+    .type-chip.active {
+      background: var(--color-navy);
+      border-color: var(--color-navy);
+      color: var(--color-white);
+    }
+
+    /* Bedroom Options */
+    .bedroom-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .bedroom-btn {
+      padding: 10px 16px;
+      background: var(--color-gray-100);
+      border: 1px solid var(--color-gray-200);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      color: var(--color-gray-600);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .bedroom-btn:hover {
+      background: var(--color-gray-200);
+    }
+
+    .bedroom-btn.active {
+      background: var(--color-navy);
+      border-color: var(--color-navy);
+      color: var(--color-white);
+    }
+
+    /* Amenities Chips */
     .amenities-chips {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
     }
 
-    .apply-btn {
-      margin-top: 16px;
-      margin-bottom: 8px;
+    .amenity-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: var(--color-gray-100);
+      border: 1px solid var(--color-gray-200);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: var(--color-gray-600);
+      cursor: pointer;
+      transition: all 0.3s ease;
     }
 
+    .amenity-chip:hover {
+      background: var(--color-gray-200);
+    }
+
+    .amenity-chip.selected {
+      background: var(--color-gold);
+      border-color: var(--color-gold);
+      color: var(--color-navy);
+    }
+
+    .amenity-chip mat-icon {
+      font-size: 16px;
+    }
+
+    /* Filter Buttons */
+    .apply-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px;
+      background: var(--color-navy);
+      color: var(--color-white);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 12px;
+    }
+
+    .apply-btn:hover {
+      background: var(--color-navy-light);
+    }
+
+    .reset-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      background: transparent;
+      color: var(--color-gray-500);
+      border: none;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .reset-btn:hover {
+      color: var(--color-navy);
+    }
+
+    /* ===== Results Section ===== */
     .results-section {
-      background: white;
-      border-radius: 8px;
-      padding: 24px;
+      min-height: 600px;
     }
 
     .results-header {
@@ -477,11 +829,34 @@ import * as L from 'leaflet';
       justify-content: space-between;
       align-items: center;
       margin-bottom: 24px;
+      padding: 20px 24px;
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .results-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .results-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--color-gray-900);
+      margin: 0;
     }
 
     .results-count {
       margin: 0;
-      color: #666;
+      color: var(--color-gray-500);
+      font-size: 0.9rem;
+    }
+
+    .results-count strong {
+      color: var(--color-navy);
+      font-weight: 600;
     }
 
     .view-toggle {
@@ -489,11 +864,38 @@ import * as L from 'leaflet';
       gap: 8px;
     }
 
-    .loading-container,
+    .view-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: var(--color-gray-100);
+      border: none;
+      border-radius: var(--radius);
+      color: var(--color-gray-500);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .view-btn:hover {
+      background: var(--color-gray-200);
+      color: var(--color-gray-700);
+    }
+
+    .view-btn.active {
+      background: var(--color-navy);
+      color: var(--color-white);
+    }
+
+    /* ===== Error & Empty States ===== */
     .error-container,
     .empty-container {
       text-align: center;
-      padding: 60px 20px;
+      padding: 80px 20px;
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
     }
 
     .error-container mat-icon,
@@ -501,134 +903,114 @@ import * as L from 'leaflet';
       font-size: 64px;
       width: 64px;
       height: 64px;
+      color: var(--color-gray-300);
       margin-bottom: 16px;
     }
 
     .empty-container h3 {
-      color: #333;
-      margin-bottom: 8px;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--color-gray-800);
+      margin: 0 0 8px 0;
     }
 
     .empty-container p {
-      color: #666;
-      margin-bottom: 24px;
+      color: var(--color-gray-500);
+      margin: 0 0 24px 0;
     }
 
-    .clear-filters-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    /* Skeleton Loading */
+    /* ===== Skeleton Loading ===== */
     .skeleton-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      grid-template-columns: repeat(3, 1fr);
       gap: 24px;
       margin-bottom: 24px;
     }
 
+    .skeleton-grid.list {
+      grid-template-columns: 1fr;
+    }
+
     .skeleton-card {
-      background: white;
-      border-radius: 12px;
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: var(--shadow-sm);
     }
 
     .skeleton-image {
-      height: 200px;
-      background: #e2e8f0;
+      height: 220px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
     }
 
     .skeleton-content {
-      padding: 16px;
+      padding: 20px;
     }
 
     .skeleton-title {
-      height: 20px;
-      background: #e2e8f0;
+      height: 24px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
       border-radius: 4px;
       margin-bottom: 12px;
-      width: 80%;
     }
 
-    .skeleton-text {
-      height: 14px;
-      background: #e2e8f0;
+    .skeleton-line {
+      height: 16px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
       border-radius: 4px;
-      margin-bottom: 16px;
+      margin-bottom: 8px;
+    }
+
+    .skeleton-line.short {
       width: 60%;
     }
 
-    .skeleton-row {
+    .skeleton-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-gray-100);
     }
 
     .skeleton-badge {
       height: 24px;
-      width: 60px;
-      background: #e2e8f0;
+      width: 80px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
       border-radius: 12px;
     }
 
     .skeleton-price {
       height: 24px;
       width: 100px;
-      background: #e2e8f0;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
       border-radius: 4px;
     }
 
-    /* Shimmer Animation */
-    .shimmer {
-      position: relative;
-      overflow: hidden;
-    }
-
-    .shimmer::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba(255, 255, 255, 0.4) 50%,
-        transparent 100%
-      );
-      animation: shimmer 1.5s infinite;
-    }
-
     @keyframes shimmer {
-      0% {
-        transform: translateX(-100%);
-      }
-      100% {
-        transform: translateX(100%);
-      }
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
     }
 
-    .properties-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 24px;
-      margin-bottom: 24px;
-    }
-
-    .properties-grid.list-view {
-      grid-template-columns: 1fr;
-    }
-
-    /* Map View Styles */
+    /* ===== Map View ===== */
     .map-container {
       width: 100%;
       height: 600px;
-      border-radius: 12px;
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: var(--shadow-sm);
     }
 
     .property-map {
@@ -636,23 +1018,23 @@ import * as L from 'leaflet';
       height: 100%;
     }
 
-    /* Leaflet Popup Styles */
+    /* Leaflet Popup */
     .property-popup .popup-title {
       font-weight: 600;
       font-size: 14px;
       margin-bottom: 4px;
-      color: #333;
+      color: var(--color-gray-900);
     }
 
     .property-popup .popup-price {
-      color: #667eea;
+      color: var(--color-navy);
       font-weight: 600;
       font-size: 13px;
       margin-bottom: 8px;
     }
 
     .property-popup .popup-link {
-      color: #667eea;
+      color: var(--color-gold);
       text-decoration: none;
       font-size: 12px;
       font-weight: 500;
@@ -662,29 +1044,31 @@ import * as L from 'leaflet';
       text-decoration: underline;
     }
 
-    @media (max-width: 768px) {
-      .map-container {
-        height: 400px;
-      }
+    /* ===== Properties Grid ===== */
+    .properties-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 24px;
     }
 
+    .properties-grid.list-view {
+      grid-template-columns: 1fr;
+    }
+
+    /* ===== Property Card ===== */
     .property-card {
       cursor: pointer;
-      background: #0f172a;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 16px;
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
       overflow: hidden;
+      box-shadow: var(--shadow-sm);
       transition: all 0.3s ease;
     }
 
     .property-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 40px rgba(212, 160, 23, 0.15);
-      border-color: #D4A017;
-    }
-
-    .property-card:active {
-      transform: translateY(0);
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-xl);
     }
 
     .property-image {
@@ -695,22 +1079,13 @@ import * as L from 'leaflet';
 
     .property-image img {
       width: 100%;
-      height: 220px;
-      object-fit: cover;
-    }
-
-    .no-image {
-      width: 100%;
       height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #e0e0e0;
+      object-fit: cover;
+      transition: transform 0.5s ease;
     }
 
-    .no-image mat-icon {
-      font-size: 48px;
-      color: #999;
+    .property-card:hover .property-image img {
+      transform: scale(1.05);
     }
 
     .property-badges {
@@ -723,23 +1098,25 @@ import * as L from 'leaflet';
     }
 
     .badge {
-      padding: 4px 12px;
-      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border-radius: 20px;
       font-size: 0.75rem;
       font-weight: 500;
     }
 
     .badge.featured {
-      background: #D4A017;
-      color: #000;
+      background: var(--color-gold);
+      color: var(--color-navy);
     }
 
     .badge.verified {
-      background: white;
+      background: var(--color-white);
       color: #22c55e;
       padding: 4px;
       border-radius: 50%;
-      border: 2px solid #22c55e;
     }
 
     .badge.verified mat-icon {
@@ -749,8 +1126,12 @@ import * as L from 'leaflet';
     }
 
     .badge.instant {
-      background: #166534;
-      color: #86efac;
+      background: var(--color-navy);
+      color: var(--color-white);
+    }
+
+    .property-card mat-card-content {
+      padding: 20px;
     }
 
     .property-header {
@@ -761,17 +1142,19 @@ import * as L from 'leaflet';
     }
 
     .property-header h3 {
-      font-size: 1.1rem;
+      font-size: 1.125rem;
       font-weight: 600;
+      color: var(--color-gray-900);
       margin: 0;
       flex: 1;
+      line-height: 1.4;
     }
 
     .rating {
       display: flex;
       align-items: center;
       gap: 4px;
-      color: #ffa500;
+      color: #f59e0b;
     }
 
     .rating mat-icon {
@@ -783,16 +1166,15 @@ import * as L from 'leaflet';
     .location {
       display: flex;
       align-items: center;
-      gap: 4px;
-      color: #666;
+      gap: 6px;
+      color: var(--color-gray-500);
       font-size: 0.9rem;
       margin-bottom: 12px;
     }
 
     .location mat-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
+      font-size: 18px;
+      color: var(--color-gray-400);
     }
 
     .features {
@@ -805,14 +1187,13 @@ import * as L from 'leaflet';
       display: flex;
       align-items: center;
       gap: 4px;
-      font-size: 0.85rem;
-      color: #666;
+      font-size: 0.875rem;
+      color: var(--color-gray-600);
     }
 
     .features mat-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
+      font-size: 18px;
+      color: var(--color-gray-400);
     }
 
     .amenities-preview {
@@ -822,7 +1203,7 @@ import * as L from 'leaflet';
     }
 
     .amenities-preview mat-icon {
-      color: #666;
+      color: var(--color-gray-500);
       font-size: 20px;
     }
 
@@ -830,29 +1211,41 @@ import * as L from 'leaflet';
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-top: 12px;
-      border-top: 1px solid #eee;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-gray-200);
     }
 
     .price {
       font-size: 1.25rem;
       font-weight: 700;
+      color: var(--color-navy);
     }
-
-    /* Price colors by listing type */
-    .price-section.sale .price { color: #D4A017; }
-    .price-section.rent .price { color: #4ade80; }
-    .price-section.short-term .price { color: #60a5fa; }
 
     .type {
       font-size: 0.8rem;
-      padding: 4px 8px;
-      border-radius: 4px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: 500;
     }
 
-    .type.sale-type { background: #1e3a5f; color: #93c5fd; }
-    .type.rent-type { background: #166534; color: #86efac; }
-    .type.short-term-type { background: #1e40af; color: #93c5fd; }
+    .type.sale-type { background: rgba(27, 58, 107, 0.1); color: var(--color-navy); }
+    .type.rent-type { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    .type.short-term-type { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+
+    /* ===== Responsive Design ===== */
+    @media (max-width: 1200px) {
+      .main-content {
+        grid-template-columns: 280px 1fr;
+      }
+
+      .properties-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .skeleton-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
 
     @media (max-width: 1024px) {
       .main-content {
@@ -862,15 +1255,60 @@ import * as L from 'leaflet';
       .filters-sidebar {
         position: static;
       }
+
+      .filters-card {
+        margin-bottom: 24px;
+      }
     }
 
     @media (max-width: 768px) {
+      .page-header {
+        padding: 32px 0 48px;
+      }
+
+      .page-title {
+        font-size: 1.75rem;
+      }
+
+      .hero-search {
+        flex-direction: column;
+      }
+
+      .hero-search-btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .results-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+      }
+
       .properties-grid {
         grid-template-columns: 1fr;
       }
 
-      .page-header h1 {
-        font-size: 1.75rem;
+      .skeleton-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .map-container {
+        height: 400px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 0 16px;
+      }
+
+      .main-content {
+        padding: 24px 0;
+      }
+
+      .price-inputs {
+        grid-template-columns: 1fr;
       }
     }
   `]

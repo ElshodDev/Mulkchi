@@ -336,37 +336,66 @@ import { Gender, UserRole, User, HostBadge } from '../../core/models';
     </div>
   `,
   styles: [`
+    /* ===== CSS Variables ===== */
+    :host {
+      --color-navy: #1B3A6B;
+      --color-navy-light: #2a4a7c;
+      --color-navy-dark: #122a4d;
+      --color-gold: #C9A84C;
+      --color-gold-light: #d4b86a;
+      --color-white: #ffffff;
+      --color-gray-50: #f8fafc;
+      --color-gray-100: #f1f5f9;
+      --color-gray-200: #e2e8f0;
+      --color-gray-300: #cbd5e1;
+      --color-gray-400: #94a3b8;
+      --color-gray-500: #64748b;
+      --color-gray-600: #475569;
+      --color-gray-700: #334155;
+      --color-gray-800: #1e293b;
+      --color-gray-900: #0f172a;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    }
+
     .profile-container {
       min-height: calc(100vh - 64px);
-      background: #f5f5f5;
+      background: var(--color-gray-50);
       padding: 40px 0;
     }
 
     .container {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 0 20px;
+      padding: 0 24px;
     }
 
+    /* ===== Profile Header ===== */
     .profile-header {
-      margin-bottom: 32px;
+      margin-bottom: 40px;
     }
 
     .profile-header h1 {
-      font-size: 2rem;
-      font-weight: 600;
-      margin-bottom: 8px;
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: var(--color-navy);
+      margin: 0 0 8px 0;
     }
 
     .profile-header p {
-      color: #666;
-      font-size: 1.1rem;
+      color: var(--color-gray-500);
+      font-size: 1.125rem;
+      margin: 0;
     }
 
+    /* ===== Profile Content ===== */
     .profile-content {
       display: grid;
-      grid-template-columns: 350px 1fr;
-      gap: 24px;
+      grid-template-columns: 360px 1fr;
+      gap: 32px;
     }
 
     .profile-sidebar {
@@ -374,14 +403,18 @@ import { Gender, UserRole, User, HostBadge } from '../../core/models';
     }
 
     .profile-card {
-      padding: 24px;
+      padding: 32px 24px;
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
     }
 
+    /* ===== Avatar Section ===== */
     .avatar-section {
       position: relative;
-      width: 120px;
-      height: 120px;
-      margin: 0 auto 24px;
+      width: 140px;
+      height: 140px;
+      margin: 0 auto 28px;
     }
 
     .avatar {
@@ -389,170 +422,280 @@ import { Gender, UserRole, User, HostBadge } from '../../core/models';
       height: 100%;
       border-radius: 50%;
       object-fit: cover;
-      border: 4px solid #e0e0e0;
+      border: 4px solid var(--color-navy);
     }
 
     .avatar-placeholder {
       width: 100%;
       height: 100%;
       border-radius: 50%;
-      background: #e0e0e0;
+      background: var(--color-navy);
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
     .avatar-placeholder mat-icon {
-      font-size: 48px;
-      width: 48px;
-      height: 48px;
-      color: #999;
+      font-size: 56px;
+      width: 56px;
+      height: 56px;
+      color: var(--color-gold);
     }
 
     .avatar-edit-btn {
       position: absolute;
-      bottom: 0;
-      right: 0;
-      background: white !important;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      bottom: 4px;
+      right: 4px;
+      background: var(--color-white) !important;
+      box-shadow: var(--shadow);
+      border: 2px solid var(--color-navy) !important;
+      transition: all 0.3s ease;
     }
 
+    .avatar-edit-btn:hover {
+      background: var(--color-navy) !important;
+    }
+
+    .avatar-edit-btn:hover mat-icon {
+      color: var(--color-gold) !important;
+    }
+
+    /* ===== User Info ===== */
     .user-info {
       text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
     }
 
     .user-info h2 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin-bottom: 4px;
+      font-size: 1.375rem;
+      font-weight: 700;
+      color: var(--color-gray-900);
+      margin: 0 0 6px 0;
     }
 
     .user-info .email {
-      color: #666;
+      color: var(--color-gray-500);
       font-size: 0.9rem;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
 
+    /* ===== Role Badge ===== */
     .role-badge {
       display: inline-block;
-      padding: 4px 12px;
-      border-radius: 16px;
+      padding: 6px 16px;
+      border-radius: 20px;
       font-size: 0.75rem;
-      font-weight: 500;
+      font-weight: 600;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .role-badge.guest {
-      background: #e3f2fd;
-      color: #1976d2;
+      background: rgba(27, 58, 107, 0.1);
+      color: var(--color-navy);
     }
 
     .role-badge.host {
-      background: #e8f5e9;
-      color: #388e3c;
+      background: rgba(201, 168, 76, 0.15);
+      color: var(--color-navy);
     }
 
     .role-badge.admin {
-      background: #fff3e0;
-      color: #f57c00;
+      background: rgba(220, 38, 38, 0.1);
+      color: #dc2626;
     }
 
+    /* ===== Host Badge ===== */
     .host-badge {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 4px;
-      margin-top: 8px;
-      color: #ffa500;
+      gap: 6px;
+      margin-top: 12px;
+      color: var(--color-gold);
       font-size: 0.9rem;
+      font-weight: 500;
     }
 
+    .host-badge mat-icon {
+      font-size: 18px;
+    }
+
+    /* ===== User Stats ===== */
     .user-stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 16px;
       text-align: center;
+      padding: 8px 0;
     }
 
-    .stat .value {
+    .user-stats .stat .value {
       display: block;
-      font-size: 1.5rem;
+      font-size: 1.625rem;
       font-weight: 700;
-      color: #333;
+      color: var(--color-navy);
+      line-height: 1.2;
     }
 
-    .stat .label {
+    .user-stats .stat .label {
       font-size: 0.8rem;
-      color: #666;
+      color: var(--color-gray-500);
     }
 
+    /* ===== Verified Badge ===== */
     .verified-badge {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
       margin-top: 24px;
-      padding: 12px;
-      background: #e8f5e9;
-      border-radius: 8px;
-      color: #4caf50;
+      padding: 12px 16px;
+      background: rgba(34, 197, 94, 0.1);
+      border-radius: var(--radius);
+      color: #16a34a;
+      font-size: 0.9rem;
+      font-weight: 500;
     }
 
+    /* ===== Profile Main ===== */
     .profile-main mat-card {
       min-height: 600px;
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+    }
+
+    ::ng-deep .mat-mdc-tab-group {
+      --mdc-secondary-navigation-tab-container-height: 56px;
+    }
+
+    ::ng-deep .mat-mdc-tab .mdc-tab__text-label {
+      color: var(--color-gray-500);
+      font-weight: 500;
+    }
+
+    ::ng-deep .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+      color: var(--color-navy) !important;
+    }
+
+    ::ng-deep .mat-mdc-tab .mdc-tab-indicator__content--underline {
+      border-color: var(--color-navy) !important;
+    }
+
+    ::ng-deep .mat-mdc-tab:hover .mdc-tab__text-label {
+      color: var(--color-navy);
     }
 
     .tab-content {
-      padding: 24px;
+      padding: 32px;
     }
 
+    /* ===== Tab Header ===== */
     .tab-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 16px;
     }
 
     .tab-header h3 {
-      font-size: 1.25rem;
+      font-size: 1.375rem;
       font-weight: 600;
+      color: var(--color-gray-900);
       margin: 0;
     }
 
+    ::ng-deep .tab-header .mat-mdc-raised-button {
+      background: var(--color-navy) !important;
+      color: var(--color-white) !important;
+      border-radius: var(--radius) !important;
+      transition: all 0.3s ease;
+    }
+
+    ::ng-deep .tab-header .mat-mdc-raised-button:hover:not([disabled]) {
+      background: var(--color-navy-light) !important;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    ::ng-deep .tab-header .mat-mdc-progress-spinner .mdc-circular-progress__indeterminate-circle-graphic {
+      stroke: var(--color-gold) !important;
+    }
+
+    /* ===== Profile Form ===== */
     .profile-form {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
     }
 
     .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      gap: 20px;
     }
 
     .full-width {
       width: 100%;
     }
 
+    ::ng-deep .profile-form .mat-mdc-form-field-focus-overlay {
+      background-color: var(--color-navy) !important;
+    }
+
+    ::ng-deep .profile-form .mat-mdc-text-field-wrapper {
+      background-color: var(--color-gray-50);
+    }
+
+    ::ng-deep .profile-form .mdc-text-field--focused .mdc-floating-label {
+      color: var(--color-navy) !important;
+    }
+
+    ::ng-deep .profile-form .mdc-text-field--outlined .mdc-notched-outline__leading,
+    ::ng-deep .profile-form .mdc-text-field--outlined .mdc-notched-outline__notch,
+    ::ng-deep .profile-form .mdc-text-field--outlined .mdc-notched-outline__trailing {
+      border-color: var(--color-gray-200) !important;
+    }
+
+    ::ng-deep .profile-form .mdc-text-field--focused .mdc-notched-outline__leading,
+    ::ng-deep .profile-form .mdc-text-field--focused .mdc-notched-outline__notch,
+    ::ng-deep .profile-form .mdc-text-field--focused .mdc-notched-outline__trailing {
+      border-color: var(--color-navy) !important;
+    }
+
     .form-actions {
       display: flex;
       justify-content: flex-end;
-      margin-top: 16px;
+      gap: 12px;
+      margin-top: 8px;
     }
 
+    ::ng-deep .form-actions .mat-mdc-button {
+      color: var(--color-gray-600) !important;
+    }
+
+    /* ===== Password Form ===== */
     .password-form {
-      max-width: 400px;
+      max-width: 450px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
     }
 
     .section-divider {
       margin: 32px 0;
     }
 
+    /* ===== Section Divider ===== */
+    .section-divider {
+      margin: 32px 0;
+      border-color: var(--color-gray-200);
+    }
+
+    /* ===== Notification Settings ===== */
     .notification-settings {
       display: flex;
       flex-direction: column;
@@ -563,20 +706,43 @@ import { Gender, UserRole, User, HostBadge } from '../../core/models';
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 0;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--color-gray-100);
     }
 
+    ::ng-deep .setting-item .mat-mdc-slide-toggle {
+      --mdc-switch-selected-track-color: var(--color-navy);
+      --mdc-switch-selected-handle-color: var(--color-gold);
+      --mdc-switch-selected-focus-track-color: var(--color-navy);
+      --mdc-switch-selected-hover-track-color: var(--color-navy);
+    }
+
+    /* ===== Danger Zone ===== */
     .danger-zone {
-      color: #f44336;
+      color: #dc2626;
+    }
+
+    .danger-zone h3 {
+      color: #dc2626;
+      font-weight: 600;
     }
 
     .danger-actions {
-      margin-top: 16px;
+      margin-top: 20px;
     }
 
+    ::ng-deep .danger-actions .mat-mdc-raised-button.mat-warn {
+      background: #dc2626 !important;
+    }
+
+    /* ===== Spinner & Loading ===== */
     .inline-spinner {
       display: inline-block;
       margin-right: 8px;
+    }
+
+    ::ng-deep .inline-spinner .mdc-circular-progress__indeterminate-circle-graphic {
+      stroke: var(--color-gold) !important;
     }
 
     .loading-container {
@@ -588,29 +754,12 @@ import { Gender, UserRole, User, HostBadge } from '../../core/models';
       gap: 16px;
     }
 
-    @media (max-width: 1024px) {
-      .profile-content {
-        grid-template-columns: 1fr;
-      }
-
-      .profile-sidebar {
-        max-width: 400px;
-        margin: 0 auto;
-      }
+    .loading-container mat-icon {
+      font-size: 64px;
+      color: var(--color-navy);
     }
 
-    @media (max-width: 600px) {
-      .form-row {
-        grid-template-columns: 1fr;
-      }
-
-      .tab-header {
-        flex-direction: column;
-        gap: 16px;
-        align-items: stretch;
-      }
-    }
-
+    /* ===== Mode Switch Section ===== */
     .mode-switch-section {
       display: flex;
       flex-direction: column;
@@ -620,14 +769,113 @@ import { Gender, UserRole, User, HostBadge } from '../../core/models';
 
     .mode-description {
       font-size: 1rem;
-      color: #333;
+      color: var(--color-gray-800);
       margin: 0;
+      font-weight: 500;
     }
 
     .mode-hint {
       font-size: 0.875rem;
-      color: #666;
+      color: var(--color-gray-500);
       margin: 8px 0 0 0;
+    }
+
+    ::ng-deep .mode-switch-section .mat-mdc-raised-button {
+      background: var(--color-navy) !important;
+      color: var(--color-white) !important;
+      border-radius: var(--radius) !important;
+      transition: all 0.3s ease;
+    }
+
+    ::ng-deep .mode-switch-section .mat-mdc-raised-button:hover:not([disabled]) {
+      background: var(--color-navy-light) !important;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* ===== Responsive Design ===== */
+    @media (max-width: 1024px) {
+      .profile-content {
+        grid-template-columns: 1fr;
+      }
+
+      .profile-sidebar {
+        max-width: 400px;
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      .profile-header h1 {
+        font-size: 1.875rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .profile-container {
+        padding: 24px 0;
+      }
+
+      .container {
+        padding: 0 16px;
+      }
+
+      .tab-content {
+        padding: 24px 16px;
+      }
+
+      .avatar-section {
+        width: 120px;
+        height: 120px;
+      }
+
+      .profile-card {
+        padding: 24px 20px;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .tab-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+      }
+
+      .tab-header h3 {
+        font-size: 1.25rem;
+      }
+
+      .user-stats {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .profile-header h1 {
+        font-size: 1.5rem;
+      }
+
+      .profile-header p {
+        font-size: 1rem;
+      }
+
+      .user-info h2 {
+        font-size: 1.125rem;
+      }
+
+      .avatar-section {
+        width: 100px;
+        height: 100px;
+      }
+
+      .avatar-placeholder mat-icon {
+        font-size: 40px;
+        width: 40px;
+        height: 40px;
+      }
     }
   `]
 })

@@ -34,19 +34,61 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
     <div class="property-detail-container">
       @if (loading()) {
         <div class="loading-container">
-          <mat-progress-spinner diameter="50"></mat-progress-spinner>
-          <p>Yuklanmoqda...</p>
+          <div class="skeleton-loader">
+            <div class="skeleton-main-image"></div>
+            <div class="skeleton-content">
+              <div class="skeleton-title"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line short"></div>
+            </div>
+          </div>
         </div>
       } @else if (error()) {
         <div class="error-container">
-          <mat-icon color="warn">error</mat-icon>
+          <mat-icon>error</mat-icon>
           <h2>{{ error() }}</h2>
-          <button mat-raised-button color="primary" routerLink="/properties">
+          <button mat-raised-button routerLink="/properties" class="back-btn">
+            <mat-icon>arrow_back</mat-icon>
             Barcha mulklarga qaytish
           </button>
         </div>
       } @else if (property()) {
         <div class="property-content">
+          <!-- Breadcrumb -->
+          <div class="breadcrumb">
+            <a routerLink="/">Bosh sahifa</a>
+            <mat-icon>chevron_right</mat-icon>
+            <a routerLink="/properties">Ko'chmas mulk</a>
+            <mat-icon>chevron_right</mat-icon>
+            <span>{{ property()?.title }}</span>
+          </div>
+
+          <!-- Property Header (Mobile: Top, Desktop: Sidebar) -->
+          <div class="property-header-mobile">
+            <div class="badges">
+              @if (property()?.isFeatured) {
+                <span class="badge featured">
+                  <mat-icon>star</mat-icon> Featured
+                </span>
+              }
+              @if (property()?.isVerified) {
+                <span class="badge verified">
+                  <mat-icon>verified</mat-icon> Tasdiqlangan
+                </span>
+              }
+              @if (property()?.isInstantBook) {
+                <span class="badge instant">
+                  <mat-icon>bolt</mat-icon> Tez bron
+                </span>
+              }
+            </div>
+            <h1 class="property-title">{{ property()?.title }}</h1>
+            <div class="location">
+              <mat-icon>location_on</mat-icon>
+              <span>{{ property()?.address }}, {{ property()?.district }}, {{ property()?.city }}</span>
+            </div>
+          </div>
+
           <!-- Image Gallery -->
           <div class="gallery-section">
             <div class="main-image">
@@ -55,14 +97,15 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
               } @else {
                 <div class="no-image">
                   <mat-icon>image_not_supported</mat-icon>
+                  <p>Rasm mavjud emas</p>
                 </div>
               }
               
               @if (property()?.images && property()!.images!.length > 1) {
-                <button mat-icon-button class="nav-btn prev" (click)="prevImage()">
+                <button class="nav-btn prev" (click)="prevImage()">
                   <mat-icon>chevron_left</mat-icon>
                 </button>
-                <button mat-icon-button class="nav-btn next" (click)="nextImage()">
+                <button class="nav-btn next" (click)="nextImage()">
                   <mat-icon>chevron_right</mat-icon>
                 </button>
                 <div class="image-counter">
@@ -87,10 +130,13 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
 
           <!-- Property Info -->
           <div class="info-section">
-            <div class="info-header">
+            <!-- Desktop Header -->
+            <div class="property-header-desktop">
               <div class="badges">
                 @if (property()?.isFeatured) {
-                  <span class="badge featured">Featured</span>
+                  <span class="badge featured">
+                    <mat-icon>star</mat-icon> Featured
+                  </span>
                 }
                 @if (property()?.isVerified) {
                   <span class="badge verified">
@@ -98,69 +144,81 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                   </span>
                 }
                 @if (property()?.isInstantBook) {
-                  <span class="badge instant">Tez bron</span>
+                  <span class="badge instant">
+                    <mat-icon>bolt</mat-icon> Tez bron
+                  </span>
                 }
               </div>
               
-              <h1>{{ property()?.title }}</h1>
+              <h1 class="property-title">{{ property()?.title }}</h1>
               
               <div class="location">
                 <mat-icon>location_on</mat-icon>
                 <span>{{ property()?.address }}, {{ property()?.district }}, {{ property()?.city }}</span>
               </div>
-              
-              <div class="rating-price">
-                <div class="rating" *ngIf="property()?.averageRating">
-                  <mat-icon>star</mat-icon>
-                  <span>{{ property()?.averageRating | number:'1.1-1' }}</span>
-                  <span class="reviews">({{ property()?.viewsCount }} ko'rish)</span>
-                </div>
-                
-                <div class="price">
-                  @if (property()?.listingType === ListingType.Sale && property()?.salePrice) {
-                    <span class="amount">{{ property()?.salePrice | number }} {{ property()?.currency }}</span>
-                    <span class="type">Sotuv</span>
-                  } @else if (property()?.listingType === ListingType.Rent && property()?.monthlyRent) {
-                    <span class="amount">{{ property()?.monthlyRent | number }} {{ property()?.currency }}</span>
-                    <span class="type">/oy</span>
-                  } @else if (property()?.listingType === ListingType.ShortTermRent && property()?.pricePerNight) {
-                    <span class="amount">{{ property()?.pricePerNight | number }} {{ property()?.currency }}</span>
-                    <span class="type">/tun</span>
-                  }
-                </div>
+            </div>
+
+            <!-- Price Card -->
+            <div class="price-card">
+              <div class="price-display">
+                @if (property()?.listingType === ListingType.Sale && property()?.salePrice) {
+                  <span class="price-amount">{{ property()?.salePrice | number }} {{ property()?.currency }}</span>
+                  <span class="price-type sale">Sotuv</span>
+                } @else if (property()?.listingType === ListingType.Rent && property()?.monthlyRent) {
+                  <span class="price-amount">{{ property()?.monthlyRent | number }} {{ property()?.currency }}</span>
+                  <span class="price-period">/oy</span>
+                } @else if (property()?.listingType === ListingType.ShortTermRent && property()?.pricePerNight) {
+                  <span class="price-amount">{{ property()?.pricePerNight | number }} {{ property()?.currency }}</span>
+                  <span class="price-period">/tun</span>
+                }
               </div>
+              @if (property()?.averageRating) {
+                <div class="rating-display">
+                  <mat-icon>star</mat-icon>
+                  <span class="rating-value">{{ property()?.averageRating | number:'1.1-1' }}</span>
+                  <span class="rating-count">({{ property()?.viewsCount }} ko'rish)</span>
+                </div>
+              }
             </div>
 
             <mat-divider></mat-divider>
 
             <!-- Quick Stats -->
             <div class="quick-stats">
-              <div class="stat">
-                <mat-icon>bed</mat-icon>
-                <div>
-                  <span class="value">{{ property()?.numberOfBedrooms }}</span>
-                  <span class="label">Xona</span>
+              <div class="stat-item">
+                <div class="stat-icon">
+                  <mat-icon>bed</mat-icon>
+                </div>
+                <div class="stat-info">
+                  <span class="stat-value">{{ property()?.numberOfBedrooms }}</span>
+                  <span class="stat-label">Xona</span>
                 </div>
               </div>
-              <div class="stat">
-                <mat-icon>bathtub</mat-icon>
-                <div>
-                  <span class="value">{{ property()?.numberOfBathrooms }}</span>
-                  <span class="label">Hammom</span>
+              <div class="stat-item">
+                <div class="stat-icon">
+                  <mat-icon>bathtub</mat-icon>
+                </div>
+                <div class="stat-info">
+                  <span class="stat-value">{{ property()?.numberOfBathrooms }}</span>
+                  <span class="stat-label">Hammom</span>
                 </div>
               </div>
-              <div class="stat">
-                <mat-icon>square_foot</mat-icon>
-                <div>
-                  <span class="value">{{ property()?.area }}</span>
-                  <span class="label">m²</span>
+              <div class="stat-item">
+                <div class="stat-icon">
+                  <mat-icon>square_foot</mat-icon>
+                </div>
+                <div class="stat-info">
+                  <span class="stat-value">{{ property()?.area }}</span>
+                  <span class="stat-label">m²</span>
                 </div>
               </div>
-              <div class="stat">
-                <mat-icon>people</mat-icon>
-                <div>
-                  <span class="value">{{ property()?.maxGuests }}</span>
-                  <span class="label">Mehmon</span>
+              <div class="stat-item">
+                <div class="stat-icon">
+                  <mat-icon>people</mat-icon>
+                </div>
+                <div class="stat-info">
+                  <span class="stat-value">{{ property()?.maxGuests }}</span>
+                  <span class="stat-label">Mehmon</span>
                 </div>
               </div>
             </div>
@@ -169,20 +227,26 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
 
             <!-- Description -->
             <div class="description-section">
-              <h2>Tavsif</h2>
-              <p>{{ property()?.description }}</p>
+              <h2 class="section-title">
+                <mat-icon>description</mat-icon>
+                Tavsif
+              </h2>
+              <p class="description-text">{{ property()?.description || 'Tavsif mavjud emas' }}</p>
             </div>
 
             <!-- Amenities -->
             <div class="amenities-section">
-              <h2>Qulayliklar</h2>
+              <h2 class="section-title">
+                <mat-icon>checklist</mat-icon>
+                Qulayliklar
+              </h2>
               <div class="amenities-grid">
                 @for (amenity of amenitiesList(); track amenity.name) {
                   <div class="amenity-item" [class.available]="amenity.available">
-                    <mat-icon [class.active]="amenity.available">
-                      {{ amenity.available ? 'check_circle' : 'cancel' }}
-                    </mat-icon>
-                    <span>{{ amenity.label }}</span>
+                    <div class="amenity-icon">
+                      <mat-icon>{{ amenity.available ? 'check_circle' : 'cancel' }}</mat-icon>
+                    </div>
+                    <span class="amenity-label">{{ amenity.label }}</span>
                   </div>
                 }
               </div>
@@ -192,63 +256,90 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
 
             <!-- Location Info -->
             <div class="location-section">
-              <h2>Joylashuv</h2>
-              <div class="location-details">
-                <p><strong>Viloyat:</strong> {{ property()?.region }}</p>
-                <p><strong>Shahar:</strong> {{ property()?.city }}</p>
-                <p><strong>Tuman:</strong> {{ property()?.district }}</p>
-                <p><strong>Mahalla:</strong> {{ property()?.mahalla }}</p>
-                <p><strong>Manzil:</strong> {{ property()?.address }}</p>
+              <h2 class="section-title">
+                <mat-icon>place</mat-icon>
+                Joylashuv
+              </h2>
+              <div class="location-grid">
+                <div class="location-item">
+                  <span class="location-label">Viloyat</span>
+                  <span class="location-value">{{ property()?.region }}</span>
+                </div>
+                <div class="location-item">
+                  <span class="location-label">Shahar</span>
+                  <span class="location-value">{{ property()?.city }}</span>
+                </div>
+                <div class="location-item">
+                  <span class="location-label">Tuman</span>
+                  <span class="location-value">{{ property()?.district }}</span>
+                </div>
+                <div class="location-item">
+                  <span class="location-label">Mahalla</span>
+                  <span class="location-value">{{ property()?.mahalla }}</span>
+                </div>
+                <div class="location-item full-width">
+                  <span class="location-label">Manzil</span>
+                  <span class="location-value">{{ property()?.address }}</span>
+                </div>
                 @if (property()?.distanceToCityCenter) {
-                  <p><strong>Shahar markazigacha:</strong> {{ property()?.distanceToCityCenter }} km</p>
+                  <div class="location-item">
+                    <span class="location-label">Shahar markazigacha</span>
+                    <span class="location-value">{{ property()?.distanceToCityCenter }} km</span>
+                  </div>
                 }
               </div>
             </div>
 
             <!-- Host Info -->
-            <mat-card class="host-card">
-              <mat-card-header>
-                <mat-card-title>Host haqida</mat-card-title>
-              </mat-card-header>
-              <mat-card-content>
-                <div class="host-info">
-                  <div class="host-avatar">
-                    <mat-icon>account_circle</mat-icon>
-                  </div>
-                  <div class="host-details">
-                    <h4>Host ID: {{ property()?.hostId | slice:0:8 }}...</h4>
-                    <p>Tasdiqlangan host</p>
+            <div class="host-card">
+              <div class="host-header">
+                <mat-icon>account_circle</mat-icon>
+                <h3>Host haqida</h3>
+              </div>
+              <div class="host-content">
+                <div class="host-avatar">
+                  <div class="avatar-placeholder">
+                    <mat-icon>person</mat-icon>
                   </div>
                 </div>
-              </mat-card-content>
-            </mat-card>
+                <div class="host-details">
+                  <h4 class="host-name">Host</h4>
+                  <div class="host-badge">
+                    <mat-icon>verified</mat-icon>
+                    <span>Tasdiqlangan host</span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <!-- Actions -->
             <div class="actions-section">
               @if (isAuthenticated()) {
                 @if (!isOwner()) {
-                  <button mat-raised-button color="primary" class="action-btn" (click)="bookNow()">
-                    <mat-icon>calendar_today</mat-icon>
-                    Bron qilish
-                  </button>
-                  <button mat-stroked-button color="primary" class="action-btn" (click)="contactHost()">
-                    <mat-icon>message</mat-icon>
-                    Host bilan bog'lanish
-                  </button>
-                  <button 
-                    mat-icon-button 
-                    [color]="isFavorite() ? 'warn' : ''" 
-                    (click)="toggleFavorite()"
-                    [matTooltip]="getFavoriteTooltip()">
-                    <mat-icon>{{ isFavorite() ? 'favorite' : 'favorite_border' }}</mat-icon>
-                  </button>
+                  <div class="action-buttons">
+                    <button mat-raised-button class="action-btn primary" (click)="bookNow()">
+                      <mat-icon>calendar_today</mat-icon>
+                      Bron qilish
+                    </button>
+                    <button mat-stroked-button class="action-btn secondary" (click)="contactHost()">
+                      <mat-icon>message</mat-icon>
+                      Host bilan bog'lanish
+                    </button>
+                    <button 
+                      class="favorite-btn"
+                      [class.active]="isFavorite()"
+                      (click)="toggleFavorite()"
+                      [matTooltip]="getFavoriteTooltip()">
+                      <mat-icon>{{ isFavorite() ? 'favorite' : 'favorite_border' }}</mat-icon>
+                    </button>
+                  </div>
                 } @else {
                   <div class="owner-actions">
-                    <button mat-raised-button color="primary" [routerLink]="['/host/properties/edit', property()?.id]">
+                    <button mat-raised-button class="edit-btn" [routerLink]="['/host/properties/edit', property()?.id]">
                       <mat-icon>edit</mat-icon>
                       Tahrirlash
                     </button>
-                    <button mat-stroked-button color="warn" (click)="deleteProperty()">
+                    <button mat-stroked-button class="delete-btn" (click)="deleteProperty()">
                       <mat-icon>delete</mat-icon>
                       O'chirish
                     </button>
@@ -256,8 +347,9 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                 }
               } @else {
                 <div class="auth-prompt">
+                  <mat-icon>login</mat-icon>
                   <p>Bron qilish yoki aloqa uchun tizimga kiring</p>
-                  <button mat-raised-button color="primary" routerLink="/auth/login">
+                  <button mat-raised-button routerLink="/auth/login" class="login-btn">
                     Kirish
                   </button>
                 </div>
@@ -274,9 +366,30 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
     </div>
   `,
   styles: [`
+    /* ===== CSS Variables ===== */
+    :host {
+      --color-navy: #1B3A6B;
+      --color-navy-light: #2a4a7c;
+      --color-gold: #C9A84C;
+      --color-white: #ffffff;
+      --color-gray-50: #f8fafc;
+      --color-gray-100: #f1f5f9;
+      --color-gray-200: #e2e8f0;
+      --color-gray-500: #64748b;
+      --color-gray-600: #475569;
+      --color-gray-800: #1e293b;
+      --color-gray-900: #0f172a;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    }
+
+    /* ===== Layout ===== */
     .property-detail-container {
       min-height: 100vh;
-      background: #f5f5f5;
+      background: var(--color-gray-50);
     }
 
     .loading-container,
@@ -293,29 +406,89 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
       font-size: 64px;
       width: 64px;
       height: 64px;
+      color: var(--color-navy);
     }
 
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: var(--color-navy);
+      color: var(--color-white);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .back-btn:hover {
+      background: var(--color-navy-light);
+    }
+
+    /* ===== Property Content ===== */
     .property-content {
       max-width: 1200px;
       margin: 0 auto;
       padding: 24px;
       display: grid;
-      grid-template-columns: 1fr 400px;
+      grid-template-columns: 1.5fr 1fr;
       gap: 32px;
     }
 
-    /* Gallery Section */
+    /* ===== Breadcrumb ===== */
+    .breadcrumb {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: var(--color-gray-500);
+    }
+
+    .breadcrumb a {
+      color: var(--color-navy);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .breadcrumb a:hover {
+      color: var(--color-gold);
+    }
+
+    .breadcrumb mat-icon {
+      font-size: 18px;
+      color: var(--color-gray-400);
+    }
+
+    /* ===== Mobile Header ===== */
+    .property-header-mobile {
+      grid-column: 1 / -1;
+      display: none;
+    }
+
+    .property-header-mobile .property-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-gray-900);
+      margin: 0;
+    }
+
+    /* ===== Gallery Section ===== */
     .gallery-section {
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
     .main-image {
       position: relative;
-      height: 500px;
-      background: #f0f0f0;
+      height: 450px;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      background: var(--color-gray-200);
     }
 
     .main-image img {
@@ -328,20 +501,42 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
       width: 100%;
       height: 100%;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 12px;
     }
 
     .no-image mat-icon {
-      font-size: 80px;
-      color: #ccc;
+      font-size: 64px;
+      color: var(--color-gray-400);
+    }
+
+    .no-image p {
+      color: var(--color-gray-500);
     }
 
     .nav-btn {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      background: rgba(255,255,255,0.9) !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      background: rgba(255, 255, 255, 0.95);
+      border: none;
+      border-radius: 50%;
+      color: var(--color-navy);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow);
+    }
+
+    .nav-btn:hover {
+      background: var(--color-white);
+      transform: translateY(-50%) scale(1.1);
     }
 
     .nav-btn.prev { left: 16px; }
@@ -350,35 +545,41 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
     .image-counter {
       position: absolute;
       bottom: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.7);
-      color: white;
+      right: 16px;
+      background: rgba(27, 58, 107, 0.9);
+      color: var(--color-white);
       padding: 8px 16px;
       border-radius: 20px;
       font-size: 0.9rem;
+      font-weight: 500;
     }
 
     .thumbnail-list {
       display: flex;
-      gap: 8px;
-      padding: 16px;
+      gap: 12px;
       overflow-x: auto;
+      padding-bottom: 8px;
     }
 
     .thumbnail {
+      flex-shrink: 0;
       width: 100px;
-      height: 70px;
-      border-radius: 8px;
+      height: 75px;
+      border-radius: var(--radius);
       overflow: hidden;
       cursor: pointer;
+      opacity: 0.6;
+      transition: all 0.3s ease;
       border: 2px solid transparent;
-      transition: border-color 0.2s;
-      flex-shrink: 0;
     }
 
     .thumbnail.active {
-      border-color: #667eea;
+      opacity: 1;
+      border-color: var(--color-gold);
+    }
+
+    .thumbnail:hover {
+      opacity: 1;
     }
 
     .thumbnail img {
@@ -387,13 +588,15 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
       object-fit: cover;
     }
 
-    /* Info Section */
+    /* ===== Info Section ===== */
     .info-section {
-      background: white;
-      border-radius: 12px;
-      padding: 24px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      height: fit-content;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .property-header-desktop {
+      display: block;
     }
 
     .info-header {
@@ -408,28 +611,32 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
     }
 
     .badge {
-      padding: 4px 12px;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 500;
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
     }
 
     .badge.featured {
-      background: #ff6b6b;
-      color: white;
+      background: var(--color-gold);
+      color: var(--color-navy);
     }
 
     .badge.verified {
-      background: #e8f5e9;
-      color: #4caf50;
+      background: rgba(34, 197, 94, 0.1);
+      color: #16a34a;
     }
 
     .badge.instant {
-      background: #e3f2fd;
-      color: #2196f3;
+      background: rgba(27, 58, 107, 0.1);
+      color: var(--color-navy);
+    }
+
+    .badge mat-icon {
+      font-size: 16px;
     }
 
     .badge mat-icon {
@@ -438,113 +645,165 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
       height: 16px;
     }
 
-    .info-header h1 {
+    .property-title {
       font-size: 1.75rem;
-      font-weight: 600;
-      margin-bottom: 12px;
-      color: #333;
+      font-weight: 700;
+      color: var(--color-gray-900);
+      margin: 0 0 12px 0;
+      line-height: 1.3;
     }
 
     .location {
       display: flex;
       align-items: center;
       gap: 8px;
-      color: #666;
-      margin-bottom: 16px;
+      color: var(--color-gray-500);
+      font-size: 0.95rem;
+    }
+
+    .location mat-icon {
+      font-size: 20px;
+      color: var(--color-navy);
     }
 
     .location mat-icon {
       color: #667eea;
     }
 
-    .rating-price {
+    /* ===== Price Card ===== */
+    .price-card {
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .price-display {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 12px;
     }
 
-    .rating {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      color: #ffa500;
-    }
-
-    .rating .reviews {
-      color: #666;
-      font-size: 0.9rem;
-    }
-
-    .price {
-      text-align: right;
-    }
-
-    .price .amount {
-      font-size: 1.75rem;
+    .price-amount {
+      font-size: 2rem;
       font-weight: 700;
-      color: #667eea;
-      display: block;
+      color: var(--color-navy);
     }
 
-    .price .type {
-      color: #666;
-      font-size: 0.9rem;
+    .price-period {
+      font-size: 1.125rem;
+      color: var(--color-gray-500);
+    }
+
+    .price-type {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      background: rgba(27, 58, 107, 0.1);
+      color: var(--color-navy);
+    }
+
+    .rating-display {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-top: 12px;
+      border-top: 1px solid var(--color-gray-200);
+    }
+
+    .rating-display mat-icon {
+      font-size: 20px;
+      color: #f59e0b;
+    }
+
+    .rating-value {
+      font-weight: 600;
+      color: var(--color-gray-800);
+    }
+
+    .rating-count {
+      color: var(--color-gray-500);
+      font-size: 0.875rem;
     }
 
     mat-divider {
       margin: 24px 0;
     }
 
-    /* Quick Stats */
+    /* ===== Quick Stats ===== */
     .quick-stats {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      padding: 8px 0;
+      gap: 12px;
+      padding: 4px 0;
     }
 
-    .stat {
+    .stat-item {
       display: flex;
       align-items: center;
       gap: 12px;
+      padding: 16px;
+      background: var(--color-gray-100);
+      border-radius: var(--radius);
     }
 
-    .stat mat-icon {
-      font-size: 28px;
-      width: 28px;
-      height: 28px;
-      color: #667eea;
+    .stat-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: var(--color-navy);
+      border-radius: var(--radius);
     }
 
-    .stat .value {
-      display: block;
+    .stat-icon mat-icon {
+      font-size: 20px;
+      color: var(--color-gold);
+    }
+
+    .stat-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-value {
       font-size: 1.25rem;
-      font-weight: 600;
-      color: #333;
+      font-weight: 700;
+      color: var(--color-gray-900);
     }
 
-    .stat .label {
+    .stat-label {
       font-size: 0.8rem;
-      color: #666;
+      color: var(--color-gray-500);
     }
 
-    /* Description */
-    .description-section h2,
-    .amenities-section h2,
-    .location-section h2 {
+    /* ===== Section Title ===== */
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
       font-size: 1.25rem;
       font-weight: 600;
-      margin-bottom: 16px;
-      color: #333;
+      color: var(--color-gray-900);
+      margin: 0 0 16px 0;
     }
 
-    .description-section p {
-      color: #555;
-      line-height: 1.7;
+    .section-title mat-icon {
+      font-size: 24px;
+      color: var(--color-navy);
+    }
+
+    /* ===== Description ===== */
+    .description-text {
+      color: var(--color-gray-600);
+      line-height: 1.8;
       white-space: pre-line;
     }
 
-    /* Amenities */
+    /* ===== Amenities ===== */
     .amenities-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -554,99 +813,282 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
     .amenity-item {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px;
-      border-radius: 8px;
-      color: #999;
+      gap: 12px;
+      padding: 12px;
+      border-radius: var(--radius);
+      background: var(--color-gray-100);
+      color: var(--color-gray-400);
     }
 
     .amenity-item.available {
-      color: #333;
-      background: #f5f5f5;
+      background: rgba(27, 58, 107, 0.05);
+      color: var(--color-gray-800);
     }
 
-    .amenity-item mat-icon {
+    .amenity-icon mat-icon {
       font-size: 20px;
     }
 
-    .amenity-item mat-icon.active {
-      color: #4caf50;
+    .amenity-item.available .amenity-icon mat-icon {
+      color: var(--color-navy);
     }
 
-    /* Location Details */
-    .location-details p {
-      margin-bottom: 8px;
-      color: #555;
+    /* ===== Location Grid ===== */
+    .location-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
     }
 
-    /* Host Card */
+    .location-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .location-item.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .location-label {
+      font-size: 0.8rem;
+      color: var(--color-gray-500);
+    }
+
+    .location-value {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--color-gray-800);
+    }
+
+    /* ===== Host Card ===== */
     .host-card {
-      margin-top: 24px;
-      background: #f8f9fa;
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow);
     }
 
-    .host-info {
+    .host-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .host-header mat-icon {
+      font-size: 24px;
+      color: var(--color-navy);
+    }
+
+    .host-header h3 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--color-gray-900);
+      margin: 0;
+    }
+
+    .host-content {
       display: flex;
       align-items: center;
       gap: 16px;
     }
 
-    .host-avatar mat-icon {
-      font-size: 48px;
-      width: 48px;
-      height: 48px;
-      color: #667eea;
+    .avatar-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      background: var(--color-navy);
+      border-radius: 50%;
     }
 
-    .host-details h4 {
-      margin: 0 0 4px 0;
+    .avatar-placeholder mat-icon {
+      font-size: 28px;
+      color: var(--color-gold);
+    }
+
+    .host-name {
+      font-size: 1.125rem;
       font-weight: 600;
+      color: var(--color-gray-900);
+      margin: 0 0 8px 0;
     }
 
-    .host-details p {
-      margin: 0;
-      color: #666;
-      font-size: 0.9rem;
+    .host-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.875rem;
+      color: #16a34a;
     }
 
-    /* Actions */
+    .host-badge mat-icon {
+      font-size: 16px;
+    }
+
+    /* ===== Actions ===== */
     .actions-section {
-      margin-top: 24px;
-      padding-top: 24px;
-      border-top: 1px solid #eee;
+      padding: 4px 0;
+    }
+
+    .action-buttons {
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
     }
 
     .action-btn {
-      flex: 1;
-      min-width: 150px;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
+      padding: 14px 24px;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+    }
+
+    .action-btn.primary {
+      flex: 1;
+      min-width: 160px;
+      background: var(--color-navy);
+      color: var(--color-white);
+    }
+
+    .action-btn.primary:hover {
+      background: var(--color-navy-light);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .action-btn.secondary {
+      flex: 1;
+      min-width: 160px;
+      background: var(--color-white);
+      color: var(--color-navy);
+      border: 2px solid var(--color-navy);
+    }
+
+    .action-btn.secondary:hover {
+      background: rgba(27, 58, 107, 0.05);
+    }
+
+    .favorite-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      background: var(--color-white);
+      border: 2px solid var(--color-gray-200);
+      border-radius: var(--radius);
+      color: var(--color-gray-400);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .favorite-btn:hover {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+
+    .favorite-btn.active {
+      background: #fef2f2;
+      border-color: #ef4444;
+      color: #ef4444;
     }
 
     .owner-actions {
       display: flex;
       gap: 12px;
-      width: 100%;
+    }
+
+    .edit-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 24px;
+      background: var(--color-navy);
+      color: var(--color-white);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .edit-btn:hover {
+      background: var(--color-navy-light);
+    }
+
+    .delete-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 24px;
+      background: var(--color-white);
+      color: #dc2626;
+      border: 2px solid #dc2626;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .delete-btn:hover {
+      background: #fef2f2;
     }
 
     .auth-prompt {
-      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 32px;
+      background: var(--color-gray-100);
+      border-radius: var(--radius-lg);
       text-align: center;
-      padding: 16px;
-      background: #f5f5f5;
-      border-radius: 8px;
+    }
+
+    .auth-prompt mat-icon {
+      font-size: 48px;
+      color: var(--color-navy);
     }
 
     .auth-prompt p {
-      margin-bottom: 12px;
-      color: #666;
+      color: var(--color-gray-600);
+      margin: 0;
     }
 
+    .login-btn {
+      padding: 12px 32px;
+      background: var(--color-navy);
+      color: var(--color-white);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .login-btn:hover {
+      background: var(--color-navy-light);
+    }
+
+    mat-divider {
+      margin: 8px 0;
+      border-top-color: var(--color-gray-200);
+    }
+
+    /* ===== Responsive Design ===== */
     @media (max-width: 1024px) {
       .property-content {
         grid-template-columns: 1fr;
@@ -659,31 +1101,109 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
       .quick-stats {
         grid-template-columns: repeat(2, 1fr);
       }
+
+      .property-header-desktop {
+        display: none;
+      }
+
+      .property-header-mobile {
+        display: block;
+      }
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 768px) {
       .property-content {
         padding: 16px;
       }
 
-      .info-header h1 {
-        font-size: 1.25rem;
+      .main-image {
+        height: 300px;
       }
 
-      .price .amount {
-        font-size: 1.25rem;
+      .nav-btn {
+        width: 40px;
+        height: 40px;
       }
 
-      .amenities-grid {
-        grid-template-columns: 1fr;
+      .price-amount {
+        font-size: 1.5rem;
       }
 
-      .actions-section {
+      .property-title {
+        font-size: 1.5rem;
+      }
+
+      .quick-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .stat-item {
+        padding: 12px;
+      }
+
+      .action-buttons {
         flex-direction: column;
       }
 
       .action-btn {
         width: 100%;
+      }
+
+      .owner-actions {
+        flex-direction: column;
+      }
+
+      .edit-btn,
+      .delete-btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .amenities-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .property-content {
+        padding: 12px;
+      }
+
+      .main-image {
+        height: 250px;
+        border-radius: var(--radius-lg);
+      }
+
+      .thumbnail {
+        width: 80px;
+        height: 60px;
+      }
+
+      .quick-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+
+      .stat-icon {
+        width: 32px;
+        height: 32px;
+      }
+
+      .stat-icon mat-icon {
+        font-size: 16px;
+      }
+
+      .stat-value {
+        font-size: 1rem;
+      }
+
+      .location-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .price-card {
+        padding: 20px;
       }
     }
   `]

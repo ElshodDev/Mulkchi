@@ -1,4 +1,4 @@
-import { Component, inject, signal, viewChild, afterNextRender, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -29,18 +29,43 @@ declare global {
   }
 }
 
+// Global flag to track initialization across component instances
+declare global {
+  interface Window {
+    __googleInitialized?: boolean;
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: {
+            client_id: string;
+            callback: (response: { credential: string }) => void;
+          }) => void;
+          renderButton: (
+            element: HTMLElement,
+            options: {
+              theme?: 'outline' | 'filled_blue' | 'filled_black';
+              size?: 'large' | 'medium' | 'small';
+              width?: string;
+            }
+          ) => void;
+        };
+      };
+    };
+  }
+}
+
 @Component({
   selector: 'app-google-login',
   standalone: true,
   imports: [CommonModule, MatButtonModule, MatIconModule],
   template: `
     <div class="google-login-container">
-          @if (isLoading()) {
+      <div *ngIf="isLoading()" class="loading-wrapper">
         <button mat-stroked-button disabled class="google-btn">
           <mat-icon>hourglass_empty</mat-icon>
           <span>Google bilan davom etish</span>
         </button>
-      }
+      </div>
       <div #googleButtonContainer class="google-button-wrapper" [class.hidden]="isLoading()"></div>
     </div>
   `,
@@ -48,6 +73,10 @@ declare global {
     .google-login-container {
       display: flex;
       justify-content: center;
+      width: 100%;
+    }
+    
+    .loading-wrapper {
       width: 100%;
     }
     
@@ -91,24 +120,21 @@ declare global {
     }
   `]
 })
-export class GoogleLoginComponent {
+export class GoogleLoginComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private snackBar = inject(MatSnackBar);
   
   isLoading = signal(true);
-  private googleInitialized = false;
   
-  googleButtonContainer = viewChild.required<ElementRef>('googleButtonContainer');
+  @ViewChild('googleButtonContainer') googleButtonContainer!: ElementRef;
   
-  constructor() {
-    afterNextRender(() => {
-      this.loadGoogleScript();
-    });
+  ngOnInit(): void {
+    this.loadGoogleScript();
   }
   
   private loadGoogleScript(): void {
-    // Check if script is already loaded
+    // Check if script is already loaded globally
     if (document.getElementById('google-identity-script')) {
       this.initializeAndRender();
       return;
@@ -135,17 +161,22 @@ export class GoogleLoginComponent {
     
     const clientId = '875022387846-46rckl1kpnk2hujvd53nasu9dr4v3i2k.apps.googleusercontent.com';
     
-    // Initialize only once
-    if (!this.googleInitialized) {
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: (response) => this.handleGoogleResponse(response)
-      });
-      this.googleInitialized = true;
+    // Initialize only once globally
+    if (!window.__googleInitialized) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: (response) => this.handleGoogleResponse(response)
+        });
+        window.__googleInitialized = true;
+        console.log('[GoogleLogin] GSI initialized successfully');
+      } catch (error) {
+        console.error('[GoogleLogin] GSI initialization error:', error);
+      }
     }
     
     // Render button
-    const container = this.googleButtonContainer()?.nativeElement;
+    const container = this.googleButtonContainer?.nativeElement;
     if (container) {
       window.google?.accounts?.id.renderButton(container, {
         theme: 'outline',
@@ -162,12 +193,17 @@ export class GoogleLoginComponent {
     }
     
     this.authService.googleLogin(response.credential).subscribe({
-      next: () => {
+      next: (authResponse) => {
+        console.log('[GoogleLogin] Login success, token:', authResponse.token ? 'present' : 'missing');
         this.snackBar.open('Google orqali muvaffaqiyatli kirdingiz!', 'Yopish', { duration: 3000 });
-        this.router.navigate(['/']);
+        // Small delay to ensure token is saved before navigation
+        setTimeout(() => {
+          this.router.navigate(['/']);
+        }, 100);
       },
       error: (err) => {
-        const message = err.error?.message || 'Google orqali kirishda xatolik';
+        console.error('[GoogleLogin] Login error:', err);
+        const message = err.error?.message || err.message || 'Google orqali kirishda xatolik';
         this.snackBar.open(message, 'Yopish', { duration: 5000 });
       }
     });

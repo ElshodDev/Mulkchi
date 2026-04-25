@@ -78,16 +78,20 @@ export class ChatService {
 
   private async startConnection(): Promise<void> {
     const token = this.getAccessToken();
-    if (!token) return;
+    if (!token) {
+      console.log('[SignalR] No token, skipping connection');
+      return;
+    }
 
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl(this.hubUrl, {
         accessTokenFactory: () => {
-          return localStorage.getItem('access_token')
+          const accessToken = localStorage.getItem('access_token')
               || localStorage.getItem('accessToken')
               || localStorage.getItem('token')
-              || localStorage.getItem('jwt')
-              || '';
+              || localStorage.getItem('jwt');
+          // Return null instead of empty string to avoid sending "undefined"
+          return accessToken && accessToken !== 'undefined' ? accessToken : null as any;
         }
       })
       .withAutomaticReconnect([0, 1000, 5000, 10000])

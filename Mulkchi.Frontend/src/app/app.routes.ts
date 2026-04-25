@@ -41,6 +41,10 @@ export const routes: Routes = [
         path: 'properties/:id',
         loadComponent: () => import('./features/properties/property-detail/property-detail.component').then(m => m.PropertyDetailComponent)
       },
+      {
+        path: 'ai-recommendations',
+        loadComponent: () => import('./features/properties/ai-recommendations/ai-recommendations.component').then(m => m.AiRecommendationsComponent)
+      },
       
       // Protected routes (Guest)
       {
@@ -74,6 +78,16 @@ export const routes: Routes = [
         path: 'host',
         canActivate: [authGuard, hostGuard],
         children: [
+          {
+            path: '',
+            redirectTo: 'properties',
+            pathMatch: 'full'
+          },
+          {
+            path: 'dashboard',
+            redirectTo: 'properties',
+            pathMatch: 'full'
+          },
           {
             path: 'properties',
             loadComponent: () => import('./features/host/host-properties/host-properties.component').then(m => m.HostPropertiesComponent)

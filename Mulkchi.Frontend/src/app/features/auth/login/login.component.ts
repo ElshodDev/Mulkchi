@@ -11,6 +11,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../../../core/services/auth.service';
 import { GoogleLoginComponent } from '../../../shared/components/google-login/google-login.component';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -98,8 +99,10 @@ import { GoogleLoginComponent } from '../../../shared/components/google-login/go
             <div class="divider">
               <span>yoki</span>
             </div>
-            
-            <app-google-login></app-google-login>
+
+            @if (googleClientId) {
+              <app-google-login></app-google-login>
+            }
           </form>
         </mat-card-content>
 
@@ -110,36 +113,60 @@ import { GoogleLoginComponent } from '../../../shared/components/google-login/go
     </div>
   `,
   styles: [`
+    /* ===== CSS Variables ===== */
+    :host {
+      --color-navy: #1B3A6B;
+      --color-navy-light: #2a4a7c;
+      --color-gold: #C9A84C;
+      --color-gold-light: #d4b86a;
+      --color-white: #ffffff;
+      --color-gray-50: #f8fafc;
+      --color-gray-100: #f1f5f9;
+      --color-gray-200: #e2e8f0;
+      --color-gray-400: #94a3b8;
+      --color-gray-500: #64748b;
+      --color-gray-600: #475569;
+      --color-gray-900: #0f172a;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    }
+
     .login-container {
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-light) 100%);
       padding: 20px;
     }
 
     .login-card {
       width: 100%;
       max-width: 450px;
-      padding: 32px;
+      padding: 40px;
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
     }
 
     mat-card-header {
       text-align: center;
       display: block;
-      margin-bottom: 24px;
+      margin-bottom: 32px;
     }
 
     mat-card-title {
-      font-size: 1.75rem;
-      font-weight: 600;
+      font-size: 1.875rem;
+      font-weight: 700;
+      color: var(--color-navy);
       margin-bottom: 8px;
     }
 
     mat-card-subtitle {
       font-size: 1rem;
-      color: #666;
+      color: var(--color-gray-500);
     }
 
     .full-width {
@@ -147,7 +174,31 @@ import { GoogleLoginComponent } from '../../../shared/components/google-login/go
     }
 
     .form-field {
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+    }
+
+    ::ng-deep .mat-mdc-form-field-focus-overlay {
+      background-color: var(--color-navy) !important;
+    }
+
+    ::ng-deep .mat-mdc-text-field-wrapper {
+      background-color: var(--color-gray-50);
+    }
+
+    ::ng-deep .mdc-text-field--focused .mdc-floating-label {
+      color: var(--color-navy) !important;
+    }
+
+    ::ng-deep .mdc-text-field--outlined .mdc-notched-outline__leading,
+    ::ng-deep .mdc-text-field--outlined .mdc-notched-outline__notch,
+    ::ng-deep .mdc-text-field--outlined .mdc-notched-outline__trailing {
+      border-color: var(--color-gray-200) !important;
+    }
+
+    ::ng-deep .mdc-text-field--focused .mdc-notched-outline__leading,
+    ::ng-deep .mdc-text-field--focused .mdc-notched-outline__notch,
+    ::ng-deep .mdc-text-field--focused .mdc-notched-outline__trailing {
+      border-color: var(--color-navy) !important;
     }
 
     .form-options {
@@ -159,57 +210,93 @@ import { GoogleLoginComponent } from '../../../shared/components/google-login/go
       gap: 8px;
     }
 
+    ::ng-deep .mat-mdc-checkbox .mdc-checkbox__native-control:checked ~ .mdc-checkbox__background {
+      background-color: var(--color-navy) !important;
+      border-color: var(--color-navy) !important;
+    }
+
+    ::ng-deep .mat-mdc-checkbox .mdc-checkbox__ripple {
+      background: var(--color-navy) !important;
+    }
+
     .error-alert {
       display: flex;
       align-items: center;
-      gap: 8px;
-      background: #ffebee;
-      color: #c62828;
-      padding: 12px 16px;
-      border-radius: 4px;
-      margin-bottom: 16px;
+      gap: 12px;
+      background: #fef2f2;
+      color: #dc2626;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      font-size: 0.95rem;
     }
 
     .submit-btn {
-      height: 48px;
-      font-size: 1rem;
+      height: 52px;
+      font-size: 1.125rem;
+      font-weight: 600;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
+      background: var(--color-navy) !important;
+      border-radius: var(--radius) !important;
+      transition: all 0.3s ease;
+    }
+
+    .submit-btn:hover:not([disabled]) {
+      background: var(--color-navy-light) !important;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .submit-btn:disabled {
+      background: var(--color-gray-400) !important;
     }
 
     .inline-spinner {
       display: inline-block;
     }
 
+    ::ng-deep .mat-mdc-progress-spinner .mdc-circular-progress__determinate-circle,
+    ::ng-deep .mat-mdc-progress-spinner .mdc-circular-progress__indeterminate-circle-graphic {
+      stroke: var(--color-gold) !important;
+    }
+
     .login-actions {
       justify-content: center;
-      padding-top: 16px;
+      padding-top: 24px;
     }
 
     .login-actions p {
       margin: 0;
-      color: #666;
+      color: var(--color-gray-600);
+      font-size: 0.95rem;
+    }
+
+    .login-actions a {
+      color: var(--color-navy) !important;
+      font-weight: 500;
     }
 
     .divider {
       display: flex;
       align-items: center;
       text-align: center;
-      margin: 20px 0;
-      color: #666;
+      margin: 24px 0;
+      color: var(--color-gray-400);
     }
 
     .divider::before,
     .divider::after {
       content: '';
       flex: 1;
-      border-bottom: 1px solid #ddd;
+      border-bottom: 1px solid var(--color-gray-200);
     }
 
     .divider span {
       padding: 0 16px;
+      font-size: 0.875rem;
     }
 
     @media (max-width: 480px) {
@@ -217,9 +304,19 @@ import { GoogleLoginComponent } from '../../../shared/components/google-login/go
         padding: 24px;
       }
 
+      mat-card-title {
+        font-size: 1.5rem;
+      }
+
       .form-options {
         flex-direction: column;
         align-items: flex-start;
+        gap: 12px;
+      }
+
+      .submit-btn {
+        height: 48px;
+        font-size: 1rem;
       }
     }
   `]
@@ -230,6 +327,9 @@ export class LoginComponent {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private snackBar = inject(MatSnackBar);
+
+  // Expose google client ID from environment to template
+  readonly googleClientId = environment.googleClientId;
 
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -264,12 +364,9 @@ export class LoginComponent {
     }).subscribe({
       next: () => {
         this.isLoading.set(false);
-        this.snackBar.open('Tizimga muvaffaqiyatli kirdingiz!', 'Yopish', {
-          duration: 3000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom'
-        });
-        this.router.navigate([this.returnUrl]);
+        this.snackBar.open('Muvaffaqiyatli kirdingiz!', 'Yopish', { duration: 3000 });
+        const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+        this.router.navigate([returnUrl]);
       },
       error: (err) => {
         this.isLoading.set(false);

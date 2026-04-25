@@ -74,3 +74,12 @@ public class PriceRange
     public decimal Min { get; set; }
     public decimal Max { get; set; }
 }
+
+public class PricePredictionRequest
+{
+    public string Region { get; set; } = string.Empty;
+    public string PropertyType { get; set; } = string.Empty;
+    public int NumberOfRooms { get; set; }
+    public decimal Area { get; set; }
+    public string ListingType { get; set; } = string.Empty;
+}

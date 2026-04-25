@@ -98,8 +98,22 @@ export class AuthService {
     return this.http.post<ApiAuthResponse>(`${this.apiUrl}/google`, {
       idToken: idToken
     }).pipe(
-      map(apiResponse => this.mapApiAuthResponse(apiResponse)),
+      tap(apiResponse => {
+        console.log('[AuthService] Google login raw response:', apiResponse);
+      }),
+      map(apiResponse => {
+        const mapped = this.mapApiAuthResponse(apiResponse);
+        console.log('[AuthService] Mapped response:', mapped);
+        if (!mapped.token) {
+          console.error('[AuthService] ERROR: Token is missing or undefined in response!');
+          console.error('[AuthService] Raw response keys:', Object.keys(apiResponse));
+        }
+        return mapped;
+      }),
       tap(response => {
+        if (!response.token) {
+          throw new Error('Token missing in authentication response');
+        }
         this.handleAuthResponse(response);
         // SignalR ga qayta ulash
         this.chatService.reconnect();
@@ -116,7 +130,7 @@ export class AuthService {
              (apiResponse as Record<string, unknown>)[pascalKey];
     };
 
-    const token = getValue('token', 'Token') as string;
+    const token = (getValue('accessToken', 'AccessToken') || getValue('token', 'Token')) as string;
     const refreshToken = getValue('refreshToken', 'RefreshToken') as string;
     const expiresAt = getValue('expiresAt', 'ExpiresAt') as string;
     const userId = getValue('userId', 'UserId') as string;
@@ -227,6 +241,9 @@ export class AuthService {
     localStorage.setItem('access_token', response.token);
     localStorage.setItem('refresh_token', response.refreshToken);
     localStorage.setItem('user', JSON.stringify(this._currentUser()));
+    
+    console.log('[AuthService] Token saved to localStorage:', !!response.token);
+    console.log('[AuthService] localStorage access_token:', localStorage.getItem('access_token') ? 'present' : 'missing');
     
     // Fetch full user details after signal update is processed
     Promise.resolve().then(() => {

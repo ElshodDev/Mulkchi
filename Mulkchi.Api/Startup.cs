@@ -89,7 +89,17 @@ public class Startup
         AddDbContext(services);
         AddBrokers(services);
         AddFoundationServices(services);
-        services.AddSignalR();
+        services.AddSignalR(options =>
+        {
+            // WebSocket-specific settings
+            options.EnableDetailedErrors = true;
+            options.MaximumReceiveMessageSize = 32 * 1024; // 32KB max message size
+            options.StreamBufferCapacity = 10;
+            
+            // Connection timeout settings
+            options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
+            options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+        });
         services.AddSingleton<IUserIdProvider, JwtUserIdProvider>();
         AddCors(services);
         

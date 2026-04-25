@@ -93,8 +93,14 @@ export class NotificationsService implements OnDestroy {
       return;
     }
     
-    const token = localStorage.getItem('token');
+    const rawToken = localStorage.getItem('access_token')
+        || localStorage.getItem('accessToken')
+        || localStorage.getItem('token')
+        || localStorage.getItem('jwt');
+    const token = rawToken && rawToken !== 'undefined' ? rawToken : null;
+    
     if (!token) {
+      console.log('[SignalR Notifications] No token, skipping connection');
       return;
     }
     

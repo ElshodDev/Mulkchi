@@ -50,6 +50,10 @@ import { UserRole } from '../../models';
             <a mat-button routerLink="/properties" routerLinkActive="active">
               Mulk qidirish
             </a>
+            <a mat-button routerLink="/ai-recommendations" routerLinkActive="active">
+              <mat-icon>recommend</mat-icon>
+              AI Tavsiyalar
+            </a>
             <a mat-button routerLink="/ai-price" routerLinkActive="active">
               <mat-icon>psychology</mat-icon>
               AI Narx

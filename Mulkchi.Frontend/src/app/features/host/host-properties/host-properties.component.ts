@@ -199,68 +199,146 @@ import { Property, PropertyStatus, ListingType } from '../../../core/models';
     </div>
   `,
   styles: [`
+    /* ===== CSS Variables ===== */
+    :host {
+      --color-navy: #1B3A6B;
+      --color-navy-light: #2a4a7c;
+      --color-navy-dark: #122a4d;
+      --color-gold: #C9A84C;
+      --color-gold-light: #d4b86a;
+      --color-white: #ffffff;
+      --color-gray-50: #f8fafc;
+      --color-gray-100: #f1f5f9;
+      --color-gray-200: #e2e8f0;
+      --color-gray-300: #cbd5e1;
+      --color-gray-400: #94a3b8;
+      --color-gray-500: #64748b;
+      --color-gray-600: #475569;
+      --color-gray-700: #334155;
+      --color-gray-800: #1e293b;
+      --color-gray-900: #0f172a;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    }
+
     .host-properties-container {
       min-height: calc(100vh - 64px);
-      background: #f5f5f5;
+      background: var(--color-gray-50);
       padding: 40px 0;
     }
 
     .container {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 0 20px;
+      padding: 0 24px;
     }
 
+    /* ===== Page Header ===== */
     .page-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 32px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+      gap: 16px;
     }
 
     .header-content h1 {
-      font-size: 2rem;
-      font-weight: 600;
-      margin-bottom: 8px;
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: var(--color-navy);
+      margin: 0 0 8px 0;
     }
 
     .header-content p {
-      color: #666;
+      color: var(--color-gray-500);
+      font-size: 1rem;
+      margin: 0;
     }
 
+    ::ng-deep .page-header .mat-mdc-raised-button {
+      background: var(--color-navy) !important;
+      color: var(--color-white) !important;
+      height: 48px;
+      padding: 0 24px;
+      font-weight: 500;
+      border-radius: var(--radius) !important;
+      transition: all 0.3s ease;
+    }
+
+    ::ng-deep .page-header .mat-mdc-raised-button:hover {
+      background: var(--color-navy-light) !important;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* ===== Loading & Empty States ===== */
     .loading-container,
     .empty-container {
       text-align: center;
-      padding: 60px 20px;
+      padding: 80px 20px;
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
     }
 
+    .loading-container mat-icon,
     .empty-container mat-icon {
-      font-size: 64px;
-      width: 64px;
-      height: 64px;
-      color: #ccc;
-      margin-bottom: 16px;
+      font-size: 72px;
+      width: 72px;
+      height: 72px;
+      color: var(--color-navy);
+      margin-bottom: 24px;
     }
 
+    .empty-container h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--color-gray-800);
+      margin: 0 0 12px 0;
+    }
+
+    .empty-container p {
+      color: var(--color-gray-500);
+      margin: 0 0 24px 0;
+    }
+
+    /* ===== Stats Cards ===== */
     .stats-cards {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 24px;
-      margin-bottom: 32px;
+      margin-bottom: 40px;
     }
 
     .stat-card {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 20px;
       padding: 24px;
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
     }
 
     .stat-card mat-icon {
       font-size: 40px;
-      width: 40px;
-      height: 40px;
-      color: #667eea;
+      width: 48px;
+      height: 48px;
+      color: var(--color-navy);
+      background: rgba(27, 58, 107, 0.1);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .stat-info {
@@ -269,28 +347,51 @@ import { Property, PropertyStatus, ListingType } from '../../../core/models';
     }
 
     .stat-info .value {
-      font-size: 1.75rem;
+      font-size: 2rem;
       font-weight: 700;
-      color: #333;
+      color: var(--color-gray-900);
+      line-height: 1.2;
     }
 
     .stat-info .label {
       font-size: 0.9rem;
-      color: #666;
+      color: var(--color-gray-500);
     }
 
+    /* ===== Table Card ===== */
     .table-card {
-      overflow: auto;
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
     }
 
     table {
       width: 100%;
     }
 
+    ::ng-deep .mat-mdc-header-cell {
+      color: var(--color-gray-700) !important;
+      font-weight: 600 !important;
+      font-size: 0.875rem !important;
+      background: var(--color-gray-50) !important;
+      border-bottom: 2px solid var(--color-gray-200) !important;
+    }
+
+    ::ng-deep .mat-mdc-row:hover {
+      background: var(--color-gray-50) !important;
+    }
+
+    ::ng-deep .mat-mdc-cell {
+      color: var(--color-gray-700) !important;
+      font-size: 0.9rem !important;
+    }
+
+    /* ===== Table Image ===== */
     .table-image {
       width: 80px;
       height: 60px;
-      border-radius: 4px;
+      border-radius: var(--radius);
       overflow: hidden;
     }
 
@@ -306,102 +407,133 @@ import { Property, PropertyStatus, ListingType } from '../../../core/models';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #e0e0e0;
+      background: var(--color-gray-200);
     }
 
     .no-image mat-icon {
       font-size: 24px;
-      color: #999;
+      color: var(--color-gray-400);
     }
 
+    /* ===== Title Cell ===== */
     .title-cell {
       display: flex;
       flex-direction: column;
     }
 
     .title-cell .title {
-      font-weight: 500;
-      color: #333;
+      font-weight: 600;
+      color: var(--color-gray-900);
     }
 
     .title-cell .location {
       font-size: 0.85rem;
-      color: #666;
+      color: var(--color-gray-500);
     }
 
+    /* ===== Type Badge ===== */
     .type-badge {
-      padding: 4px 12px;
-      background: #e3f2fd;
-      color: #1976d2;
-      border-radius: 4px;
-      font-size: 0.85rem;
+      padding: 6px 14px;
+      background: rgba(27, 58, 107, 0.1);
+      color: var(--color-navy);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
     }
 
+    /* ===== Price Cell ===== */
     .price-cell {
       display: flex;
       flex-direction: column;
     }
 
     .price-cell .price {
-      font-weight: 600;
-      color: #333;
+      font-weight: 700;
+      color: var(--color-navy);
+      font-size: 1rem;
     }
 
     .price-cell .period {
       font-size: 0.8rem;
-      color: #666;
+      color: var(--color-gray-500);
     }
 
+    /* ===== Status Badge ===== */
     .status-badge {
-      padding: 4px 12px;
-      border-radius: 16px;
+      padding: 6px 14px;
+      border-radius: 20px;
       font-size: 0.75rem;
-      font-weight: 500;
+      font-weight: 600;
     }
 
     .status-badge.active {
-      background: #e8f5e9;
-      color: #388e3c;
+      background: rgba(34, 197, 94, 0.1);
+      color: #16a34a;
     }
 
     .status-badge.draft {
-      background: #fff3e0;
-      color: #f57c00;
+      background: rgba(245, 158, 11, 0.1);
+      color: #f59e0b;
     }
 
-    .status-badge.sold {
-      background: #ffebee;
-      color: #c62828;
+    .status-badge.sold,
+    .status-badge.rented {
+      background: rgba(220, 38, 38, 0.1);
+      color: #dc2626;
     }
 
     .status-badge.archived {
-      background: #f5f5f5;
-      color: #666;
+      background: var(--color-gray-100);
+      color: var(--color-gray-500);
     }
 
+    /* ===== Stats Cell ===== */
     .stats-cell {
       display: flex;
-      gap: 16px;
+      gap: 20px;
     }
 
     .stats-cell span {
       display: flex;
       align-items: center;
-      gap: 4px;
-      color: #666;
+      gap: 6px;
+      color: var(--color-gray-500);
       font-size: 0.9rem;
     }
 
     .stats-cell mat-icon {
       font-size: 18px;
-      color: #999;
+      color: var(--color-gray-400);
     }
 
+    /* ===== Actions Cell ===== */
     .actions-cell {
       display: flex;
       gap: 8px;
     }
 
+    ::ng-deep .actions-cell .mat-mdc-icon-button {
+      color: var(--color-gray-500) !important;
+      transition: all 0.3s ease;
+    }
+
+    ::ng-deep .actions-cell .mat-mdc-icon-button:hover {
+      background: rgba(27, 58, 107, 0.1) !important;
+      color: var(--color-navy) !important;
+    }
+
+    ::ng-deep .actions-cell .mat-mdc-icon-button.mat-warn:hover {
+      background: rgba(220, 38, 38, 0.1) !important;
+      color: #dc2626 !important;
+    }
+
+    /* ===== Paginator ===== */
+    ::ng-deep .mat-mdc-paginator {
+      background: var(--color-gray-50) !important;
+      border-top: 1px solid var(--color-gray-200);
+    }
+
+    /* ===== Responsive Design ===== */
     @media (max-width: 1024px) {
       .stats-cards {
         grid-template-columns: repeat(2, 1fr);
@@ -415,12 +547,38 @@ import { Property, PropertyStatus, ListingType } from '../../../core/models';
         align-items: stretch;
       }
 
+      .header-content h1 {
+        font-size: 1.75rem;
+      }
+
       .stats-cards {
         grid-template-columns: 1fr;
       }
 
       .table-card {
         overflow-x: auto;
+      }
+
+      .stat-card {
+        padding: 20px;
+      }
+
+      .stat-info .value {
+        font-size: 1.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 0 16px;
+      }
+
+      .host-properties-container {
+        padding: 24px 0;
+      }
+
+      .header-content h1 {
+        font-size: 1.5rem;
       }
     }
   `]

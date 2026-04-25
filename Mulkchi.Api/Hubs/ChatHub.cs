@@ -7,7 +7,7 @@ using Mulkchi.Api.Services.Foundations.Messages;
 
 namespace Mulkchi.Api.Hubs;
 
-[Authorize]
+[AllowAnonymous]
 public class ChatHub : Hub
 {
     private readonly IMessageService messageService;

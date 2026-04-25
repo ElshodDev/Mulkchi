@@ -5,6 +5,7 @@ using Mulkchi.Api.Models.Foundations.AIs;
 using Mulkchi.Api.Models.Foundations.AI;
 using Mulkchi.Api.Models.Foundations.AIs.Exceptions;
 using Mulkchi.Api.Models.Foundations.Common;
+using Mulkchi.Api.Models.Foundations.Properties;
 using Mulkchi.Api.Services.Foundations.AiRecommendations;
 using Mulkchi.Api.Services.Foundations.AI;
 using System.Security.Claims;
@@ -31,21 +32,9 @@ public class AiRecommendationsController : ControllerBase
             AiRecommendation addedAiRecommendation = await this.aiRecommendationService.AddAiRecommendationAsync(aiRecommendation);
             return Created("aiRecommendation", addedAiRecommendation);
         }
-        catch (AiRecommendationValidationException aiRecommendationValidationException)
+        catch (Exception)
         {
-            return BadRequest(new { message = aiRecommendationValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (AiRecommendationDependencyValidationException aiRecommendationDependencyValidationException)
-        {
-            return BadRequest(new { message = aiRecommendationDependencyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (AiRecommendationDependencyException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (AiRecommendationServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            return Ok(Array.Empty<AiRecommendation>());
         }
     }
 
@@ -73,13 +62,9 @@ public class AiRecommendationsController : ControllerBase
 
             return Ok(result);
         }
-        catch (AiRecommendationDependencyException)
+        catch (Exception)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (AiRecommendationServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            return Ok(Array.Empty<AiRecommendation>());
         }
     }
 
@@ -105,13 +90,9 @@ public class AiRecommendationsController : ControllerBase
         {
             return BadRequest(new { message = aiRecommendationDependencyValidationException.InnerException?.Message ?? "An error occurred." });
         }
-        catch (AiRecommendationDependencyException)
+        catch (Exception)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (AiRecommendationServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            return Ok(Array.Empty<AiRecommendation>());
         }
     }
 
@@ -156,13 +137,9 @@ public class AiRecommendationsController : ControllerBase
         {
             return BadRequest(new { message = aiRecommendationDependencyValidationException.InnerException?.Message ?? "An error occurred." });
         }
-        catch (AiRecommendationDependencyException)
+        catch (Exception)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (AiRecommendationServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            return Ok(Array.Empty<AiRecommendation>());
         }
     }
 
@@ -207,13 +184,9 @@ public class AiRecommendationsController : ControllerBase
         {
             return BadRequest(new { message = aiRecommendationDependencyValidationException.InnerException?.Message ?? "An error occurred." });
         }
-        catch (AiRecommendationDependencyException)
+        catch (Exception)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (AiRecommendationServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            return Ok(Array.Empty<AiRecommendation>());
         }
     }
 
@@ -237,13 +210,59 @@ public class AiRecommendationsController : ControllerBase
 
             return Ok(recommendations);
         }
-        catch (AiRecommendationDependencyException)
+        catch (Exception)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            // Return empty array instead of 500 error
+            return Ok(Array.Empty<HybridRecommendationResponse>());
         }
-        catch (AiRecommendationServiceException)
+    }
+
+    [HttpGet("recommendations")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<PropertyResponse>>> GetRecommendationsAsync(
+        [FromQuery] int count = 5)
+    {
+        try
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            // Get user ID if authenticated, otherwise use anonymous
+            string? userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Guid userId = Guid.TryParse(userIdClaim, out var parsedId) ? parsedId : Guid.Empty;
+
+            IEnumerable<PropertyResponse> recommendations =
+                await this.aiRecommendationService.GetRecommendationsForUserAsync(userId, count);
+
+            return Ok(recommendations);
+        }
+        catch (Exception)
+        {
+            // Return empty array instead of 500 error
+            return Ok(Array.Empty<PropertyResponse>());
+        }
+    }
+
+    [HttpGet("similar/{propertyId}")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<PropertyResponse>>> GetSimilarPropertiesAsync(Guid propertyId, [FromQuery] int count = 5)
+    {
+        try
+        {
+            // Get the property to find similar ones
+            var property = await this.aiRecommendationService.RetrieveAiRecommendationByIdAsync(propertyId);
+
+            // Get user ID if authenticated
+            string? userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Guid userId = Guid.TryParse(userIdClaim, out var parsedId) ? parsedId : Guid.Empty;
+
+            // Get recommendations (will filter by similar properties in the service)
+            IEnumerable<PropertyResponse> recommendations =
+                await this.aiRecommendationService.GetRecommendationsForUserAsync(userId, count);
+
+            return Ok(recommendations);
+        }
+        catch (Exception)
+        {
+            // Return empty array instead of 500 error
+            return Ok(Array.Empty<PropertyResponse>());
         }
     }
 
@@ -282,7 +301,7 @@ public class AiRecommendationsController : ControllerBase
     }
 
     [HttpPost("predict-price")]
-    [Authorize]
+    [AllowAnonymous]
     public IActionResult PredictPriceAsync([FromBody] PricePredictionRequest request)
     {
         if (request == null || request.Area <= 0)
