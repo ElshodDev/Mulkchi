@@ -1667,16 +1667,13 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  private propertyService = inject(PropertyService);
-  private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
 
   featuredProperties = this.propertyService.featuredProperties;
   loading = this.propertyService.loading;
   error = signal<string | null>(null);
-  ListingType = ListingType;
+  listingTypeEnum = ListingType;
 
   searchQuery = '';
   listingType: 'Sale' | 'Rent' | 'ShortTermRent' = 'Rent';
