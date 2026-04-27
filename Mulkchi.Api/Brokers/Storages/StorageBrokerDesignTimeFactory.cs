@@ -13,25 +13,22 @@ public class StorageBrokerDesignTimeFactory : IDesignTimeDbContextFactory<Storag
         var optionsBuilder = new DbContextOptionsBuilder<StorageBroker>();
         
         // Use configuration for design time - reads from appsettings.json
-        var configuration = new ConfigurationBuilder()
+        var config = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+            .AddJsonFile("appsettings.json", optional: false)
+            .AddJsonFile("appsettings.Development.json", optional: true)
+            .AddEnvironmentVariables()
             .Build();
 
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
-        
-        // Fallback if connection string is null or empty
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            connectionString = "Data Source=DESKTOP-BBV4DEP;Initial Catalog=MulkchiDb;Integrated Security=True;TrustServerCertificate=true;MultipleActiveResultSets=true";
-        }
+        var connectionString = Environment.GetEnvironmentVariable("MULKCHI_CONNECTION_STRING")
+            ?? config.GetConnectionString("DefaultConnection");
         
         optionsBuilder.UseSqlServer(connectionString, options => options.EnableRetryOnFailure());
 
         // Create mock environment
         var mockEnvironment = new MockWebHostEnvironment();
 
-        return new StorageBroker(optionsBuilder.Options, configuration, mockEnvironment);
+        return new StorageBroker(optionsBuilder.Options, config, mockEnvironment);
     }
 
     private class MockWebHostEnvironment : IWebHostEnvironment

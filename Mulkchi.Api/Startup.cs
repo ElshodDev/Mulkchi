@@ -427,13 +427,8 @@ public class Startup
 
     private void AddDbContext(IServiceCollection services)
     {
-        var connectionString = this.configuration.GetConnectionString("DefaultConnection");
-        
-        // Fallback to hardcoded connection string if not configured
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            connectionString = "Data Source=DESKTOP-BBV4DEP;Initial Catalog=MulkchiDb;Integrated Security=True;TrustServerCertificate=true;MultipleActiveResultSets=true";
-        }
+        var connectionString = Environment.GetEnvironmentVariable("MULKCHI_CONNECTION_STRING")
+            ?? this.configuration.GetConnectionString("DefaultConnection");
 
         services.AddDbContext<StorageBroker>(options =>
             options.UseSqlServer(connectionString));
