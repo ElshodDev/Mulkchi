@@ -21,7 +21,9 @@ namespace Mulkchi.Api.Brokers.Tokens
         public string GenerateToken(User user)
         {
             var jwtSettings = configuration.GetSection("JwtSettings");
-            var secret = jwtSettings["Secret"] ?? throw new InvalidOperationException("JwtSettings:Secret is missing.");
+            var secret = Environment.GetEnvironmentVariable("MULKCHI_JWT_SECRET")
+                ?? jwtSettings["Secret"]
+                ?? throw new InvalidOperationException("JWT Secret is not configured. Set the MULKCHI_JWT_SECRET environment variable or JwtSettings:Secret in appsettings.");
             var issuer = jwtSettings["Issuer"];
             var audience = jwtSettings["Audience"];
             
