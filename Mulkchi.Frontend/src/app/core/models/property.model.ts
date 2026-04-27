@@ -42,7 +42,7 @@ export enum UzbekistanRegion {
   Andijon = 'Andijon',
   Fargona = 'Fargona',
   Namangan = 'Namangan',
-  Xiva = 'Xiva',
+  Xorazm = 'Xorazm',
   Navoi = 'Navoi',
   Jizzax = 'Jizzax',
   Sirdaryo = 'Sirdaryo',
@@ -136,6 +136,12 @@ export interface Property {
   thumbnailUrl?: string;
 }
 
+export interface PropertyResponse extends Property {
+  // Additional properties specific to responses if any
+  floor?: number;
+  totalFloors?: number;
+}
+
 export interface PropertyImage {
   id: string;
   propertyId: string;
@@ -216,4 +222,20 @@ export interface PropertySearchParams {
   availableTo?: Date;
   page?: number;
   pageSize?: number;
+}
+
+import { ApiAuthResponse } from './api.models';
+
+/**
+ * Response returned when creating a new property listing.
+ * Includes the created property and new authentication tokens (if user was upgraded to Host).
+ */
+export interface PropertyCreateResponse {
+  /** The newly created property listing */
+  property: Property;
+  /** 
+   * New authentication tokens (only present if user was upgraded from Guest to Host).
+   * When present, frontend should update stored tokens to access Host-only endpoints.
+   */
+  tokens?: ApiAuthResponse;
 }

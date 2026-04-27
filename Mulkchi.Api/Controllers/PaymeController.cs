@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Mulkchi.Api.Application.Payments.Webhooks;
 using Mulkchi.Api.Models.Foundations.Payments;
 using Mulkchi.Api.Services.Foundations.Payments;
 
@@ -34,11 +35,16 @@ public class PaymeController : ControllerBase
 
     private readonly IPaymentService paymentService;
     private readonly IConfiguration configuration;
+    private readonly IFinalizePaymentWebhookHandler finalizePaymentWebhookHandler;
 
-    public PaymeController(IPaymentService paymentService, IConfiguration configuration)
+    public PaymeController(
+        IPaymentService paymentService,
+        IConfiguration configuration,
+        IFinalizePaymentWebhookHandler finalizePaymentWebhookHandler)
     {
         this.paymentService = paymentService;
         this.configuration = configuration;
+        this.finalizePaymentWebhookHandler = finalizePaymentWebhookHandler;
     }
 
     [HttpPost]
@@ -150,11 +156,11 @@ public class PaymeController : ControllerBase
         if (payment.Status == PaymentStatus.Cancelled)
             return Error(request.Id, ErrTransactionCancelled, "Transaction cancelled.");
 
-        payment.Status = PaymentStatus.Completed;
-        payment.IsEscrowHeld = false;
-        payment.EscrowReleasedAt = DateTimeOffset.UtcNow;
-        payment.UpdatedDate = DateTimeOffset.UtcNow;
-        await this.paymentService.ModifyPaymentAsync(payment);
+        payment = await this.finalizePaymentWebhookHandler.HandleAsync(
+            new FinalizePaymentWebhookCommand(
+                transactionId,
+                PaymentMethod.Payme,
+                PaymentStatus.Completed));
 
         return Success(request.Id, new
         {
@@ -187,9 +193,11 @@ public class PaymeController : ControllerBase
             });
         }
 
-        payment.Status = PaymentStatus.Cancelled;
-        payment.UpdatedDate = DateTimeOffset.UtcNow;
-        await this.paymentService.ModifyPaymentAsync(payment);
+        payment = await this.finalizePaymentWebhookHandler.HandleAsync(
+            new FinalizePaymentWebhookCommand(
+                transactionId,
+                PaymentMethod.Payme,
+                PaymentStatus.Cancelled));
 
         return Success(request.Id, new
         {
@@ -260,7 +268,15 @@ public class PaymeController : ControllerBase
             return false;
 
         var encoded = authHeader["Basic ".Length..].Trim();
-        var decoded = Encoding.UTF8.GetString(Convert.FromBase64String(encoded));
+        string decoded;
+        try
+        {
+            decoded = Encoding.UTF8.GetString(Convert.FromBase64String(encoded));
+        }
+        catch
+        {
+            return false;
+        }
         // Expected format: "Paycom:{merchantKey}"
         var merchantKey = this.configuration["Payme:MerchantKey"] ?? "";
         return decoded == $"Paycom:{merchantKey}";

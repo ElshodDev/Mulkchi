@@ -13,6 +13,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PropertyService } from '../../../core/services/property.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Property, PropertyType, PropertyCategory, ListingType, UzbekistanRegion } from '../../../core/models';
 
 @Component({
@@ -436,6 +437,7 @@ import { Property, PropertyType, PropertyCategory, ListingType, UzbekistanRegion
 export class PropertyFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private propertyService = inject(PropertyService);
+  private authService = inject(AuthService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private snackBar = inject(MatSnackBar);
@@ -680,7 +682,17 @@ export class PropertyFormComponent implements OnInit {
         next: () => {
           this.isSubmitting.set(false);
           this.snackBar.open('Mulk e\'lon qilindi', 'Yopish', { duration: 3000 });
-          this.router.navigate(['/host/properties']);
+          // Refresh user data to get updated Host role from backend
+          this.authService.getCurrentUser().subscribe({
+            next: () => {
+              // Navigate to host properties after user data is refreshed
+              this.router.navigate(['/host/properties']);
+            },
+            error: () => {
+              // Even if refresh fails, navigate to host properties
+              this.router.navigate(['/host/properties']);
+            }
+          });
         },
         error: () => {
           this.isSubmitting.set(false);

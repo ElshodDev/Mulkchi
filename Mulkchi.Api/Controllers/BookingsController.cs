@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using FluentValidation;
+using Mulkchi.Api.Application.Bookings.ConfirmPayment;
+using Mulkchi.Api.Application.Bookings.Contracts;
+using Mulkchi.Api.Application.Bookings.CreateHold;
 using Mulkchi.Api.Models.Foundations.Bookings;
 using Mulkchi.Api.Models.Foundations.Common;
 using Mulkchi.Api.Services.Foundations.Bookings;
@@ -17,9 +21,18 @@ namespace Mulkchi.Api.Controllers
     public class BookingsController : ControllerBase
     {
         private readonly IBookingService bookingService;
+        private readonly ICreateBookingHoldHandler createBookingHoldHandler;
+        private readonly IConfirmBookingPaymentHandler confirmBookingPaymentHandler;
 
-        public BookingsController(IBookingService bookingService) =>
+        public BookingsController(
+            IBookingService bookingService,
+            ICreateBookingHoldHandler createBookingHoldHandler,
+            IConfirmBookingPaymentHandler confirmBookingPaymentHandler)
+        {
             this.bookingService = bookingService;
+            this.createBookingHoldHandler = createBookingHoldHandler;
+            this.confirmBookingPaymentHandler = confirmBookingPaymentHandler;
+        }
 
         [HttpGet]
         [Authorize]
@@ -233,28 +246,31 @@ namespace Mulkchi.Api.Controllers
             }
         }
 
-        /// <summary>
-        /// Sanalarni 10 daqiqa davomida bloklaydi (phantom booking himoyasi).
-        /// POST /api/Bookings/hold
-        /// </summary>
         [HttpPost("hold")]
         [Authorize]
-        public async ValueTask<ActionResult> CreateBookingHold([FromBody] BookingHoldRequest request)
+        public async ValueTask<ActionResult> CreateBookingHold([FromBody] CreateBookingHoldHttpRequest request)
         {
             try
             {
-                var hold = await this.bookingService.CreateBookingHoldAsync(
-                    request.PropertyId, request.CheckInDate, request.CheckOutDate);
+                var result = await this.createBookingHoldHandler.HandleAsync(
+                    new CreateBookingHoldCommand(
+                        request.PropertyId,
+                        request.CheckInDate,
+                        request.CheckOutDate));
 
                 return Ok(new
                 {
-                    holdId = hold.Id,
-                    propertyId = hold.PropertyId,
-                    checkInDate = hold.CheckInDate,
-                    checkOutDate = hold.CheckOutDate,
-                    expiresAt = hold.ExpiresAt,
+                    holdId = result.HoldId,
+                    propertyId = result.PropertyId,
+                    checkInDate = result.CheckInDate,
+                    checkOutDate = result.CheckOutDate,
+                    expiresAt = result.ExpiresAt,
                     message = "Sanalar 10 daqiqa davomida siz uchun band qilindi."
                 });
+            }
+            catch (ValidationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -270,10 +286,40 @@ namespace Mulkchi.Api.Controllers
             }
         }
 
-        /// <summary>
-        /// Aktiv holdni bekor qiladi.
-        /// DELETE /api/Bookings/hold/{holdId}
-        /// </summary>
+        [HttpPost("confirm-payment")]
+        [Authorize]
+        public async ValueTask<ActionResult> ConfirmBookingPayment([FromBody] ConfirmBookingPaymentHttpRequest request)
+        {
+            try
+            {
+                string idempotencyKey = Request.Headers["X-Idempotency-Key"].FirstOrDefault();
+                var result = await this.confirmBookingPaymentHandler.HandleAsync(
+                    new ConfirmBookingPaymentCommand(
+                        request.HoldId,
+                        request.Amount,
+                        request.Method,
+                        idempotencyKey));
+
+                return Ok(result);
+            }
+            catch (ValidationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Internal server error." });
+            }
+        }
+
         [HttpDelete("hold/{holdId}")]
         [Authorize]
         public async ValueTask<ActionResult> ReleaseBookingHold(Guid holdId)
@@ -293,11 +339,5 @@ namespace Mulkchi.Api.Controllers
             }
         }
     }
-
-    /// <summary>Request body for creating a booking hold.</summary>
-    public record BookingHoldRequest(
-        Guid PropertyId,
-        DateTimeOffset CheckInDate,
-        DateTimeOffset CheckOutDate);
 }
 

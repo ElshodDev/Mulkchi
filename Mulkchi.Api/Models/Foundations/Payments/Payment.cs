@@ -19,6 +19,7 @@ public class Payment
     public Guid ReceiverId { get; set; }
     public Guid? HomeRequestId { get; set; }
     public Guid? ContractId { get; set; }
+    public Guid? BookingId { get; set; }
 
     /// <summary>
     /// Client-supplied idempotency key (e.g. from X-Idempotency-Key header).

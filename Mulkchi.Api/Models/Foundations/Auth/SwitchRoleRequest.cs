@@ -13,4 +13,9 @@ public class SwitchRoleRequest
     /// Target mode to switch to (Guest or Host).
     /// </summary>
     public UserRole TargetMode { get; set; }
+
+    /// <summary>
+    /// Refresh token for generating new access token.
+    /// </summary>
+    public string RefreshToken { get; set; } = string.Empty;
 }

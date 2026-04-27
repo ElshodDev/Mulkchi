@@ -11,6 +11,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatChipsModule } from '@angular/material/chips';
 import { Chart, ChartConfiguration } from 'chart.js/auto';
 import { AIService, AIPriceRequest } from '../../core/services/ai.service';
 import { UzbekistanRegion } from '../../core/models';
@@ -30,7 +32,9 @@ import { UzbekistanRegion } from '../../core/models';
     MatProgressSpinnerModule,
     MatRadioModule,
     MatDividerModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatProgressBarModule,
+    MatChipsModule
   ],
   template: `
     <div class="ai-price-container">
@@ -143,6 +147,22 @@ import { UzbekistanRegion } from '../../core/models';
 
           <!-- Results Section -->
           <div class="results-section">
+            @if (aiService.loading()) {
+              <!-- Loading Skeleton -->
+              <mat-card class="result-card loading-card">
+                <mat-card-content>
+                  <div class="skeleton-header"></div>
+                  <div class="skeleton-gauge"></div>
+                  <div class="skeleton-price"></div>
+                  <div class="skeleton-details">
+                    <div class="skeleton-row"></div>
+                    <div class="skeleton-row"></div>
+                    <div class="skeleton-row"></div>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            }
+            
             @if (aiService.priceResult()) {
               <mat-card class="result-card">
                 <mat-card-header>
@@ -153,39 +173,114 @@ import { UzbekistanRegion } from '../../core/models';
                 </mat-card-header>
 
                 <mat-card-content>
-                  <!-- Price Range -->
-                  <div class="price-main">
-                    <span class="price-value">
-                      {{ formatPrice(aiService.priceResult()?.minPrice) }} - {{ formatPrice(aiService.priceResult()?.maxPrice) }}
-                    </span>
-                    <span class="price-currency">{{ aiService.priceResult()?.currency }}</span>
+                  <!-- Animated Price Gauge -->
+                  <div class="price-gauge-container">
+                    <div class="gauge-wrapper">
+                      <svg class="gauge-svg" viewBox="0 0 200 120">
+                        <!-- Background arc -->
+                        <path d="M 20 100 A 80 80 0 0 1 180 100" 
+                              fill="none" 
+                              stroke="#e2e8f0" 
+                              stroke-width="20" />
+                        <!-- Value arc with animation -->
+                        <path class="gauge-arc" 
+                              d="M 20 100 A 80 80 0 0 1 180 100" 
+                              fill="none" 
+                              [attr.stroke]="getGaugeColor(aiService.priceResult()?.confidence || 0)"
+                              stroke-width="20"
+                              stroke-dasharray="251.2"
+                              [attr.stroke-dashoffset]="getGaugeOffset(aiService.priceResult()?.confidence || 0)"
+                              stroke-linecap="round" />
+                        <!-- Center value -->
+                        <text x="100" y="85" text-anchor="middle" class="gauge-value">
+                          {{ ((aiService.priceResult()?.confidence || 0) * 100).toFixed(0) }}%
+                        </text>
+                        <text x="100" y="105" text-anchor="middle" class="gauge-label">Ishonch</text>
+                      </svg>
+                    </div>
+                  </div>
+
+                  <!-- Price Range Display -->
+                  <div class="price-range-section">
+                    <div class="price-bar-container">
+                      <div class="price-bar-labels">
+                        <span class="min-label">Min: {{ formatPrice(aiService.priceResult()?.minPrice) }}</span>
+                        <span class="rec-label highlight">Tavsiya: {{ formatPrice(aiService.priceResult()?.recommendedPrice) }}</span>
+                        <span class="max-label">Max: {{ formatPrice(aiService.priceResult()?.maxPrice) }}</span>
+                      </div>
+                      <div class="price-bar">
+                        <div class="price-segment min-segment" [style.width.%]="25"></div>
+                        <div class="price-segment rec-segment recommended" [style.width.%]="50">
+                          <span class="marker"></span>
+                        </div>
+                        <div class="price-segment max-segment" [style.width.%]="25"></div>
+                      </div>
+                    </div>
                   </div>
 
                   <mat-divider></mat-divider>
 
+                  <!-- Comparison Bar -->
+                  <div class="comparison-bar-section">
+                    <div class="comparison-header">
+                      <span>Bozor taqqoslash</span>
+                      <span class="comparison-badge" [class.positive]="getComparisonPercentage() <= 0" [class.negative]="getComparisonPercentage() > 0">
+                        {{ getComparisonPercentage() > 0 ? '+' : '' }}{{ getComparisonPercentage() }}%
+                      </span>
+                    </div>
+                    <mat-progress-bar 
+                      mode="determinate" 
+                      [value]="getComparisonBarValue()"
+                      [class.comparison-positive]="getComparisonPercentage() <= 0"
+                      [class.comparison-negative]="getComparisonPercentage() > 0">
+                    </mat-progress-bar>
+                    <p class="comparison-text">
+                      {{ getComparisonLabel() }}
+                    </p>
+                  </div>
+
                   <!-- Details -->
-                  <div class="price-details">
-                    <div class="detail-row">
-                      <span class="label">O'rtacha narx:</span>
-                      <span class="value">{{ formatPrice(aiService.priceResult()?.recommendedPrice) }} {{ aiService.priceResult()?.currency }}</span>
+                  <div class="price-details-grid">
+                    <div class="detail-card">
+                      <mat-icon>attach_money</mat-icon>
+                      <div class="detail-info">
+                        <span class="label">m² narxi</span>
+                        <span class="value">{{ formatPrice(getPricePerSqm()) }} {{ aiService.priceResult()?.currency }}</span>
+                      </div>
                     </div>
-                    <div class="detail-row">
-                      <span class="label">Bozor o'rtachasi:</span>
-                      <span class="value">{{ formatPrice(aiService.priceResult()?.marketAverage) }} {{ aiService.priceResult()?.currency }}</span>
+                    <div class="detail-card">
+                      <mat-icon>trending_up</mat-icon>
+                      <div class="detail-info">
+                        <span class="label">Narx segmenti</span>
+                        <span class="value">{{ aiService.priceResult()?.priceLevel || 'O\'rta' }}</span>
+                      </div>
                     </div>
-                    <div class="detail-row">
-                      <span class="label">Ishonch darajasi:</span>
-                      <span class="value">{{ (aiService.priceResult()?.confidence || 0) * 100 }}%</span>
+                    <div class="detail-card" *ngIf="aiService.priceResult()?.similarCount">
+                      <mat-icon>home</mat-icon>
+                      <div class="detail-info">
+                        <span class="label">O'xshash mulklar</span>
+                        <span class="value">{{ aiService.priceResult()?.similarCount }} ta</span>
+                      </div>
                     </div>
                   </div>
 
-                  <!-- Comparison Message -->
-                  <div class="comparison-message" [class.positive]="(aiService.priceResult()?.comparisonPercentage || 0) < 0" [class.negative]="(aiService.priceResult()?.comparisonPercentage || 0) > 0">
-                    <mat-icon>
-                      {{ (aiService.priceResult()?.comparisonPercentage || 0) < 0 ? 'trending_down' : 'trending_up' }}
-                    </mat-icon>
-                    <span>{{ aiService.priceResult()?.comparisonMessage }}</span>
-                  </div>
+                  <!-- Factor Breakdown -->
+                  @if (aiService.priceResult()?.factorBreakdown && getFactorKeys().length > 0) {
+                    <div class="factors-section">
+                      <h4>
+                        <mat-icon>analytics</mat-icon>
+                        Narxga ta'sir etuvchi omillar
+                      </h4>
+                      <div class="factor-chips">
+                        @for (factor of getFactorEntries(); track factor.key) {
+                          <mat-chip class="factor-chip">
+                            <mat-icon>add_circle</mat-icon>
+                            {{ factor.key }}: +{{ factor.value }}%
+                          </mat-chip>
+                        }
+                      </div>
+                    </div>
+                  }
 
                   <!-- Tips -->
                   <div class="tips-section">
@@ -473,6 +568,271 @@ import { UzbekistanRegion } from '../../core/models';
       margin-top: 16px;
     }
 
+    /* Loading Skeleton */
+    .loading-card {
+      min-height: 400px;
+    }
+
+    .skeleton-header {
+      height: 24px;
+      width: 60%;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+      margin-bottom: 32px;
+    }
+
+    .skeleton-gauge {
+      height: 150px;
+      width: 200px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 100px 100px 0 0;
+      margin: 0 auto 32px;
+    }
+
+    .skeleton-price {
+      height: 40px;
+      width: 80%;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+      margin: 0 auto 24px;
+    }
+
+    .skeleton-details {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .skeleton-row {
+      height: 20px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Price Gauge */
+    .price-gauge-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .gauge-wrapper {
+      width: 200px;
+      height: 120px;
+    }
+
+    .gauge-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .gauge-arc {
+      transition: stroke-dashoffset 1.5s ease-out;
+    }
+
+    .gauge-value {
+      font-size: 32px;
+      font-weight: 700;
+      fill: #0F172A;
+    }
+
+    .gauge-label {
+      font-size: 14px;
+      fill: #64748b;
+    }
+
+    /* Price Range Section */
+    .price-range-section {
+      margin-bottom: 24px;
+    }
+
+    .price-bar-container {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .price-bar-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-size: 0.875rem;
+    }
+
+    .min-label, .max-label {
+      color: #64748b;
+    }
+
+    .rec-label {
+      font-weight: 600;
+      color: #667eea;
+    }
+
+    .price-bar {
+      display: flex;
+      height: 12px;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #e2e8f0;
+    }
+
+    .price-segment {
+      height: 100%;
+    }
+
+    .min-segment {
+      background: #94a3b8;
+    }
+
+    .rec-segment {
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .rec-segment.recommended::after {
+      content: '★';
+      color: white;
+      font-size: 10px;
+    }
+
+    .max-segment {
+      background: #94a3b8;
+    }
+
+    /* Comparison Bar Section */
+    .comparison-bar-section {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .comparison-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .comparison-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .comparison-badge.positive {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .comparison-badge.negative {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .comparison-text {
+      margin-top: 12px;
+      font-size: 0.875rem;
+      color: #64748b;
+    }
+
+    :host ::ng-deep .comparison-positive .mat-mdc-progress-bar-fill {
+      background-color: #10b981 !important;
+    }
+
+    :host ::ng-deep .comparison-negative .mat-mdc-progress-bar-fill {
+      background-color: #ef4444 !important;
+    }
+
+    /* Price Details Grid */
+    .price-details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .detail-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 12px;
+    }
+
+    .detail-card mat-icon {
+      color: #667eea;
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+
+    .detail-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .detail-info .label {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+
+    .detail-info .value {
+      font-weight: 600;
+      color: #0F172A;
+      font-size: 0.875rem;
+    }
+
+    /* Factors Section */
+    .factors-section {
+      margin-bottom: 24px;
+    }
+
+    .factors-section h4 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 12px 0;
+      color: #0F172A;
+      font-size: 0.875rem;
+    }
+
+    .factor-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .factor-chip {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .factor-chip mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      margin-right: 4px;
+    }
+
     /* Error & Empty Cards */
     .error-card,
     .empty-card {
@@ -513,6 +873,10 @@ import { UzbekistanRegion } from '../../core/models';
 
       .page-header h1 {
         font-size: 1.75rem;
+      }
+
+      .price-details-grid {
+        grid-template-columns: 1fr;
       }
     }
   `]
@@ -581,6 +945,61 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
   formatPrice(price: number | undefined): string {
     if (price === undefined || price === null) return '0';
     return price.toLocaleString('uz-UZ');
+  }
+
+  // Gauge helper methods
+  getGaugeColor(confidence: number): string {
+    if (confidence >= 0.8) return '#10b981'; // Green
+    if (confidence >= 0.6) return '#f59e0b'; // Yellow
+    return '#ef4444'; // Red
+  }
+
+  getGaugeOffset(confidence: number): number {
+    // 251.2 is the length of the arc (π * 80)
+    return 251.2 - (251.2 * confidence);
+  }
+
+  // Comparison methods
+  getComparisonPercentage(): number {
+    const result = this.aiService.priceResult();
+    if (!result) return 0;
+    return Math.round(result.comparisonPercentage || 0);
+  }
+
+  getComparisonBarValue(): number {
+    const percentage = this.getComparisonPercentage();
+    // Normalize to 0-100 range, where 50 is market average
+    return Math.max(0, Math.min(100, 50 + percentage));
+  }
+
+  getComparisonLabel(): string {
+    return this.getComparisonPercentage() <= 0
+      ? "✓ Bozor o'rtachasidan past narxdasiz"
+      : "⚠ Bozor o'rtachasidan yuqori narxdasiz";
+  }
+
+  // Price per sqm calculation
+  getPricePerSqm(): number {
+    const result = this.aiService.priceResult();
+    const area = this.priceForm.value.area;
+    if (!result || !area || area <= 0) return 0;
+    return Math.round((result.recommendedPrice || 0) / area);
+  }
+
+  // Factor breakdown helpers
+  getFactorKeys(): string[] {
+    const result = this.aiService.priceResult();
+    if (!result?.factorBreakdown) return [];
+    return Object.keys(result.factorBreakdown);
+  }
+
+  getFactorEntries(): { key: string; value: number }[] {
+    const result = this.aiService.priceResult();
+    if (!result?.factorBreakdown) return [];
+    return Object.entries(result.factorBreakdown).map(([key, value]) => ({
+      key,
+      value: value as number
+    }));
   }
 
   private renderChart(): void {

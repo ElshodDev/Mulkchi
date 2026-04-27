@@ -4,37 +4,61 @@ using Mulkchi.Api.Brokers.DateTimes;
 using Mulkchi.Api.Brokers.Loggings;
 using Mulkchi.Api.Brokers.Storages;
 using Mulkchi.Api.Services.Foundations.Auth;
+using Mulkchi.Api.Services.Foundations.Users;
+using Mulkchi.Api.Models.Foundations.Auth;
+using Mulkchi.Api.Models.Foundations.Users;
 using Microsoft.Extensions.Localization;
 using Mulkchi.Api.Models.Foundations.Properties.Extensions;
 using Mulkchi.Api.Resources;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.FeatureManagement;
+using System.Text.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Mulkchi.Api.Services.Search;
 
 namespace Mulkchi.Api.Services.Foundations.Properties;
 
 public partial class PropertyService : IPropertyService
 {
+    private const string PropertyCacheVersionKey = "properties:list:version";
     private readonly IStorageBroker storageBroker;
     private readonly ILoggingBroker loggingBroker;
     private readonly IDateTimeBroker dateTimeBroker;
     private readonly ICurrentUserService currentUserService;
+    private readonly IUserService userService;
+    private readonly IAuthService authService;
     private readonly IStringLocalizer<SharedResource> localizer;
+    private readonly IDistributedCache distributedCache;
+    private readonly IFeatureManager featureManager;
+    private readonly IMeiliPropertySearchService meiliPropertySearchService;
 
     public PropertyService(
         IStorageBroker storageBroker,
         ILoggingBroker loggingBroker,
         IDateTimeBroker dateTimeBroker,
         ICurrentUserService currentUserService,
-        IStringLocalizer<SharedResource> localizer)
+        IUserService userService,
+        IAuthService authService,
+        IStringLocalizer<SharedResource> localizer,
+        IDistributedCache distributedCache,
+        IFeatureManager featureManager,
+        IMeiliPropertySearchService meiliPropertySearchService)
     {
         this.storageBroker = storageBroker;
         this.loggingBroker = loggingBroker;
         this.dateTimeBroker = dateTimeBroker;
         this.currentUserService = currentUserService;
+        this.userService = userService;
+        this.authService = authService;
         this.localizer = localizer;
+        this.distributedCache = distributedCache;
+        this.featureManager = featureManager;
+        this.meiliPropertySearchService = meiliPropertySearchService;
     }
 
     public async ValueTask<PropertyResponse> AddPropertyAsync(PropertyCreateDto dto)
@@ -114,6 +138,7 @@ public partial class PropertyService : IPropertyService
 
         ValidatePropertyOnAdd(property);
         Property addedProperty = await this.storageBroker.InsertPropertyAsync(property);
+        await InvalidatePropertyListCacheAsync();
 
         return ToPropertyResponse(addedProperty);
     }
@@ -130,6 +155,18 @@ public partial class PropertyService : IPropertyService
 
     public async ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> RetrieveAllPropertiesAsync(PropertyQueryParams queryParams)
     {
+        long cacheVersion = await GetPropertyCacheVersionAsync();
+        string cacheKey = BuildPropertyListCacheKey(queryParams, cacheVersion);
+        string cachedJson = await this.distributedCache.GetStringAsync(cacheKey);
+        if (!string.IsNullOrWhiteSpace(cachedJson))
+        {
+            var cached = JsonSerializer.Deserialize<CachedPropertyListResult>(cachedJson);
+            if (cached is not null)
+            {
+                return (cached.Items, cached.TotalCount);
+            }
+        }
+
         IQueryable<Property> query = this.storageBroker.SelectAllProperties();
 
         if (!string.IsNullOrWhiteSpace(queryParams.City))
@@ -195,11 +232,86 @@ public partial class PropertyService : IPropertyService
 
         var responseItems = properties.Select(ToPropertyResponse).ToList();
 
+        await this.distributedCache.SetStringAsync(
+            cacheKey,
+            JsonSerializer.Serialize(new CachedPropertyListResult
+            {
+                TotalCount = totalCount,
+                Items = responseItems
+            }),
+            new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2)
+            });
+
         return (responseItems, totalCount);
+    }
+
+    private static string BuildPropertyListCacheKey(PropertyQueryParams queryParams, long version) =>
+        $"properties:list:v{version}:{queryParams.Page}:{queryParams.PageSize}:{queryParams.SortBy}:{queryParams.City}:{queryParams.Region}:{queryParams.ListingType}:{queryParams.PropertyType}:{queryParams.MinPrice}:{queryParams.MaxPrice}:{queryParams.Bedrooms}:{queryParams.SearchQuery}";
+
+    private async ValueTask<long> GetPropertyCacheVersionAsync()
+    {
+        string cachedVersion = await this.distributedCache.GetStringAsync(PropertyCacheVersionKey);
+        if (long.TryParse(cachedVersion, out long version) && version > 0)
+        {
+            return version;
+        }
+
+        await this.distributedCache.SetStringAsync(
+            PropertyCacheVersionKey,
+            "1",
+            new DistributedCacheEntryOptions
+            {
+                SlidingExpiration = TimeSpan.FromDays(1)
+            });
+
+        return 1;
+    }
+
+    private async ValueTask InvalidatePropertyListCacheAsync()
+    {
+        long currentVersion = await GetPropertyCacheVersionAsync();
+        await this.distributedCache.SetStringAsync(
+            PropertyCacheVersionKey,
+            (currentVersion + 1).ToString(),
+            new DistributedCacheEntryOptions
+            {
+                SlidingExpiration = TimeSpan.FromDays(1)
+            });
+    }
+
+    private sealed class CachedPropertyListResult
+    {
+        public int TotalCount { get; init; }
+        public List<PropertyResponse> Items { get; init; } = new();
     }
 
     public async ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> SearchPropertiesAsync(PropertySearchParams searchParams)
     {
+        if (!string.IsNullOrWhiteSpace(searchParams.SearchQuery) &&
+            await this.featureManager.IsEnabledAsync("UseMeiliSearch"))
+        {
+            var (ids, meiliTotalCount) = await this.meiliPropertySearchService.SearchAsync(searchParams.SearchQuery, 50);
+            if (ids.Count > 0)
+            {
+                var orderedById = ids.Select((id, index) => new { id, index })
+                    .ToDictionary(x => x.id, x => x.index);
+
+                var meiliProperties = await this.storageBroker.SelectAllProperties()
+                    .Where(p => ids.Contains(p.Id))
+                    .ToListAsync();
+
+                var ordered = meiliProperties
+                    .OrderBy(p => orderedById.TryGetValue(p.Id, out int idx) ? idx : int.MaxValue)
+                    .Take(50)
+                    .Select(ToPropertyResponse)
+                    .ToList();
+
+                return (ordered, meiliTotalCount);
+            }
+        }
+
         IQueryable<Property> query = this.storageBroker.SelectAllProperties()
             .Where(p => p.DeletedDate == null);
 
@@ -284,7 +396,9 @@ public partial class PropertyService : IPropertyService
                 throw new UnauthorizedAccessException("You can only modify your own properties.");
             }
             property.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
-            return await this.storageBroker.UpdatePropertyAsync(property);
+            Property updatedProperty = await this.storageBroker.UpdatePropertyAsync(property);
+            await InvalidatePropertyListCacheAsync();
+            return updatedProperty;
         });
 
     public ValueTask<Property> RemovePropertyByIdAsync(Guid propertyId) =>
@@ -300,8 +414,62 @@ public partial class PropertyService : IPropertyService
             {
                 throw new UnauthorizedAccessException("You can only delete your own properties.");
             }
-            return await this.storageBroker.DeletePropertyByIdAsync(propertyId);
+            Property deletedProperty = await this.storageBroker.DeletePropertyByIdAsync(propertyId);
+            await InvalidatePropertyListCacheAsync();
+            return deletedProperty;
         });
+
+    public async ValueTask<PropertyResponse> PublishPropertyAsync(Guid propertyId)
+    {
+        var property = await RetrievePropertyEntityByIdAsync(propertyId);
+        if (property is null)
+            throw new NotFoundPropertyException(propertyId);
+
+        property.Status = PropertyStatus.Active;
+        property.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
+        await ModifyPropertyAsync(property);
+
+        return ToPropertyResponse(property);
+    }
+
+    public async ValueTask<PropertyResponse> UnpublishPropertyAsync(Guid propertyId)
+    {
+        var property = await RetrievePropertyEntityByIdAsync(propertyId);
+        if (property is null)
+            throw new NotFoundPropertyException(propertyId);
+
+        property.Status = PropertyStatus.Inactive;
+        property.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
+        await ModifyPropertyAsync(property);
+
+        return ToPropertyResponse(property);
+    }
+
+    public async ValueTask<PropertyCreateResponse> AddPropertyWithUserUpgradeAsync(PropertyCreateDto dto, ClaimsPrincipal user)
+    {
+        // Auto-upgrade user to Host role if they're creating their first property
+        var userIdClaim = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        AuthResponse? newTokens = null;
+        
+        if (userIdClaim is not null && Guid.TryParse(userIdClaim, out Guid userId))
+        {
+            User upgradedUser = await this.userService.UpgradeToHostAsync(userId);
+            
+            // If user was upgraded (was Guest), generate new tokens with Host role
+            if (upgradedUser.Role == UserRole.Host && upgradedUser.CurrentMode == UserRole.Host)
+            {
+                newTokens = await this.authService.GenerateTokensForUserAsync(userId);
+            }
+        }
+        
+        var addedProperty = await AddPropertyAsync(dto);
+        
+        return new PropertyCreateResponse
+        {
+            Property = addedProperty,
+            Tokens = newTokens
+        };
+    }
 
     private static PropertyResponse ToPropertyResponse(Property p)
     {

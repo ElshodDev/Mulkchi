@@ -18,10 +18,14 @@ export interface AIPriceResponse {
   minPrice: number;
   maxPrice: number;
   currency: string;
+  pricePerSqm?: number;
   marketAverage: number;
   comparisonPercentage: number;
   comparisonMessage: string;
   confidence: number;
+  priceLevel?: string;
+  similarCount?: number;
+  factorBreakdown?: { [key: string]: number };
   regionalData?: {
     region: string;
     averagePrice: number;
@@ -32,7 +36,7 @@ export interface AIPriceResponse {
   providedIn: 'root'
 })
 export class AIService {
-  private readonly apiUrl = `${environment.apiUrl}/ai-recommendations`;
+  private readonly apiUrl = `${environment.apiUrl}/airecommendations`;
 
   // Signals for state management
   private readonly _priceResult = signal<AIPriceResponse | null>(null);

@@ -15,6 +15,7 @@ using Mulkchi.Api.Models.Foundations.Favorites;
 using Mulkchi.Api.Models.Foundations.HomeRequests;
 using Mulkchi.Api.Models.Foundations.Messages;
 using Mulkchi.Api.Models.Foundations.Notifications;
+using Mulkchi.Api.Models.Foundations.Outbox;
 using Mulkchi.Api.Models.Foundations.Payments;
 using Mulkchi.Api.Models.Foundations.Properties;
 using Mulkchi.Api.Models.Foundations.PropertyImages;
@@ -75,10 +76,15 @@ public partial class StorageBroker : DbContext, IStorageBroker
             entity.Property(p => p.Amount).HasPrecision(18, 2);
             entity.Property(p => p.PlatformFee).HasPrecision(18, 2);
             entity.Property(p => p.HostReceives).HasPrecision(18, 2);
+            entity.Property(p => p.IdempotencyKey).HasMaxLength(128);
             // Filtered unique index: enforce idempotency key uniqueness only when set
             entity.HasIndex(p => p.IdempotencyKey)
                 .IsUnique()
                 .HasFilter("[IdempotencyKey] IS NOT NULL");
+            entity.HasIndex(p => p.BookingId);
+            entity.HasIndex(p => p.ExternalTransactionId)
+                .IsUnique()
+                .HasFilter("[ExternalTransactionId] IS NOT NULL");
         });
 
         modelBuilder.Entity<Property>(entity =>
@@ -109,6 +115,7 @@ public partial class StorageBroker : DbContext, IStorageBroker
             entity.HasIndex(p => p.Status);
             entity.HasIndex(p => p.CheckInDate);
             entity.HasIndex(p => p.CheckOutDate);
+            entity.HasIndex(p => new { p.PropertyId, p.CheckInDate, p.CheckOutDate, p.Status });
         });
 
         // BookingHold — no soft delete, purged via DeleteExpiredBookingHoldsAsync
@@ -178,6 +185,13 @@ public partial class StorageBroker : DbContext, IStorageBroker
             entity.HasIndex(p => p.Status);
             entity.HasIndex(p => p.EndDate);
             entity.HasIndex(p => new { p.Status, p.EndDate });
+        });
+
+        modelBuilder.Entity<OutboxMessage>(entity =>
+        {
+            entity.Property(x => x.Type).HasMaxLength(256);
+            entity.HasIndex(x => x.CreatedDate);
+            entity.HasIndex(x => x.ProcessedDate);
         });
 
         modelBuilder.Entity<SubscriptionPlan>(entity =>

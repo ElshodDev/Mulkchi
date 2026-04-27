@@ -565,6 +565,22 @@ public partial class AuthService : IAuthService
             if (existingUser is not null)
             {
                 user = existingUser;
+                // Update EmailConfirmed if Google verified the email
+                if (emailVerified && !user.EmailConfirmed)
+                {
+                    user.EmailConfirmed = true;
+                    user.UpdatedDate = now;
+                }
+                // Google users are considered verified
+                if (!user.IsVerified)
+                {
+                    user.IsVerified = true;
+                    user.UpdatedDate = now;
+                }
+                if (user.UpdatedDate == now)
+                {
+                    user = await this.storageBroker.UpdateUserAsync(user);
+                }
             }
             else
             {
@@ -577,6 +593,7 @@ public partial class AuthService : IAuthService
                     Phone = string.Empty,
                     AvatarUrl = picture,
                     EmailConfirmed = emailVerified,
+                    IsVerified = emailVerified, // Google verified users are considered verified
                     Role = UserRole.Guest,
                     CreatedDate = now,
                     UpdatedDate = now
@@ -674,5 +691,15 @@ public partial class AuthService : IAuthService
 
         if (!computedHash.Equals(request.Hash, StringComparison.OrdinalIgnoreCase))
             throw new InvalidAuthException("Telegram auth data verification failed.");
+    }
+
+    // Generate new tokens for user (used after role upgrade)
+    public async Task<AuthResponse> GenerateTokensForUserAsync(Guid userId)
+    {
+        User? user = await this.storageBroker.SelectUserByIdAsync(userId);
+        if (user is null)
+            throw new NotFoundUserException(userId);
+
+        return await GenerateAndSaveAuthResponseAsync(user);
     }
 }

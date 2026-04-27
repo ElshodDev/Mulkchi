@@ -169,9 +169,7 @@ export class GoogleLoginComponent implements OnInit {
           callback: (response) => this.handleGoogleResponse(response)
         });
         window.__googleInitialized = true;
-        console.log('[GoogleLogin] GSI initialized successfully');
       } catch (error) {
-        console.error('[GoogleLogin] GSI initialization error:', error);
       }
     }
     
@@ -194,7 +192,6 @@ export class GoogleLoginComponent implements OnInit {
     
     this.authService.googleLogin(response.credential).subscribe({
       next: (authResponse) => {
-        console.log('[GoogleLogin] Login success, token:', authResponse.token ? 'present' : 'missing');
         this.snackBar.open('Google orqali muvaffaqiyatli kirdingiz!', 'Yopish', { duration: 3000 });
         // Small delay to ensure token is saved before navigation
         setTimeout(() => {
@@ -202,7 +199,6 @@ export class GoogleLoginComponent implements OnInit {
         }, 100);
       },
       error: (err) => {
-        console.error('[GoogleLogin] Login error:', err);
         const message = err.error?.message || err.message || 'Google orqali kirishda xatolik';
         this.snackBar.open(message, 'Yopish', { duration: 5000 });
       }

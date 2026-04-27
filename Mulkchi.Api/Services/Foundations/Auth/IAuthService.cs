@@ -27,5 +27,11 @@ public interface IAuthService
 
     // Telegram auth
     ValueTask<AuthResponse> LoginWithTelegramAsync(TelegramAuthRequest request);
+
+    /// <summary>
+    /// Generates new JWT and refresh tokens for a user.
+    /// Used when user role is upgraded (e.g., Guest -> Host) to issue new tokens with updated claims.
+    /// </summary>
+    Task<AuthResponse> GenerateTokensForUserAsync(Guid userId);
 }
 

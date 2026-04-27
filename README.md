@@ -1,115 +1,143 @@
 # Mulkchi
 
-Mulkchi — O‘zbekiston ko‘chmas mulk platformasi uchun full-stack loyiha (ASP.NET Core Web API + Angular).
+Mulkchi — ko‘chmas mulk uchun full-stack platforma: `ASP.NET Core Web API` + `Angular`.
 
-## Asosiy texnologiyalar
+## Stack
 
 - **Backend:** .NET 9, ASP.NET Core, EF Core (SQL Server), SignalR, ML.NET
-- **Frontend:** Angular 20, Angular Material, RxJS
-- **Xavfsizlik:** JWT bearer auth, cookie-based session oqimi, rate limiting, CORS
-- **Infratuzilma:** Docker, docker-compose
+- **Frontend:** Angular 20, Angular Material, RxJS, Chart.js, Leaflet
+- **Xavfsizlik:** JWT (httpOnly cookie), rate limiting, CORS, security headers
+- **Qo‘shimcha:** Serilog logging, health checks, localization (`uz`, `ru`, `en`)
 
-## Loyiha tuzilmasi
+## Repository tuzilmasi
 
-- `/Mulkchi.Api` — Web API
-- `/Mulkchi.Frontend` — Angular ilova
-- `/Mulkchi.Api.Tests.Unit` — backend unit testlar
-- `/Mulkchi.Tests` — qo‘shimcha test loyihasi
-- `/docker-compose.yml` — lokal konteyner muhiti
-- `/env.example` — `.env` uchun namunaviy qiymatlar
+- `Mulkchi.Api` — backend API
+- `Mulkchi.Frontend` — Angular ilova
+- `Mulkchi.Api.Tests.Unit` — backend unit testlar
+- `Mulkchi.Api.Infrastructure.Build` — infra/build utilitar loyiha
+- `Mulkchi.sln` — asosiy solution
+- `start-services.ps1` — local dev servislarini birga ishga tushirish skripti
 
-## Muhim funksiyalar
+## Backendda nimalar bor
 
-- JWT asosidagi autentifikatsiya va avtorizatsiya
-- Ko‘chmas mulk e’lonlari va qidiruv endpointlari
-- Bron, to‘lov, sharh, favorite, saved search kabi biznes modullar
-- SignalR orqali real-time chat va notification
-- ML.NET asosida narx tavsiyasi/prediction
-- Health check endpointlar (`/health`, `/health/database`, `/health/file-storage`)
+Asosiy funksional modullar (`Controllers` bo‘yicha):
 
-## Lokal ishga tushirish
+- Auth: `AuthController`
+- Users: `UsersController`
+- Properties: `PropertiesController`, `PropertyImagesController`, `PropertyImagesUploadController`, `PropertyViewsController`, `CompareController`
+- Bookings: `BookingsController`
+- Payments: `PaymentsController`, `PaymeController`, `ClickController`
+- Communication: `MessagesController`, `ChatController`, `NotificationsController`, `SseNotificationsController`
+- Recommendation/AI: `AiRecommendationsController`
+- Analytics: `AnalyticsController`
+- Qo‘shimcha biznes modullar: `FavoritesController`, `SavedSearchesController`, `ReviewsController`, `AnnouncementsController`, `DiscountsController`, `DiscountUsagesController`, `BoostsController`, `SubscriptionsController`, `HomeRequestsController`, `RentalContractsController`, `AmenitiesController`, `GeoController`
+
+Texnik jihatlar:
+
+- `ChatHub` va `NotificationHub` (`/hubs/chat`, `/hubs/notifications`)
+- Health checks: `/health`, `/health/database`, `/health/file-storage`
+- Startup’da migration avtomatik qo‘llanadi
+- `ResponseCaching` va `IMemoryCache` ishlatiladi
+- `FluentValidation`, `MailKit`, `BCrypt`, `Serilog` integratsiyalangan
+
+## Frontendda nimalar bor
+
+Asosiy route/featurelar:
+
+- Public: home, properties list/detail, AI recommendations, market analytics, property compare
+- Auth: login, register, forgot-password
+- User: profile, bookings, favorites, messages, AI price prediction
+- Host: host properties, host bookings, create/edit listing
+- Admin: admin dashboard
+- Error page: not-found
+
+Frontend servislaridan asosiylari:
+
+- `auth.service`, `property.service`, `chat.service`, `notifications.service`
+- `ai.service`, `analytics.service`, `comparison.service`, `toast.service`
+- JWT interceptor va route guardlar (`authGuard`, `hostGuard`, `adminGuard`)
+
+## Local ishga tushirish
 
 ### 1) Talablar
 
 - .NET SDK 9
-- Node.js 20+ (Angular frontend uchun)
-- SQL Server (lokal yoki konteyner)
+- Node.js 20+
+- SQL Server
 
-### 2) Backend sozlash va ishga tushirish
+### 2) Backend
 
 ```bash
-cd Mulkchi
 dotnet restore Mulkchi.sln
 ```
 
-`JwtSettings:Secret` bo‘sh bo‘lsa API ishga tushmaydi. Secret ni user-secrets yoki env orqali bering:
+JWT secret majburiy (`Mulkchi.Api/appsettings.json` da bo‘sh):
 
 ```bash
-cd Mulkchi/Mulkchi.Api
+cd Mulkchi.Api
 dotnet user-secrets init
-dotnet user-secrets set "JwtSettings:Secret" "kamida-32-belgili-kuchli-maxfiy-kalit"
+dotnet user-secrets set "JwtSettings:Secret" "kamida-32-belgili-maxfiy-kalit"
 ```
 
-Kerak bo‘lsa DB connection string ni ham sozlang (`ConnectionStrings:DefaultConnection`).
-
-API ni ishga tushirish:
+Ishga tushirish:
 
 ```bash
-cd Mulkchi
 dotnet run --project Mulkchi.Api
 ```
 
-Backend URL (development): `http://localhost:5009`  
-Swagger: `http://localhost:5009/swagger`
+- API: `http://localhost:5000`
+- Swagger: `http://localhost:5000/swagger`
 
-### 3) Frontend ishga tushirish
+### 3) Frontend
 
 ```bash
-cd Mulkchi/Mulkchi.Frontend
-npm ci
+cd Mulkchi.Frontend
+npm install
 npm start
 ```
 
-Frontend URL: `http://localhost:4200`  
-Development rejimida `/api` va `/hubs` so‘rovlari `proxy.conf.js` orqali backend ga proxylanadi.
+- Frontend: `http://localhost:4200`
+- `proxy.conf.js` orqali `/api` va `/hubs` `http://localhost:5000` ga proxy qilinadi
 
-## Docker orqali ishga tushirish
+### 4) Windows uchun tez start (ixtiyoriy)
 
-```bash
-cd Mulkchi
-cp env.example .env
-docker compose up --build
+PowerShell:
+
+```powershell
+.\start-services.ps1
 ```
 
-Asosiy servislar: `db`, `redis`, `backend`, `frontend`.
+Monitoring bilan:
 
-Email verification uchun `.env` ichida SMTP qiymatlarni ham to'ldiring:
-
-```bash
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_SENDER_EMAIL=youremail@gmail.com
-SMTP_SENDER_PASSWORD=your-app-password
-SMTP_SENDER_NAME=Mulkchi Platform
+```powershell
+.\start-services.ps1 -Monitor
 ```
 
-Gmail ishlatilsa oddiy parol emas, `App Password` qo'llang.
+## Konfiguratsiya
 
-## Konfiguratsiya (qisqa)
+Backend:
 
-- `Mulkchi.Api/appsettings.json` — development default sozlamalar
-- `Mulkchi.Api/appsettings.Production.json` — production sozlamalar
-- `AllowedOrigins` — production CORS originlari
-- `RateLimiting`:
-  - Development: `Enabled=false`
-  - Production: `Enabled=true`, `General=300`, `Auth=20`, `Upload=30`, `WindowSeconds=60`
+- `Mulkchi.Api/appsettings.json`
+  - `ConnectionStrings:DefaultConnection`
+  - `JwtSettings` (Secret/Issuer/Audience/ExpiryMinutes)
+  - `EmailSettings`, `SmsSettings`
+  - `Payme`, `Click`
+  - `RateLimiting`
+  - `AllowedOrigins`
+
+Frontend:
+
+- `Mulkchi.Frontend/src/environments/environment.development.ts`
+  - `apiUrl`
+  - `signalRUrl`
+  - `frontendUrl`
+  - `googleClientId`
 
 ## Test va build
 
 Backend:
 
 ```bash
-cd Mulkchi
 dotnet build Mulkchi.sln -c Release
 dotnet test Mulkchi.sln -c Release
 ```
@@ -117,91 +145,18 @@ dotnet test Mulkchi.sln -c Release
 Frontend:
 
 ```bash
-cd Mulkchi/Mulkchi.Frontend
+cd Mulkchi.Frontend
 npm run build
 npm run test:ci
+npm run lint
 ```
 
-Eslatma: ushbu repoda `npm run lint` uchun Angular lint target hozircha sozlanmagan.
+## Muhim eslatmalar
 
-## Tavsiya tizimi va geolokatsiya (Hybrid)
-
-Loyihada mulk tavsiyasi uchun gibrid yondashuv ishlatiladi. Backend endpoint:
-
-- `POST /api/AiRecommendations/hybrid`
-
-Request (asosiy maydonlar):
-
-- `userId` (ixtiyoriy)
-- `latitude`, `longitude` (ixtiyoriy, geolokatsiya)
-- `radiusKm` (default: `10`)
-- `limit` (default: `10`, max: `50`)
-
-### Scoring formulasi
-
-Hybrid score qat'iy ushbu vaznlarda hisoblanadi:
-
-- masofa mosligi: **35%**
-- narx diapazoni mosligi: **25%**
-- xona soni mosligi: **20%**
-- mulk turi mosligi: **15%**
-- foydalanuvchi xususiyatlari mosligi: **5%**
-
-Masofa hisobida Haversine formulasi qo‘llanadi (`PropertyGeoExtensions.DistanceKm`).
-
-### A/B variant
-
-Hybrid response har bir recommendation uchun `abVariant` (`A` yoki `B`) qaytaradi.
-Variant deterministik ravishda `propertyId` va `userId` kombinatsiyasidan hosil qilinadi.
-
-### Dashboard analytics
-
-`GET /api/analytics/dashboard` ichidagi `recommendations` blokida quyidagilar real hisoblanadi:
-
-- `totalRecommendations`
-- `viewedRecommendations`
-- `clickedRecommendations`
-- `clickThroughRate`
-- `conversionRate`
-- `topRecommendationTypes`
-- `recommendationPerformance`
-- `abTestPerformance` (`variantA`, `variantB` count va CTR)
+- `JwtSettings:Secret` bo‘lmasa backend ishga tushmaydi.
+- Frontend va backend default portlari bu repoda `4200` va `5000`.
+- Docker fayllari hozirgi repoda aktiv ishlatilmayapti (o‘chirib tashlangan).
 
 ## Litsenziya
 
-MIT — batafsil: [LICENSE](LICENSE)
-
----
-
-## Amalga oshirilgan vs Rejalashtirilgan funksiyalar
-
-Quyidagi jadval muammo bayonotidagi talablar bilan joriy holat o'rtasidagi moslikni ko'rsatadi.
-
-| #   | Funksiya                                                                            | Holat                   | Izoh                                                                                        |
-| --- | ----------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------- |
-| 1   | **5 bosqichli mulk e'loni formasi** (Basic → Parametrlar → Narx → Manzil → Rasmlar) | ✅ Amalga oshirildi     | `property-form` component qayta yozildi                                                     |
-| 2   | **Rasm WebP konvertatsiya** (thumbnail 300×200, medium 800×600, full)               | ✅ Amalga oshirildi     | `SixLabors.ImageSharp 3.1.12` orqali; `LocalFileStorageBroker` yangilandi                   |
-| 3   | **Maksimal 20 ta rasm** per property                                                | ✅ Amalga oshirildi     | `PropertyImagesUploadController` + frontend default                                         |
-| 4   | **Backend qidiruv (search/autocomplete)**                                           | ✅ Mavjud               | `/api/Properties/search`, `/api/Properties/autocomplete`                                    |
-| 5   | **Live search (debounce 300ms)**                                                    | ✅ Yaxshilandi          | `GlobalSearchComponent` haqiqiy query bilan backend-ga yuboriladi                           |
-| 6   | **ElasticSearch integratsiyasi**                                                    | ⏳ Rejalashtirilgan     | Hozir SQL Server full-text search; ES standalone qatlam sifatida qo'shilishi mumkin         |
-| 7   | **Phantom booking himoyasi** (10-daqiqalik pessimistik lock)                        | ✅ Amalga oshirildi     | `BookingHold` entity + `POST /api/Bookings/hold`, `DELETE /api/Bookings/hold/{id}`          |
-| 8   | **Availability calendar** (band sanalar)                                            | ✅ Mavjud               | `GET /api/Bookings/availability/{propertyId}?year=&month=`                                  |
-| 9   | **Payme / Click to'lov integratsiyasi**                                             | ✅ Mavjud               | `PaymentsController` mavjud                                                                 |
-| 10  | **To'lovdan keyin email+SMS notification**                                          | ✅ Mavjud               | `MailKit` + SMS stub; Payme/Click webhook uchun kengaytirish mumkin                         |
-| 11  | **Ijara shartnomasi PDF + e-imzo**                                                  | ⏳ Qisman               | `RentalContracts` moduli bor; PDF generation va e-imzo integratsiyasi rejalashtirilgan      |
-| 12  | **KYC (ijarachilar tekshiruvi)**                                                    | ⏳ Rejalashtirilgan     | —                                                                                           |
-| 13  | **Onlayn muzokara (bid/offer)**                                                     | ⏳ Rejalashtirilgan     | —                                                                                           |
-| 14  | **Geolokatsiyaga asoslangan tavsiya tizimi**                                        | ✅ Amalga oshirildi     | `ML.NET` + `AiRecommendations` moduli, `/api/Recommendations`                               |
-| 15  | **Analytics: public (barcha uchun)**                                                | ✅ Mavjud + yaxshilandi | `GET /api/Analytics/market-overview`, `/by-region`, `/price-trends` — 1 soat response cache |
-| 16  | **Analytics: admin dashboard**                                                      | ✅ Mavjud               | `AnalyticsDashboardComponent` (Admin rol talab qilinadi)                                    |
-| 17  | **Materialized view / cron refresh**                                                | ⏳ Qisman               | `ResponseCaching` (1 soat) qo'shildi; DB materialized view va background cron keyinchalik   |
-| 18  | **Redis kesh**                                                                      | ⏳ Rejalashtirilgan     | Hozir `IMemoryCache` (in-process); `IDistributedCache` + Redis kengaytirish uchun tayyor    |
-| 19  | **HSTS (HTTP Strict Transport Security)**                                           | ✅ Amalga oshirildi     | `SecurityHeadersMiddleware` yangilandi                                                      |
-| 20  | **CSP, XSS, CSRF himoyasi**                                                         | ✅ Amalga oshirildi     | `SecurityHeadersMiddleware`, `SameSite` cookie, `DomSanitizer`                              |
-| 21  | **Rate Limiting**                                                                   | ✅ Amalga oshirildi     | Sliding window per-IP; `Auth:20`, `Upload:30`, `General:300` req/min                        |
-| 22  | **SQL Injection himoyasi (Prisma/Parameterized)**                                   | ✅ Amalga oshirildi     | EF Core parametrli so'rovlar                                                                |
-| 23  | **Parol bcrypt (salt=12)**                                                          | ✅ Amalga oshirildi     | `BCrypt.Net-Next`                                                                           |
-| 24  | **JWT autentifikatsiya**                                                            | ✅ Amalga oshirildi     | httpOnly cookie + BehaviorSubject refresh loop himoyasi                                     |
-| 25  | **SignalR real-time chat + notification**                                           | ✅ Amalga oshirildi     | `ChatHub`, `NotificationHub`                                                                |
-| 26  | **Ko'p tillik qo'llab-quvvatlash**                                                  | ✅ Amalga oshirildi     | `uz`, `ru`, `en` (Accept-Language header)                                                   |
+MIT — [LICENSE](LICENSE)

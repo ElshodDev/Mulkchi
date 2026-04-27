@@ -2,6 +2,7 @@ using Mulkchi.Api.Models.Foundations.Properties;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace Mulkchi.Api.Services.Foundations.Properties;
@@ -28,4 +29,7 @@ public interface IPropertyService
     // New enhancement methods
     ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> RetrieveMyPropertiesAsync(PropertyQueryParams queryParams);
     ValueTask<IEnumerable<PropertyResponse>> RetrieveNewListingsAsync(int days, int count);
+    ValueTask<PropertyResponse> PublishPropertyAsync(Guid propertyId);
+    ValueTask<PropertyResponse> UnpublishPropertyAsync(Guid propertyId);
+    ValueTask<PropertyCreateResponse> AddPropertyWithUserUpgradeAsync(PropertyCreateDto dto, ClaimsPrincipal user);
 }

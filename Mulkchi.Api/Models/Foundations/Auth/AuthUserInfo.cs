@@ -28,6 +28,12 @@ public class AuthUserInfo
     /// </summary>
     public string AccessToken { get; set; }
 
+    /// <summary>
+    /// Refresh token for obtaining new access tokens.
+    /// Frontend stores this in localStorage for session management.
+    /// </summary>
+    public string RefreshToken { get; set; }
+
     public AuthUserInfo() { }
 
     public AuthUserInfo(AuthResponse response)
@@ -41,5 +47,6 @@ public class AuthUserInfo
         CurrentMode = response.CurrentMode;
         ExpiresAt = response.ExpiresAt;
         AccessToken = response.Token;
+        RefreshToken = response.RefreshToken;
     }
 }

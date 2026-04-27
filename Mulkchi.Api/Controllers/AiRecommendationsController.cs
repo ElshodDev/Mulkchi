@@ -8,6 +8,7 @@ using Mulkchi.Api.Models.Foundations.Common;
 using Mulkchi.Api.Models.Foundations.Properties;
 using Mulkchi.Api.Services.Foundations.AiRecommendations;
 using Mulkchi.Api.Services.Foundations.AI;
+using Microsoft.FeatureManagement;
 using System.Security.Claims;
 
 namespace Mulkchi.Api.Controllers;
@@ -17,10 +18,14 @@ namespace Mulkchi.Api.Controllers;
 public class AiRecommendationsController : ControllerBase
 {
     private readonly IAiRecommendationService aiRecommendationService;
+    private readonly IFeatureManagerSnapshot featureManager;
 
-    public AiRecommendationsController(IAiRecommendationService aiRecommendationService)
+    public AiRecommendationsController(
+        IAiRecommendationService aiRecommendationService,
+        IFeatureManagerSnapshot featureManager)
     {
         this.aiRecommendationService = aiRecommendationService;
+        this.featureManager = featureManager;
     }
 
     [HttpPost]
@@ -197,6 +202,9 @@ public class AiRecommendationsController : ControllerBase
     {
         try
         {
+            if (!await this.featureManager.IsEnabledAsync("EnableAiRecommendations"))
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "AI recommendations are disabled." });
+
             var normalizedRequest = request ?? new HybridRecommendationRequest();
 
             string? userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -214,29 +222,6 @@ public class AiRecommendationsController : ControllerBase
         {
             // Return empty array instead of 500 error
             return Ok(Array.Empty<HybridRecommendationResponse>());
-        }
-    }
-
-    [HttpGet("recommendations")]
-    [AllowAnonymous]
-    public async Task<ActionResult<IEnumerable<PropertyResponse>>> GetRecommendationsAsync(
-        [FromQuery] int count = 5)
-    {
-        try
-        {
-            // Get user ID if authenticated, otherwise use anonymous
-            string? userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            Guid userId = Guid.TryParse(userIdClaim, out var parsedId) ? parsedId : Guid.Empty;
-
-            IEnumerable<PropertyResponse> recommendations =
-                await this.aiRecommendationService.GetRecommendationsForUserAsync(userId, count);
-
-            return Ok(recommendations);
-        }
-        catch (Exception)
-        {
-            // Return empty array instead of 500 error
-            return Ok(Array.Empty<PropertyResponse>());
         }
     }
 
@@ -263,6 +248,34 @@ public class AiRecommendationsController : ControllerBase
         {
             // Return empty array instead of 500 error
             return Ok(Array.Empty<PropertyResponse>());
+        }
+    }
+
+    [HttpGet("recommendations")]
+    [Authorize]
+    public async Task<ActionResult<List<AiRecommendation>>> GetRecommendationsAsync([FromQuery] int count = 5)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim, out Guid userId))
+                return Unauthorized(new { message = "User not authenticated." });
+
+            // Get user's recommendations
+            IQueryable<AiRecommendation> recommendations = this.aiRecommendationService.RetrieveAllAiRecommendations();
+            
+            // Filter by current user and take limited count
+            var userRecommendations = recommendations
+                .Where(r => r.UserId == userId)
+                .OrderByDescending(r => r.CreatedDate)
+                .Take(count)
+                .ToList();
+
+            return Ok(userRecommendations);
+        }
+        catch (Exception)
+        {
+            return Ok(Array.Empty<AiRecommendation>());
         }
     }
 
@@ -308,34 +321,34 @@ public class AiRecommendationsController : ControllerBase
             return BadRequest("Noto'g'ri ma'lumotlar kiritildi");
 
         // === VILOYAT BO'YICHA BAZAVIY NARX (USD/m²) ===
-        // Haqiqiy O'zbekiston bozori narxlari asosida
+        // Haqiqiy O'zbekiston bozori narxlari asosida (2024 yil holatiga)
         decimal basePricePerSqm = request.Region switch
         {
-            "Toshkent"            => 1200m,  // Toshkent shahar — eng qimmat
-            "ToshkentViloyat"     => 550m,   // Toshkent viloyat
-            "Samarqand"           => 500m,   // Samarqand
-            "Buxoro"              => 420m,   // Buxoro
-            "Namangan"            => 400m,   // Namangan
-            "Andijon"             => 420m,   // Andijon
-            "Fargona"             => 410m,   // Farg'ona
+            "Toshkent"            => 1250m,  // Toshkent shahar — eng qimmat
+            "ToshkentViloyat"     => 600m,   // Toshkent viloyat
+            "Samarqand"           => 550m,   // Samarqand
+            "Buxoro"              => 480m,   // Buxoro
+            "Namangan"            => 420m,   // Namangan
+            "Andijon"             => 440m,   // Andijon
+            "Fargona"             => 430m,   // Farg'ona
             "Qashqadaryo"         => 380m,   // Qarshi
-            "Surxondaryo"         => 340m,   // Termiz
-            "Xorazm"              => 360m,   // Urganch
-            "Navoiy"              => 390m,   // Navoiy
-            "Jizzax"              => 360m,   // Jizzax
-            "Sirdaryo"            => 355m,   // Guliston
-            "Qoraqalpogiston"     => 320m,   // Nukus
+            "Surxondaryo"         => 350m,   // Termiz
+            "Xorazm"              => 380m,   // Urganch
+            "Navoiy"              => 410m,   // Navoiy
+            "Jizzax"              => 370m,   // Jizzax
+            "Sirdaryo"            => 360m,   // Guliston
+            "Qoraqalpogiston"     => 330m,   // Nukus
             _                     => 450m
         };
 
-        // === MULK TURI KOEFFITSIENTI ===
+        // Mulk turiga qarab mantiqiy o'zgarishlar
         decimal typeMultiplier = request.PropertyType switch
         {
             "Apartment" => 1.00m,
-            "House"     => 1.30m,
-            "Villa"     => 2.20m,
-            "Office"    => 1.40m,
-            "Land"      => 0.30m,
+            "House"     => 1.15m, // Hovli uylar odatda m2 ga nisbatan biroz arzonroq yoki qimmatroq bo'lishi mumkin
+            "Villa"     => 1.80m,
+            "Office"    => 1.50m,
+            "Commercial" => 1.70m,
             "Studio"    => 1.10m,
             _           => 1.00m
         };

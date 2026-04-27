@@ -79,7 +79,6 @@ export class ChatService {
   private async startConnection(): Promise<void> {
     const token = this.getAccessToken();
     if (!token) {
-      console.log('[SignalR] No token, skipping connection');
       return;
     }
 

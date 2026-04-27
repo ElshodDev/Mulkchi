@@ -77,12 +77,11 @@ export class SelectivePreloadingStrategy implements PreloadingStrategy {
   }
 
   /**
-   * Log preloaded module
+   * Track preloaded module
    */
   private log(route: Route, strategy: string): void {
     if (route.path) {
       this.preloadedModules.push(route.path);
-      console.log(`Preloaded: ${route.path} (${strategy})`);
     }
   }
 
@@ -105,7 +104,7 @@ export class QuicklinkStrategy implements PreloadingStrategy {
   preload(route: Route, load: () => Observable<any>): Observable<any> {
     // Only preload if link is in viewport
     if (this.hasVisibleLink(route.path)) {
-      this.log(route);
+      this.logQuicklink(route);
       return load();
     }
 
@@ -143,10 +142,12 @@ export class QuicklinkStrategy implements PreloadingStrategy {
     );
   }
 
-  private log(route: Route): void {
+  /**
+   * Quicklink specific tracking
+   */
+  private logQuicklink(route: Route): void {
     if (route.path) {
       this.preloadedModules.push(route.path);
-      console.log(`Quicklink preloaded: ${route.path}`);
     }
   }
 }

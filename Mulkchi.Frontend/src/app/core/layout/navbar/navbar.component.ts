@@ -14,7 +14,7 @@ import { map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
-import { UserRole } from '../../models';
+import { ComparisonService } from '../../services/comparison.service';
 
 @Component({
   selector: 'app-navbar',
@@ -58,6 +58,10 @@ import { UserRole } from '../../models';
               <mat-icon>psychology</mat-icon>
               AI Narx
             </a>
+            <a mat-button routerLink="/market-analytics" routerLinkActive="active">
+              <mat-icon>insights</mat-icon>
+              Bozor tahlili
+            </a>
 
             @if (isInHostMode()) {
               <a mat-button routerLink="/host/properties" routerLinkActive="active">
@@ -78,6 +82,12 @@ import { UserRole } from '../../models';
         <!-- Right Side Actions -->
         <div class="nav-actions">
           @if (isAuthenticated()) {
+            <!-- Post Listing Button - Visible to all authenticated users -->
+            <a mat-raised-button color="accent" routerLink="/listings/create" class="post-listing-btn">
+              <mat-icon>add_circle</mat-icon>
+              E'lon qilish
+            </a>
+
             <!-- Favorites -->
             <button mat-icon-button routerLink="/favorites" matTooltip="Sevimlilar">
               <mat-icon>favorite</mat-icon>
@@ -91,9 +101,17 @@ import { UserRole } from '../../models';
                         aria-hidden="false">chat</mat-icon>
             </button>
 
+            <!-- Comparison -->
+            <button mat-icon-button routerLink="/compare" matTooltip="Solishtirish">
+              <mat-icon [matBadge]="comparisonService.count() || null" 
+                        [matBadgeHidden]="comparisonService.isEmpty()"
+                        matBadgeColor="accent"
+                        aria-hidden="false">compare_arrows</mat-icon>
+            </button>
+
             <!-- Notifications -->
             <button mat-icon-button matTooltip="Bildirishnomalar">
-              <mat-icon>notifications</mat-icon>
+              <mat-icon aria-hidden="false">notifications</mat-icon>
             </button>
 
             <!-- User Menu -->
@@ -120,31 +138,6 @@ import { UserRole } from '../../models';
                 <mat-icon>favorite</mat-icon>
                 <span>Sevimlilar</span>
               </a>
-              <!-- Single Identity: Mode Switcher -->
-              @if (canBeHost()) {
-                <mat-divider></mat-divider>
-                <div class="mode-switcher">
-                  <span class="mode-label">Rejim:</span>
-                  <div class="mode-buttons">
-                    <button 
-                      mat-button 
-                      [class.active-mode]="isInGuestMode()"
-                      (click)="switchMode('Guest')"
-                      [disabled]="isInGuestMode()">
-                      <mat-icon>person</mat-icon>
-                      Mehmon
-                    </button>
-                    <button 
-                      mat-button 
-                      [class.active-mode]="isInHostMode()"
-                      (click)="switchMode('Host')"
-                      [disabled]="isInHostMode()">
-                      <mat-icon>real_estate_agent</mat-icon>
-                      Host
-                    </button>
-                  </div>
-                </div>
-              }
               
               @if (isInHostMode()) {
                 <mat-divider></mat-divider>
@@ -199,9 +192,18 @@ import { UserRole } from '../../models';
               <mat-icon matListItemIcon>psychology</mat-icon>
               <span matListItemTitle>AI Narx</span>
             </a>
+            <a mat-list-item routerLink="/market-analytics" (click)="sidenav.close()">
+              <mat-icon matListItemIcon>insights</mat-icon>
+              <span matListItemTitle>Bozor tahlili</span>
+            </a>
 
             @if (isAuthenticated()) {
               <mat-divider></mat-divider>
+              <!-- Mobile: Post Listing Button -->
+              <a mat-list-item routerLink="/listings/create" (click)="sidenav.close()" class="post-listing-mobile">
+                <mat-icon matListItemIcon color="accent">add_circle</mat-icon>
+                <span matListItemTitle>E'lon qilish</span>
+              </a>
               <a mat-list-item routerLink="/profile" (click)="sidenav.close()">
                 <mat-icon matListItemIcon>person</mat-icon>
                 <span matListItemTitle>Profil</span>
@@ -214,26 +216,6 @@ import { UserRole } from '../../models';
                 <mat-icon matListItemIcon>favorite</mat-icon>
                 <span matListItemTitle>Sevimlilar</span>
               </a>
-              
-              <!-- Single Identity: Mobile Mode Switcher -->
-              @if (canBeHost()) {
-                <mat-divider></mat-divider>
-                <div mat-subheader>Rejim o'zgartirish</div>
-                <button 
-                  mat-list-item 
-                  (click)="switchMode('Guest'); sidenav.close()"
-                  [class.active-mode]="isInGuestMode()">
-                  <mat-icon matListItemIcon>person</mat-icon>
-                  <span matListItemTitle>Mehmon rejimi</span>
-                </button>
-                <button 
-                  mat-list-item 
-                  (click)="switchMode('Host'); sidenav.close()"
-                  [class.active-mode]="isInHostMode()">
-                  <mat-icon matListItemIcon>real_estate_agent</mat-icon>
-                  <span matListItemTitle>Host rejimi</span>
-                </button>
-              }
               
               @if (isInHostMode()) {
                 <mat-divider></mat-divider>
@@ -325,6 +307,33 @@ import { UserRole } from '../../models';
       gap: 8px;
     }
 
+    .post-listing-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 500;
+      padding: 0 16px;
+      height: 36px;
+      border-radius: 18px;
+      margin-right: 8px;
+    }
+
+    .post-listing-btn mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .post-listing-btn span {
+        display: none;
+      }
+      .post-listing-btn {
+        padding: 0 12px;
+        min-width: auto;
+      }
+    }
+
     .user-menu-btn {
       display: flex;
       align-items: center;
@@ -361,61 +370,14 @@ import { UserRole } from '../../models';
       width: 280px;
     }
 
-    /* Single Identity: Mode Switcher Styles */
-    .mode-switcher {
-      padding: 8px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .mode-label {
-      font-size: 12px;
-      color: rgba(0, 0, 0, 0.6);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .mode-buttons {
-      display: flex;
-      gap: 8px;
-    }
-
-    .mode-buttons button {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      padding: 8px;
-      border-radius: 4px;
-      transition: all 0.2s ease;
-    }
-
-    .mode-buttons button mat-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
-    }
-
-    .active-mode {
-      background-color: rgba(103, 58, 183, 0.1) !important;
-      color: #673ab7 !important;
-      font-weight: 500;
-    }
-
-    .active-mode:hover {
-      background-color: rgba(103, 58, 183, 0.2) !important;
-    }
-
-    button.mat-list-item.active-mode {
-      background-color: rgba(103, 58, 183, 0.1);
-      color: #673ab7;
-    }
-
     @media (max-width: 768px) {
-      .navbar-container {
-        padding: 0 16px;
+      .post-listing-btn span {
+        display: none;
+      }
+
+      .post-listing-btn {
+        padding: 0 12px;
+        min-width: auto;
       }
 
       .logo span {
@@ -431,6 +393,7 @@ import { UserRole } from '../../models';
 export class NavbarComponent {
   private authService = inject(AuthService);
   chatService = inject(ChatService);
+  comparisonService = inject(ComparisonService);
   private breakpointObserver = inject(BreakpointObserver);
   private snackBar = inject(MatSnackBar);
 
@@ -445,19 +408,9 @@ export class NavbarComponent {
 
   sidenavOpened = signal(false);
 
-  // Single Identity: Check if user is in Host mode
+  // Check if user is in Host mode
   isInHostMode(): boolean {
     return this.authService.isInHostMode();
-  }
-
-  // Single Identity: Check if user is in Guest mode
-  isInGuestMode(): boolean {
-    return this.authService.isInGuestMode();
-  }
-
-  // Check if user can be a Host (has Host role or is verified)
-  canBeHost(): boolean {
-    return this.authService.isHost() || this.currentUser()?.isVerified || false;
   }
 
   isHost(): boolean {
@@ -468,28 +421,6 @@ export class NavbarComponent {
   isAdmin(): boolean {
     const user = this.currentUser();
     return user ? this.authService.isAdmin() : false;
-  }
-
-  // Single Identity: Switch between Guest and Host modes
-  switchMode(mode: 'Guest' | 'Host'): void {
-    const targetMode = mode === 'Host' ? UserRole.Host : UserRole.Guest;
-    
-    this.authService.switchMode({ targetMode }).subscribe({
-      next: () => {
-        this.snackBar.open(
-          mode === 'Host' ? 'Host rejimiga o\'tdingiz' : 'Mehmon rejimiga o\'tdingiz',
-          'Yopish',
-          { duration: 2000 }
-        );
-      },
-      error: (err) => {
-        this.snackBar.open(
-          err.error?.message || 'Rejim o\'zgartirishda xatolik',
-          'Yopish',
-          { duration: 5000 }
-        );
-      }
-    });
   }
 
   toggleSidenav(): void {

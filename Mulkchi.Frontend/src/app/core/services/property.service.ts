@@ -1,6 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, tap, catchError, throwError } from 'rxjs';
+import { Observable, tap, catchError, throwError, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { 
   Property, 
@@ -9,14 +9,17 @@ import {
   PagedResult,
   PropertyType,
   ListingType,
-  UzbekistanRegion 
+  UzbekistanRegion,
+  PropertyCreateResponse 
 } from '../models';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PropertyService {
   private readonly apiUrl = `${environment.apiUrl}/properties`;
+  private readonly authService = inject(AuthService);
   
   // Signals for state management
   private readonly _properties = signal<Property[]>([]);
@@ -135,10 +138,19 @@ export class PropertyService {
     );
   }
   
-  // Create property (Host only)
+  // Create property (any authenticated user - auto-upgraded to Host)
   createProperty(request: PropertyCreateRequest): Observable<Property> {
-    return this.http.post<Property>(this.apiUrl, request).pipe(
-      tap(property => this._currentProperty.set(property)),
+    return this.http.post<PropertyCreateResponse>(this.apiUrl, request).pipe(
+      tap(response => {
+        this._currentProperty.set(response.property);
+        
+        // If new tokens are provided (user was upgraded to Host), update stored tokens
+        if (response.tokens) {
+          const mappedTokens = this.authService.mapApiAuthResponse(response.tokens);
+          this.authService.handleAuthResponse(mappedTokens);
+        }
+      }),
+      map(response => response.property),
       catchError(error => throwError(() => error))
     );
   }
@@ -160,7 +172,7 @@ export class PropertyService {
   
   // Get host properties
   getHostProperties(): Observable<Property[]> {
-    return this.http.get<Property[]>(`${environment.apiUrl}/users/me/properties`).pipe(
+    return this.http.get<Property[]>(`${this.apiUrl}/my/listings`).pipe(
       catchError(error => throwError(() => error))
     );
   }

@@ -98,18 +98,7 @@ export class AuthService {
     return this.http.post<ApiAuthResponse>(`${this.apiUrl}/google`, {
       idToken: idToken
     }).pipe(
-      tap(apiResponse => {
-        console.log('[AuthService] Google login raw response:', apiResponse);
-      }),
-      map(apiResponse => {
-        const mapped = this.mapApiAuthResponse(apiResponse);
-        console.log('[AuthService] Mapped response:', mapped);
-        if (!mapped.token) {
-          console.error('[AuthService] ERROR: Token is missing or undefined in response!');
-          console.error('[AuthService] Raw response keys:', Object.keys(apiResponse));
-        }
-        return mapped;
-      }),
+      map(apiResponse => this.mapApiAuthResponse(apiResponse)),
       tap(response => {
         if (!response.token) {
           throw new Error('Token missing in authentication response');
@@ -122,8 +111,11 @@ export class AuthService {
     );
   }
 
-  // Map API response to AuthResponse
-  private mapApiAuthResponse(apiResponse: ApiAuthResponse | Record<string, unknown>): AuthResponse {
+  /**
+   * Map API response (ApiAuthResponse) to internal AuthResponse format.
+   * Public so other services can convert backend responses.
+   */
+  mapApiAuthResponse(apiResponse: ApiAuthResponse | Record<string, unknown>): AuthResponse {
     // Support both PascalCase (C#) and camelCase (TypeScript) responses
     const getValue = (camelKey: string, pascalKey: string): unknown => {
       return (apiResponse as Record<string, unknown>)[camelKey] ?? 
@@ -212,7 +204,11 @@ export class AuthService {
     );
   }
   
-  private handleAuthResponse(response: AuthResponse): void {
+  /** 
+   * Handle authentication response - updates signals, localStorage, and fetches user details.
+   * Public so other services (like PropertyService) can update tokens after role upgrade.
+   */
+  handleAuthResponse(response: AuthResponse): void {
     this._accessToken.set(response.token);
     const mode = response.currentMode ?? response.role ?? UserRole.Guest;
     this._currentMode.next(mode);
@@ -242,9 +238,6 @@ export class AuthService {
     localStorage.setItem('refresh_token', response.refreshToken);
     localStorage.setItem('user', JSON.stringify(this._currentUser()));
     
-    console.log('[AuthService] Token saved to localStorage:', !!response.token);
-    console.log('[AuthService] localStorage access_token:', localStorage.getItem('access_token') ? 'present' : 'missing');
-    
     // Fetch full user details after signal update is processed
     Promise.resolve().then(() => {
       if (this._accessToken()) {
@@ -269,11 +262,16 @@ export class AuthService {
   }
 
   // Single Identity: Switch between Guest and Host modes
-  switchMode(request: SwitchModeRequest): Observable<AuthResponse> {
-    return this.http.post<ApiAuthResponse>(`${this.apiUrl}/switch-role`, {
-      targetMode: request.targetMode
-    }).pipe(
-      map(apiResponse => this.mapApiAuthResponse(apiResponse)),
+  switchMode(request: { TargetMode: UserRole }): Observable<AuthResponse> {
+    // Get refresh token from localStorage
+    const refreshToken = localStorage.getItem('refresh_token') || '';
+    // Explicitly construct request body to match backend SwitchRoleRequest DTO
+    const body = {
+      TargetMode: request.TargetMode,
+      RefreshToken: refreshToken
+    };
+    return this.http.post<AuthResponse>(`${this.apiUrl}/switch-role`, body).pipe(
+      map(apiResponse => this.mapApiAuthResponse(apiResponse as unknown as Record<string, unknown>)),
       tap(response => {
         // Update current mode
         this._currentMode.next(response.currentMode ?? response.role);

@@ -2,6 +2,7 @@ namespace Mulkchi.Api.Models.Foundations.Properties;
 
 public class PropertySearchParams
 {
+    public string? SearchQuery { get; set; }
     public string? Region { get; set; }
     public string? City { get; set; }
     public decimal? MinPrice { get; set; }

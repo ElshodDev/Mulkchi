@@ -22,14 +22,6 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
   // Handle "undefined" string or null/undefined
   const token = rawToken && rawToken !== 'undefined' ? rawToken : null;
 
-  // Debug logging
-  if (req.url.includes('/api/')) {
-    console.log('[JWT Interceptor] Key used:', TOKEN_KEY);
-    console.log('[JWT Interceptor] URL:', req.url);
-    console.log('[JWT Interceptor] Raw token:', rawToken ? rawToken.substring(0, 20) + '...' : 'null/undefined');
-    console.log('[JWT Interceptor] Token valid:', !!token);
-  }
-
   // Only add token to API requests if it's valid
   if (req.url.startsWith(environment.apiUrl) && token) {
     req = req.clone({
@@ -37,7 +29,6 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
         Authorization: `Bearer ${token}`
       }
     });
-    console.log('[JWT Interceptor] Added Authorization header');
   }
 
   return next(req);

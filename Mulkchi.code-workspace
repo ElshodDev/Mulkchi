@@ -1,10 +1,10 @@
 {
 	"folders": [
 		{
-			"name": "Mulkchi",
 			"path": "."
+		},
+		{
+			"path": "../Amaliyot"
 		}
-	],
-	"settings": {},
-	"workbenchMode": "windsurf-agent-window"
+	]
 }

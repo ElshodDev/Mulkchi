@@ -1702,7 +1702,7 @@ export class HomeComponent implements OnInit {
       
       snackBarRef.onAction().subscribe(() => {
         // Switch to Host mode and navigate to the original URL
-        this.authService.switchMode({ targetMode: UserRole.Host }).subscribe({
+        this.authService.switchMode({ TargetMode: UserRole.Host }).subscribe({
           next: () => {
             const targetUrl = returnUrl || '/host/dashboard';
             this.router.navigate([targetUrl]);

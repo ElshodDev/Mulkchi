@@ -100,7 +100,6 @@ export class NotificationsService implements OnDestroy {
     const token = rawToken && rawToken !== 'undefined' ? rawToken : null;
     
     if (!token) {
-      console.log('[SignalR Notifications] No token, skipping connection');
       return;
     }
     

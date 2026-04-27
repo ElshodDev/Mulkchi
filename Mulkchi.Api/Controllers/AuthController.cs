@@ -6,6 +6,7 @@ using Mulkchi.Api.Models.Foundations.Users;
 using Mulkchi.Api.Services.Foundations.Auth;
 using System.Security.Claims;
 
+// TODO: DELETE AuthController.cs after testing. Logic has been moved to Auth/AccountController, Auth/TokenController, etc.
 namespace Mulkchi.Api.Controllers;
 
 [ApiController]
@@ -439,7 +440,7 @@ public class AuthController : ControllerBase
                     || user.Role == UserRole.Admin 
                     || user.Role == UserRole.SuperAdmin
                     || user.Role == UserRole.Agent
-                    || (user.EmailConfirmed && user.IsVerified);
+                    || user.EmailConfirmed;
 
                 if (!canBecomeHost)
                     return BadRequest(new { message = "Host rejimga o'tish uchun hisobingizni tasdiqlang yoki moderator bilan bog'laning." });
@@ -463,8 +464,11 @@ public class AuthController : ControllerBase
             });
 
             // Generate new tokens with updated mode
-            AuthResponse response = await this.authService.RefreshTokenAsync(
-                Request.Cookies[RefreshTokenCookie] ?? string.Empty);
+            // Try to get refresh token from request body first, then fallback to cookie
+            string refreshToken = request.RefreshToken 
+                ?? Request.Cookies[RefreshTokenCookie] 
+                ?? string.Empty;
+            AuthResponse response = await this.authService.RefreshTokenAsync(refreshToken);
             
             // Override the current mode in response
             response.CurrentMode = request.TargetMode;

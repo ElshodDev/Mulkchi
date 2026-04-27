@@ -1,4 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { EMPTY } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -1029,7 +1031,18 @@ export class ProfileComponent implements OnInit {
   switchToHostMode(): void {
     this.isSwitchingMode.set(true);
     
-    this.authService.switchMode({ targetMode: UserRole.Host }).subscribe({
+    this.authService.switchMode({ TargetMode: UserRole.Host }).pipe(
+      catchError(err => {
+        const message = err.error?.message 
+          || 'Xatolik yuz berdi. Qayta urinib ko\'ring.';
+        this.snackBar.open(message, 'Yopish', { 
+          duration: 6000,
+          panelClass: ['warning-snackbar']
+        });
+        this.isSwitchingMode.set(false);
+        return EMPTY;
+      })
+    ).subscribe({
       next: (response) => {
         this.isSwitchingMode.set(false);
         this.snackBar.open('Host rejimga muvaffaqiyatli o\'tdingiz!', 'Yopish', {
@@ -1037,20 +1050,8 @@ export class ProfileComponent implements OnInit {
           horizontalPosition: 'center',
           verticalPosition: 'bottom'
         });
-        // Reload page to refresh role state
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      },
-      error: (error) => {
-        this.isSwitchingMode.set(false);
-        const errorMsg = error?.error?.message || 'Rejim almashtirishda xatolik';
-        this.snackBar.open(errorMsg, 'Yopish', {
-          duration: 5000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom',
-          panelClass: 'error-snackbar'
-        });
+        // Navigate to host property creation
+        this.router.navigate(['/host/properties/create']);
       }
     });
   }

@@ -14,8 +14,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { PropertyService } from '../../../core/services/property.service';
-import { Property, PropertyType, ListingType, PropertySearchParams } from '../../../core/models';
+import { ComparisonService } from '../../../core/services/comparison.service';
+import { ToastService } from '../../../core/services/toast.service';
+import { Property, PropertyType, ListingType, PropertySearchParams, PropertyResponse, UzbekistanRegion } from '../../../core/models';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import * as L from 'leaflet';
 
 @Component({
@@ -35,7 +40,9 @@ import * as L from 'leaflet';
     MatProgressSpinnerModule,
     MatExpansionModule,
     MatDividerModule,
-    MatBadgeModule
+    MatBadgeModule,
+    MatTooltipModule,
+    MatAutocompleteModule
   ],
   template: `
     <div class="property-list-container">
@@ -50,7 +57,7 @@ import * as L from 'leaflet';
           <h1 class="page-title">Barcha e'lonlar</h1>
           <p class="page-subtitle">O'zbekistondagi eng yaxshi mulk e'lonlarini qidirib toping</p>
           
-          <!-- Hero Search -->
+          <!-- Hero Search with Smart Autocomplete -->
           <div class="hero-search">
             <div class="search-input-wrapper">
               <mat-icon class="search-icon">search</mat-icon>
@@ -59,8 +66,43 @@ import * as L from 'leaflet';
                 class="hero-search-input" 
                 placeholder="Shahar, tuman yoki ko'cha..."
                 [value]="heroSearchValue()"
-                (input)="heroSearchValue.set($any($event).target.value)"
-                (keyup.enter)="onHeroSearch()">
+                (input)="onSearchInput($any($event).target.value)"
+                (keyup.enter)="onHeroSearch()"
+                [matAutocomplete]="auto">
+              <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onLocationSelected($event)">
+                <!-- Location Suggestions -->
+                @if (searchSuggestions().locations.length > 0) {
+                  <mat-optgroup label="📍 Joylashuvlar">
+                    @for (loc of searchSuggestions().locations.slice(0, 5); track loc) {
+                      <mat-option [value]="loc">
+                        <span [innerHTML]="highlightMatch(loc, heroSearchValue())"></span>
+                      </mat-option>
+                    }
+                  </mat-optgroup>
+                }
+                <!-- Property Types -->
+                @if (searchSuggestions().types.length > 0) {
+                  <mat-optgroup label="🏠 Mulk turlari">
+                    @for (type of searchSuggestions().types.slice(0, 3); track type) {
+                      <mat-option [value]="type">{{ type }}</mat-option>
+                    }
+                  </mat-optgroup>
+                }
+                <!-- Recent Searches -->
+                @if (searchSuggestions().recent.length > 0 && heroSearchValue().length === 0) {
+                  <mat-optgroup label="🔍 So'nggi qidiruvlar">
+                    @for (recent of searchSuggestions().recent.slice(0, 3); track recent) {
+                      <mat-option [value]="recent">
+                        <mat-icon style="font-size: 16px; margin-right: 8px;">history</mat-icon>
+                        {{ recent }}
+                      </mat-option>
+                    }
+                  </mat-optgroup>
+                }
+              </mat-autocomplete>
+              @if (isSearching()) {
+                <mat-spinner diameter="20" class="search-spinner"></mat-spinner>
+              }
             </div>
             <button mat-raised-button class="hero-search-btn" (click)="onHeroSearch()">
               <mat-icon>search</mat-icon>
@@ -330,6 +372,17 @@ import * as L from 'leaflet';
                            [alt]="property.title"
                            style="width:100%; height:220px; object-fit:cover;">
                     }
+                    
+                    <!-- Compare Button -->
+                    <button 
+                      mat-icon-button 
+                      class="compare-action-btn" 
+                      [class.active]="comparisonService.isInComparison(property.id)"
+                      (click)="toggleCompare($event, property)"
+                      [matTooltip]="getCompareTooltip(property.id)">
+                      <mat-icon>{{ comparisonService.isInComparison(property.id) ? 'compare_arrows' : 'add_circle_outline' }}</mat-icon>
+                    </button>
+
                     <div class="property-badges">
                       @if (property.isFeatured) {
                         <span class="badge featured">Featured</span>
@@ -521,6 +574,10 @@ import * as L from 'leaflet';
     .search-icon {
       color: var(--color-gray-400);
       margin-right: 12px;
+    }
+
+    .search-spinner {
+      margin-left: 8px;
     }
 
     .hero-search-input {
@@ -1310,11 +1367,49 @@ import * as L from 'leaflet';
       .price-inputs {
         grid-template-columns: 1fr;
       }
+
+      .comparison-bar {
+        position: fixed;
+        top: 64px;
+        right: 16px;
+        background-color: var(--color-white);
+        padding: 16px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+      }
+
+      .compare-info {
+        display: flex;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .compare-info mat-icon {
+        font-size: 24px;
+        margin-right: 8px;
+      }
+
+      .compare-actions {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .compare-actions button {
+        margin-right: 16px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .comparison-bar {
+        top: 56px;
+      }
     }
   `]
 })
 export class PropertyListComponent implements OnInit {
   private propertyService = inject(PropertyService);
+  public comparisonService = inject(ComparisonService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -1329,8 +1424,23 @@ export class PropertyListComponent implements OnInit {
   pageIndex = signal(0);
   viewMode = signal<'grid' | 'list' | 'map'>('grid');
   selectedAmenities = signal<string[]>([]);
+  
+  // Smart Search signals
+  searchSuggestions = signal<{locations: string[], types: string[], recent: string[]}>({
+    locations: [],
+    types: [],
+    recent: []
+  });
+  isSearching = signal<boolean>(false);
+  private searchSubject = new Subject<string>();
 
   ListingType = ListingType;
+
+  getCompareTooltip(propertyId: string): string {
+    return this.comparisonService.isInComparison(propertyId)
+      ? 'Solishtirishdan olib tashlash'
+      : "Solishtirishga qo'shish";
+  }
 
   propertyTypes = [
     { value: 'Apartment', label: 'Kvartira' },
@@ -1500,6 +1610,19 @@ export class PropertyListComponent implements OnInit {
     this.router.navigate(['/properties', id]);
   }
 
+  toggleCompare(event: Event, property: Property): void {
+    event.stopPropagation();
+    const propertyResponse = property as unknown as PropertyResponse;
+    if (this.comparisonService.isInComparison(property.id)) {
+      this.comparisonService.removeFromCompare(property.id);
+    } else {
+      const added = this.comparisonService.addToCompare(propertyResponse);
+      if (!added) {
+        alert('Maksimal 4 ta mulkni solishtirish mumkin');
+      }
+    }
+  }
+
   // Hero search - update sidebar filter and apply
   onHeroSearch(): void {
     const searchValue = this.heroSearchValue().trim();
@@ -1597,5 +1720,61 @@ export class PropertyListComponent implements OnInit {
       return `${property.pricePerNight.toLocaleString()} ${property.currency}/tun`;
     }
     return 'Narx ko\'rsatilmagan';
+  }
+
+  // Smart Search Methods
+  private loadRecentSearches(): string[] {
+    const recent = localStorage.getItem('recent_searches');
+    return recent ? JSON.parse(recent) : ['Toshkent', 'Samarqand', 'Kvartira'];
+  }
+
+  private saveSearch(query: string) {
+    if (!query.trim()) return;
+    const recent = this.loadRecentSearches().filter(s => s !== query);
+    recent.unshift(query);
+    localStorage.setItem('recent_searches', JSON.stringify(recent.slice(0, 5)));
+  }
+
+  onSearchInput(value: string) {
+    this.heroSearchValue.set(value);
+    this.isSearching.set(true);
+    
+    // Debounce search
+    setTimeout(() => {
+      this.updateSearchSuggestions(value);
+      this.isSearching.set(false);
+    }, 300);
+  }
+
+  private updateSearchSuggestions(query: string) {
+    const allLocations = Object.values(UzbekistanRegion).map(r => r.toString());
+    const propertyTypes = ['Kvartira', 'Uy', 'Villa', 'Ofis', 'Tijorat', 'Yer uchastkasi'];
+    
+    const locations = query.length > 0 
+      ? allLocations.filter(l => l.toLowerCase().includes(query.toLowerCase()))
+      : [];
+      
+    const types = query.length > 0
+      ? propertyTypes.filter(t => t.toLowerCase().includes(query.toLowerCase()))
+      : [];
+    
+    this.searchSuggestions.set({
+      locations,
+      types,
+      recent: query.length === 0 ? this.loadRecentSearches() : []
+    });
+  }
+
+  onLocationSelected(event: any) {
+    const value = event.option.value;
+    this.heroSearchValue.set(value);
+    this.saveSearch(value);
+    this.searchSuggestions.set({ locations: [], types: [], recent: [] });
+  }
+
+  highlightMatch(text: string, query: string): string {
+    if (!query) return text;
+    const regex = new RegExp(`(${query})`, 'gi');
+    return text.replace(regex, '<strong>$1</strong>');
   }
 }

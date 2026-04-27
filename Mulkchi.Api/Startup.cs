@@ -35,12 +35,22 @@ using Mulkchi.Api.Services.Foundations.Amenities;
 using Mulkchi.Api.Services.Foundations.Chat;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Mulkchi.Api.Services.Foundations.AI;
 using Mulkchi.Api.Services.Foundations.Analytics;
 using Mulkchi.Api.Services.RateLimiting;
 using Mulkchi.Api.Validators;
+using Mulkchi.Api.Application.Bookings.CreateHold;
+using Mulkchi.Api.Application.Bookings.ConfirmPayment;
+using Mulkchi.Api.Application.Payments.Webhooks;
+using Mulkchi.Api.Services.Background;
+using Mulkchi.Api.Services.Search;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.FeatureManagement;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using StackExchange.Redis;
 
 namespace Mulkchi.Api;
 
@@ -78,18 +88,24 @@ public class Startup
         // In-process response cache for public analytics / search endpoints
         services.AddResponseCaching();
         services.AddMemoryCache();
+        AddDistributedCache(services);
         
         // Add FluentValidation
         services.AddFluentValidationAutoValidation();
         services.AddFluentValidationClientsideAdapters();
         services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
+        services.AddFeatureManagement();
+        AddOpenTelemetry(services);
 
         AddSwagger(services);
         AddJwtAuthentication(services);
         AddDbContext(services);
         AddBrokers(services);
         AddFoundationServices(services);
-        services.AddSignalR(options =>
+        AddBackgroundServices(services);
+        var redisConnection = this.configuration["Redis:ConnectionString"];
+
+        var signalRBuilder = services.AddSignalR(options =>
         {
             // WebSocket-specific settings
             options.EnableDetailedErrors = true;
@@ -100,6 +116,15 @@ public class Startup
             options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
             options.KeepAliveInterval = TimeSpan.FromSeconds(15);
         });
+
+        if (!string.IsNullOrWhiteSpace(redisConnection))
+        {
+            signalRBuilder.AddStackExchangeRedis(redisConnection, options =>
+            {
+                options.Configuration.ChannelPrefix = RedisChannel.Literal("mulkchi-signalr");
+            });
+        }
+
         services.AddSingleton<IUserIdProvider, JwtUserIdProvider>();
         AddCors(services);
         
@@ -122,6 +147,7 @@ public class Startup
 
         app.UseHttpsRedirection();
         app.UseStaticFiles(); // Enable static file serving
+        app.UseMiddleware<CorrelationIdMiddleware>();
         app.UseSecurityHeaders();
         app.UseCors(env.IsDevelopment() ? "AllowAngular" : "Production");
 
@@ -352,11 +378,62 @@ public class Startup
         
         // Register SMS broker (stub — replace with real provider in production)
         services.AddTransient<ISmsBroker, StubSmsBroker>();
+
+        // Vertical-slice handlers (Bookings)
+        services.AddScoped<ICreateBookingHoldHandler, CreateBookingHoldHandler>();
+        services.AddScoped<IConfirmBookingPaymentHandler, ConfirmBookingPaymentHandler>();
+        services.AddScoped<IFinalizePaymentWebhookHandler, FinalizePaymentWebhookHandler>();
+        services.AddScoped<IMeiliPropertySearchService, MeiliPropertySearchService>();
+    }
+
+    private void AddDistributedCache(IServiceCollection services)
+    {
+        var redisConnection = this.configuration["Redis:ConnectionString"];
+        if (!string.IsNullOrWhiteSpace(redisConnection))
+        {
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = redisConnection;
+                options.InstanceName = "mulkchi:";
+            });
+            return;
+        }
+
+        services.AddDistributedMemoryCache();
+    }
+
+    private void AddBackgroundServices(IServiceCollection services)
+    {
+        services.AddHostedService<ExpiredBookingHoldCleanupService>();
+        services.AddHostedService<OutboxProcessorService>();
+    }
+
+    private void AddOpenTelemetry(IServiceCollection services)
+    {
+        services.AddOpenTelemetry()
+            .ConfigureResource(resource =>
+            {
+                resource.AddService("Mulkchi.Api");
+            })
+            .WithTracing(tracing =>
+            {
+                tracing
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddEntityFrameworkCoreInstrumentation()
+                    .AddOtlpExporter();
+            });
     }
 
     private void AddDbContext(IServiceCollection services)
     {
         var connectionString = this.configuration.GetConnectionString("DefaultConnection");
+        
+        // Fallback to hardcoded connection string if not configured
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            connectionString = "Data Source=DESKTOP-BBV4DEP;Initial Catalog=MulkchiDb;Integrated Security=True;TrustServerCertificate=true;MultipleActiveResultSets=true";
+        }
 
         services.AddDbContext<StorageBroker>(options =>
             options.UseSqlServer(connectionString));

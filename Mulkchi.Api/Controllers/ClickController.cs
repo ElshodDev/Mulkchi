@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Mulkchi.Api.Application.Payments.Webhooks;
 using Mulkchi.Api.Models.Foundations.Payments;
 using Mulkchi.Api.Services.Foundations.Payments;
 
@@ -32,17 +33,23 @@ public class ClickController : ControllerBase
     private const int ErrAlreadyPaid          = -4;
     private const int ErrTransactionCancelled = -9;
     private const int ErrInvalidAmount        = -2;
+    private static readonly TimeSpan MaxWebhookSkew = TimeSpan.FromMinutes(5);
 
     // Maximum allowed difference between Click-reported and stored amounts (UZS)
     private const double AmountToleranceUzs = 0.01;
 
     private readonly IPaymentService paymentService;
     private readonly IConfiguration configuration;
+    private readonly IFinalizePaymentWebhookHandler finalizePaymentWebhookHandler;
 
-    public ClickController(IPaymentService paymentService, IConfiguration configuration)
+    public ClickController(
+        IPaymentService paymentService,
+        IConfiguration configuration,
+        IFinalizePaymentWebhookHandler finalizePaymentWebhookHandler)
     {
         this.paymentService = paymentService;
         this.configuration = configuration;
+        this.finalizePaymentWebhookHandler = finalizePaymentWebhookHandler;
     }
 
     /// <summary>Prepare: action=0 — called before deducting funds.</summary>
@@ -154,9 +161,11 @@ public class ClickController : ControllerBase
         // 3. Cancelled by the payment system (error > 0 means user cancelled)
         if (request.Error > 0)
         {
-            payment.Status = PaymentStatus.Cancelled;
-            payment.UpdatedDate = DateTimeOffset.UtcNow;
-            await this.paymentService.ModifyPaymentAsync(payment);
+            payment = await this.finalizePaymentWebhookHandler.HandleAsync(
+                new FinalizePaymentWebhookCommand(
+                    request.ClickTransId.ToString(),
+                    PaymentMethod.Click,
+                    PaymentStatus.Cancelled));
 
             response.Error = ErrOk;
             response.ErrorNote = "Cancelled";
@@ -172,11 +181,11 @@ public class ClickController : ControllerBase
         }
 
         // 5. Complete the payment
-        payment.Status = PaymentStatus.Completed;
-        payment.IsEscrowHeld = false;
-        payment.EscrowReleasedAt = DateTimeOffset.UtcNow;
-        payment.UpdatedDate = DateTimeOffset.UtcNow;
-        await this.paymentService.ModifyPaymentAsync(payment);
+        payment = await this.finalizePaymentWebhookHandler.HandleAsync(
+            new FinalizePaymentWebhookCommand(
+                request.ClickTransId.ToString(),
+                PaymentMethod.Click,
+                PaymentStatus.Completed));
 
         response.Error = ErrOk;
         response.ErrorNote = "Success";
@@ -191,6 +200,13 @@ public class ClickController : ControllerBase
     /// </summary>
     private bool VerifySignature(ClickRequest req, bool isPrepare)
     {
+        if (!long.TryParse(req.SignTime, out var signUnix))
+            return false;
+
+        var signTime = DateTimeOffset.FromUnixTimeSeconds(signUnix);
+        if (DateTimeOffset.UtcNow - signTime > MaxWebhookSkew)
+            return false;
+
         var secretKey = this.configuration["Click:SecretKey"] ?? "";
         var raw = $"{req.ClickTransId}{req.ServiceId}{secretKey}{req.MerchantTransId}{req.Amount}{req.Action}{req.SignTime}";
         var computed = ComputeMd5(raw);

@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Mulkchi.Api.Models.Foundations.Common;
 using Mulkchi.Api.Models.Foundations.Properties;
 using Mulkchi.Api.Models.Foundations.Properties.Exceptions;
 using Mulkchi.Api.Services.Foundations.Properties;
+using Microsoft.FeatureManagement;
 using System.Threading.Tasks;
 using System;
 
@@ -14,20 +16,24 @@ namespace Mulkchi.Api.Controllers;
 public class PropertiesController : ControllerBase
 {
     private readonly IPropertyService propertyService;
+    private readonly IFeatureManagerSnapshot featureManager;
 
-    public PropertiesController(IPropertyService propertyService)
+    public PropertiesController(
+        IPropertyService propertyService,
+        IFeatureManagerSnapshot featureManager)
     {
         this.propertyService = propertyService;
+        this.featureManager = featureManager;
     }
 
     [HttpPost]
-    [Authorize(Roles = "Host,Admin")]
-    public async Task<ActionResult<PropertyResponse>> PostPropertyAsync([FromBody] PropertyCreateDto dto)
+    [Authorize] // Any authenticated user can create listings - auto-upgraded to Host role
+    public async Task<ActionResult<PropertyCreateResponse>> PostPropertyAsync([FromBody] PropertyCreateDto dto)
     {
         try
         {
-            var addedProperty = await this.propertyService.AddPropertyAsync(dto);
-            return Created($"api/properties/{addedProperty.Id}", addedProperty);
+            var response = await this.propertyService.AddPropertyWithUserUpgradeAsync(dto, User);
+            return Created($"api/properties/{response.Property.Id}", response);
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -155,6 +161,9 @@ public class PropertiesController : ControllerBase
     {
         try
         {
+            if (!await this.featureManager.IsEnabledAsync("EnableSearch"))
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "Search is temporarily disabled." });
+
             var (items, total) = await this.propertyService.SearchPropertiesAsync(searchParams);
 
             var result = new PagedResult<PropertyResponse>
@@ -243,15 +252,8 @@ public class PropertiesController : ControllerBase
     {
         try
         {
-            var property = await this.propertyService.RetrievePropertyEntityByIdAsync(id);
-            if (property is null)
-                return NotFound(new { message = $"Property with id '{id}' was not found." });
-
-            property.Status = PropertyStatus.Active;
-            property.UpdatedDate = DateTimeOffset.UtcNow;
-            await this.propertyService.ModifyPropertyAsync(property);
-
-            return Ok(new { message = "Property published successfully.", isPublished = true });
+            var response = await this.propertyService.PublishPropertyAsync(id);
+            return Ok(new { message = "Property published successfully.", isPublished = true, property = response });
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -269,15 +271,8 @@ public class PropertiesController : ControllerBase
     {
         try
         {
-            var property = await this.propertyService.RetrievePropertyEntityByIdAsync(id);
-            if (property is null)
-                return NotFound(new { message = $"Property with id '{id}' was not found." });
-
-            property.Status = PropertyStatus.Inactive;
-            property.UpdatedDate = DateTimeOffset.UtcNow;
-            await this.propertyService.ModifyPropertyAsync(property);
-
-            return Ok(new { message = "Property unpublished successfully.", isPublished = false });
+            var response = await this.propertyService.UnpublishPropertyAsync(id);
+            return Ok(new { message = "Property unpublished successfully.", isPublished = false, property = response });
         }
         catch (UnauthorizedAccessException ex)
         {

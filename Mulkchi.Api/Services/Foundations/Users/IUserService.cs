@@ -19,4 +19,10 @@ public interface IUserService
     ValueTask<IEnumerable<UserResponse>> RetrieveAllUsersAsync(); // Admin only
     ValueTask<User> ModifyUserAsync(User user);
     ValueTask<User> RemoveUserByIdAsync(Guid userId);
+    
+    /// <summary>
+    /// Automatically upgrades user to Host role when creating their first property listing.
+    /// Sets Role to Host, CurrentMode to Host, and HostSince if not already set.
+    /// </summary>
+    ValueTask<User> UpgradeToHostAsync(Guid userId);
 }

@@ -11,6 +11,11 @@ public partial class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        // Add User Secrets and Environment Variables explicitly to override appsettings
+        builder.Configuration
+            .AddUserSecrets<Program>(optional: true)
+            .AddEnvironmentVariables();
+
         // Configure Serilog
         Log.Logger = new LoggerConfiguration()
             .ReadFrom.Configuration(builder.Configuration)
@@ -21,6 +26,12 @@ public partial class Program
             .CreateLogger();
 
         builder.Host.UseSerilog();
+
+        // Configure lowercase routes for consistent API URLs
+        builder.Services.Configure<RouteOptions>(options =>
+        {
+            options.LowercaseUrls = true;
+        });
 
         var startup = new Startup(builder.Configuration);
         startup.ConfigureServices(builder.Services);
