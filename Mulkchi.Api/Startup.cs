@@ -262,16 +262,14 @@ public class Startup
 
     private void AddJwtAuthentication(IServiceCollection services)
     {
-        var jwtSettings = this.configuration.GetSection("JwtSettings");
-        var secret = jwtSettings["Secret"];
+        var jwtSecret = Environment.GetEnvironmentVariable("MULKCHI_JWT_SECRET")
+            ?? this.configuration["JwtSettings:Secret"];
 
-        if (string.IsNullOrWhiteSpace(secret))
+        if (string.IsNullOrWhiteSpace(jwtSecret))
             throw new InvalidOperationException(
-                "JwtSettings:Secret is not configured or is empty. " +
-                "Set a strong random secret via an environment variable (MULKCHI_JWT_SECRET), " +
-                "User Secrets (dotnet user-secrets), or a secrets manager.");
+                "JWT Secret is not configured. Set the MULKCHI_JWT_SECRET environment variable or Jwt:Secret in appsettings.");
 
-        var key = Encoding.UTF8.GetBytes(secret);
+        var key = Encoding.UTF8.GetBytes(jwtSecret);
 
         services.AddAuthentication(options =>
         {
@@ -285,9 +283,9 @@ public class Startup
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(key),
                 ValidateIssuer = true,
-                ValidIssuer = jwtSettings["Issuer"],
+                ValidIssuer = this.configuration["JwtSettings:Issuer"],
                 ValidateAudience = true,
-                ValidAudience = jwtSettings["Audience"],
+                ValidAudience = this.configuration["JwtSettings:Audience"],
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero
             };
