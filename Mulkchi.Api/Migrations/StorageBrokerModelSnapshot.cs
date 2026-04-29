@@ -359,6 +359,8 @@ namespace Mulkchi.Api.Migrations
 
                     b.HasIndex("Status");
 
+                    b.HasIndex("PropertyId", "CheckInDate", "CheckOutDate", "Status");
+
                     b.ToTable("Bookings");
                 });
 
@@ -801,6 +803,42 @@ namespace Mulkchi.Api.Migrations
                     b.ToTable("Notifications");
                 });
 
+            modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Outbox.OutboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("LastError")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("ProcessedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedDate");
+
+                    b.HasIndex("ProcessedDate");
+
+                    b.ToTable("OutboxMessages");
+                });
+
             modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Payments.Payment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -810,6 +848,9 @@ namespace Mulkchi.Api.Migrations
                     b.Property<decimal>("Amount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid?>("BookingId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("ContractId")
                         .HasColumnType("uniqueidentifier");
@@ -824,7 +865,7 @@ namespace Mulkchi.Api.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("ExternalTransactionId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<Guid?>("HomeRequestId")
                         .HasColumnType("uniqueidentifier");
@@ -834,7 +875,8 @@ namespace Mulkchi.Api.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("IdempotencyKey")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<bool>("IsEscrowHeld")
                         .HasColumnType("bit");
@@ -865,6 +907,12 @@ namespace Mulkchi.Api.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("ExternalTransactionId")
+                        .IsUnique()
+                        .HasFilter("[ExternalTransactionId] IS NOT NULL");
 
                     b.HasIndex("IdempotencyKey")
                         .IsUnique()

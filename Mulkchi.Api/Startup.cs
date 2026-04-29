@@ -103,18 +103,21 @@ public class Startup
         AddBrokers(services);
         AddFoundationServices(services);
         AddBackgroundServices(services);
-        var redisConnection = this.configuration["Redis:ConnectionString"];
+        // Check for Redis connection: MULKCHI_REDIS_URL env var takes priority, then Redis:ConnectionString
+        var redisConnection = Environment.GetEnvironmentVariable("MULKCHI_REDIS_URL")
+            ?? this.configuration["Redis:ConnectionString"];
 
         var signalRBuilder = services.AddSignalR(options =>
         {
             // WebSocket-specific settings
-            options.EnableDetailedErrors = true;
-            options.MaximumReceiveMessageSize = 32 * 1024; // 32KB max message size
+            options.EnableDetailedErrors = env.IsDevelopment();
+            options.MaximumReceiveMessageSize = 64 * 1024; // 64KB max message size
             options.StreamBufferCapacity = 10;
             
-            // Connection timeout settings
-            options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
-            options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+            // Connection timeout settings - increased to prevent 1011 errors
+            options.ClientTimeoutInterval = TimeSpan.FromSeconds(120); // Increased from 60s
+            options.KeepAliveInterval = TimeSpan.FromSeconds(30); // Increased from 15s
+            options.HandshakeTimeout = TimeSpan.FromSeconds(30);
         });
 
         if (!string.IsNullOrWhiteSpace(redisConnection))
@@ -386,7 +389,9 @@ public class Startup
 
     private void AddDistributedCache(IServiceCollection services)
     {
-        var redisConnection = this.configuration["Redis:ConnectionString"];
+        // Check for Redis connection: MULKCHI_REDIS_URL env var takes priority, then Redis:ConnectionString
+        var redisConnection = Environment.GetEnvironmentVariable("MULKCHI_REDIS_URL")
+            ?? this.configuration["Redis:ConnectionString"];
         if (!string.IsNullOrWhiteSpace(redisConnection))
         {
             services.AddStackExchangeRedisCache(options =>

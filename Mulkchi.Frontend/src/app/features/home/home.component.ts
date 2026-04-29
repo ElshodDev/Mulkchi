@@ -1685,34 +1685,6 @@ export class HomeComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadFeaturedProperties();
-    this.checkModeSwitchRequired();
-  }
-
-  private checkModeSwitchRequired(): void {
-    const modeSwitchRequired = this.route.snapshot.queryParams['modeSwitchRequired'];
-    const returnUrl = this.route.snapshot.queryParams['returnUrl'];
-    
-    if (modeSwitchRequired) {
-      // Show snackbar with action to switch to Host mode
-      const snackBarRef = this.snackBar.open(
-        'E\'lon joylash uchun Host rejimga o\'tishingiz kerak',
-        'Host rejimga o\'tish',
-        { duration: 10000, horizontalPosition: 'center', verticalPosition: 'bottom' }
-      );
-      
-      snackBarRef.onAction().subscribe(() => {
-        // Switch to Host mode and navigate to the original URL
-        this.authService.switchMode({ TargetMode: UserRole.Host }).subscribe({
-          next: () => {
-            const targetUrl = returnUrl || '/host/dashboard';
-            this.router.navigate([targetUrl]);
-          },
-          error: () => {
-            this.snackBar.open('Rejim almashtirishda xatolik yuz berdi', 'Yopish', { duration: 3000 });
-          }
-        });
-      });
-    }
   }
 
   onSearch(): void {

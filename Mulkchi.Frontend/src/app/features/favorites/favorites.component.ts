@@ -121,10 +121,11 @@ import { Property } from '../../core/models';
       font-size: 2rem;
       font-weight: 600;
       margin-bottom: 8px;
+      color: #1a1a2e;
     }
 
     .page-header p {
-      color: #666;
+      color: #444444;
     }
 
     .loading-container,

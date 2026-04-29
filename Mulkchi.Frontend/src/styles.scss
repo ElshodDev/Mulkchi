@@ -290,3 +290,61 @@ a {
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+// ==========================================
+// Text Readability Fixes
+// ==========================================
+
+// Fix placeholder text color to be darker and more readable
+::placeholder {
+  color: #555555 !important;
+  opacity: 1 !important;
+}
+
+::-webkit-input-placeholder {
+  color: #555555 !important;
+  opacity: 1 !important;
+}
+
+::-moz-placeholder {
+  color: #555555 !important;
+  opacity: 1 !important;
+}
+
+:-ms-input-placeholder {
+  color: #555555 !important;
+  opacity: 1 !important;
+}
+
+// Fix Material form field placeholder and label colors
+.mat-mdc-form-field {
+  .mdc-text-field--outlined .mdc-floating-label {
+    color: #444444 !important;
+  }
+
+  .mat-mdc-input-element::placeholder {
+    color: #555555 !important;
+    opacity: 1 !important;
+  }
+}
+
+// Fix page headers and titles for better contrast
+.page-header {
+  h1, h2, h3 {
+    color: #1a1a2e !important;
+  }
+
+  p {
+    color: #444444 !important;
+  }
+}
+
+// Fix form labels
+.mat-mdc-form-field .mat-mdc-floating-label {
+  color: #333333 !important;
+}
+
+// Ensure all headings are dark enough
+h1, h2, h3, h4, h5, h6 {
+  color: #1a1a2e;
+}
