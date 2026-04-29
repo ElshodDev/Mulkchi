@@ -15,6 +15,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PropertyService } from '../../../core/services/property.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Property, PropertyType, PropertyCategory, ListingType, UzbekistanRegion } from '../../../core/models';
+import { ImageUploadComponent, UploadedImage } from '../../../shared/components/image-upload/image-upload.component';
 
 @Component({
   selector: 'app-property-form',
@@ -31,7 +32,8 @@ import { Property, PropertyType, PropertyCategory, ListingType, UzbekistanRegion
     MatCheckboxModule,
     MatStepperModule,
     MatChipsModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    ImageUploadComponent
   ],
   template: `
     <div class="property-form-container">
@@ -255,12 +257,10 @@ import { Property, PropertyType, PropertyCategory, ListingType, UzbekistanRegion
                   </div>
 
                   <div class="photo-upload-section">
-                    <h3>Rasmlar</h3>
-                    <div class="upload-area" (click)="uploadPhotos()">
-                      <mat-icon>cloud_upload</mat-icon>
-                      <p>Rasmlarni yuklang</p>
-                      <span>Yoki shu yerga olib keling</span>
-                    </div>
+                    <app-image-upload 
+                      (imagesChange)="onImagesChange($event)"
+                      (imageUpload)="onImageUpload($event)">
+                    </app-image-upload>
                   </div>
 
                   <div class="step-actions">
@@ -702,7 +702,20 @@ export class PropertyFormComponent implements OnInit {
     }
   }
 
+  // Image handling
+  selectedImages = signal<UploadedImage[]>([]);
+
+  onImagesChange(images: UploadedImage[]): void {
+    this.selectedImages.set(images);
+  }
+
+  onImageUpload(image: UploadedImage): void {
+    // Image is ready for upload when form is submitted
+    console.log('Image selected:', image.file.name);
+  }
+
   uploadPhotos(): void {
-    this.snackBar.open('Rasm yuklash funksiyasi tez orada qo\'shiladi', 'Yopish', { duration: 3000 });
+    // This method is now handled by the image upload component
+    console.log('Using image upload component instead');
   }
 }
