@@ -100,6 +100,13 @@ namespace Mulkchi.Api.Controllers
         {
             try
             {
+                // Check if user is in Guest role and provide helpful error message
+                var userRole = User.FindFirstValue(ClaimTypes.Role);
+                if (userRole == "Guest")
+                {
+                    return Forbid(); // Returns 403 with clear indication that role upgrade is needed
+                }
+
                 queryParams.IsHostView = true; // Tell service to filter by Host
                 
                 var (items, total) = await this.bookingService.RetrieveBookingsAsync(queryParams);
