@@ -1,5 +1,3 @@
-#nullable disable
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -282,7 +280,7 @@ public class PaymeController : ControllerBase
         return decoded == $"Paycom:{merchantKey}";
     }
 
-    private async Task<Payment> FindByExternalIdAsync(string externalId)
+    private async Task<Payment?> FindByExternalIdAsync(string externalId)
     {
         return await this.paymentService.RetrieveAllPayments()
             .FirstOrDefaultAsync(p => p.ExternalTransactionId == externalId);
@@ -335,5 +333,5 @@ public class PaymeError
 {
     [JsonPropertyName("code")]    public int    Code    { get; set; }
     [JsonPropertyName("message")] public string Message { get; set; }
-    [JsonPropertyName("data")]    public object Data    { get; set; }
+    [JsonPropertyName("data")]    public object? Data    { get; set; }
 }
