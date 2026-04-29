@@ -15,6 +15,7 @@ using System;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Mulkchi.Api.Controllers;
 
@@ -30,6 +31,7 @@ public class AnalyticsController : ControllerBase
     private readonly IPaymentService paymentService;
     private readonly IDiscountService discountService;
     private readonly IAiRecommendationService aiRecommendationService;
+    private readonly ILogger<AnalyticsController> _logger;
 
     public AnalyticsController(
         IAnalyticsService analyticsService,
@@ -39,7 +41,8 @@ public class AnalyticsController : ControllerBase
         IUserService userService,
         IPaymentService paymentService,
         IDiscountService discountService,
-        IAiRecommendationService aiRecommendationService)
+        IAiRecommendationService aiRecommendationService,
+        ILogger<AnalyticsController> logger)
     {
         this.analyticsService = analyticsService;
         this.priceRecommendationService = priceRecommendationService;
@@ -49,6 +52,7 @@ public class AnalyticsController : ControllerBase
         this.paymentService = paymentService;
         this.discountService = discountService;
         this.aiRecommendationService = aiRecommendationService;
+        _logger = logger;
     }
 
     [HttpGet("dashboard")]
@@ -252,8 +256,9 @@ public class AnalyticsController : ControllerBase
 
             return Ok(dashboard);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AnalyticsController), nameof(GetDashboard));
             return StatusCode(500, new { message = "Internal server error." });
         }
     }
@@ -284,8 +289,9 @@ public class AnalyticsController : ControllerBase
 
             return File(bytes, contentType, $"analytics-{type}.{extension}");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AnalyticsController), nameof(ExportDashboard));
             return StatusCode(500, new { message = "Internal server error." });
         }
     }
@@ -299,8 +305,9 @@ public class AnalyticsController : ControllerBase
             var overview = await this.analyticsService.GetMarketOverviewAsync();
             return Ok(overview);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AnalyticsController), nameof(GetMarketOverview));
             return StatusCode(500, new { message = "Internal server error." });
         }
     }
@@ -314,8 +321,9 @@ public class AnalyticsController : ControllerBase
             var regionData = await this.analyticsService.GetAnalyticsByRegionAsync();
             return Ok(regionData);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AnalyticsController), nameof(GetAnalyticsByRegion));
             return StatusCode(500, new { message = "Internal server error." });
         }
     }
@@ -329,8 +337,9 @@ public class AnalyticsController : ControllerBase
             var trends = await this.analyticsService.GetPriceTrendsAsync();
             return Ok(trends);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AnalyticsController), nameof(GetPriceTrends));
             return StatusCode(500, new { message = "Internal server error." });
         }
     }
@@ -344,8 +353,9 @@ public class AnalyticsController : ControllerBase
             var districtData = await this.analyticsService.GetAnalyticsByDistrictAsync();
             return Ok(districtData);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AnalyticsController), nameof(GetAnalyticsByDistrict));
             return StatusCode(500, new { message = "Internal server error." });
         }
     }
@@ -359,8 +369,9 @@ public class AnalyticsController : ControllerBase
             var priceRanges = await this.analyticsService.GetDistrictPriceRangesAsync();
             return Ok(priceRanges);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AnalyticsController), nameof(GetDistrictPriceRanges));
             return StatusCode(500, new { message = "Internal server error." });
         }
     }
@@ -374,8 +385,9 @@ public class AnalyticsController : ControllerBase
             var accuracy = await this.analyticsService.GetAiRecommendationAccuracyAsync();
             return Ok(accuracy);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AnalyticsController), nameof(GetAiRecommendationAccuracy));
             return StatusCode(500, new { message = "Internal server error." });
         }
     }
@@ -388,8 +400,9 @@ public class AnalyticsController : ControllerBase
             var heatmap = await this.analyticsService.GetPropertyPriceHeatmapAsync();
             return Ok(heatmap);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AnalyticsController), nameof(GetPropertyPriceHeatmap));
             return StatusCode(500, new { message = "Internal server error." });
         }
     }
@@ -402,8 +415,9 @@ public class AnalyticsController : ControllerBase
             var prediction = await this.priceRecommendationService.PredictPriceAsync(request);
             return Ok(prediction);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AnalyticsController), nameof(PredictPrice));
             return StatusCode(500, new { message = "Internal server error." });
         }
     }
@@ -417,8 +431,9 @@ public class AnalyticsController : ControllerBase
             await this.priceRecommendationService.TrainModelAsync();
             return Ok(new { message = "Model training completed successfully" });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AnalyticsController), nameof(TrainModel));
             return StatusCode(500, new { message = "Internal server error." });
         }
     }
@@ -439,8 +454,9 @@ public class AnalyticsController : ControllerBase
                 needsTraining = trainingDataCount >= 10 && !isTrained
             });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AnalyticsController), nameof(GetModelStatus));
             return StatusCode(500, new { message = "Internal server error." });
         }
     }

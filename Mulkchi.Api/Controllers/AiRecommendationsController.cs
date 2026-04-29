@@ -10,6 +10,7 @@ using Mulkchi.Api.Services.Foundations.AiRecommendations;
 using Mulkchi.Api.Services.Foundations.AI;
 using Microsoft.FeatureManagement;
 using System.Security.Claims;
+using Microsoft.Extensions.Logging;
 
 namespace Mulkchi.Api.Controllers;
 
@@ -19,13 +20,16 @@ public class AiRecommendationsController : ControllerBase
 {
     private readonly IAiRecommendationService aiRecommendationService;
     private readonly IFeatureManagerSnapshot featureManager;
+    private readonly ILogger<AiRecommendationsController> _logger;
 
     public AiRecommendationsController(
         IAiRecommendationService aiRecommendationService,
-        IFeatureManagerSnapshot featureManager)
+        IFeatureManagerSnapshot featureManager,
+        ILogger<AiRecommendationsController> logger)
     {
         this.aiRecommendationService = aiRecommendationService;
         this.featureManager = featureManager;
+        _logger = logger;
     }
 
     [HttpPost]
@@ -37,8 +41,9 @@ public class AiRecommendationsController : ControllerBase
             AiRecommendation addedAiRecommendation = await this.aiRecommendationService.AddAiRecommendationAsync(aiRecommendation);
             return Created("aiRecommendation", addedAiRecommendation);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AiRecommendationsController), nameof(PostAiRecommendationAsync));
             return Ok(Array.Empty<AiRecommendation>());
         }
     }
@@ -67,8 +72,9 @@ public class AiRecommendationsController : ControllerBase
 
             return Ok(result);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AiRecommendationsController), nameof(GetAllAiRecommendations));
             return Ok(Array.Empty<AiRecommendation>());
         }
     }
@@ -95,8 +101,9 @@ public class AiRecommendationsController : ControllerBase
         {
             return BadRequest(new { message = aiRecommendationDependencyValidationException.InnerException?.Message ?? "An error occurred." });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AiRecommendationsController), nameof(GetAiRecommendationByIdAsync));
             return Ok(Array.Empty<AiRecommendation>());
         }
     }
@@ -142,8 +149,9 @@ public class AiRecommendationsController : ControllerBase
         {
             return BadRequest(new { message = aiRecommendationDependencyValidationException.InnerException?.Message ?? "An error occurred." });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AiRecommendationsController), nameof(PutAiRecommendationAsync));
             return Ok(Array.Empty<AiRecommendation>());
         }
     }
@@ -189,8 +197,9 @@ public class AiRecommendationsController : ControllerBase
         {
             return BadRequest(new { message = aiRecommendationDependencyValidationException.InnerException?.Message ?? "An error occurred." });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AiRecommendationsController), nameof(DeleteAiRecommendationByIdAsync));
             return Ok(Array.Empty<AiRecommendation>());
         }
     }
@@ -218,8 +227,9 @@ public class AiRecommendationsController : ControllerBase
 
             return Ok(recommendations);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AiRecommendationsController), nameof(GetHybridRecommendationsAsync));
             // Return empty array instead of 500 error
             return Ok(Array.Empty<HybridRecommendationResponse>());
         }
@@ -244,8 +254,9 @@ public class AiRecommendationsController : ControllerBase
 
             return Ok(recommendations);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AiRecommendationsController), nameof(GetSimilarPropertiesAsync));
             // Return empty array instead of 500 error
             return Ok(Array.Empty<PropertyResponse>());
         }
@@ -273,8 +284,9 @@ public class AiRecommendationsController : ControllerBase
 
             return Ok(userRecommendations);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AiRecommendationsController), nameof(GetRecommendationsAsync));
             return Ok(Array.Empty<AiRecommendation>());
         }
     }
