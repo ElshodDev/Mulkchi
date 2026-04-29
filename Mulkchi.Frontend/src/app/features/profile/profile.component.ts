@@ -176,7 +176,7 @@ import { Gender, UserRole, User, HostBadge } from '../../core/models';
 
                           <mat-form-field appearance="outline">
                             <mat-label>Jins</mat-label>
-                            <mat-select formControlName="gender" [disabled]="!isEditing()">
+                            <mat-select formControlName="gender" [attr.disabled]="!isEditing() || null">
                               <mat-option [value]="'Male'">Erkak</mat-option>
                               <mat-option [value]="'Female'">Ayol</mat-option>
                               <mat-option [value]="'Other'">Boshqa</mat-option>
