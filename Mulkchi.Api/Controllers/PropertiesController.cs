@@ -60,10 +60,18 @@ public class PropertiesController : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
-    public async Task<ActionResult<PagedResult<PropertyResponse>>> GetAllProperties([FromQuery] PropertyQueryParams queryParams)
+    public async Task<ActionResult<PagedResult<PropertyResponse>>> GetAllProperties([FromQuery] PropertyQueryParams? queryParams)
     {
         try
         {
+            // Ensure queryParams is not null with defaults
+            queryParams ??= new PropertyQueryParams { Page = 1, PageSize = 20 };
+            
+            // Validate page parameters
+            if (queryParams.Page < 1) queryParams.Page = 1;
+            if (queryParams.PageSize < 1) queryParams.PageSize = 20;
+            if (queryParams.PageSize > 100) queryParams.PageSize = 100; // Max limit
+            
             var (items, total) = await this.propertyService.RetrieveAllPropertiesAsync(queryParams);
 
             var result = new PagedResult<PropertyResponse>
