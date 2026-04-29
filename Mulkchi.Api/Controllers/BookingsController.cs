@@ -1,5 +1,3 @@
-#nullable disable
-
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,6 +11,7 @@ using Mulkchi.Api.Application.Bookings.CreateHold;
 using Mulkchi.Api.Models.Foundations.Bookings;
 using Mulkchi.Api.Models.Foundations.Common;
 using Mulkchi.Api.Services.Foundations.Bookings;
+using Microsoft.Extensions.Logging;
 
 namespace Mulkchi.Api.Controllers
 {
@@ -23,15 +22,18 @@ namespace Mulkchi.Api.Controllers
         private readonly IBookingService bookingService;
         private readonly ICreateBookingHoldHandler createBookingHoldHandler;
         private readonly IConfirmBookingPaymentHandler confirmBookingPaymentHandler;
+        private readonly ILogger<BookingsController> _logger;
 
         public BookingsController(
             IBookingService bookingService,
             ICreateBookingHoldHandler createBookingHoldHandler,
-            IConfirmBookingPaymentHandler confirmBookingPaymentHandler)
+            IConfirmBookingPaymentHandler confirmBookingPaymentHandler,
+            ILogger<BookingsController> logger)
         {
             this.bookingService = bookingService;
             this.createBookingHoldHandler = createBookingHoldHandler;
             this.confirmBookingPaymentHandler = confirmBookingPaymentHandler;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -53,8 +55,9 @@ namespace Mulkchi.Api.Controllers
 
                 return Ok(result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(BookingsController), nameof(GetMyBookings));
                 return StatusCode(500, new { message = "Internal server error." });
             }
         }
@@ -84,8 +87,9 @@ namespace Mulkchi.Api.Controllers
 
                 return Ok(result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(BookingsController), nameof(GetMyBookings));
                 return StatusCode(500, new { message = "Internal server error." });
             }
         }
@@ -110,8 +114,9 @@ namespace Mulkchi.Api.Controllers
 
                 return Ok(result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(BookingsController), nameof(GetHostBookings));
                 return StatusCode(500, new { message = "Internal server error." });
             }
         }
@@ -129,8 +134,9 @@ namespace Mulkchi.Api.Controllers
             {
                 return Unauthorized(new { message = ex.Message });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(BookingsController), nameof(GetBookingByIdAsync));
                 return StatusCode(500, new { message = "Internal server error." });
             }
         }
@@ -148,8 +154,9 @@ namespace Mulkchi.Api.Controllers
             {
                 return Unauthorized(new { message = ex.Message });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(BookingsController), nameof(PostBookingAsync));
                 return StatusCode(500, new { message = "Internal server error." });
             }
         }
@@ -171,8 +178,9 @@ namespace Mulkchi.Api.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(BookingsController), nameof(ConfirmBookingAsync));
                 return StatusCode(500, new { message = "Internal server error." });
             }
         }
@@ -190,8 +198,9 @@ namespace Mulkchi.Api.Controllers
             {
                 return Unauthorized(new { message = ex.Message });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(BookingsController), nameof(CancelBookingAsync));
                 return StatusCode(500, new { message = "Internal server error." });
             }
         }
@@ -205,8 +214,9 @@ namespace Mulkchi.Api.Controllers
                 Booking modifiedBooking = await this.bookingService.ModifyBookingAsync(booking);
                 return Ok(modifiedBooking);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(BookingsController), nameof(PutBookingAsync));
                 return StatusCode(500, new { message = "Internal server error." });
             }
         }
@@ -220,8 +230,9 @@ namespace Mulkchi.Api.Controllers
                 Booking deletedBooking = await this.bookingService.RemoveBookingAsync(id);
                 return Ok(deletedBooking);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(BookingsController), nameof(DeleteBookingAsync));
                 return StatusCode(500, new { message = "Internal server error." });
             }
         }
@@ -240,8 +251,9 @@ namespace Mulkchi.Api.Controllers
 
                 return Ok(new { propertyId, year, month, blockedDates = blockedStrings });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(BookingsController), nameof(GetPropertyAvailability));
                 return StatusCode(500, new { message = "Internal server error." });
             }
         }
@@ -280,8 +292,9 @@ namespace Mulkchi.Api.Controllers
             {
                 return Conflict(new { message = ex.Message });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(BookingsController), nameof(ConfirmBookingPayment));
                 return StatusCode(500, new { message = "Internal server error." });
             }
         }
@@ -314,8 +327,9 @@ namespace Mulkchi.Api.Controllers
             {
                 return Conflict(new { message = ex.Message });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(BookingsController), nameof(ConfirmBookingPayment));
                 return StatusCode(500, new { message = "Internal server error." });
             }
         }
@@ -333,8 +347,9 @@ namespace Mulkchi.Api.Controllers
             {
                 return Unauthorized(new { message = ex.Message });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(BookingsController), nameof(ReleaseBookingHold));
                 return StatusCode(500, new { message = "Internal server error." });
             }
         }
