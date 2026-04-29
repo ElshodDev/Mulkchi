@@ -101,7 +101,10 @@ import { forkJoin } from 'rxjs';
                 </div>
                 <div class="stat-info">
                   <span class="label">Eng faol shahar</span>
-                  <span class="value">{{ overview()?.mostActiveCity || 'Toshkent' }}</span>
+                  <span class="value">{{ overview()?.topCity || overview()?.mostActiveCity || 'Toshkent' }}</span>
+                  @if (overview()?.topCityCount) {
+                    <small class="count">({{ overview()?.topCityCount }} e'lon)</small>
+                  }
                 </div>
               </mat-card-content>
             </mat-card>
@@ -114,6 +117,12 @@ import { forkJoin } from 'rxjs';
                 <div class="stat-info">
                   <span class="label">Bugungi yangi e'lonlar</span>
                   <span class="value">+{{ overview()?.newListingsToday || 0 }}</span>
+                  @if (overview()?.priceChangePercent !== undefined) {
+                    <small class="trend" [class.up]="(overview()?.priceChangePercent || 0) > 0" [class.down]="(overview()?.priceChangePercent || 0) < 0">
+                      {{ (overview()?.priceChangePercent || 0) > 0 ? '+' : '' }}{{ overview()?.priceChangePercent }}%
+                      <mat-icon>{{ (overview()?.priceChangePercent || 0) > 0 ? 'trending_up' : (overview()?.priceChangePercent || 0) < 0 ? 'trending_down' : 'trending_flat' }}</mat-icon>
+                    </small>
+                  }
                 </div>
               </mat-card-content>
             </mat-card>
@@ -416,6 +425,32 @@ import { forkJoin } from 'rxjs';
       color: #1e293b;
     }
 
+    .stat-info .count {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+
+    .stat-info .trend {
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .stat-info .trend.up {
+      color: #10b981;
+    }
+
+    .stat-info .trend.down {
+      color: #ef4444;
+    }
+
+    .stat-info .trend mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+
     .charts-grid {
       display: grid;
       grid-template-columns: 2fr 1fr;
@@ -669,10 +704,6 @@ export class MarketAnalyticsComponent implements OnInit, AfterViewInit {
   loadData(): void {
     this.loading.set(true);
     
-    // Set timestamp
-    const now = new Date();
-    this.lastUpdated.set(`${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`);
-    
     forkJoin({
       overview: this.analyticsService.getMarketOverview(),
       regions: this.analyticsService.getAnalyticsByRegion(),
@@ -684,6 +715,16 @@ export class MarketAnalyticsComponent implements OnInit, AfterViewInit {
         this.regionData.set(data.regions);
         this.priceTrends.set(data.trends);
         this.districtData.set(data.districts);
+        
+        // Use backend lastUpdated or fallback to current time
+        const backendTime = data.overview?.lastUpdated;
+        if (backendTime) {
+          const date = new Date(backendTime);
+          this.lastUpdated.set(`${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`);
+        } else {
+          const now = new Date();
+          this.lastUpdated.set(`${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`);
+        }
         
         // Mock property type data
         this.propertyTypeData.set([

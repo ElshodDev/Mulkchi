@@ -19,6 +19,9 @@ public class AnalyticsService : IAnalyticsService
 
     public async Task<object> GetMarketOverviewAsync()
     {
+        var today = System.DateTimeOffset.UtcNow.Date;
+        var yesterday = today.AddDays(-1);
+        
         var properties = this.storageBroker.Properties
             .Where(p => !p.DeletedDate.HasValue)
             .AsQueryable();
@@ -36,13 +39,55 @@ public class AnalyticsService : IAnalyticsService
             .Where(p => p.MonthlyRent.HasValue && p.MonthlyRent > 0)
             .AverageAsync(p => (decimal?)p.MonthlyRent) ?? 0;
 
+        // Bugungi yangi e'lonlar
+        var newListingsToday = await properties
+            .CountAsync(p => p.CreatedDate.Date == today);
+
+        // Kechagi yangi e'lonlar (taqqoslash uchun)
+        var newListingsYesterday = await properties
+            .CountAsync(p => p.CreatedDate.Date == yesterday);
+
+        // Oxirgi 7 kunlik o'rtacha
+        var lastWeek = today.AddDays(-7);
+        var avgNewListingsPerDay = await properties
+            .Where(p => p.CreatedDate.Date >= lastWeek && p.CreatedDate.Date < today)
+            .GroupBy(p => p.CreatedDate.Date)
+            .Select(g => g.Count())
+            .AverageAsync();
+
+        // Eng faol shahar
+        var topCity = await properties
+            .GroupBy(p => p.City)
+            .Select(g => new { City = g.Key, Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .FirstOrDefaultAsync();
+
+        // Oylik o'rtacha kvadrat metr narxi
+        var averagePricePerSqm = await properties
+            .Where(p => p.SalePrice.HasValue && p.SalePrice > 0 && p.Area > 0)
+            .Select(p => p.SalePrice.Value / (decimal)p.Area)
+            .AverageAsync();
+
+        // Sotish va ijara narxlarining o'rtacha farqi
+        var priceChangePercent = newListingsYesterday > 0 
+            ? ((double)(newListingsToday - newListingsYesterday) / newListingsYesterday * 100)
+            : 0;
+
         return new
         {
             totalListings,
             totalForSale,
             totalForRent,
             averageSalePrice,
-            averageRentPrice
+            averageRentPrice,
+            newListingsToday,
+            newListingsYesterday,
+            avgNewListingsPerDay = Math.Round(avgNewListingsPerDay, 1),
+            topCity = topCity?.City ?? "Toshkent",
+            topCityCount = topCity?.Count ?? 0,
+            averagePricePerSqm = Math.Round(averagePricePerSqm, 2),
+            priceChangePercent = Math.Round(priceChangePercent, 1),
+            lastUpdated = System.DateTimeOffset.UtcNow
         };
     }
 
