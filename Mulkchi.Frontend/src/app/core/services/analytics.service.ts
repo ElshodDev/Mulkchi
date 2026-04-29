@@ -11,6 +11,13 @@ export interface MarketOverview {
   averageRentPrice: number;
   mostActiveCity?: string;
   newListingsToday?: number;
+  topCity?: string;
+  topCityCount?: number;
+  newListingsYesterday?: number;
+  avgNewListingsPerDay?: number;
+  averagePricePerSqm?: number;
+  priceChangePercent?: number;
+  lastUpdated?: string;
 }
 
 export interface RegionAnalytics {

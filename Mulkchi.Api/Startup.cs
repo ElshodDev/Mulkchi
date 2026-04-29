@@ -57,10 +57,12 @@ namespace Mulkchi.Api;
 public class Startup
 {
     private readonly IConfiguration configuration;
+    private readonly IWebHostEnvironment environment;
 
-    public Startup(IConfiguration configuration)
+    public Startup(IConfiguration configuration, IWebHostEnvironment environment)
     {
         this.configuration = configuration;
+        this.environment = environment;
     }
 
     public void ConfigureServices(IServiceCollection services)
@@ -110,7 +112,7 @@ public class Startup
         var signalRBuilder = services.AddSignalR(options =>
         {
             // WebSocket-specific settings
-            options.EnableDetailedErrors = env.IsDevelopment();
+            options.EnableDetailedErrors = this.environment.IsDevelopment();
             options.MaximumReceiveMessageSize = 64 * 1024; // 64KB max message size
             options.StreamBufferCapacity = 10;
             
