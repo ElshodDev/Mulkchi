@@ -28,9 +28,7 @@ export const hostGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
   }
   
   // User is authenticated but not in Host mode
-  // Show a dialog or redirect to mode switch page
-  // For now, allow them to access but they'll see a mode switch prompt
-  // Alternatively, redirect to home with a message
-  router.navigate(['/'], { queryParams: { modeSwitchRequired: 'true', returnUrl: route.url.map(segment => segment.path).join('/') } });
+  // Redirect to home page
+  router.navigate(['/']);
   return false;
 };

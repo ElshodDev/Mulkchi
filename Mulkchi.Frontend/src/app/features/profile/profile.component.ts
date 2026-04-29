@@ -259,42 +259,6 @@ import { Gender, UserRole, User, HostBadge } from '../../core/models';
 
                       <mat-divider class="section-divider"></mat-divider>
 
-                      <h3>Foydalanuvchi rejimi</h3>
-                      
-                      <div class="mode-switch-section">
-                        <p class="mode-description">
-                          Hozirgi rejim: <strong>{{ getCurrentModeLabel() }}</strong>
-                        </p>
-                        @if (currentUser()?.role === 'Guest') {
-                          <button 
-                            mat-raised-button
-                            class="host-mode-btn"
-                            (click)="switchToHostMode()"
-                            [disabled]="isSwitchingMode()">
-                            @if (isSwitchingMode()) {
-                              <mat-progress-spinner diameter="20" class="inline-spinner"></mat-progress-spinner>
-                              <span>O'tilmoqda...</span>
-                            } @else {
-                              <ng-container>
-                                <mat-icon>switch_account</mat-icon>
-                                <span>Host rejimga o'tish</span>
-                              </ng-container>
-                            }
-                          </button>
-                          <p class="mode-hint">E'lon joylashtirish uchun Host rejimga o'ting</p>
-                        }
-                        @if (currentUser()?.role === 'Host') {
-                          <button 
-                            mat-stroked-button
-                            (click)="navigateToHostDashboard()">
-                            <mat-icon>dashboard</mat-icon>
-                            <span>Host boshqaruv paneli</span>
-                          </button>
-                        }
-                      </div>
-
-                      <mat-divider class="section-divider"></mat-divider>
-
                       <h3>Bildirishnomalar</h3>
                       
                       <div class="notification-settings">
@@ -388,7 +352,7 @@ import { Gender, UserRole, User, HostBadge } from '../../core/models';
     }
 
     .profile-header p {
-      color: var(--color-gray-500);
+      color: #444444;
       font-size: 1.125rem;
       margin: 0;
     }
@@ -761,40 +725,6 @@ import { Gender, UserRole, User, HostBadge } from '../../core/models';
       color: var(--color-navy);
     }
 
-    /* ===== Mode Switch Section ===== */
-    .mode-switch-section {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      padding: 16px 0;
-    }
-
-    .mode-description {
-      font-size: 1rem;
-      color: var(--color-gray-800);
-      margin: 0;
-      font-weight: 500;
-    }
-
-    .mode-hint {
-      font-size: 0.875rem;
-      color: var(--color-gray-500);
-      margin: 8px 0 0 0;
-    }
-
-    ::ng-deep .mode-switch-section .mat-mdc-raised-button {
-      background: var(--color-navy) !important;
-      color: var(--color-white) !important;
-      border-radius: var(--radius) !important;
-      transition: all 0.3s ease;
-    }
-
-    ::ng-deep .mode-switch-section .mat-mdc-raised-button:hover:not([disabled]) {
-      background: var(--color-navy-light) !important;
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-lg);
-    }
-
     /* ===== Responsive Design ===== */
     @media (max-width: 1024px) {
       .profile-content {
@@ -891,7 +821,6 @@ export class ProfileComponent implements OnInit {
   isEditing = signal(false);
   isSaving = signal(false);
   isChangingPassword = signal(false);
-  isSwitchingMode = signal(false);
   selectedLanguage = signal(this.currentUser()?.preferredLanguage || 'uz');
 
   Gender = Gender;
@@ -1016,44 +945,6 @@ export class ProfileComponent implements OnInit {
       [HostBadge.Legend]: 'Afsona'
     };
     return labels[badge] || badge;
-  }
-
-  getCurrentModeLabel(): string {
-    const role = this.currentUser()?.role;
-    const labels: Record<string, string> = {
-      'Guest': 'Mehmon (Guest)',
-      'Host': 'Uy egasi (Host)',
-      'Admin': 'Administrator'
-    };
-    return labels[role || ''] || role || 'Noma\'lum';
-  }
-
-  switchToHostMode(): void {
-    this.isSwitchingMode.set(true);
-    
-    this.authService.switchMode({ TargetMode: UserRole.Host }).pipe(
-      catchError(err => {
-        const message = err.error?.message 
-          || 'Xatolik yuz berdi. Qayta urinib ko\'ring.';
-        this.snackBar.open(message, 'Yopish', { 
-          duration: 6000,
-          panelClass: ['warning-snackbar']
-        });
-        this.isSwitchingMode.set(false);
-        return EMPTY;
-      })
-    ).subscribe({
-      next: (response) => {
-        this.isSwitchingMode.set(false);
-        this.snackBar.open('Host rejimga muvaffaqiyatli o\'tdingiz!', 'Yopish', {
-          duration: 3000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom'
-        });
-        // Navigate to host property creation
-        this.router.navigate(['/host/properties/create']);
-      }
-    });
   }
 
   navigateToHostDashboard(): void {
