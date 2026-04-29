@@ -8,6 +8,7 @@ using Mulkchi.Api.Services.Foundations.Properties;
 using Microsoft.FeatureManagement;
 using System.Threading.Tasks;
 using System;
+using System.Security.Claims;
 
 namespace Mulkchi.Api.Controllers;
 
@@ -290,6 +291,13 @@ public class PropertiesController : ControllerBase
     {
         try
         {
+            // Check if user is in Guest role and provide helpful error message
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+            if (userRole == "Guest")
+            {
+                return Forbid(); // Returns 403 with clear indication that role upgrade is needed
+            }
+
             var (items, total) = await this.propertyService.RetrieveMyPropertiesAsync(queryParams);
 
             var result = new PagedResult<PropertyResponse>
