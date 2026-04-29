@@ -1729,12 +1729,17 @@ export class HomeComponent implements OnInit {
   }
 
   // Get image URL from property (handles multiple image formats)
+  // Uses thumbnail for faster loading
   getImageUrl(property: any): string {
     if (property.images?.length > 0) {
-      return property.images[0].url || property.images[0].imageUrl || '';
+      // Find primary image or use first one
+      const primaryImage = property.images.find((img: any) => img.isPrimary) || property.images[0];
+      
+      // Use thumbnail for faster loading, fallback to url
+      return primaryImage.thumbnailUrl || primaryImage.url || primaryImage.imageUrl || '';
     }
-    if (property.imageUrl) return property.imageUrl;
     if (property.thumbnailUrl) return property.thumbnailUrl;
+    if (property.imageUrl) return property.imageUrl;
     return this.getPlaceholderImage(property);
   }
 
