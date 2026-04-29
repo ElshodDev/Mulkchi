@@ -6,7 +6,7 @@ using Mulkchi.Api.Services.Foundations.Auth;
 namespace Mulkchi.Api.Controllers.Auth;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/auth")]
 public class SocialAuthController : ControllerBase
 {
     private const string AccessTokenCookie = "access_token";

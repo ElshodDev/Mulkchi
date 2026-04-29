@@ -9,7 +9,7 @@ using System.Security.Claims;
 namespace Mulkchi.Api.Controllers.Auth;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/auth")]
 public class AccountController : ControllerBase
 {
     private const string AccessTokenCookie = "access_token";

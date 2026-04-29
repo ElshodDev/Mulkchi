@@ -8,7 +8,7 @@ using System.Security.Claims;
 namespace Mulkchi.Api.Controllers.Auth;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/auth")]
 public class PasswordController : ControllerBase
 {
     private readonly IAuthService authService;
