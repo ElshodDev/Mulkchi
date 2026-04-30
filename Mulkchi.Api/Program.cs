@@ -72,17 +72,17 @@ public partial class Program
 /// </summary>
 public class SecurityDestructuringPolicy : Serilog.Core.IDestructuringPolicy
 {
-    public bool TryDestructure(object value, Serilog.Core.ILogEventPropertyValueFactory propertyValueFactory, out Serilog.Core.LogEventPropertyValue? result)
+    public bool TryDestructure(object value, Serilog.Core.ILogEventPropertyValueFactory propertyValueFactory, out Serilog.Events.LogEventPropertyValue? result)
     {
         // Prevent logging of HttpContext.Request.Query (may contain JWT tokens)
         if (value is Microsoft.AspNetCore.Http.HttpRequest request)
         {
             result = new Serilog.Events.StructureValue(new[]
             {
-                new Serilog.Events.LogEventProperty("Method", new ScalarValue(request.Method)),
-                new Serilog.Events.LogEventProperty("Path", new ScalarValue(request.Path)),
+                new Serilog.Events.LogEventProperty("Method", new Serilog.Events.ScalarValue(request.Method)),
+                new Serilog.Events.LogEventProperty("Path", new Serilog.Events.ScalarValue(request.Path)),
                 // QueryString intentionally omitted to prevent JWT token logging
-                new Serilog.Events.LogEventProperty("ContentType", new ScalarValue(request.ContentType ?? "unknown"))
+                new Serilog.Events.LogEventProperty("ContentType", new Serilog.Events.ScalarValue(request.ContentType ?? "unknown"))
             });
             return true;
         }
