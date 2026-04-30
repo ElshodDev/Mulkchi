@@ -145,12 +145,17 @@ export interface PropertyResponse extends Property {
 export interface PropertyImage {
   id: string;
   propertyId: string;
-  imageUrl: string;
-  url?: string; // Alternative property for image URL
+  // Backend format (from LocalFileStorageBroker)
+  url: string;           // Full-size WebP URL
+  mediumUrl: string;     // Medium variant (800x600)
+  thumbnailUrl: string;  // Thumbnail variant (300x200)
   caption?: string;
   sortOrder: number;
-  isMain: boolean;
+  isPrimary: boolean;    // Backend uses IsPrimary
   createdDate: Date;
+  // Legacy support
+  imageUrl?: string;     // For backwards compatibility
+  isMain?: boolean;      // For backwards compatibility
 }
 
 export interface PropertyCreateRequest {

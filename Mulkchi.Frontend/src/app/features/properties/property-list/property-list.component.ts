@@ -1576,13 +1576,28 @@ export class PropertyListComponent implements OnInit {
   }
 
   // Get image URL from property (handles multiple image formats)
-  getImageUrl(property: Property): string {
+  // Uses thumbnail for list view (faster loading), medium for detail view
+  getImageUrl(property: Property, size: 'thumbnail' | 'medium' | 'full' = 'thumbnail'): string {
+    // Try to get from images array first
     if (property.images && property.images.length > 0) {
-      const firstImage = property.images[0] as any;
-      return firstImage.url || firstImage.imageUrl || '';
+      // Find primary image or use first one
+      const primaryImage = property.images.find(img => img.isPrimary) || property.images[0];
+      
+      // Return appropriate size
+      if (size === 'thumbnail' && primaryImage.thumbnailUrl) {
+        return primaryImage.thumbnailUrl;
+      }
+      if (size === 'medium' && primaryImage.mediumUrl) {
+        return primaryImage.mediumUrl;
+      }
+      return primaryImage.url || primaryImage.imageUrl || '';
     }
+    
+    // Fallback to legacy properties
+    if (size === 'thumbnail' && property.thumbnailUrl) return property.thumbnailUrl;
     if (property.imageUrl) return property.imageUrl;
-    if (property.thumbnailUrl) return property.thumbnailUrl;
+    if (property.mainImageUrl) return property.mainImageUrl;
+    
     return this.getPlaceholderImage(property);
   }
 
