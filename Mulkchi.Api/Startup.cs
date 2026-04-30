@@ -377,6 +377,13 @@ public class Startup
         services.AddScoped(typeof(Application.Interfaces.IRepository<>), typeof(Infrastructure.Repositories.Repository<>));
         services.AddScoped<Application.Interfaces.IUnitOfWork, Infrastructure.Repositories.UnitOfWork>();
         
+        // Clean Architecture: Application Services
+        services.AddScoped<Application.Interfaces.IPropertyService, Application.Services.PropertyService>();
+        
+        // FluentValidation
+        services.AddFluentValidationAutoValidation();
+        services.AddValidatorsFromAssemblyContaining<Program>();
+        
         // Configure EmailSettings
         services.Configure<EmailSettings>(this.configuration.GetSection("EmailSettings"));
         
