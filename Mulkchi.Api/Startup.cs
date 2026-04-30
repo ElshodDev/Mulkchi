@@ -370,8 +370,12 @@ public class Startup
         services.AddScoped<IChatService, ChatService>();
         services.AddScoped<IAnalyticsService, AnalyticsService>();
         // Singleton: connection tracker must outlive individual HTTP requests
-        services.AddSingleton<IUserConnectionTracker, UserConnectionTracker>();
         services.AddScoped<IPriceRecommendationService, PriceRecommendationService>();
+        services.AddScoped<IAIRecommendationEngine, AIRecommendationEngine>();
+        
+        // Clean Architecture: Repository Pattern
+        services.AddScoped(typeof(Application.Interfaces.IRepository<>), typeof(Infrastructure.Repositories.Repository<>));
+        services.AddScoped<Application.Interfaces.IUnitOfWork, Infrastructure.Repositories.UnitOfWork>();
         
         // Configure EmailSettings
         services.Configure<EmailSettings>(this.configuration.GetSection("EmailSettings"));
