@@ -1,3 +1,5 @@
+using Mulkchi.Api.Models.Foundations.PropertyImages;
+
 namespace Mulkchi.Api.Models.Foundations.Properties;
 
 public class PropertyResponse
@@ -71,4 +73,11 @@ public class PropertyResponse
     public DateTimeOffset CreatedDate { get; set; }
     public DateTimeOffset UpdatedDate { get; set; }
     public DateTimeOffset? DeletedDate { get; set; }
+    
+    // AI Recommendations support
+    public List<PropertyImage>? Images { get; set; }
+    public string? HostName { get; set; }
+    public string? HostAvatarUrl { get; set; }
+    public double? Score { get; set; }
+    public string? RecommendationReason { get; set; }
 }

@@ -6,6 +6,7 @@ using Mulkchi.Api.Models.Foundations.AI;
 using Mulkchi.Api.Models.Foundations.AIs.Exceptions;
 using Mulkchi.Api.Models.Foundations.Common;
 using Mulkchi.Api.Models.Foundations.Properties;
+using Mulkchi.Api.Models.Foundations.PropertyImages;
 using Mulkchi.Api.Services.Foundations.AiRecommendations;
 using Mulkchi.Api.Services.Foundations.AI;
 using Microsoft.FeatureManagement;
@@ -21,15 +22,18 @@ public class AiRecommendationsController : ControllerBase
     private readonly IAiRecommendationService aiRecommendationService;
     private readonly IFeatureManagerSnapshot featureManager;
     private readonly ILogger<AiRecommendationsController> _logger;
+    private readonly Brokers.Storages.IStorageBroker storageBroker;
 
     public AiRecommendationsController(
         IAiRecommendationService aiRecommendationService,
         IFeatureManagerSnapshot featureManager,
-        ILogger<AiRecommendationsController> logger)
+        ILogger<AiRecommendationsController> logger,
+        Brokers.Storages.IStorageBroker storageBroker)
     {
         this.aiRecommendationService = aiRecommendationService;
         this.featureManager = featureManager;
         _logger = logger;
+        this.storageBroker = storageBroker;
     }
 
     [HttpPost]
@@ -264,7 +268,7 @@ public class AiRecommendationsController : ControllerBase
 
     [HttpGet("recommendations")]
     [Authorize]
-    public async Task<ActionResult<List<AiRecommendation>>> GetRecommendationsAsync([FromQuery] int count = 5)
+    public async Task<ActionResult<List<PropertyResponse>>> GetRecommendationsAsync([FromQuery] int count = 5)
     {
         try
         {
@@ -282,12 +286,85 @@ public class AiRecommendationsController : ControllerBase
                 .Take(count)
                 .ToList();
 
-            return Ok(userRecommendations);
+            // Get property IDs from recommendations
+            var propertyIds = userRecommendations.Select(r => r.PropertyId).Distinct().ToList();
+            
+            // Fetch properties
+            var properties = await this.storageBroker.SelectAllProperties()
+                .Where(p => propertyIds.Contains(p.Id) && !p.DeletedDate.HasValue)
+                .ToListAsync();
+
+            // Map to PropertyResponse
+            var propertyResponses = properties.Select(property => new PropertyResponse
+            {
+                Id = property.Id,
+                Title = property.Title,
+                Description = property.Description,
+                Type = property.Type,
+                Category = property.Category,
+                Status = property.Status,
+                ListingType = property.ListingType,
+                MonthlyRent = property.MonthlyRent,
+                SalePrice = property.SalePrice,
+                PricePerNight = property.PricePerNight,
+                Area = property.Area,
+                NumberOfBedrooms = property.NumberOfBedrooms,
+                NumberOfBathrooms = property.NumberOfBathrooms,
+                MaxGuests = property.MaxGuests,
+                Region = property.Region,
+                City = property.City,
+                District = property.District,
+                Address = property.Address,
+                Mahalla = property.Mahalla,
+                Latitude = property.Latitude,
+                Longitude = property.Longitude,
+                HasWifi = property.HasWifi,
+                HasParking = property.HasParking,
+                HasPool = property.HasPool,
+                PetsAllowed = property.PetsAllowed,
+                IsInstantBook = property.IsInstantBook,
+                IsVacant = property.IsVacant,
+                IsFeatured = property.IsFeatured,
+                IsVerified = property.IsVerified,
+                HasMetroNearby = property.HasMetroNearby,
+                HasBusStop = property.HasBusStop,
+                HasMarketNearby = property.HasMarketNearby,
+                HasSchoolNearby = property.HasSchoolNearby,
+                HasHospitalNearby = property.HasHospitalNearby,
+                DistanceToCityCenter = property.DistanceToCityCenter,
+                HasElevator = property.HasElevator,
+                HasSecurity = property.HasSecurity,
+                HasGenerator = property.HasGenerator,
+                HasGas = property.HasGas,
+                HasFurniture = property.HasFurniture,
+                IsRenovated = property.IsRenovated,
+                HasAirConditioning = property.HasAirConditioning,
+                HasHeating = property.HasHeating,
+                HasWasher = property.HasWasher,
+                HasKitchen = property.HasKitchen,
+                HasTV = property.HasTV,
+                HasWorkspace = property.HasWorkspace,
+                IsSelfCheckIn = property.IsSelfCheckIn,
+                IsChildFriendly = property.IsChildFriendly,
+                IsAccessible = property.IsAccessible,
+                AverageRating = property.AverageRating,
+                ViewsCount = property.ViewsCount,
+                FavoritesCount = property.FavoritesCount,
+                HostId = property.HostId,
+                Currency = property.Currency,
+                ExchangeRate = property.ExchangeRate,
+                CreatedDate = property.CreatedDate,
+                UpdatedDate = property.UpdatedDate,
+                Score = (double?)userRecommendations.FirstOrDefault(r => r.PropertyId == property.Id)?.Score,
+                RecommendationReason = userRecommendations.FirstOrDefault(r => r.PropertyId == property.Id)?.Description
+            }).ToList();
+
+            return Ok(propertyResponses);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AiRecommendationsController), nameof(GetRecommendationsAsync));
-            return Ok(Array.Empty<AiRecommendation>());
+            return Ok(Array.Empty<PropertyResponse>());
         }
     }
 
