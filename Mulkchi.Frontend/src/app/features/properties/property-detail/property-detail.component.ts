@@ -121,7 +121,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                     class="thumbnail" 
                     [class.active]="i === currentImageIndex()"
                     (click)="selectImage(i)">
-                    <img [src]="image.imageUrl" [alt]="image.caption || ''">
+                    <img [src]="getThumbnailUrl(image)" [alt]="image.caption || ''">
                   </div>
                 }
               </div>
@@ -1225,10 +1225,16 @@ export class PropertyDetailComponent implements OnInit {
   currentImage = computed(() => {
     const prop = this.property();
     if (prop?.images && prop.images.length > 0) {
-      return prop.images[this.currentImageIndex()].imageUrl;
+      const image = prop.images[this.currentImageIndex()];
+      return image.url || image.imageUrl || '';
     }
     return null;
   });
+
+  // Get thumbnail URL for an image
+  getThumbnailUrl(image: any): string {
+    return image.thumbnailUrl || image.url || image.imageUrl || '';
+  }
 
   isAuthenticated = this.authService.isAuthenticated;
   currentUser = this.authService.currentUser;
