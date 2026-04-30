@@ -48,7 +48,7 @@ import { Gender, UserRole, User, HostBadge } from '../../core/models';
             <!-- Profile Sidebar -->
             <aside class="profile-sidebar">
               <mat-card class="profile-card">
-                <div class="avatar-section">
+                <div class="avatar-section" [class.uploading]="isUploadingAvatar()">
                   @if (currentUser()?.avatarUrl) {
                     <img [src]="currentUser()?.avatarUrl" [alt]="currentUser()?.firstName" class="avatar">
                   } @else {
@@ -56,7 +56,12 @@ import { Gender, UserRole, User, HostBadge } from '../../core/models';
                       <mat-icon>person</mat-icon>
                     </div>
                   }
-                  <button mat-icon-button class="avatar-edit-btn" (click)="uploadAvatar()">
+                  @if (isUploadingAvatar()) {
+                    <div class="avatar-loading-overlay">
+                      <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
+                    </div>
+                  }
+                  <button mat-icon-button class="avatar-edit-btn" (click)="uploadAvatar()" [disabled]="isUploadingAvatar()">
                     <mat-icon>photo_camera</mat-icon>
                   </button>
                 </div>
@@ -424,6 +429,23 @@ import { Gender, UserRole, User, HostBadge } from '../../core/models';
 
     .avatar-edit-btn:hover mat-icon {
       color: var(--color-gold) !important;
+    }
+
+    .avatar-section.uploading .avatar,
+    .avatar-section.uploading .avatar-placeholder {
+      opacity: 0.5;
+    }
+
+    .avatar-loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
     }
 
     /* ===== User Info ===== */
@@ -911,8 +933,51 @@ export class ProfileComponent implements OnInit {
     }, 1500);
   }
 
+  isUploadingAvatar = signal(false);
+
   uploadAvatar(): void {
-    this.snackBar.open('Rasm yuklash funksiyasi tez orada qo\'shiladi', 'Yopish', { duration: 3000 });
+    // Trigger file input click
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/jpeg,image/png,image/webp';
+    fileInput.onchange = (event) => this.handleAvatarFileSelect(event);
+    fileInput.click();
+  }
+
+  private handleAvatarFileSelect(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.snackBar.open('Rasm hajmi 5MB dan oshmasligi kerak', 'Yopish', { duration: 3000 });
+        return;
+      }
+      
+      // Validate file type
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        this.snackBar.open('Faqat JPG, PNG yoki WEBP formatlari qo\'llab-quvvatlanadi', 'Yopish', { duration: 3000 });
+        return;
+      }
+      
+      this.isUploadingAvatar.set(true);
+      
+      this.authService.uploadAvatar(file).subscribe({
+        next: (updatedUser) => {
+          this.isUploadingAvatar.set(false);
+          this.snackBar.open('Avatar muvaffaqiyatli yangilandi', 'Yopish', { duration: 3000 });
+        },
+        error: (error) => {
+          this.isUploadingAvatar.set(false);
+          this.snackBar.open(
+            error.error?.message || 'Avatar yuklashda xatolik', 
+            'Yopish', 
+            { duration: 3000 }
+          );
+        }
+      });
+    }
   }
 
   changeLanguage(lang: any): void {
