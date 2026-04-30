@@ -313,4 +313,28 @@ export class AuthService {
     const role = this._currentUser()?.role;
     return role === UserRole.Admin || role === UserRole.SuperAdmin;
   }
+
+  // Upload user avatar
+  uploadAvatar(file: File): Observable<User> {
+    const userId = this._currentUser()?.id;
+    if (!userId) {
+      return throwError(() => new Error('Foydalanuvchi aniqlanmadi'));
+    }
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    return this.http.put<User>(`${this.usersUrl}/${userId}/avatar`, formData).pipe(
+      tap(updatedUser => {
+        // Update stored user data
+        const currentUser = this._currentUser();
+        if (currentUser) {
+          const newUser = { ...currentUser, avatarUrl: updatedUser.avatarUrl };
+          localStorage.setItem('user', JSON.stringify(newUser));
+          this._currentUser.set(newUser);
+        }
+      }),
+      catchError(error => throwError(() => error))
+    );
+  }
 }
