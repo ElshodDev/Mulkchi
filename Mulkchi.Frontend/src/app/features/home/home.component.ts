@@ -16,7 +16,7 @@ import { FormsModule } from '@angular/forms';
 import { PropertyService } from '../../core/services/property.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ReviewService } from '../../core/services/review.service';
-import { NotificationService } from '../../core/services/notification.service';
+import { NotificationsService } from '../../core/services/notifications.service';
 import { ListingType, UserRole } from '../../core/models';
 
 @Component({
@@ -1658,7 +1658,7 @@ export class HomeComponent implements OnInit {
     private authService: AuthService,
     private propertyService: PropertyService,
     private reviewService: ReviewService,
-    private notificationService: NotificationService,
+    private notificationService: NotificationsService,
     private dialog: MatDialog,
     private router: Router
   ) {}
