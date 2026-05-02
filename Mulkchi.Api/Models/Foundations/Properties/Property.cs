@@ -1,5 +1,7 @@
 #nullable disable
 
+using Mulkchi.Api.Models.Foundations.PropertyImages;
+
 namespace Mulkchi.Api.Models.Foundations.Properties;
 
 public class Property
@@ -15,9 +17,21 @@ public class Property
     public decimal? SalePrice { get; set; }
     public decimal? PricePerNight { get; set; }
     public decimal? SecurityDeposit { get; set; }
+    public decimal Price { get; set; }
+    public int Floor { get; set; }
+    public int TotalFloors { get; set; }
     public double Area { get; set; }
     public int NumberOfBedrooms { get; set; }
     public int NumberOfBathrooms { get; set; }
+    
+    // Alias properties for compatibility
+    public int Rooms { get => NumberOfBedrooms; set => NumberOfBedrooms = value; }
+    public int Bathrooms { get => NumberOfBathrooms; set => NumberOfBathrooms = value; }
+    public int ViewCount { get => ViewsCount; set => ViewsCount = value; }
+    public int FavoriteCount { get => FavoritesCount; set => FavoritesCount = value; }
+    public Guid OwnerId { get => HostId; set => HostId = value; }
+    public bool IsActive { get => IsVacant; set => IsVacant = value; }
+    public PropertyType PropertyType { get => Type; set => Type = value; }
     public int MaxGuests { get; set; }
     public UzbekistanRegion Region { get; set; }
     public string City { get; set; }
@@ -65,6 +79,7 @@ public class Property
     public int ViewsCount { get; set; }
     public int FavoritesCount { get; set; }
     public Guid HostId { get; set; }
+    public ICollection<PropertyImage> Images { get; set; }
     public Currency Currency { get; set; } = Currency.UZS;
     public decimal ExchangeRate { get; set; } = 1.0m;
     public DateTimeOffset CreatedDate { get; set; }
