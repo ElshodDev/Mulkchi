@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Mulkchi.Api.Models.Foundations.Discounts;
 using Mulkchi.Api.Models.Foundations.Discounts.Exceptions;
@@ -29,11 +29,11 @@ public partial class DiscountService
         {
             throw CreateAndLogDependencyValidationException(notFoundDiscountException);
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedDiscountStorageException(
                 message: "Failed Discount storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }
@@ -69,11 +69,11 @@ public partial class DiscountService
         {
             return returningDiscountsFunction();
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedDiscountStorageException(
                 message: "Failed Discount storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }

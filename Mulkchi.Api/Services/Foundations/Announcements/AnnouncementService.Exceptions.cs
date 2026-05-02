@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Mulkchi.Api.Models.Foundations.Announcements;
 using Mulkchi.Api.Models.Foundations.Announcements.Exceptions;
@@ -29,11 +29,11 @@ public partial class AnnouncementService
         {
             throw CreateAndLogDependencyValidationException(notFoundAnnouncementException);
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedAnnouncementStorageException(
                 message: "Failed Announcement storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }
@@ -69,11 +69,11 @@ public partial class AnnouncementService
         {
             return returningAnnouncementsFunction();
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedAnnouncementStorageException(
                 message: "Failed Announcement storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }

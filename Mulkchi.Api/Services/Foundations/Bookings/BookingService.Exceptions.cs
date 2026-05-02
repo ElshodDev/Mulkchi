@@ -2,7 +2,7 @@
 
 
 using System;
-using Microsoft.Data.SqlClient;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Xeptions;
 using Mulkchi.Api.Models.Foundations.Bookings;
@@ -30,9 +30,9 @@ namespace Mulkchi.Api.Services.Foundations.Bookings
             catch (BookingServiceException) { throw; }
             catch (FailedBookingStorageException ex) { throw new BookingDependencyException(ex); }
             catch (FailedBookingServiceException ex) { throw new BookingServiceException(ex); }
-            catch (SqlException sqlException)
+            catch (DbException dbException)
             {
-                var failedStorage = new FailedBookingStorageException(sqlException);
+                var failedStorage = new FailedBookingStorageException(dbException);
                 throw new BookingDependencyException(failedStorage);
             }
             catch (DbUpdateConcurrencyException dbUpdateConcurrencyException)

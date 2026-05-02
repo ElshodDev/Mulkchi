@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Mulkchi.Api.Models.Foundations.SavedSearches;
 using Mulkchi.Api.Models.Foundations.SavedSearches.Exceptions;
@@ -29,11 +29,11 @@ public partial class SavedSearchService
         {
             throw CreateAndLogDependencyValidationException(notFoundSavedSearchException);
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedSavedSearchStorageException(
                 message: "Failed SavedSearch storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }
@@ -69,11 +69,11 @@ public partial class SavedSearchService
         {
             return returningSavedSearchesFunction();
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedSavedSearchStorageException(
                 message: "Failed SavedSearch storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }

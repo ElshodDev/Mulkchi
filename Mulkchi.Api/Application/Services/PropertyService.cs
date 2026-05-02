@@ -80,7 +80,10 @@ public class PropertyService : IPropertyService
             query = query.Where(p => p.City == request.City);
 
         if (!string.IsNullOrEmpty(request.Region))
-            query = query.Where(p => p.Region == request.Region);
+        {
+            if (Enum.TryParse<UzbekistanRegion>(request.Region, out var regionValue))
+                query = query.Where(p => p.Region == regionValue);
+        }
 
         if (request.MinPrice.HasValue)
             query = query.Where(p => p.Price >= request.MinPrice.Value);
@@ -153,7 +156,7 @@ public class PropertyService : IPropertyService
             TotalFloors = request.TotalFloors,
             Address = request.Address,
             City = request.City,
-            Region = request.Region,
+            Region = Enum.Parse<UzbekistanRegion>(request.Region),
             Latitude = request.Latitude,
             Longitude = request.Longitude,
             OwnerId = ownerId,
@@ -246,7 +249,7 @@ public class PropertyService : IPropertyService
             TotalFloors = property.TotalFloors,
             Address = property.Address,
             City = property.City,
-            Region = property.Region,
+            Region = property.Region.ToString(),
             Country = "Uzbekistan",
             Latitude = property.Latitude,
             Longitude = property.Longitude,

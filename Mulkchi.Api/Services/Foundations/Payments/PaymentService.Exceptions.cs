@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Mulkchi.Api.Models.Foundations.Payments;
 using Mulkchi.Api.Models.Foundations.Payments.Exceptions;
@@ -29,11 +29,11 @@ public partial class PaymentService
         {
             throw CreateAndLogDependencyValidationException(notFoundPaymentException);
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedPaymentStorageException(
                 message: "Failed Payment storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }
@@ -69,11 +69,11 @@ public partial class PaymentService
         {
             return returningPaymentsFunction();
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedPaymentStorageException(
                 message: "Failed Payment storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }
