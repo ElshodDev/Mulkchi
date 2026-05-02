@@ -1,4 +1,8 @@
 using System.Text;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Instrumentation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -48,9 +52,6 @@ using Mulkchi.Api.Services.Search;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.FeatureManagement;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
-using StackExchange.Redis;
 
 namespace Mulkchi.Api;
 
@@ -105,11 +106,8 @@ public class Startup
         AddBrokers(services);
         AddFoundationServices(services);
         AddBackgroundServices(services);
-        // Check for Redis connection: MULKCHI_REDIS_URL env var takes priority, then Redis:ConnectionString
-        var redisConnection = Environment.GetEnvironmentVariable("MULKCHI_REDIS_URL")
-            ?? this.configuration["Redis:ConnectionString"];
-
-        var signalRBuilder = services.AddSignalR(options =>
+        // SignalR in-memory configuration (Redis disabled for local development)
+        services.AddSignalR(options =>
         {
             // WebSocket-specific settings
             options.EnableDetailedErrors = this.environment.IsDevelopment();
@@ -121,14 +119,6 @@ public class Startup
             options.KeepAliveInterval = TimeSpan.FromSeconds(30); // Increased from 15s
             options.HandshakeTimeout = TimeSpan.FromSeconds(30);
         });
-
-        if (!string.IsNullOrWhiteSpace(redisConnection))
-        {
-            signalRBuilder.AddStackExchangeRedis(redisConnection, options =>
-            {
-                options.Configuration.ChannelPrefix = RedisChannel.Literal("mulkchi-signalr");
-            });
-        }
 
         services.AddSingleton<IUserIdProvider, JwtUserIdProvider>();
         AddCors(services);
@@ -371,7 +361,8 @@ public class Startup
         services.AddScoped<IAnalyticsService, AnalyticsService>();
         // Singleton: connection tracker must outlive individual HTTP requests
         services.AddScoped<IPriceRecommendationService, PriceRecommendationService>();
-        services.AddScoped<IAIRecommendationEngine, AIRecommendationEngine>();
+        // TODO: AIRecommendationEngine class yaratish kerak
+        // services.AddScoped<IAIRecommendationEngine, AIRecommendationEngine>();
         
         // Clean Architecture: Repository Pattern
         services.AddScoped(typeof(Application.Interfaces.IRepository<>), typeof(Infrastructure.Repositories.Repository<>));
@@ -447,7 +438,7 @@ public class Startup
             ?? this.configuration.GetConnectionString("DefaultConnection");
 
         services.AddDbContext<StorageBroker>(options =>
-            options.UseSqlServer(connectionString));
+            options.UseNpgsql(connectionString));
 
         services.AddScoped<IStorageBroker, StorageBroker>();
     }
