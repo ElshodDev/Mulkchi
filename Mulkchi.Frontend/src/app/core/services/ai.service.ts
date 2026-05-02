@@ -4,6 +4,45 @@ import { Observable, tap, catchError, throwError, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Property } from '../../core/models';
 
+export interface HybridRecommendationProperty {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  address: string;
+  city: string;
+  region: string;
+  propertyType: string;
+  listingType: string;
+  area: number;
+  roomsCount: number;
+  bathroomsCount: number;
+  imageUrl: string;
+  images: string[];
+  hostId: string;
+  hostName: string;
+  rating: number;
+  reviewsCount: number;
+  viewsCount: number;
+  distanceKm?: number;
+  isFeatured: boolean;
+  isVerified: boolean;
+}
+
+export interface HybridRecommendationResponse {
+  id: string;
+  userId?: string;
+  propertyId: string;
+  recommendationType: string;
+  abVariant: string;
+  score: number;
+  reason: string;
+  property: HybridRecommendationProperty;
+  createdAt: string;
+  isViewed: boolean;
+  isClicked: boolean;
+}
+
 export interface AIPriceRequest {
   region: string;
   propertyType: string;
@@ -96,9 +135,11 @@ export class AIService {
     this._loading.set(true);
     this._error.set(null);
 
-    const params = new HttpParams().set('count', count.toString());
+    // Use hybrid endpoint which auto-generates recommendations
+    const request = { limit: count };
 
-    return this.http.get<Property[]>(`${this.apiUrl}/recommendations`, { params }).pipe(
+    return this.http.post<HybridRecommendationResponse[]>(`${this.apiUrl}/hybrid`, request).pipe(
+      map(responses => responses.map(r => this.mapHybridToProperty(r.property))),
       tap(properties => {
         this._recommendations.set(properties);
         this._loading.set(false);
@@ -110,6 +151,79 @@ export class AIService {
         return throwError(() => error);
       })
     );
+  }
+
+  private mapHybridToProperty(hybrid: HybridRecommendationProperty): Property {
+    return {
+      id: hybrid.id,
+      title: hybrid.title || 'Mulk',
+      description: hybrid.description || '',
+      type: hybrid.propertyType as any,
+      category: 'Residential' as any,
+      status: 'Active' as any,
+      listingType: hybrid.listingType as any,
+      monthlyRent: hybrid.listingType === 'Rent' ? hybrid.price : undefined,
+      salePrice: hybrid.listingType === 'Sale' ? hybrid.price : undefined,
+      pricePerNight: undefined,
+      area: hybrid.area,
+      numberOfBedrooms: hybrid.roomsCount,
+      numberOfBathrooms: hybrid.bathroomsCount,
+      maxGuests: 0,
+      region: 'Toshkent' as any,
+      city: hybrid.city || 'Toshkent',
+      district: hybrid.region || '',
+      address: hybrid.address || '',
+      isVacant: true,
+      isFeatured: hybrid.isFeatured,
+      isVerified: hybrid.isVerified,
+      averageRating: hybrid.rating,
+      viewsCount: hybrid.viewsCount,
+      favoritesCount: 0,
+      images: hybrid.images?.map((imgUrl, index) => ({
+        id: `${hybrid.id}-img-${index}`,
+        propertyId: hybrid.id,
+        url: imgUrl,
+        imageUrl: imgUrl,
+        mediumUrl: imgUrl,
+        thumbnailUrl: imgUrl,
+        isPrimary: index === 0,
+        sortOrder: index,
+        createdDate: new Date()
+      } as any)) || [],
+      hostId: hybrid.hostId,
+      hostName: hybrid.hostName || '',
+      currency: 'UZS' as any,
+      exchangeRate: 1,
+      createdDate: new Date(),
+      updatedDate: new Date(),
+      // Default amenities
+      hasWifi: false,
+      hasParking: false,
+      hasPool: false,
+      petsAllowed: false,
+      isInstantBook: false,
+      hasMetroNearby: false,
+      hasBusStop: false,
+      hasMarketNearby: false,
+      hasSchoolNearby: false,
+      hasHospitalNearby: false,
+      distanceToCityCenter: 0,
+      hasElevator: false,
+      hasSecurity: false,
+      hasGenerator: false,
+      hasGas: false,
+      hasFurniture: false,
+      isRenovated: false,
+      hasAirConditioning: false,
+      hasHeating: false,
+      hasWasher: false,
+      hasKitchen: false,
+      hasTV: false,
+      hasWorkspace: false,
+      isSelfCheckIn: false,
+      isChildFriendly: false,
+      isAccessible: false
+    } as Property;
   }
 
   getSimilarProperties(propertyId: string, count: number = 5): Observable<Property[]> {

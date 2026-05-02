@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AIService } from '../../../core/services/ai.service';
 import { PropertyService } from '../../../core/services/property.service';
+import { ComparisonService } from '../../../core/services/comparison.service';
 import { Property } from '../../../core/models';
 
 @Component({
@@ -153,6 +154,12 @@ import { Property } from '../../../core/models';
                       </div>
                     </div>
                   </mat-card-content>
+                  <div class="card-actions">
+                    <button mat-stroked-button color="primary" (click)="addToCompare(property); $event.stopPropagation();">
+                      <mat-icon>compare_arrows</mat-icon>
+                      Solishtirish
+                    </button>
+                  </div>
                 </mat-card>
               }
             </div>
@@ -356,6 +363,20 @@ import { Property } from '../../../core/models';
     .property-card:hover {
       transform: translateY(-8px);
       box-shadow: var(--shadow-lg);
+    }
+
+    .card-actions {
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      border-top: 1px solid var(--color-gray-200);
+      background: var(--color-gray-50);
+    }
+
+    .card-actions button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .property-image {
@@ -622,6 +643,7 @@ import { Property } from '../../../core/models';
 export class AiRecommendationsComponent implements OnInit {
   private aiServicePrivate = inject(AIService);
   private snackBar = inject(MatSnackBar);
+  private comparisonService = inject(ComparisonService);
 
   // Make service available to template
   get aiService() {
@@ -648,5 +670,24 @@ export class AiRecommendationsComponent implements OnInit {
       horizontalPosition: 'center',
       verticalPosition: 'bottom'
     });
+  }
+
+  addToCompare(property: Property): void {
+    const added = this.comparisonService.addToCompare(property as any);
+    if (added) {
+      this.snackBar.open('Mulk solishtirish ro\'yxatiga qo\'shildi', 'Solishtirish', {
+        duration: 3000,
+        horizontalPosition: 'center',
+        verticalPosition: 'bottom'
+      }).onAction().subscribe(() => {
+        window.location.href = '/compare';
+      });
+    } else {
+      this.snackBar.open('Bu mulk allaqachon ro\'yxatda yoki limit to\'lgan', 'OK', {
+        duration: 2000,
+        horizontalPosition: 'center',
+        verticalPosition: 'bottom'
+      });
+    }
   }
 }
