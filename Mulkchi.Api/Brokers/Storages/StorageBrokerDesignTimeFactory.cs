@@ -23,7 +23,7 @@ public class StorageBrokerDesignTimeFactory : IDesignTimeDbContextFactory<Storag
         var connectionString = Environment.GetEnvironmentVariable("MULKCHI_CONNECTION_STRING")
             ?? config.GetConnectionString("DefaultConnection");
         
-        optionsBuilder.UseSqlServer(connectionString, options => options.EnableRetryOnFailure());
+        optionsBuilder.UseNpgsql(connectionString, options => options.EnableRetryOnFailure());
 
         // Create mock environment
         var mockEnvironment = new MockWebHostEnvironment();

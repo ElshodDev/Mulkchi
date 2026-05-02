@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Mulkchi.Api.Models.Foundations.AIs;
@@ -38,12 +39,12 @@ public partial class StorageBroker : DbContext, IStorageBroker
         IWebHostEnvironment environment)
         : base(options)
     {
-        this.configuration = configuration;
-        this.environment = environment;
-        // Database migrations must be applied via a dedicated startup task or
-        // init container (e.g. `dotnet ef database update`), not inside the
-        // DbContext constructor.  Running Migrate() here causes race conditions
-        // when multiple API instances start simultaneously.
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.ConfigureWarnings(warnings => 
+            warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -80,11 +81,11 @@ public partial class StorageBroker : DbContext, IStorageBroker
             // Filtered unique index: enforce idempotency key uniqueness only when set
             entity.HasIndex(p => p.IdempotencyKey)
                 .IsUnique()
-                .HasFilter("[IdempotencyKey] IS NOT NULL");
+                .HasFilter("\"IdempotencyKey\" IS NOT NULL");
             entity.HasIndex(p => p.BookingId);
             entity.HasIndex(p => p.ExternalTransactionId)
                 .IsUnique()
-                .HasFilter("[ExternalTransactionId] IS NOT NULL");
+                .HasFilter("\"ExternalTransactionId\" IS NOT NULL");
         });
 
         modelBuilder.Entity<Property>(entity =>
