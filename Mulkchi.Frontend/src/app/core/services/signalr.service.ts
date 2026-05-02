@@ -18,7 +18,7 @@ export class SignalRService {
   connectionError = signal<string | null>(null);
   
   // Message handlers
-  private messageHandlers: Map<string, ((data: any) => void)[]> = new Map();
+  private messageHandlers = new Map<string, ((data: unknown) => void)[]>();
 
   startConnection(): void {
     if (this.hubConnection?.state === signalR.HubConnectionState.Connected) {
@@ -130,21 +130,21 @@ export class SignalRService {
     });
   }
 
-  private handleMessage(eventName: string, data: any): void {
+  private handleMessage(eventName: string, data: unknown): void {
     const handlers = this.messageHandlers.get(eventName);
     if (handlers) {
       handlers.forEach(handler => handler(data));
     }
   }
 
-  on(eventName: string, handler: (data: any) => void): void {
+  on(eventName: string, handler: (data: unknown) => void): void {
     if (!this.messageHandlers.has(eventName)) {
       this.messageHandlers.set(eventName, []);
     }
     this.messageHandlers.get(eventName)?.push(handler);
   }
 
-  off(eventName: string, handler?: (data: any) => void): void {
+  off(eventName: string, handler?: (data: unknown) => void): void {
     if (handler) {
       const handlers = this.messageHandlers.get(eventName);
       if (handlers) {

@@ -12,7 +12,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { PropertyService } from '../../../core/services/property.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { Property, ListingType, UserRole } from '../../../core/models';
+import { ListingType } from '../../../core/models';
 import { BookingPanelComponent } from '../booking-panel/booking-panel.component';
 
 @Component({
@@ -1232,6 +1232,7 @@ export class PropertyDetailComponent implements OnInit {
   });
 
   // Get thumbnail URL for an image
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getThumbnailUrl(image: any): string {
     return image.thumbnailUrl || image.url || image.imageUrl || '';
   }

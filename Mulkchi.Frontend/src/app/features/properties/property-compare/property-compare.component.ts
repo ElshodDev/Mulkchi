@@ -8,7 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 import { PropertyService } from '../../../core/services/property.service';
-import { Property, PropertyResponse } from '../../../core/models';
+import { PropertyResponse } from '../../../core/models';
 
 @Component({
   selector: 'app-property-compare',

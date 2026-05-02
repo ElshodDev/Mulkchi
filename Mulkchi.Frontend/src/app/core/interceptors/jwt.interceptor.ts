@@ -1,13 +1,9 @@
 import { HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
-import { AuthService } from '../services/auth.service';
 import { environment } from '../../../environments/environment';
 
 const TOKEN_KEY = 'access_token';
 
 export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
-
   // Skip auth endpoints - they don't need JWT token
   const skipAuthUrls = ['/api/auth/login', '/api/auth/register', '/api/auth/google', '/api/auth/refresh'];
   const isAuthUrl = skipAuthUrls.some(url => req.url.includes(url));

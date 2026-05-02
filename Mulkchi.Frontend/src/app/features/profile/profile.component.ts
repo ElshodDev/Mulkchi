@@ -1,6 +1,4 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { EMPTY } from 'rxjs';
-import { catchError } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -16,7 +14,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../../core/services/auth.service';
-import { Gender, UserRole, User, HostBadge } from '../../core/models';
+import { Gender, UserRole, HostBadge } from '../../core/models';
 
 @Component({
   selector: 'app-profile',
@@ -964,7 +962,7 @@ export class ProfileComponent implements OnInit {
       this.isUploadingAvatar.set(true);
       
       this.authService.uploadAvatar(file).subscribe({
-        next: (updatedUser) => {
+        next: () => {
           this.isUploadingAvatar.set(false);
           this.snackBar.open('Avatar muvaffaqiyatli yangilandi', 'Yopish', { duration: 3000 });
         },
@@ -980,6 +978,7 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   changeLanguage(lang: any): void {
     this.selectedLanguage.set(lang.value);
     this.snackBar.open('Til o\'zgartirildi', 'Yopish', { duration: 2000 });
@@ -1016,7 +1015,8 @@ export class ProfileComponent implements OnInit {
     this.router.navigate(['/host']);
   }
 
-  passwordMatchValidator(formGroup: any): { [key: string]: boolean } | null {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  passwordMatchValidator(formGroup: any): Record<string, boolean> | null {
     const newPassword = formGroup.get('newPassword');
     const confirmPassword = formGroup.get('confirmPassword');
     if (newPassword && confirmPassword && newPassword.value !== confirmPassword.value) {

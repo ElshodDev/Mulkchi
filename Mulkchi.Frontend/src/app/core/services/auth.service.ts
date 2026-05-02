@@ -3,8 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, throwError, map, BehaviorSubject } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
-import { User, AuthResponse, LoginRequest, RegisterRequest, SwitchModeRequest, UserRole, Gender, HostBadge, ApiRegisterRequest, ApiAuthResponse } from '../models';
-import { LoggerService } from './logger.service';
+import { User, AuthResponse, LoginRequest, RegisterRequest, UserRole, Gender, HostBadge, ApiRegisterRequest, ApiAuthResponse } from '../models';
 import { ChatService } from './chat.service';
 
 @Injectable({

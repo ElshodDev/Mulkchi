@@ -7,9 +7,6 @@ import {
   PropertyCreateRequest, 
   PropertySearchParams,
   PagedResult,
-  PropertyType,
-  ListingType,
-  UzbekistanRegion,
   PropertyCreateResponse 
 } from '../models';
 import { AuthService } from './auth.service';
@@ -38,7 +35,7 @@ export class PropertyService {
   constructor(private http: HttpClient) {}
   
   // Get all properties with pagination
-  getAllProperties(page: number = 1, pageSize: number = 20, params?: Partial<PropertySearchParams>): Observable<PagedResult<Property>> {
+  getAllProperties(page = 1, pageSize = 20, params?: Partial<PropertySearchParams>): Observable<PagedResult<Property>> {
     this._loading.set(true);
     
     let httpParams = new HttpParams()
@@ -111,7 +108,7 @@ export class PropertyService {
   }
   
   // Get featured properties
-  getFeaturedProperties(count: number = 8): Observable<Property[]> {
+  getFeaturedProperties(count = 8): Observable<Property[]> {
     return this.http.get<Property[]>(`${this.apiUrl}/featured`, {
       params: new HttpParams().set('count', count.toString())
     }).pipe(
@@ -121,7 +118,7 @@ export class PropertyService {
   }
   
   // Get similar properties
-  getSimilarProperties(propertyId: string, count: number = 6): Observable<Property[]> {
+  getSimilarProperties(propertyId: string, count = 6): Observable<Property[]> {
     return this.http.get<Property[]>(`${this.apiUrl}/${propertyId}/similar`, {
       params: new HttpParams().set('count', count.toString())
     }).pipe(

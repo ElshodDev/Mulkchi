@@ -1,9 +1,8 @@
-import { Injectable, signal, Component, inject } from '@angular/core';
+import { Injectable, Component, inject } from '@angular/core';
 import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
-import { ComponentType } from '@angular/cdk/overlay';
 
 export type ToastType = 'info' | 'success' | 'warning' | 'error';
 

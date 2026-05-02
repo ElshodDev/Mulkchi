@@ -34,7 +34,7 @@ export class BookingService {
   constructor(private http: HttpClient) {}
   
   // Get my bookings (Guest)
-  getMyBookings(page: number = 1, pageSize: number = 20): Observable<PagedResult<Booking>> {
+  getMyBookings(page = 1, pageSize = 20): Observable<PagedResult<Booking>> {
     this._loading.set(true);
     
     const params = new HttpParams()
@@ -63,7 +63,7 @@ export class BookingService {
   }
   
   // Get host bookings (Host)
-  getHostBookings(page: number = 1, pageSize: number = 20, status?: BookingStatus): Observable<PagedResult<Booking>> {
+  getHostBookings(page = 1, pageSize = 20, status?: BookingStatus): Observable<PagedResult<Booking>> {
     this._loading.set(true);
     
     let params = new HttpParams()

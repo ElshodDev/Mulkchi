@@ -169,7 +169,7 @@ export class GoogleLoginComponent implements OnInit {
           callback: (response) => this.handleGoogleResponse(response)
         });
         window.__googleInitialized = true;
-      } catch (error) {
+      } catch { /* ignore */
       }
     }
     
@@ -191,7 +191,7 @@ export class GoogleLoginComponent implements OnInit {
     }
     
     this.authService.googleLogin(response.credential).subscribe({
-      next: (authResponse) => {
+      next: () => {
         this.snackBar.open('Google orqali muvaffaqiyatli kirdingiz!', 'Yopish', { duration: 3000 });
         // Small delay to ensure token is saved before navigation
         setTimeout(() => {

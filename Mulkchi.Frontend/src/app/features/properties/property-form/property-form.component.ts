@@ -39,7 +39,7 @@ import { ImageUploadComponent, UploadedImage } from '../../../shared/components/
     <div class="property-form-container">
       <div class="container">
         <div class="page-header">
-          <h1>{{ isEditMode() ? 'Mulkni tahrirlash' : 'Yangi mulk qo\'shish' }}</h1>
+          <h1>{{ isEditMode() ? 'Mulkni tahrirlash' : 'Yangi mulk qo'shish' }}</h1>
           <p>E'lon ma'lumotlarini to'ldiring</p>
         </div>
 
@@ -275,7 +275,7 @@ import { ImageUploadComponent, UploadedImage } from '../../../shared/components/
                         <mat-progress-spinner diameter="20" class="inline-spinner"></mat-progress-spinner>
                         <span>Saqlanmoqda...</span>
                       } @else {
-                        <span>{{ isEditMode() ? 'Yangilash' : 'E\'lon qilish' }}</span>
+                        <span>{{ isEditMode() ? 'Yangilash' : 'E'lon qilish' }}</span>
                       }
                     </button>
                   </div>
@@ -623,6 +623,7 @@ export class PropertyFormComponent implements OnInit {
     this.isSubmitting.set(true);
 
     const a = this.amenitiesForm.value;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formData: Record<string, any> = {
       title: this.basicInfoForm.value.title!,
       type: this.basicInfoForm.value.type!,
@@ -666,6 +667,7 @@ export class PropertyFormComponent implements OnInit {
     };
 
     if (this.isEditMode() && this.propertyId()) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.propertyService.updateProperty(this.propertyId()!, formData as any).subscribe({
         next: () => {
           this.isSubmitting.set(false);
@@ -678,6 +680,7 @@ export class PropertyFormComponent implements OnInit {
         }
       });
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.propertyService.createProperty(formData as any).subscribe({
         next: () => {
           this.isSubmitting.set(false);

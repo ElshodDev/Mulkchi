@@ -321,25 +321,23 @@ export class FavoritesComponent implements OnInit {
 
   // Get image URL from property (handles multiple image formats)
   // Uses thumbnail for faster loading
-  getImageUrl(property: any): string {
+  getImageUrl(property: unknown): string {
+    const prop = property as { images?: { isPrimary?: boolean; thumbnailUrl?: string; url?: string; imageUrl?: string }[]; thumbnailUrl?: string; imageUrl?: string };
     // Check for images array first (new format)
-    if (property.images && Array.isArray(property.images) && property.images.length > 0) {
+    if (prop.images && Array.isArray(prop.images) && prop.images.length > 0) {
       // Find primary image or use first one
-      const primaryImage = property.images.find((img: any) => img.isPrimary) || property.images[0];
+      const primaryImage = prop.images.find((img) => img.isPrimary) || prop.images[0];
       
       // Use thumbnail for faster loading, fallback to other formats
       return primaryImage.thumbnailUrl || primaryImage.url || primaryImage.imageUrl || '';
     }
     
     // Fallback to legacy properties
-    if (property.thumbnailUrl) {
-      return property.thumbnailUrl;
+    if (prop.thumbnailUrl) {
+      return prop.thumbnailUrl;
     }
-    if (property.imageUrl) {
-      return property.imageUrl;
-    }
-    if (property.mainImageUrl) {
-      return property.mainImageUrl;
+    if (prop.imageUrl) {
+      return prop.imageUrl;
     }
     
     return '/assets/placeholder.svg';

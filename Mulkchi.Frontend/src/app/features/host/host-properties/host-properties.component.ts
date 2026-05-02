@@ -11,7 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PropertyService } from '../../../core/services/property.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { Property, PropertyStatus, ListingType } from '../../../core/models';
+import { Property, PropertyStatus } from '../../../core/models';
 
 @Component({
   selector: 'app-host-properties',

@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import * as signalR from '@microsoft/signalr';
-import { Observable, Subject, from, of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
@@ -13,7 +13,7 @@ export interface Notification {
   message: string;
   type: NotificationType;
   category: NotificationCategory;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   isRead: boolean;
   createdAt: Date;
   readAt?: Date;

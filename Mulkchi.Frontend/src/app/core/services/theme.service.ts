@@ -120,7 +120,7 @@ export class ThemeService {
     
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     
-    mediaQuery.addEventListener('change', (e) => {
+    mediaQuery.addEventListener('change', () => {
       if (this.currentTheme() === 'system') {
         this.applyTheme('system');
       }

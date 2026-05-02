@@ -64,7 +64,7 @@ export interface AIPriceResponse {
   confidence: number;
   priceLevel?: string;
   similarCount?: number;
-  factorBreakdown?: { [key: string]: number };
+  factorBreakdown?: Record<string, number>;
   regionalData?: {
     region: string;
     averagePrice: number;
@@ -131,7 +131,7 @@ export class AIService {
     );
   }
 
-  getRecommendations(count: number = 5): Observable<Property[]> {
+  getRecommendations(count = 5): Observable<Property[]> {
     this._loading.set(true);
     this._error.set(null);
 
@@ -154,6 +154,7 @@ export class AIService {
   }
 
   private mapHybridToProperty(hybrid: HybridRecommendationProperty): Property {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     return {
       id: hybrid.id,
       title: hybrid.title || 'Mulk',
@@ -224,9 +225,10 @@ export class AIService {
       isChildFriendly: false,
       isAccessible: false
     } as Property;
+    /* eslint-enable @typescript-eslint/no-explicit-any */
   }
 
-  getSimilarProperties(propertyId: string, count: number = 5): Observable<Property[]> {
+  getSimilarProperties(propertyId: string, count = 5): Observable<Property[]> {
     this._loading.set(true);
     this._error.set(null);
 

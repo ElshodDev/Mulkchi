@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, AfterViewInit } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -18,9 +18,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { PropertyService } from '../../../core/services/property.service';
 import { ComparisonService } from '../../../core/services/comparison.service';
-import { ToastService } from '../../../core/services/toast.service';
-import { Property, PropertyType, ListingType, PropertySearchParams, PropertyResponse, UzbekistanRegion } from '../../../core/models';
-import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Property, ListingType, PropertySearchParams, PropertyResponse, UzbekistanRegion } from '../../../core/models';
+import { Subject } from 'rxjs';
 import * as L from 'leaflet';
 
 @Component({
@@ -1780,6 +1779,7 @@ export class PropertyListComponent implements OnInit {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onLocationSelected(event: any) {
     const value = event.option.value;
     this.heroSearchValue.set(value);

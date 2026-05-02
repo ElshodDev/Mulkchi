@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, OnDestroy, Input, ElementRef, ViewChild, inject } from '@angular/core';
+import { Component, AfterViewInit, OnDestroy, Input, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import * as L from 'leaflet';
 
@@ -106,15 +106,15 @@ import * as L from 'leaflet';
 export class PropertyLocationMapComponent implements AfterViewInit, OnDestroy {
   @ViewChild('map', { static: true }) mapElement!: ElementRef;
   
-  @Input() latitude: number = 41.2995; // Tashkent default
-  @Input() longitude: number = 69.2401;
-  @Input() zoom: number = 13;
-  @Input() showControls: boolean = true;
-  @Input() showPopup: boolean = true;
-  @Input() title: string = 'Mulk joylashuvi';
-  @Input() address: string = '';
-  @Input() height: string = '300px';
-  @Input() draggable: boolean = false;
+  @Input() latitude = 41.2995; // Tashkent default
+  @Input() longitude = 69.2401;
+  @Input() zoom = 13;
+  @Input() showControls = true;
+  @Input() showPopup = true;
+  @Input() title = 'Mulk joylashuvi';
+  @Input() address = '';
+  @Input() height = '300px';
+  @Input() draggable = false;
   
   private map: L.Map | null = null;
   private marker: L.Marker | null = null;
@@ -132,6 +132,7 @@ export class PropertyLocationMapComponent implements AfterViewInit, OnDestroy {
   
   private initMap(): void {
     // Fix Leaflet default icon path issue
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (L.Icon.Default.prototype as any)._getIconUrl;
     L.Icon.Default.mergeOptions({
       iconRetinaUrl: 'assets/marker-icon-2x.png',

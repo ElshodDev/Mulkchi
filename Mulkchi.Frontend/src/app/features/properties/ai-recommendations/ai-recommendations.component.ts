@@ -7,7 +7,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AIService } from '../../../core/services/ai.service';
-import { PropertyService } from '../../../core/services/property.service';
 import { ComparisonService } from '../../../core/services/comparison.service';
 import { Property } from '../../../core/models';
 
@@ -673,6 +672,7 @@ export class AiRecommendationsComponent implements OnInit {
   }
 
   addToCompare(property: Property): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const added = this.comparisonService.addToCompare(property as any);
     if (added) {
       this.snackBar.open('Mulk solishtirish ro\'yxatiga qo\'shildi', 'Solishtirish', {

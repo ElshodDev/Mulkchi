@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { Observable, catchError, finalize, tap, throwError } from 'rxjs';
+import { Observable, catchError, tap, throwError } from 'rxjs';
 
 export interface MarketOverview {
   totalListings: number;

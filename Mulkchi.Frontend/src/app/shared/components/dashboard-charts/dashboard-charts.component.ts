@@ -1,11 +1,11 @@
-import { Component, OnInit, Input, inject } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { BaseChartDirective } from 'ng2-charts';
-import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
+import { ChartConfiguration, ChartData } from 'chart.js';
 
 export interface ChartDataSet {
   label: string;
@@ -604,6 +604,7 @@ export class DashboardChartsComponent implements OnInit {
     // For now, we're using the sample data defined above
   }
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onPeriodChange(period: any): void {
     this.selectedPeriod = period.value;
     // Reload chart data based on selected period

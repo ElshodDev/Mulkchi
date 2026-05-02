@@ -8,7 +8,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -17,7 +16,7 @@ import { PropertyService } from '../../core/services/property.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ReviewService } from '../../core/services/review.service';
 import { NotificationsService } from '../../core/services/notifications.service';
-import { ListingType, UserRole } from '../../core/models';
+import { ListingType } from '../../core/models';
 
 @Component({
   selector: 'app-home',
@@ -1674,8 +1673,9 @@ export class HomeComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private snackBar = inject(MatSnackBar);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   featuredProperties: any[] = [];
-  loading: boolean = false;
+  loading = false;
 
   error = signal<string | null>(null);
   listingTypeEnum = ListingType;
@@ -1730,9 +1730,11 @@ export class HomeComponent implements OnInit {
 
   // Get image URL from property (handles multiple image formats)
   // Uses thumbnail for faster loading
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getImageUrl(property: any): string {
     if (property.images?.length > 0) {
       // Find primary image or use first one
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const primaryImage = property.images.find((img: any) => img.isPrimary) || property.images[0];
       
       // Use thumbnail for faster loading, fallback to url
@@ -1751,6 +1753,7 @@ export class HomeComponent implements OnInit {
   }
 
   // Get placeholder image based on property type
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getPlaceholderImage(property: any): string {
     const type = property.type || 'Apartment';
     const colors: Record<string, string> = {
