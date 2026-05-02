@@ -59,8 +59,8 @@ public partial class Program
             await db.Database.MigrateAsync();
         }
 
-        // Seed development data
-        await DevelopmentDataSeeder.SeedAsync(app);
+        // Seed development data (temporarily disabled - needs column name fixes for PostgreSQL)
+        // await DevelopmentDataSeeder.SeedAsync(app);
 
         app.Run();
     }
