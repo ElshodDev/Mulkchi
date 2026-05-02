@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Mulkchi.Api.Models.Foundations.RentalContracts;
 using Mulkchi.Api.Models.Foundations.RentalContracts.Exceptions;
@@ -29,11 +29,11 @@ public partial class RentalContractService
         {
             throw CreateAndLogDependencyValidationException(notFoundRentalContractException);
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedRentalContractStorageException(
                 message: "Failed RentalContract storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }
@@ -69,11 +69,11 @@ public partial class RentalContractService
         {
             return returningRentalContractsFunction();
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedRentalContractStorageException(
                 message: "Failed RentalContract storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }

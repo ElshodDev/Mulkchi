@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Mulkchi.Api.Models.Foundations.Auth;
 using Mulkchi.Api.Models.Foundations.Auth.Exceptions;
@@ -45,11 +45,11 @@ public partial class AuthService
         {
             throw CreateAndLogDependencyValidationException(alreadyExistsUserEmailException);
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedAuthStorageException(
                 message: "Failed auth storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }
@@ -95,11 +95,11 @@ public partial class AuthService
         {
             throw CreateAndLogValidationException(invalidRefreshTokenException);
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedAuthStorageException(
                 message: "Failed auth storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }
@@ -180,10 +180,21 @@ public partial class AuthService
             (text.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) &&
              text.Contains("dbo.Users", StringComparison.OrdinalIgnoreCase));
 
-        if (dbUpdateException.InnerException is SqlException sqlException &&
-            (sqlException.Number == 2601 || sqlException.Number == 2627))
+        // Database-agnostic duplicate key check (works with SQL Server and PostgreSQL)
+        if (dbUpdateException.InnerException is DbException dbEx)
         {
-            return IsUsersEmailConstraintText(sqlException.Message);
+            // Check for common duplicate key error indicators in the message
+            string message = dbEx.Message ?? "";
+            if (IsUsersEmailConstraintText(message) ||
+                message.Contains("unique constraint", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("already exists", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("2601", StringComparison.OrdinalIgnoreCase) || // SQL Server
+                message.Contains("2627", StringComparison.OrdinalIgnoreCase) || // SQL Server
+                message.Contains("23505", StringComparison.OrdinalIgnoreCase))   // PostgreSQL
+            {
+                return true;
+            }
         }
 
         string errorText = string.IsNullOrWhiteSpace(dbUpdateException.InnerException?.Message)

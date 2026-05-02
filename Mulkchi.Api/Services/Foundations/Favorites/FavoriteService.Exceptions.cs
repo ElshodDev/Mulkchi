@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Mulkchi.Api.Models.Foundations.Favorites;
 using Mulkchi.Api.Models.Foundations.Favorites.Exceptions;
@@ -33,11 +33,11 @@ public partial class FavoriteService
         {
             throw CreateAndLogDependencyValidationException(alreadyExistsFavoriteException);
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedFavoriteStorageException(
                 message: "Failed Favorite storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }
@@ -73,11 +73,11 @@ public partial class FavoriteService
         {
             return returningFavoritesFunction();
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedFavoriteStorageException(
                 message: "Failed Favorite storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }

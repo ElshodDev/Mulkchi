@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Mulkchi.Api.Models.Foundations.PropertyViews;
 using Mulkchi.Api.Models.Foundations.PropertyViews.Exceptions;
@@ -29,11 +29,11 @@ public partial class PropertyViewService
         {
             throw CreateAndLogDependencyValidationException(notFoundPropertyViewException);
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedPropertyViewStorageException(
                 message: "Failed PropertyView storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }
@@ -69,11 +69,11 @@ public partial class PropertyViewService
         {
             return returningPropertyViewsFunction();
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedPropertyViewStorageException(
                 message: "Failed PropertyView storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }
