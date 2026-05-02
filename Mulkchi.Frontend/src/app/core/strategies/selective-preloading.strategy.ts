@@ -12,7 +12,7 @@ export class SelectivePreloadingStrategy implements PreloadingStrategy {
   private preloadDelay = 2000; // 2 seconds delay before preloading
   private preloadedModules: string[] = [];
 
-  preload(route: Route, load: () => Observable<any>): Observable<any> {
+  preload(route: Route, load: () => Observable<unknown>): Observable<unknown> {
     // Check if route has data with preload flag
     if (route.data && route.data['preload']) {
       const priority = route.data['preloadPriority'] || 1;
@@ -20,13 +20,13 @@ export class SelectivePreloadingStrategy implements PreloadingStrategy {
 
       // High priority routes preload immediately
       if (priority === 0) {
-        this.log(route, 'immediate');
+        this.log(route);
         return load();
       }
 
       // Medium priority routes preload after delay
       if (priority === 1) {
-        this.log(route, `delayed ${delay}ms`);
+        this.log(route);
         return timer(delay).pipe(
           mergeMap(() => load())
         );
@@ -34,7 +34,7 @@ export class SelectivePreloadingStrategy implements PreloadingStrategy {
 
       // Low priority routes - only preload if connection is good
       if (priority === 2 && this.shouldPreload()) {
-        this.log(route, 'low priority');
+        this.log(route);
         return timer(delay * 2).pipe(
           mergeMap(() => load())
         );
@@ -51,6 +51,7 @@ export class SelectivePreloadingStrategy implements PreloadingStrategy {
   private shouldPreload(): boolean {
     // Check if user prefers reduced data
     if ('connection' in navigator) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const connection = (navigator as any).connection;
       
       // Don't preload on slow connections
@@ -79,7 +80,7 @@ export class SelectivePreloadingStrategy implements PreloadingStrategy {
   /**
    * Track preloaded module
    */
-  private log(route: Route, strategy: string): void {
+  private log(route: Route): void {
     if (route.path) {
       this.preloadedModules.push(route.path);
     }
@@ -101,7 +102,7 @@ export class SelectivePreloadingStrategy implements PreloadingStrategy {
 export class QuicklinkStrategy implements PreloadingStrategy {
   private preloadedModules: string[] = [];
 
-  preload(route: Route, load: () => Observable<any>): Observable<any> {
+  preload(route: Route, load: () => Observable<unknown>): Observable<unknown> {
     // Only preload if link is in viewport
     if (this.hasVisibleLink(route.path)) {
       this.logQuicklink(route);
@@ -120,8 +121,8 @@ export class QuicklinkStrategy implements PreloadingStrategy {
     // Check if any links to this route are in viewport
     const links = document.querySelectorAll(`a[href^="/${path}"]`);
     
-    for (let i = 0; i < links.length; i++) {
-      if (this.isInViewport(links[i])) {
+    for (const link of links) {
+      if (this.isInViewport(link)) {
         return true;
       }
     }

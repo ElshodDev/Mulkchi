@@ -8,7 +8,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
 import { BookingService } from '../../../core/services/booking.service';
 import { Booking, BookingStatus } from '../../../core/models';
 
@@ -532,21 +532,21 @@ export class HostBookingsComponent implements OnInit {
     this.pageSize.set(event.pageSize);
   }
 
-  confirmBooking(id: string): void {
+  confirmBooking(_id: string): void {
     if (confirm('Bu bronni tasdiqlamoqchimisiz?')) {
       this.snackBar.open('Bron tasdiqlandi', 'Yopish', { duration: 3000 });
       this.loadBookings();
     }
   }
 
-  completeBooking(id: string): void {
+  completeBooking(_id: string): void {
     if (confirm('Bu bronni yakunlansinmi?')) {
       this.snackBar.open('Bron yakunlandi', 'Yopish', { duration: 3000 });
       this.loadBookings();
     }
   }
 
-  cancelBooking(id: string): void {
+  cancelBooking(_id: string): void {
     if (confirm('Bu bronni bekor qilmoqchimisiz?')) {
       this.snackBar.open('Bron bekor qilindi', 'Yopish', { duration: 3000 });
       this.loadBookings();

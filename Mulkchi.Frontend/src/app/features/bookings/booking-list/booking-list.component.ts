@@ -10,7 +10,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BookingService } from '../../../core/services/booking.service';
-import { Booking, BookingStatus } from '../../../core/models';
+import { BookingStatus } from '../../../core/models';
 
 @Component({
   selector: 'app-booking-list',

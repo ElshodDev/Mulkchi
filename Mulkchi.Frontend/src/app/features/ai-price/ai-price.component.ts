@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, viewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, inject, viewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -252,7 +252,7 @@ import { UzbekistanRegion } from '../../core/models';
                       <mat-icon>trending_up</mat-icon>
                       <div class="detail-info">
                         <span class="label">Narx segmenti</span>
-                        <span class="value">{{ aiService.priceResult()?.priceLevel || 'O\'rta' }}</span>
+                        <span class="value">{{ aiService.priceResult()?.priceLevel || 'O'rta' }}</span>
                       </div>
                     </div>
                     <div class="detail-card" *ngIf="aiService.priceResult()?.similarCount">
@@ -885,6 +885,7 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
   private fb = inject(FormBuilder);
   aiService = inject(AIService);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   chartCanvas = viewChild<any>('chartCanvas');
   private chart: Chart | null = null;
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal, viewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -478,7 +478,7 @@ import { Conversation, Message } from '../../core/models';
     }
   `]
 })
-export class MessagesComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class MessagesComponent implements OnInit, AfterViewChecked {
   chatService = inject(ChatService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -525,10 +525,6 @@ export class MessagesComponent implements OnInit, OnDestroy, AfterViewChecked {
       this.scrollToBottom();
       this.shouldScroll.set(false);
     }
-  }
-
-  ngOnDestroy(): void {
-    // Don't disconnect on destroy to keep receiving notifications
   }
 
   private scrollToBottom(): void {

@@ -1,14 +1,14 @@
-import { Component, OnInit, inject, signal, computed, viewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, viewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableModule } from '@angular/material/table';
-import { MatSortModule, MatSort } from '@angular/material/sort';
+import { MatSortModule } from '@angular/material/sort';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatChipsModule } from '@angular/material/chips';
-import { Chart, ChartConfiguration } from 'chart.js/auto';
+import { Chart } from 'chart.js/auto';
 import { AnalyticsService, MarketOverview, RegionAnalytics, PriceTrend, DistrictAnalytics } from '../../core/services/analytics.service';
 
 // Extended interface for heatmap
@@ -639,7 +639,7 @@ import { forkJoin } from 'rxjs';
     }
   `]
 })
-export class MarketAnalyticsComponent implements OnInit, AfterViewInit {
+export class MarketAnalyticsComponent implements OnInit {
   private analyticsService = inject(AnalyticsService);
   private trendsCanvas = viewChild<ElementRef<HTMLCanvasElement>>('trendsCanvas');
   private regionsCanvas = viewChild<ElementRef<HTMLCanvasElement>>('regionsCanvas');
@@ -695,10 +695,6 @@ export class MarketAnalyticsComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.loadData();
-  }
-
-  ngAfterViewInit(): void {
-    // Charts will be initialized after data is loaded
   }
 
   loadData(): void {

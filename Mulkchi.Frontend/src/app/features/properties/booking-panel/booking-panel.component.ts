@@ -330,7 +330,7 @@ export class BookingPanelComponent {
     };
 
     this.bookingService.createBooking(request).subscribe({
-      next: (booking) => {
+      next: () => {
         this.isLoading.set(false);
         this.snackBar.open('Bron tasdiqlandi!', 'Yopish', {
           duration: 3000,
@@ -363,10 +363,11 @@ export class BookingPanelComponent {
         this.errorMessage.set('Bu sana band. Boshqa sanani tanlang.');
         break;
 
-      case 400:
+      case 400: {
         const message = error.error?.message || 'Ma\'lumotlar noto\'g\'ri kiritildi';
         this.errorMessage.set(message);
         break;
+      }
 
       case 403:
         this.errorMessage.set('Bu amalni bajarishga ruxsat yo\'q');

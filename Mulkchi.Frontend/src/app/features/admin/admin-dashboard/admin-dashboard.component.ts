@@ -5,7 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -556,19 +556,19 @@ export class AdminDashboardComponent implements OnInit {
     return property.salePrice || property.monthlyRent || property.pricePerNight || 0;
   }
 
-  deleteUser(id: string): void {
+  deleteUser(_id: string): void {
     if (confirm('Haqiqatan ham bu foydalanuvchini o\'chirmoqchimisiz?')) {
       this.snackBar.open('Foydalanuvchi o\'chirildi', 'Yopish', { duration: 3000 });
       this.loadDashboardData();
     }
   }
 
-  verifyProperty(id: string): void {
+  verifyProperty(_id: string): void {
     this.snackBar.open('Mulk tasdiqlandi', 'Yopish', { duration: 3000 });
     this.loadDashboardData();
   }
 
-  deleteProperty(id: string): void {
+  deleteProperty(_id: string): void {
     if (confirm('Haqiqatan ham bu mulkni o\'chirmoqchimisiz?')) {
       this.snackBar.open('Mulk o\'chirildi', 'Yopish', { duration: 3000 });
       this.loadDashboardData();

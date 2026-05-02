@@ -175,7 +175,7 @@ export class SeoService {
   /**
    * Set robots meta tag
    */
-  setRobotsMeta(noIndex: boolean = false, noFollow: boolean = false): void {
+  setRobotsMeta(noIndex = false, noFollow = false): void {
     let content = 'index, follow';
     
     if (noIndex && noFollow) {
@@ -209,7 +209,7 @@ export class SeoService {
   /**
    * Set page language
    */
-  setLanguage(locale: string = 'uz_UZ'): void {
+  setLanguage(locale = 'uz_UZ'): void {
     const lang = locale.split('_')[0];
     document.documentElement.lang = lang;
   }

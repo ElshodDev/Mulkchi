@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 import { Message, Conversation } from '../models';
 import * as signalR from '@microsoft/signalr';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { LoggerService } from './logger.service';
+
 
 @Injectable({
   providedIn: 'root'
@@ -90,7 +90,7 @@ export class ChatService {
               || localStorage.getItem('token')
               || localStorage.getItem('jwt');
           // Return null instead of empty string to avoid sending "undefined"
-          return accessToken && accessToken !== 'undefined' ? accessToken : null as any;
+          return accessToken && accessToken !== 'undefined' ? accessToken : null;
         }
       })
       .withAutomaticReconnect([0, 1000, 5000, 10000])
