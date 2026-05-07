@@ -18,6 +18,10 @@ obj/
 logs/
 wwwroot/uploads/
 
+# Ngrok logs
+ngrok_output.txt
+ngrok_setup_log.txt
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
