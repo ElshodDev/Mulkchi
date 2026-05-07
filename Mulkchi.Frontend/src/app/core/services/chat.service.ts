@@ -1,19 +1,22 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
-import { environment } from '../../../environments/environment';
-import { Message, Conversation } from '../models';
-import * as signalR from '@microsoft/signalr';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-
+import { Router } from '@angular/router';
+import * as signalR from '@microsoft/signalr';
+import { environment } from '../../../environments/environment';
+import { Conversation, Message } from '../models';
+import { AuthService } from './auth.service';
+import { SessionService } from './session.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ChatService {
   private http = inject(HttpClient);
   private router = inject(Router);
   private snackBar = inject(MatSnackBar);
+  private authService = inject(AuthService);
+  private sessionService = inject(SessionService);
 
   private hubConnection: signalR.HubConnection | null = null;
   private readonly apiUrl = `${environment.apiUrl}/messages`;
@@ -41,23 +44,21 @@ export class ChatService {
   });
 
   constructor() {
-    // Try to connect on init if authenticated
-    const token = localStorage.getItem('access_token')
-               || localStorage.getItem('accessToken')
-               || localStorage.getItem('token')
-               || localStorage.getItem('jwt');
-    if (token) {
-      this.tryConnect();
-    } else {
-      console.warn('[ChatService] Token yo\'q, SignalR ulanmaydi');
+    this.sessionService.authChanges$.subscribe((isLoggedIn) => {
+      if (isLoggedIn) {
+        void this.tryConnect();
+      } else {
+        this.disconnect();
+      }
+    });
+
+    if (this.authService.isAuthenticated()) {
+      void this.tryConnect();
     }
   }
 
   private getAccessToken(): string | null {
-    return localStorage.getItem('access_token')
-        || localStorage.getItem('accessToken')
-        || localStorage.getItem('token')
-        || localStorage.getItem('jwt');
+    return this.authService.getAccessToken();
   }
 
   private isAuthenticated(): boolean {
@@ -84,14 +85,7 @@ export class ChatService {
 
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl(this.hubUrl, {
-        accessTokenFactory: () => {
-          const accessToken = localStorage.getItem('access_token')
-              || localStorage.getItem('accessToken')
-              || localStorage.getItem('token')
-              || localStorage.getItem('jwt');
-          // Return null instead of empty string to avoid sending "undefined"
-          return accessToken && accessToken !== 'undefined' ? accessToken : null;
-        }
+        accessTokenFactory: () => this.getAccessToken() ?? '',
       })
       .withAutomaticReconnect([0, 1000, 5000, 10000])
       .configureLogging(signalR.LogLevel.Information)
@@ -126,9 +120,11 @@ export class ChatService {
   private handleIncomingMessage(message: Message): void {
     // If we're in the active conversation, add the message
     const activeConv = this._activeConversation();
-    if (activeConv && 
-        (message.senderId === activeConv.otherUserId || message.receiverId === activeConv.otherUserId)) {
-      this._currentMessages.update(msgs => [...msgs, message]);
+    if (
+      activeConv &&
+      (message.senderId === activeConv.otherUserId || message.receiverId === activeConv.otherUserId)
+    ) {
+      this._currentMessages.update((msgs) => [...msgs, message]);
     }
 
     // Update conversations list
@@ -136,18 +132,18 @@ export class ChatService {
 
     // Show notification if not from current user
     if (message.senderId !== this.getCurrentUserId()) {
-      this._unreadCount.update(count => count + 1);
+      this._unreadCount.update((count) => count + 1);
       this.showNotification(message);
     }
   }
 
   private updateConversationWithMessage(message: Message): void {
-    this._conversations.update(convs => {
+    this._conversations.update((convs) => {
       const senderId = message.senderId;
       const receiverId = message.receiverId;
       const otherUserId = senderId === this.getCurrentUserId() ? receiverId : senderId;
 
-      const existingIndex = convs.findIndex(c => c.otherUserId === otherUserId);
+      const existingIndex = convs.findIndex((c) => c.otherUserId === otherUserId);
 
       if (existingIndex >= 0) {
         // Update existing conversation
@@ -156,9 +152,10 @@ export class ChatService {
           ...updated[existingIndex],
           lastMessage: message.content,
           lastMessageDate: message.createdDate,
-          unreadCount: senderId === this.getCurrentUserId() 
-            ? updated[existingIndex].unreadCount 
-            : (updated[existingIndex].unreadCount || 0) + 1
+          unreadCount:
+            senderId === this.getCurrentUserId()
+              ? updated[existingIndex].unreadCount
+              : (updated[existingIndex].unreadCount || 0) + 1,
         };
         // Move to top
         const [conv] = updated.splice(existingIndex, 1);
@@ -171,28 +168,26 @@ export class ChatService {
   }
 
   private showNotification(message: Message): void {
-    this.snackBar.open(`Yangi xabar: ${message.content.substring(0, 50)}${message.content.length > 50 ? '...' : ''}`, 'Ko\'rish', {
-      duration: 5000,
-      horizontalPosition: 'end',
-      verticalPosition: 'top'
-    }).onAction().subscribe(() => {
-      this.router.navigate(['/messages'], { 
-        queryParams: { userId: message.senderId } 
+    this.snackBar
+      .open(
+        `Yangi xabar: ${message.content.substring(0, 50)}${message.content.length > 50 ? '...' : ''}`,
+        "Ko'rish",
+        {
+          duration: 5000,
+          horizontalPosition: 'end',
+          verticalPosition: 'top',
+        },
+      )
+      .onAction()
+      .subscribe(() => {
+        this.router.navigate(['/messages'], {
+          queryParams: { userId: message.senderId },
+        });
       });
-    });
   }
 
   private getCurrentUserId(): string | null {
-    const userJson = localStorage.getItem('user');
-    if (userJson) {
-      try {
-        const user = JSON.parse(userJson) as { id: string };
-        return user.id;
-      } catch {
-        return null;
-      }
-    }
-    return null;
+    return this.authService.currentUser()?.id ?? null;
   }
 
   // Send message via SignalR
@@ -229,25 +224,25 @@ export class ChatService {
       },
       error: () => {
         this._isLoading.set(false);
-      }
+      },
     });
   }
 
   // Get messages with specific user
   getMessages(otherUserId: string): void {
     this._isLoading.set(true);
-    
+
     this.http.get<Message[]>(`${this.apiUrl}/${otherUserId}`).subscribe({
       next: (messages) => {
         this._currentMessages.set(messages);
         this._isLoading.set(false);
-        
+
         // Mark conversation as read
         this.markAsRead(otherUserId);
       },
       error: () => {
         this._isLoading.set(false);
-      }
+      },
     });
   }
 
@@ -256,17 +251,17 @@ export class ChatService {
     this.http.post(`${this.apiUrl}/${otherUserId}/read`, {}).subscribe({
       next: () => {
         // Update unread count in conversations
-        this._conversations.update(convs => 
-          convs.map(c => 
-            c.otherUserId === otherUserId ? { ...c, unreadCount: 0 } : c
-          )
+        this._conversations.update((convs) =>
+          convs.map((c) => (c.otherUserId === otherUserId ? { ...c, unreadCount: 0 } : c)),
         );
-        
+
         // Recalculate total unread
         const total = this._conversations().reduce((sum, c) => sum + (c.unreadCount || 0), 0);
         this._unreadCount.set(total);
       },
-      error: () => { /* Silently handle error */ }
+      error: () => {
+        /* Silently handle error */
+      },
     });
   }
 
@@ -278,12 +273,8 @@ export class ChatService {
 
   // Reconnect - called after login
   reconnect(): void {
-    const token = localStorage.getItem('access_token')
-               || localStorage.getItem('accessToken')
-               || localStorage.getItem('token')
-               || localStorage.getItem('jwt');
-    if (token && this.hubConnection?.state !== 'Connected') {
-      this.startConnection();
+    if (this.getAccessToken() && this.hubConnection?.state !== 'Connected') {
+      void this.startConnection();
     }
   }
 

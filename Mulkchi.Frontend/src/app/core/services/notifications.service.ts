@@ -92,12 +92,8 @@ export class NotificationsService implements OnDestroy {
     if (this.hubConnection) {
       return;
     }
-    
-    const rawToken = localStorage.getItem('access_token')
-        || localStorage.getItem('accessToken')
-        || localStorage.getItem('token')
-        || localStorage.getItem('jwt');
-    const token = rawToken && rawToken !== 'undefined' ? rawToken : null;
+ 
+    const token = this.authService.getAccessToken();
     
     if (!token) {
       return;
