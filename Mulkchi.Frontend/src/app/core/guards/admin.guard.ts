@@ -1,18 +1,18 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
+
 import { UserRole } from '../models';
+import { AuthStore } from '../stores/auth.store';
 
 export const adminGuard: CanActivateFn = () => {
-  const authService = inject(AuthService);
+  const authStore = inject(AuthStore);
   const router = inject(Router);
-  
-  const currentUser = authService.currentUser();
-  
+
+  const currentUser = authStore.currentUser();
+
   if (currentUser && (currentUser.role === UserRole.Admin || currentUser.role === UserRole.SuperAdmin)) {
     return true;
   }
-  
-  router.navigate(['/']);
-  return false;
+
+  return router.createUrlTree(['/forbidden']);
 };

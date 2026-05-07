@@ -1,216 +1,223 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, throwError, map, BehaviorSubject } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import {
+  catchError,
+  finalize,
+  map,
+  Observable,
+  shareReplay,
+  switchMap,
+  take,
+  tap,
+  throwError,
+} from 'rxjs';
+
 import { environment } from '../../../environments/environment';
-import { User, AuthResponse, LoginRequest, RegisterRequest, UserRole, Gender, HostBadge, ApiRegisterRequest, ApiAuthResponse } from '../models';
-import { ChatService } from './chat.service';
+import {
+  ApiAuthResponse,
+  ApiRegisterRequest,
+  AuthResponse,
+  Gender,
+  HostBadge,
+  LoginRequest,
+  RegisterRequest,
+  User,
+  UserRole,
+} from '../models';
+import { SessionService } from './session.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
+  private static readonly refreshTokenStorageKey = 'mulkchi_refresh_token';
+
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly sessionService = inject(SessionService);
+
   private readonly apiUrl = `${environment.apiUrl}/auth`;
   private readonly usersUrl = `${environment.apiUrl}/users`;
-  
-  // Signals for state management
+
   private readonly _currentUser = signal<User | null>(null);
   private readonly _accessToken = signal<string | null>(null);
-  private readonly _isAuthenticated = computed(() => !!this._accessToken() && !!this._currentUser());
-  
-  // Public readonly signals
+  private readonly _refreshToken = signal<string | null>(this.readStoredRefreshToken());
+  private readonly _currentMode = signal<UserRole>(UserRole.Guest);
+  private readonly _isRestoringSession = signal(false);
+
+  private refreshRequest$: Observable<AuthResponse> | null = null;
+
   readonly currentUser = computed(() => this._currentUser());
-  readonly isAuthenticated = computed(() => this._isAuthenticated());
+  readonly isAuthenticated = computed(() => !!this._accessToken() && !!this._currentUser());
   readonly userRole = computed(() => this._currentUser()?.role ?? null);
-  
-  // Single Identity: Current Mode Management
-  private readonly _currentMode = new BehaviorSubject<UserRole>(UserRole.Guest);
-  readonly currentMode$ = this._currentMode.asObservable();
-  readonly currentMode = computed(() => this._currentUser()?.currentMode ?? this._currentUser()?.role ?? UserRole.Guest);
-  
-  private chatService = inject(ChatService);
+  readonly currentMode = computed(() => this._currentMode());
+  readonly isRestoringSession = computed(() => this._isRestoringSession());
 
-  constructor(
-    private http: HttpClient,
-    private router: Router
-  ) {
-    this.loadStoredAuth();
-  }
-  
-  private loadStoredAuth(): void {
-    const token = localStorage.getItem('access_token');
-    const userJson = localStorage.getItem('user');
-    
-    if (token && userJson) {
-      try {
-        const user = JSON.parse(userJson) as User;
-        this._accessToken.set(token);
-        this._currentUser.set(user);
-        // Initialize current mode from stored user
-        const mode = user.currentMode ?? user.role ?? UserRole.Guest;
-        this._currentMode.next(mode);
-      } catch {
-        this.clearAuth();
-      }
-    }
-  }
-  
   login(request: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<ApiAuthResponse>(`${this.apiUrl}/login`, {
-      Email: request.email,
-      Password: request.password
-    }).pipe(
-      map(apiResponse => this.mapApiAuthResponse(apiResponse)),
-      tap(response => {
-        this.handleAuthResponse(response);
-        // SignalR ga qayta ulash
-        this.chatService.reconnect();
-      }),
-      catchError(error => throwError(() => error))
-    );
+    return this.http
+      .post<ApiAuthResponse>(`${this.apiUrl}/login`, {
+        Email: request.email,
+        Password: request.password,
+      })
+      .pipe(
+        map((apiResponse) => this.mapApiAuthResponse(apiResponse)),
+        tap((response) => {
+          this.handleAuthResponse(response);
+          this.sessionService.emitLogin();
+        }),
+      );
   }
-  
-  register(request: RegisterRequest): Observable<AuthResponse> {
-    // Convert camelCase to PascalCase for C# backend compatibility
+
+  register(credentials: RegisterRequest): Observable<AuthResponse> {
     const apiRequest: ApiRegisterRequest = {
-      FirstName: request.firstName,
-      LastName: request.lastName,
-      Email: request.email,
-      Phone: request.phone || '', // Phone is required on backend
-      Password: request.password,
-      PreferredLanguage: 'uz'
+      FirstName: credentials.firstName,
+      LastName: credentials.lastName,
+      Email: credentials.email,
+      Phone: credentials.phone || '',
+      Password: credentials.password,
+      PreferredLanguage: 'uz',
     };
-    
-    return this.http.post<ApiAuthResponse>(`${this.apiUrl}/register`, apiRequest).pipe(
-      map(apiResponse => this.mapApiAuthResponse(apiResponse)),
-      tap(response => {
-        this.handleAuthResponse(response);
-        // SignalR ga qayta ulash
-        this.chatService.reconnect();
-      }),
-      catchError(error => throwError(() => error))
-    );
+
+    return this.http
+      .post<ApiAuthResponse>(`${this.apiUrl}/register`, apiRequest, { observe: 'response' })
+      .pipe(
+        tap((httpResponse) => {
+          if (httpResponse.status === 200 || httpResponse.status === 201) {
+            const response = this.mapApiAuthResponse(httpResponse.body!);
+            this.handleAuthResponse(response, true);
+            this.sessionService.emitLogin();
+          }
+        }),
+        map((httpResponse) => this.mapApiAuthResponse(httpResponse.body!)),
+        catchError((error: HttpErrorResponse) => {
+          return throwError(() => this.handleError(error));
+        }),
+      );
   }
 
-  // Google Login
   googleLogin(idToken: string): Observable<AuthResponse> {
-    return this.http.post<ApiAuthResponse>(`${this.apiUrl}/google`, {
-      idToken: idToken
-    }).pipe(
-      map(apiResponse => this.mapApiAuthResponse(apiResponse)),
-      tap(response => {
-        if (!response.token) {
-          throw new Error('Token missing in authentication response');
-        }
+    return this.http.post<ApiAuthResponse>(`${this.apiUrl}/google`, { idToken }).pipe(
+      map((apiResponse) => this.mapApiAuthResponse(apiResponse)),
+      tap((response) => {
         this.handleAuthResponse(response);
-        // SignalR ga qayta ulash
-        this.chatService.reconnect();
+        this.sessionService.emitLogin();
       }),
-      catchError(error => throwError(() => error))
     );
   }
 
-  /**
-   * Map API response (ApiAuthResponse) to internal AuthResponse format.
-   * Public so other services can convert backend responses.
-   */
+  bootstrapSession(): void {
+    if (this.isAuthenticated() || this._isRestoringSession()) {
+      return;
+    }
+
+    this._isRestoringSession.set(true);
+
+    this.refreshToken()
+      .pipe(
+        switchMap(() => this.getCurrentUser()),
+        take(1),
+        finalize(() => this._isRestoringSession.set(false)),
+      )
+      .subscribe({
+        error: () => this.clearAuth(false),
+      });
+  }
+
   mapApiAuthResponse(apiResponse: ApiAuthResponse | Record<string, unknown>): AuthResponse {
-    // Support both PascalCase (C#) and camelCase (TypeScript) responses
-    const getValue = (camelKey: string, pascalKey: string): unknown => {
-      return (apiResponse as Record<string, unknown>)[camelKey] ?? 
-             (apiResponse as Record<string, unknown>)[pascalKey];
-    };
+    const getValue = (camelKey: string, pascalKey: string): unknown =>
+      (apiResponse as Record<string, unknown>)[camelKey] ??
+      (apiResponse as Record<string, unknown>)[pascalKey];
 
     const token = (getValue('accessToken', 'AccessToken') || getValue('token', 'Token')) as string;
-    const refreshToken = getValue('refreshToken', 'RefreshToken') as string;
-    const expiresAt = getValue('expiresAt', 'ExpiresAt') as string;
-    const userId = getValue('userId', 'UserId') as string;
-    const email = getValue('email', 'Email') as string;
-    const firstName = getValue('firstName', 'FirstName') as string;
-    const lastName = getValue('lastName', 'LastName') as string;
-    const avatarUrl = getValue('avatarUrl', 'AvatarUrl') as string | undefined;
-    const role = getValue('role', 'Role') as string;
-    
+
     return {
-      token: token,
-      refreshToken: refreshToken,
-      expiresAt: new Date(expiresAt),
-      userId: userId,
-      email: email,
-      firstName: firstName,
-      lastName: lastName,
-      avatarUrl: avatarUrl,
-      role: role as UserRole
+      token,
+      refreshToken: getValue('refreshToken', 'RefreshToken') as string,
+      expiresAt: new Date(getValue('expiresAt', 'ExpiresAt') as string),
+      userId: getValue('userId', 'UserId') as string,
+      email: getValue('email', 'Email') as string,
+      firstName: getValue('firstName', 'FirstName') as string,
+      lastName: getValue('lastName', 'LastName') as string,
+      avatarUrl: getValue('avatarUrl', 'AvatarUrl') as string | undefined,
+      role: getValue('role', 'Role') as UserRole,
+      currentMode: getValue('currentMode', 'CurrentMode') as UserRole | undefined,
     };
   }
-  
+
   refreshToken(): Observable<AuthResponse> {
-    const refreshToken = localStorage.getItem('refresh_token');
-    if (!refreshToken) {
-      return throwError(() => new Error('No refresh token available'));
+    if (this.refreshRequest$) {
+      return this.refreshRequest$;
     }
-    
-    return this.http.post<ApiAuthResponse>(`${this.apiUrl}/refresh-token`, { refreshToken }).pipe(
-      map(apiResponse => this.mapApiAuthResponse(apiResponse)),
-      tap(response => {
-        this.handleAuthResponse(response);
-        // SignalR ga qayta ulash
-        this.chatService.reconnect();
-      }),
-      catchError(error => {
-        this.clearAuth();
-        return throwError(() => error);
-      })
-    );
+
+    const refreshToken = this._refreshToken();
+    const requestBody = refreshToken ? { refreshToken } : {};
+
+    this.refreshRequest$ = this.http
+      .post<ApiAuthResponse>(`${this.apiUrl}/refresh-token`, requestBody)
+      .pipe(
+        map((apiResponse) => this.mapApiAuthResponse(apiResponse)),
+        tap((response) => {
+          this.handleAuthResponse(response, false);
+          this.sessionService.emitLogin();
+        }),
+        catchError((error) => {
+          this.clearAuth(false);
+          return throwError(() => error);
+        }),
+        finalize(() => {
+          this.refreshRequest$ = null;
+        }),
+        shareReplay(1),
+      );
+
+    return this.refreshRequest$;
   }
-  
+
   logout(): void {
-    const refreshToken = localStorage.getItem('refresh_token');
+    const refreshToken = this._refreshToken();
     const body = refreshToken ? { refreshToken } : {};
-    
-    this.http.post(`${this.apiUrl}/logout`, body).subscribe({
-      next: () => this.clearAuth(),
-      error: () => this.clearAuth() // Clear locally even if server fails
-    });
+
+    this.http
+      .post<void>(`${this.apiUrl}/logout`, body)
+      .pipe(take(1))
+      .subscribe({
+        next: () => this.clearAuth(),
+        error: () => this.clearAuth(),
+      });
   }
-  
+
   getCurrentUser(): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/me`).pipe(
-      tap(user => this._currentUser.set(user)),
-      catchError(error => throwError(() => error))
+      tap((user) => {
+        this._currentUser.set(user);
+        this._currentMode.set(user.currentMode ?? user.role ?? UserRole.Guest);
+      }),
     );
   }
-  
+
   updateProfile(user: Partial<User>): Observable<User> {
     return this.http.put<User>(`${this.usersUrl}/me`, user).pipe(
-      tap(updatedUser => {
+      tap((updatedUser) => {
         this._currentUser.set(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        this._currentMode.set(updatedUser.currentMode ?? updatedUser.role ?? UserRole.Guest);
       }),
-      catchError(error => throwError(() => error))
     );
   }
-  
+
   forgotPassword(email: string): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/forgot-password`, { email }).pipe(
-      catchError(error => throwError(() => error))
-    );
+    return this.http.post<void>(`${this.apiUrl}/forgot-password`, { email });
   }
-  
+
   resetPassword(token: string, newPassword: string): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/reset-password`, { token, newPassword }).pipe(
-      catchError(error => throwError(() => error))
-    );
+    return this.http.post<void>(`${this.apiUrl}/reset-password`, { token, newPassword });
   }
-  
-  /** 
-   * Handle authentication response - updates signals, localStorage, and fetches user details.
-   * Public so other services (like PropertyService) can update tokens after role upgrade.
-   */
-  handleAuthResponse(response: AuthResponse): void {
+
+  handleAuthResponse(response: AuthResponse, fetchProfile = true): void {
     this._accessToken.set(response.token);
-    const mode = response.currentMode ?? response.role ?? UserRole.Guest;
-    this._currentMode.next(mode);
+    this._refreshToken.set(response.refreshToken);
+    this.storeRefreshToken(response.refreshToken);
+    this._currentMode.set(response.currentMode ?? response.role ?? UserRole.Guest);
     this._currentUser.set({
       id: response.userId,
       email: response.email,
@@ -218,8 +225,8 @@ export class AuthService {
       lastName: response.lastName,
       avatarUrl: response.avatarUrl,
       role: response.role,
-      currentMode: response.currentMode ?? response.role, // Set current mode from response
-      gender: Gender.Other, // Will be populated by getCurrentUser()
+      currentMode: response.currentMode ?? response.role,
+      gender: Gender.Other,
       isVerified: false,
       emailConfirmed: false,
       badge: HostBadge.New,
@@ -230,92 +237,71 @@ export class AuthService {
       totalBookings: 0,
       preferredLanguage: 'uz',
       createdDate: new Date(),
-      updatedDate: new Date()
+      updatedDate: new Date(),
     });
-    
-    localStorage.setItem('access_token', response.token);
-    localStorage.setItem('refresh_token', response.refreshToken);
-    localStorage.setItem('user', JSON.stringify(this._currentUser()));
-    
-    // Fetch full user details after signal update is processed
-    Promise.resolve().then(() => {
-      if (this._accessToken()) {
-        this.getCurrentUser().subscribe({
-          error: () => {
-            // Silently ignore errors from getCurrentUser
-            // User data from login response is sufficient
-          }
-        });
-      }
-    });
-  }
-  
-  clearAuth(): void {
-    this._accessToken.set(null);
-    this._currentUser.set(null);
-    this._currentMode.next(UserRole.Guest);
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
-    this.router.navigate(['/auth/login']);
+
+    if (!fetchProfile) {
+      return;
+    }
+
+    this.getCurrentUser()
+      .pipe(take(1))
+      .subscribe({
+        error: () => undefined,
+      });
   }
 
-  // Single Identity: Switch between Guest and Host modes
+  clearAuth(redirectToLogin = true): void {
+    this._accessToken.set(null);
+    this._refreshToken.set(null);
+    this.clearStoredRefreshToken();
+    this._currentUser.set(null);
+    this._currentMode.set(UserRole.Guest);
+    this.sessionService.emitLogout();
+
+    if (redirectToLogin) {
+      void this.router.navigate(['/auth/login']);
+    }
+  }
+
   switchMode(request: { TargetMode: UserRole }): Observable<AuthResponse> {
-    // Get refresh token from localStorage
-    const refreshToken = localStorage.getItem('refresh_token') || '';
-    // Explicitly construct request body to match backend SwitchRoleRequest DTO
     const body = {
       TargetMode: request.TargetMode,
-      RefreshToken: refreshToken
+      RefreshToken: this._refreshToken() ?? '',
     };
-    return this.http.post<AuthResponse>(`${this.apiUrl}/switch-role`, body).pipe(
-      map(apiResponse => this.mapApiAuthResponse(apiResponse as unknown as Record<string, unknown>)),
-      tap(response => {
-        // Update current mode
-        this._currentMode.next(response.currentMode ?? response.role);
-        // Update stored user with new mode
-        const currentUser = this._currentUser();
-        if (currentUser) {
-          currentUser.currentMode = response.currentMode ?? response.role;
-          localStorage.setItem('user', JSON.stringify(currentUser));
-          this._currentUser.set({ ...currentUser });
-        }
-        this._accessToken.set(response.token);
-        localStorage.setItem('access_token', response.token);
-      }),
-      catchError(error => throwError(() => error))
+
+    return this.http.post<Record<string, unknown>>(`${this.apiUrl}/switch-role`, body).pipe(
+      map((apiResponse) => this.mapApiAuthResponse(apiResponse)),
+      tap((response) => this.handleAuthResponse(response, false)),
     );
   }
 
-  // Check if user is in Host mode (Single Identity)
   isInHostMode(): boolean {
     const mode = this.currentMode();
     return mode === UserRole.Host || mode === UserRole.Admin || mode === UserRole.SuperAdmin;
   }
 
-  // Check if user is in Guest mode
   isInGuestMode(): boolean {
     return this.currentMode() === UserRole.Guest;
   }
-  
+
   getAccessToken(): string | null {
     return this._accessToken();
   }
-  
+
   isHost(): boolean {
     const role = this._currentUser()?.role;
     return role === UserRole.Host || role === UserRole.Admin || role === UserRole.SuperAdmin;
   }
-  
+
   isAdmin(): boolean {
     const role = this._currentUser()?.role;
     return role === UserRole.Admin || role === UserRole.SuperAdmin;
   }
 
-  // Upload user avatar
   uploadAvatar(file: File): Observable<User> {
     const userId = this._currentUser()?.id;
+
     if (!userId) {
       return throwError(() => new Error('Foydalanuvchi aniqlanmadi'));
     }
@@ -324,16 +310,58 @@ export class AuthService {
     formData.append('avatar', file);
 
     return this.http.put<User>(`${this.usersUrl}/${userId}/avatar`, formData).pipe(
-      tap(updatedUser => {
-        // Update stored user data
+      tap((updatedUser) => {
         const currentUser = this._currentUser();
-        if (currentUser) {
-          const newUser = { ...currentUser, avatarUrl: updatedUser.avatarUrl };
-          localStorage.setItem('user', JSON.stringify(newUser));
-          this._currentUser.set(newUser);
+        if (!currentUser) {
+          return;
         }
+
+        this._currentUser.set({
+          ...currentUser,
+          avatarUrl: updatedUser.avatarUrl,
+        });
       }),
-      catchError(error => throwError(() => error))
     );
+  }
+
+  private readStoredRefreshToken(): string | null {
+    if (typeof localStorage === 'undefined') {
+      return null;
+    }
+
+    return localStorage.getItem(AuthService.refreshTokenStorageKey);
+  }
+
+  private storeRefreshToken(refreshToken: string): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+
+    localStorage.setItem(AuthService.refreshTokenStorageKey, refreshToken);
+  }
+
+  private clearStoredRefreshToken(): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+
+    localStorage.removeItem(AuthService.refreshTokenStorageKey);
+  }
+
+  private handleError(error: HttpErrorResponse): string {
+    if (error.error instanceof ErrorEvent) {
+      return 'Tarmoq xatosi: ' + error.error.message;
+    } else {
+      if (error.status === 400) {
+        return 'Noto\'g\'ri ma\'lumot kiritildi';
+      } else if (error.status === 401) {
+        return 'Email yoki parol noto\'g\'ri';
+      } else if (error.status === 409) {
+        return 'Bu email allaqachon ro\'yxatdan o\'tgan';
+      } else if (error.status === 500) {
+        return 'Server xatosi. Iltimos keyinroq urinib ko\'ring';
+      }
+      return `Xatolik: ${error.status} - ${error.message}`;
+    }
   }
 }

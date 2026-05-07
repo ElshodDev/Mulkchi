@@ -1,8 +1,11 @@
-import { Injectable, Component, inject } from '@angular/core';
-import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
+import { ChangeDetectionStrategy, Component, inject, Injectable } from '@angular/core';
+import {
+  MAT_SNACK_BAR_DATA,
+  MatSnackBar,
+  MatSnackBarConfig,
+} from '@angular/material/snack-bar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { CommonModule } from '@angular/common';
 
 export type ToastType = 'info' | 'success' | 'warning' | 'error';
 
@@ -13,112 +16,138 @@ export interface ToastData {
 }
 
 @Component({
+  selector: 'app-toast',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule],
+  imports: [MatButtonModule, MatIconModule],
   template: `
-    <div class="toast-container" [class]="'toast-' + data.type">
-      <mat-icon class="toast-icon">{{ getIcon() }}</mat-icon>
-      <span class="toast-message">{{ data.message }}</span>
+    <div class="toast" [class]="'toast toast--' + data.type">
+      <div class="toast__icon">
+        <mat-icon>{{ icon() }}</mat-icon>
+      </div>
+      <div class="toast__copy">{{ data.message }}</div>
       @if (data.action) {
-        <button mat-button (click)="action()">{{ data.action }}</button>
+        <button mat-button type="button">{{ data.action }}</button>
       }
     </div>
   `,
-  styles: [`
-    .toast-container {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 16px;
-      border-radius: 8px;
-      min-width: 300px;
-      max-width: 400px;
-    }
-    
-    .toast-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
-    .toast-error { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; }
-    .toast-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
-    .toast-info { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; }
-    
-    .toast-icon { font-size: 20px; width: 20px; height: 20px; }
-    .toast-message { flex: 1; font-size: 14px; font-weight: 500; }
-  `]
+  styles: [
+    `
+      .toast {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: var(--space-3);
+        min-width: min(92vw, 26rem);
+        padding: var(--space-3);
+        border: 1px solid transparent;
+        border-radius: var(--radius-4);
+        background: var(--color-surface-elevated);
+        box-shadow: var(--shadow-lg);
+        color: var(--color-text-primary);
+      }
+
+      .toast__icon {
+        display: grid;
+        place-items: center;
+        inline-size: 2.5rem;
+        aspect-ratio: 1;
+        border-radius: var(--radius-round);
+      }
+
+      .toast__copy {
+        font-size: var(--font-size-2);
+        line-height: var(--line-height-normal);
+      }
+
+      .toast--success {
+        border-color: rgba(34, 197, 94, 0.2);
+      }
+
+      .toast--success .toast__icon {
+        background: rgba(34, 197, 94, 0.12);
+        color: var(--color-success-500);
+      }
+
+      .toast--error {
+        border-color: rgba(220, 38, 38, 0.2);
+      }
+
+      .toast--error .toast__icon {
+        background: rgba(220, 38, 38, 0.12);
+        color: var(--color-danger-600);
+      }
+
+      .toast--warning {
+        border-color: rgba(245, 158, 11, 0.22);
+      }
+
+      .toast--warning .toast__icon {
+        background: rgba(245, 158, 11, 0.14);
+        color: var(--color-warning-500);
+      }
+
+      .toast--info {
+        border-color: rgba(59, 130, 246, 0.2);
+      }
+
+      .toast--info .toast__icon {
+        background: rgba(59, 130, 246, 0.12);
+        color: var(--color-info-500);
+      }
+    `,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ToastComponent {
-  data: ToastData = inject(MAT_SNACK_BAR_DATA);
-  
-  action() {
-    // Action handler
-  }
-  
-  getIcon(): string {
+  protected readonly data = inject<ToastData>(MAT_SNACK_BAR_DATA);
+
+  protected icon(): string {
     switch (this.data.type) {
-      case 'success': return 'check_circle';
-      case 'error': return 'error';
-      case 'warning': return 'warning';
-      default: return 'info';
+      case 'success':
+        return 'check_circle';
+      case 'error':
+        return 'error';
+      case 'warning':
+        return 'warning';
+      default:
+        return 'info';
     }
   }
 }
 
-// Import injection token
-import { MAT_SNACK_BAR_DATA } from '@angular/material/snack-bar';
-
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ToastService {
-  private snackBar = inject(MatSnackBar);
-  
-  private defaultConfig: MatSnackBarConfig = {
-    duration: 5000,
+  private readonly snackBar = inject(MatSnackBar);
+
+  private readonly defaultConfig: MatSnackBarConfig = {
+    duration: 4500,
     horizontalPosition: 'right',
     verticalPosition: 'top',
-    panelClass: ['custom-toast']
+    panelClass: ['app-toast-panel'],
   };
-  
-  show(message: string, type: ToastType = 'info', action?: string) {
-    const panelClass = `toast-${type}`;
-    
+
+  show(message: string, type: ToastType = 'info', action?: string): void {
     this.snackBar.openFromComponent(ToastComponent, {
       ...this.defaultConfig,
-      panelClass: [panelClass, 'custom-toast'],
-      data: { message, type, action } as ToastData
+      data: { message, type, action } satisfies ToastData,
     });
   }
-  
-  success(message: string, action?: string) {
+
+  success(message: string, action?: string): void {
     this.show(message, 'success', action);
   }
-  
-  error(message: string, action?: string) {
+
+  error(message: string, action?: string): void {
     this.show(message, 'error', action);
   }
-  
-  warning(message: string, action?: string) {
+
+  warning(message: string, action?: string): void {
     this.show(message, 'warning', action);
   }
-  
-  info(message: string, action?: string) {
+
+  info(message: string, action?: string): void {
     this.show(message, 'info', action);
-  }
-  
-  // Booking related toasts
-  newBooking(propertyTitle: string) {
-    this.success(`Yangi bron so'rovi: "${propertyTitle}"`, 'Ko\'rish');
-  }
-  
-  bookingConfirmed() {
-    this.success('Broningiz tasdiqlandi ✓', 'OK');
-  }
-  
-  bookingCancelled() {
-    this.warning('Bron bekor qilindi', 'Tushundim');
-  }
-  
-  // Message related toasts
-  newMessage(senderName: string, preview?: string) {
-    const msg = preview ? `Yangi xabar: "${preview.substring(0, 30)}..."` : `Yangi xabar: ${senderName}`;
-    this.info(msg, 'Ochish');
   }
 }
