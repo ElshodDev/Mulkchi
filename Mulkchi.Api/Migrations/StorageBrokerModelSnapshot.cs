@@ -136,6 +136,248 @@ namespace Mulkchi.Api.Migrations
                     b.ToTable("PropertyAmenities");
                 });
 
+            modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Analytics.DistrictStat", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AffordabilityScore")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("AmenitiesScore")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<int>("ApartmentCount")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("AverageDaysOnMarket")
+                        .HasColumnType("double precision");
+
+                    b.Property<decimal>("AverageRentPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("AverageSalePrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset>("CalculatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ClosedListingsThisMonth")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CommercialCount")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("ConnectivityScore")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("District")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<decimal>("GrowthScore")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<double>("HospitalCoveragePercent")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("HouseCount")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("InfrastructureScore")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("InvestmentPotentialScore")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<int>("LandCount")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("MarketCoveragePercent")
+                        .HasColumnType("double precision");
+
+                    b.Property<decimal>("MaxSalePrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("MedianSalePrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<double>("MetroCoveragePercent")
+                        .HasColumnType("double precision");
+
+                    b.Property<decimal>("MinSalePrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("NewListingsThisMonth")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("OverallScore")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<double>("ParkingCoveragePercent")
+                        .HasColumnType("double precision");
+
+                    b.Property<decimal>("PricePerSqm")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("PriceQuartile25")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("PriceQuartile75")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Region")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("RentalYieldPercent")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("SafetyScore")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<double>("SchoolCoveragePercent")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("TotalListings")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("WifiCoveragePercent")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CalculatedAt")
+                        .HasDatabaseName("IX_DistrictStats_CalculatedAt");
+
+                    b.HasIndex("OverallScore")
+                        .HasDatabaseName("IX_DistrictStats_OverallScore");
+
+                    b.HasIndex("Region", "District")
+                        .IsUnique()
+                        .HasDatabaseName("IX_DistrictStats_Region_District");
+
+                    b.ToTable("DistrictStats");
+                });
+
+            modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Analytics.MarketTrend", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("AverageDaysOnMarket")
+                        .HasColumnType("double precision");
+
+                    b.Property<decimal>("AverageRentPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("AverageSalePrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset>("CalculatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DataPointsUsed")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("District")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("ListingsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("MarketSentiment")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<double>("PriceChangePercent")
+                        .HasColumnType("double precision");
+
+                    b.Property<decimal>("PricePerSqm")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("PropertyType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Region")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("TransactionsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("YearMonth")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("YearMonth")
+                        .HasDatabaseName("IX_MarketTrends_YearMonth");
+
+                    b.HasIndex("Region", "District", "YearMonth")
+                        .IsUnique()
+                        .HasDatabaseName("IX_MarketTrends_Region_District_YearMonth");
+
+                    b.ToTable("MarketTrends");
+                });
+
+            modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Analytics.PriceHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<double?>("ChangePercent")
+                        .HasColumnType("double precision");
+
+                    b.Property<decimal?>("PreviousPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("PropertyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("RecordedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecordedDate")
+                        .HasDatabaseName("IX_PriceHistories_RecordedDate");
+
+                    b.HasIndex("PropertyId", "RecordedDate")
+                        .HasDatabaseName("IX_PriceHistories_PropertyId_RecordedDate");
+
+                    b.ToTable("PriceHistories");
+                });
+
             modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Announcements.Announcement", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1673,6 +1915,17 @@ namespace Mulkchi.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Amenity");
+
+                    b.Navigation("Property");
+                });
+
+            modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Analytics.PriceHistory", b =>
+                {
+                    b.HasOne("Mulkchi.Api.Models.Foundations.Properties.Property", "Property")
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Property");
                 });
