@@ -2,12 +2,12 @@ name: Backend CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'Mulkchi.Api/**'
-      - 'Mulkchi.Api.Tests.Unit/**'
+      - 'Mulkchi.Api.Tests/**'
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'Mulkchi.Api/**'
 
@@ -33,8 +33,9 @@ jobs:
 
       - name: Unit testlarni ishga tushirish
         run: |
-          dotnet test Mulkchi.Api.Tests.Unit/ \
-            --no-build --no-restore \
+          dotnet test Mulkchi.Api.Tests/Mulkchi.Api.Tests.csproj \
+            --no-build \
+            --no-restore \
             --configuration Release \
             --verbosity normal \
             --logger "trx;LogFileName=test-results.trx" \
