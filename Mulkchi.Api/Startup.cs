@@ -5,15 +5,19 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using StackExchange.Redis;
 using Mulkchi.Api.Brokers.DateTimes;
 using Mulkchi.Api.Brokers.Loggings;
 using Mulkchi.Api.Brokers.Storages;
 using Mulkchi.Api.Brokers.Notifications;
+using Mulkchi.Api.Brokers.Tokens;
 using Microsoft.AspNetCore.SignalR;
 using Mulkchi.Api.Hubs;
 using Mulkchi.Api.Middleware;
+using Mulkchi.Api.Services.Foundations.Auth;
 using Mulkchi.Api.Services.Foundations.Users;
 using Mulkchi.Api.Services.Foundations.Properties;
 using Mulkchi.Api.Services.Foundations.HomeRequests;
@@ -30,7 +34,6 @@ using Mulkchi.Api.Services.Foundations.AiRecommendations;
 using Mulkchi.Api.Services.Foundations.Discounts;
 using Mulkchi.Api.Services.Foundations.DiscountUsages;
 using Mulkchi.Api.Services.Foundations.Announcements;
-using Mulkchi.Api.Services.Foundations.Auth;
 using Mulkchi.Api.Services.Foundations.Bookings;
 using Mulkchi.Api.Services.Foundations.Boosts;
 using Mulkchi.Api.Services.Foundations.Subscriptions;
@@ -68,6 +71,8 @@ public class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
+        var redisConnection = GetRedisConnectionString();
+
         services.AddControllers()
             .AddJsonOptions(options =>
             {
@@ -91,7 +96,7 @@ public class Startup
         // In-process response cache for public analytics / search endpoints
         services.AddResponseCaching();
         services.AddMemoryCache();
-        AddDistributedCache(services);
+        AddDistributedCache(services, redisConnection);
         
         // Add FluentValidation
         services.AddFluentValidationAutoValidation();
@@ -106,19 +111,7 @@ public class Startup
         AddBrokers(services);
         AddFoundationServices(services);
         AddBackgroundServices(services);
-        // SignalR in-memory configuration (Redis disabled for local development)
-        services.AddSignalR(options =>
-        {
-            // WebSocket-specific settings
-            options.EnableDetailedErrors = this.environment.IsDevelopment();
-            options.MaximumReceiveMessageSize = 64 * 1024; // 64KB max message size
-            options.StreamBufferCapacity = 10;
-            
-            // Connection timeout settings - increased to prevent 1011 errors
-            options.ClientTimeoutInterval = TimeSpan.FromSeconds(120); // Increased from 60s
-            options.KeepAliveInterval = TimeSpan.FromSeconds(30); // Increased from 15s
-            options.HandshakeTimeout = TimeSpan.FromSeconds(30);
-        });
+        AddDistributedRealtimeInfrastructure(services, redisConnection);
 
         services.AddSingleton<IUserIdProvider, JwtUserIdProvider>();
         AddCors(services);
@@ -143,8 +136,8 @@ public class Startup
         app.UseHttpsRedirection();
         app.UseStaticFiles(); // Enable static file serving
         app.UseMiddleware<CorrelationIdMiddleware>();
+        app.UseMiddleware<RequestLoggingMiddleware>();
         app.UseSecurityHeaders();
-        app.UseCors(env.IsDevelopment() ? "AllowAngular" : "Production");
 
         // Add global exception handling
         app.UseGlobalExceptionHandling();
@@ -166,6 +159,7 @@ public class Startup
         });
 
         app.UseRouting();
+        app.UseCors(env.IsDevelopment() ? "AllowAngular" : "Production");
         app.UseResponseCaching();
         app.UseAuthentication();
         app.UseAuthorization();
@@ -289,27 +283,64 @@ public class Startup
             {
                 OnMessageReceived = context =>
                 {
+                    var logger = context.HttpContext.RequestServices
+                        .GetRequiredService<ILoggerFactory>()
+                        .CreateLogger("JwtBearerEvents");
+
                     var path = context.HttpContext.Request.Path;
 
                     if (path.StartsWithSegments("/hubs"))
                     {
-                        // SignalR WebSocket: prefer query-string token (accessTokenFactory),
-                        // fall back to httpOnly cookie for SSE/long-polling transports.
                         var queryToken = context.Request.Query["access_token"].ToString();
                         if (!string.IsNullOrEmpty(queryToken))
                         {
                             context.Token = queryToken;
+                            logger.LogDebug(
+                                "JWT token resolved from SignalR query string for {Path}.",
+                                path);
                             return Task.CompletedTask;
                         }
                     }
 
-                    // For all requests (including hubs that did not supply a query token):
-                    // read the access token from the httpOnly cookie.
+                    if (context.Request.Headers.ContainsKey("Authorization"))
+                    {
+                        return Task.CompletedTask;
+                    }
+
                     if (context.Request.Cookies.TryGetValue("access_token", out var cookieToken)
                         && !string.IsNullOrEmpty(cookieToken))
                     {
                         context.Token = cookieToken;
+                        logger.LogDebug("JWT token resolved from access_token cookie for {Path}.", path);
                     }
+
+                    return Task.CompletedTask;
+                },
+                OnAuthenticationFailed = context =>
+                {
+                    var logger = context.HttpContext.RequestServices
+                        .GetRequiredService<ILoggerFactory>()
+                        .CreateLogger("JwtBearerEvents");
+
+                    logger.LogWarning(
+                        context.Exception,
+                        "JWT authentication failed for {Method} {Path}.",
+                        context.Request.Method,
+                        context.Request.Path);
+
+                    return Task.CompletedTask;
+                },
+                OnChallenge = context =>
+                {
+                    var logger = context.HttpContext.RequestServices
+                        .GetRequiredService<ILoggerFactory>()
+                        .CreateLogger("JwtBearerEvents");
+
+                    logger.LogWarning(
+                        "JWT challenge returned for {Method} {Path} with error {Error}.",
+                        context.Request.Method,
+                        context.Request.Path,
+                        context.Error);
 
                     return Task.CompletedTask;
                 }
@@ -334,8 +365,16 @@ public class Startup
 
     private void AddFoundationServices(IServiceCollection services)
     {
+        // Telegram
+         services.AddSingleton<ITelegramBroker, TelegramBroker>();
+        services.AddScoped<ITelegramAuthService, TelegramAuthService>();
+
+         // InMemory cache (Redis yo'q bo'lsa)
+         services.AddDistributedMemoryCache();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddSingleton<IUserConnectionTracker, UserConnectionTracker>();
+        services.AddSingleton<IRefreshTokenGuard, NoOpRefreshTokenGuard>();
         services.AddScoped<IPropertyService, PropertyService>();
         services.AddScoped<IHomeRequestService, HomeRequestService>();
         services.AddScoped<IPaymentService, PaymentService>();
@@ -359,10 +398,7 @@ public class Startup
         services.AddScoped<IAmenityService, AmenityService>();
         services.AddScoped<IChatService, ChatService>();
         services.AddScoped<IAnalyticsService, AnalyticsService>();
-        // Singleton: connection tracker must outlive individual HTTP requests
         services.AddScoped<IPriceRecommendationService, PriceRecommendationService>();
-        // TODO: AIRecommendationEngine class yaratish kerak
-        // services.AddScoped<IAIRecommendationEngine, AIRecommendationEngine>();
         
         // Clean Architecture: Repository Pattern
         services.AddScoped(typeof(Application.Interfaces.IRepository<>), typeof(Infrastructure.Repositories.Repository<>));
@@ -370,11 +406,7 @@ public class Startup
         
         // Clean Architecture: Application Services
         services.AddScoped<Application.Interfaces.IPropertyService, Application.Services.PropertyService>();
-        
-        // FluentValidation
-        services.AddFluentValidationAutoValidation();
-        services.AddValidatorsFromAssemblyContaining<Program>();
-        
+
         // Configure EmailSettings
         services.Configure<EmailSettings>(this.configuration.GetSection("EmailSettings"));
         
@@ -391,16 +423,14 @@ public class Startup
         services.AddScoped<IMeiliPropertySearchService, MeiliPropertySearchService>();
     }
 
-    private void AddDistributedCache(IServiceCollection services)
+    private void AddDistributedCache(IServiceCollection services, string? redisConnection)
     {
-        // Check for Redis connection: MULKCHI_REDIS_URL env var takes priority, then Redis:ConnectionString
-        var redisConnection = Environment.GetEnvironmentVariable("MULKCHI_REDIS_URL")
-            ?? this.configuration["Redis:ConnectionString"];
         if (!string.IsNullOrWhiteSpace(redisConnection))
         {
+            var configurationOptions = CreateRedisConfigurationOptions(redisConnection);
             services.AddStackExchangeRedisCache(options =>
             {
-                options.Configuration = redisConnection;
+                options.ConfigurationOptions = configurationOptions;
                 options.InstanceName = "mulkchi:";
             });
             return;
@@ -409,10 +439,57 @@ public class Startup
         services.AddDistributedMemoryCache();
     }
 
+    private void AddDistributedRealtimeInfrastructure(IServiceCollection services, string? redisConnection)
+    {
+        var signalRBuilder = services.AddSignalR(options =>
+        {
+            options.EnableDetailedErrors = this.environment.IsDevelopment();
+            options.MaximumReceiveMessageSize = 64 * 1024;
+            options.StreamBufferCapacity = 10;
+            options.ClientTimeoutInterval = TimeSpan.FromSeconds(120);
+            options.KeepAliveInterval = TimeSpan.FromSeconds(30);
+            options.HandshakeTimeout = TimeSpan.FromSeconds(30);
+        });
+
+        if (string.IsNullOrWhiteSpace(redisConnection))
+        {
+            // In-memory connection tracker for local development
+            services.AddSingleton<IUserConnectionTracker, UserConnectionTracker>();
+            return;
+        }
+
+        services.AddHostedService<RedisPresenceCleanupService>();
+
+        var configurationOptions = CreateRedisConfigurationOptions(redisConnection);
+
+        services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(configurationOptions));
+        services.AddSingleton<IUserConnectionTracker, RedisUserConnectionTracker>();
+        services.AddSingleton<IRefreshTokenGuard, RedisRefreshTokenGuard>();
+
+        signalRBuilder.AddStackExchangeRedis(redisConnection, options =>
+        {
+            options.Configuration.ChannelPrefix = "mulkchi:signalr";
+        });
+    }
+
     private void AddBackgroundServices(IServiceCollection services)
     {
         services.AddHostedService<ExpiredBookingHoldCleanupService>();
         services.AddHostedService<OutboxProcessorService>();
+        services.AddHostedService<AnalyticsCollectionService>();
+    }
+
+    private string? GetRedisConnectionString() =>
+        Environment.GetEnvironmentVariable("MULKCHI_REDIS_URL")
+        ?? this.configuration["Redis:ConnectionString"];
+
+    private static ConfigurationOptions CreateRedisConfigurationOptions(string redisConnection)
+    {
+        var configurationOptions = ConfigurationOptions.Parse(redisConnection);
+        configurationOptions.AbortOnConnectFail = false;
+        configurationOptions.ConnectRetry = 3;
+        configurationOptions.ConnectTimeout = 5000;
+        return configurationOptions;
     }
 
     private void AddOpenTelemetry(IServiceCollection services)
@@ -457,19 +534,6 @@ public class Startup
                     )
                     .AllowAnyHeader()
                     .AllowAnyMethod()
-                    .AllowCredentials();
-            });
-
-            options.AddPolicy("AllowAll", builder =>
-            {
-                builder
-                    .WithOrigins(
-                        "http://localhost:4200",
-                        "http://localhost:4201",
-                        "http://localhost:3000"
-                    )
-                    .AllowAnyMethod()
-                    .AllowAnyHeader()
                     .AllowCredentials();
             });
 
