@@ -286,7 +286,7 @@ public class PaymeController : ControllerBase
             .FirstOrDefaultAsync(p => p.ExternalTransactionId == externalId);
     }
 
-    private static long GetAmount(Dictionary<string, object> p)
+    private static long GetAmount(Dictionary<string, object>? p)
     {
         if (p is null) return 0;
         if (p.TryGetValue("amount", out var v))
