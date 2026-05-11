@@ -1,7 +1,7 @@
 using Serilog;
 using Serilog.Events;
-using Mulkchi.Api.DataSeed;
 using Microsoft.EntityFrameworkCore;
+using Mulkchi.Api.DataSeed;
 using Mulkchi.Api.Brokers.Storages;
 
 namespace Mulkchi.Api;
@@ -20,6 +20,34 @@ public partial class Program
         builder.Configuration
             .AddUserSecrets<Program>(optional: true)
             .AddEnvironmentVariables();
+
+        // Validate critical configuration values
+        var jwtSecret = Environment.GetEnvironmentVariable("MULKCHI_JWT_SECRET") 
+            ?? builder.Configuration["JwtSettings:Secret"];
+        var telegramToken = Environment.GetEnvironmentVariable("MULKCHI_TELEGRAM_TOKEN") 
+            ?? builder.Configuration["TelegramAuth:BotToken"];
+        var dbPassword = Environment.GetEnvironmentVariable("MULKCHI_DB_PASSWORD");
+
+        if (string.IsNullOrEmpty(jwtSecret) || jwtSecret == "SET_IN_ENVIRONMENT")
+        {
+            throw new InvalidOperationException("JWT Secret not configured. Set MULKCHI_JWT_SECRET environment variable or configure JwtSettings:Secret in appsettings.");
+        }
+
+        if (string.IsNullOrEmpty(telegramToken) || telegramToken == "SET_IN_ENVIRONMENT")
+        {
+            throw new InvalidOperationException("Telegram Bot Token not configured. Set MULKCHI_TELEGRAM_TOKEN environment variable or configure TelegramAuth:BotToken in appsettings.");
+        }
+
+        if (!string.IsNullOrEmpty(dbPassword) && dbPassword != "SET_IN_ENVIRONMENT")
+        {
+            // Replace placeholder in connection string if environment variable is provided
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            if (connectionString != null && connectionString.Contains("SET_IN_ENVIRONMENT"))
+            {
+                connectionString = connectionString.Replace("SET_IN_ENVIRONMENT", dbPassword);
+                builder.Configuration["ConnectionStrings:DefaultConnection"] = connectionString;
+            }
+        }
 
         // Configure Serilog with URL logging suppression for security
         // BMI: Tokenlar URL'da ko'rinmasligi uchun - OWASP Sensitive Data Exposure protection
@@ -52,15 +80,23 @@ public partial class Program
         var app = builder.Build();
         startup.Configure(app, app.Environment);
 
-        // Apply pending migrations at startup so the database exists before seed runs.
-        using (var scope = app.Services.CreateScope())
+        // Conditionally apply pending migrations based on configuration
+        var runMigrations = builder.Configuration
+            .GetValue<bool>("RunMigrationsOnStartup", false);
+
+        if (runMigrations)
         {
-            var db = scope.ServiceProvider.GetRequiredService<StorageBroker>();
-            await db.Database.MigrateAsync();
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<StorageBroker>();
+                await db.Database.MigrateAsync();
+            }
         }
 
-        // Seed development data (temporarily disabled - needs column name fixes for PostgreSQL)
-        // await DevelopmentDataSeeder.SeedAsync(app);
+        if (app.Environment.IsDevelopment())
+        {
+            await DevelopmentDataSeeder.SeedAsync(app);
+        }
 
         app.Run();
     }
@@ -72,7 +108,7 @@ public partial class Program
 /// </summary>
 public class SecurityDestructuringPolicy : Serilog.Core.IDestructuringPolicy
 {
-    public bool TryDestructure(object value, Serilog.Core.ILogEventPropertyValueFactory propertyValueFactory, out Serilog.Events.LogEventPropertyValue? result)
+    public bool TryDestructure(object value, Serilog.Core.ILogEventPropertyValueFactory propertyValueFactory, out Serilog.Events.LogEventPropertyValue result)
     {
         // Prevent logging of HttpContext.Request.Query (may contain JWT tokens)
         if (value is Microsoft.AspNetCore.Http.HttpRequest request)
@@ -87,7 +123,7 @@ public class SecurityDestructuringPolicy : Serilog.Core.IDestructuringPolicy
             return true;
         }
 
-        result = null;
+        result = new Serilog.Events.ScalarValue(null);
         return false;
     }
 }
