@@ -1,11 +1,7 @@
-using System;
-using System.Net;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Mulkchi.Api.Models.Foundations.Auth.Exceptions;
-using Serilog;
+using System.Security.Claims;
 
 namespace Mulkchi.Api.Middleware;
 
@@ -28,7 +24,14 @@ public class GlobalExceptionMiddleware
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "An unhandled exception occurred: {Message}", ex.Message);
+            _logger.LogError(
+                ex,
+                "Unhandled exception for {Method} {Path}. TraceId: {TraceId}, UserId: {UserId}",
+                context.Request.Method,
+                context.Request.Path,
+                context.TraceIdentifier,
+                context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anonymous");
+
             await HandleExceptionAsync(context, ex);
         }
     }
@@ -45,8 +48,7 @@ public class GlobalExceptionMiddleware
             {
                 code = GetErrorCode(exception),
                 message = GetErrorMessage(exception),
-                details = exception.InnerException?.Message,
-                timestamp = DateTime.UtcNow
+                traceId = context.TraceIdentifier
             }
         };
 
@@ -56,52 +58,91 @@ public class GlobalExceptionMiddleware
 
     private static int GetStatusCode(Exception exception)
     {
+        var innermostException = GetInnermostException(exception);
+        var typeName = exception.GetType().Name;
+        var innermostTypeName = innermostException.GetType().Name;
+
         return exception switch
         {
-            AuthValidationException => StatusCodes.Status400BadRequest,
-            AuthDependencyValidationException => StatusCodes.Status400BadRequest,
-            NotFoundUserByEmailException => StatusCodes.Status404NotFound,
-            NotFoundPasswordResetTokenException => StatusCodes.Status400BadRequest,
-            InvalidAuthException => StatusCodes.Status400BadRequest,
             UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
             KeyNotFoundException => StatusCodes.Status404NotFound,
             ArgumentException => StatusCodes.Status400BadRequest,
             InvalidOperationException => StatusCodes.Status400BadRequest,
+            _ when innermostException is UnauthorizedAccessException =>
+                StatusCodes.Status401Unauthorized,
+            _ when innermostException is KeyNotFoundException ||
+                   innermostTypeName.StartsWith("NotFound", StringComparison.Ordinal) =>
+                StatusCodes.Status404NotFound,
+            _ when innermostTypeName.StartsWith("AlreadyExists", StringComparison.Ordinal) =>
+                StatusCodes.Status409Conflict,
+            _ when innermostTypeName.StartsWith("Invalid", StringComparison.Ordinal) ||
+                   typeName.EndsWith("ValidationException", StringComparison.Ordinal) ||
+                   typeName.EndsWith("DependencyValidationException", StringComparison.Ordinal) =>
+                StatusCodes.Status400BadRequest,
             _ => StatusCodes.Status500InternalServerError
         };
     }
 
-    private static string GetErrorCode(Exception exception)
-    {
-        return exception switch
-        {
-            AuthValidationException => "AUTH_VALIDATION_ERROR",
-            AuthDependencyValidationException => "AUTH_DEPENDENCY_VALIDATION_ERROR",
-            NotFoundUserByEmailException => "USER_NOT_FOUND",
-            NotFoundPasswordResetTokenException => "PASSWORD_RESET_TOKEN_NOT_FOUND",
-            InvalidAuthException => "INVALID_AUTH_DATA",
-            UnauthorizedAccessException => "UNAUTHORIZED",
-            KeyNotFoundException => "KEY_NOT_FOUND",
-            ArgumentException => "INVALID_ARGUMENT",
-            InvalidOperationException => "INVALID_OPERATION",
-            _ => "INTERNAL_SERVER_ERROR"
-        };
-    }
+    private static string GetErrorCode(Exception exception) =>
+        ToErrorCode(GetInnermostException(exception).GetType().Name);
 
     private static string GetErrorMessage(Exception exception)
     {
-        return exception switch
+        var statusCode = GetStatusCode(exception);
+        if (statusCode >= StatusCodes.Status500InternalServerError)
         {
-            AuthValidationException => "Authentication validation failed.",
-            AuthDependencyValidationException => exception.InnerException?.Message ?? "Authentication dependency validation failed.",
-            NotFoundUserByEmailException => "User not found with the provided email.",
-            NotFoundPasswordResetTokenException => "Password reset token is invalid or expired.",
-            InvalidAuthException => "Invalid authentication data provided.",
-            UnauthorizedAccessException => "Access is unauthorized.",
-            KeyNotFoundException => "Requested resource not found.",
-            ArgumentException => "Invalid argument provided.",
-            InvalidOperationException => "Invalid operation attempted.",
-            _ => "An internal server error occurred."
-        };
+            return "So'rov bajarilmadi.";
+        }
+
+        // Return safe, generic message for client errors
+        return GetSafeErrorMessage(GetStatusCode(exception));
+    }
+
+    private static string GetSafeErrorMessage(int statusCode) => statusCode switch
+    {
+        StatusCodes.Status400BadRequest => "So'rov noto'g'ri.",
+        StatusCodes.Status401Unauthorized => "Avtorizatsiya talab qilinadi.",
+        StatusCodes.Status403Forbidden => "Kirishga ruxsat yoq.",
+        StatusCodes.Status404NotFound => "Topilmadi.",
+        StatusCodes.Status409Conflict => "Ma'lumot bajarilmagan.",
+        _ => "So'rov bajarilmadi."
+    };
+
+    private static string? GetExceptionDetails(Exception exception)
+    {
+        var statusCode = GetStatusCode(exception);
+        // Never expose exception details to client
+        return null;
+    }
+
+    private static Exception GetInnermostException(Exception exception)
+    {
+        while (exception.InnerException is not null)
+        {
+            exception = exception.InnerException;
+        }
+
+        return exception;
+    }
+
+    private static string ToErrorCode(string exceptionTypeName)
+    {
+        var trimmedName = exceptionTypeName.EndsWith("Exception", StringComparison.Ordinal)
+            ? exceptionTypeName[..^"Exception".Length]
+            : exceptionTypeName;
+
+        var builder = new System.Text.StringBuilder();
+        for (var index = 0; index < trimmedName.Length; index++)
+        {
+            var character = trimmedName[index];
+            if (index > 0 && char.IsUpper(character) && !char.IsUpper(trimmedName[index - 1]))
+            {
+                builder.Append('_');
+            }
+
+            builder.Append(char.ToUpperInvariant(character));
+        }
+
+        return builder.ToString();
     }
 }
