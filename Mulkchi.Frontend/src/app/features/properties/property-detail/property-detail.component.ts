@@ -1,18 +1,32 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { PropertyService } from '../../../core/services/property.service';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { map } from 'rxjs';
+import { ListingType, PropertyImage } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
-import { ListingType } from '../../../core/models';
+import { FavoritesService } from '../../../core/services/favorites.service';
+import { PropertyService } from '../../../core/services/property.service';
+import { ToastService } from '../../../core/services/toast.service';
+import {
+  ConfirmationDialogComponent,
+  ConfirmationDialogData,
+} from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { BookingPanelComponent } from '../booking-panel/booking-panel.component';
 
 @Component({
@@ -28,7 +42,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
     MatDividerModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
-    BookingPanelComponent
+    BookingPanelComponent,
   ],
   template: `
     <div class="property-detail-container">
@@ -67,25 +81,21 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
           <div class="property-header-mobile">
             <div class="badges">
               @if (property()?.isFeatured) {
-                <span class="badge featured">
-                  <mat-icon>star</mat-icon> Featured
-                </span>
+                <span class="badge featured"> <mat-icon>star</mat-icon> Featured </span>
               }
               @if (property()?.isVerified) {
-                <span class="badge verified">
-                  <mat-icon>verified</mat-icon> Tasdiqlangan
-                </span>
+                <span class="badge verified"> <mat-icon>verified</mat-icon> Tasdiqlangan </span>
               }
               @if (property()?.isInstantBook) {
-                <span class="badge instant">
-                  <mat-icon>bolt</mat-icon> Tez bron
-                </span>
+                <span class="badge instant"> <mat-icon>bolt</mat-icon> Tez bron </span>
               }
             </div>
             <h1 class="property-title">{{ property()?.title }}</h1>
             <div class="location">
               <mat-icon>location_on</mat-icon>
-              <span>{{ property()?.address }}, {{ property()?.district }}, {{ property()?.city }}</span>
+              <span
+                >{{ property()?.address }}, {{ property()?.district }}, {{ property()?.city }}</span
+              >
             </div>
           </div>
 
@@ -93,14 +103,14 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
           <div class="gallery-section">
             <div class="main-image">
               @if (currentImage()) {
-                <img [src]="currentImage()" [alt]="property()?.title">
+                <img [src]="currentImage()" [alt]="property()?.title" />
               } @else {
                 <div class="no-image">
                   <mat-icon>image_not_supported</mat-icon>
                   <p>Rasm mavjud emas</p>
                 </div>
               }
-              
+
               @if (property()?.images && property()!.images!.length > 1) {
                 <button class="nav-btn prev" (click)="prevImage()">
                   <mat-icon>chevron_left</mat-icon>
@@ -113,15 +123,16 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                 </div>
               }
             </div>
-            
+
             @if (property()?.images && property()!.images!.length > 1) {
               <div class="thumbnail-list">
                 @for (image of property()!.images; track image.id; let i = $index) {
-                  <div 
-                    class="thumbnail" 
+                  <div
+                    class="thumbnail"
                     [class.active]="i === currentImageIndex()"
-                    (click)="selectImage(i)">
-                    <img [src]="getThumbnailUrl(image)" [alt]="image.caption || ''">
+                    (click)="selectImage(i)"
+                  >
+                    <img [src]="getThumbnailUrl(image)" [alt]="image.caption || ''" />
                   </div>
                 }
               </div>
@@ -134,27 +145,24 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
             <div class="property-header-desktop">
               <div class="badges">
                 @if (property()?.isFeatured) {
-                  <span class="badge featured">
-                    <mat-icon>star</mat-icon> Featured
-                  </span>
+                  <span class="badge featured"> <mat-icon>star</mat-icon> Featured </span>
                 }
                 @if (property()?.isVerified) {
-                  <span class="badge verified">
-                    <mat-icon>verified</mat-icon> Tasdiqlangan
-                  </span>
+                  <span class="badge verified"> <mat-icon>verified</mat-icon> Tasdiqlangan </span>
                 }
                 @if (property()?.isInstantBook) {
-                  <span class="badge instant">
-                    <mat-icon>bolt</mat-icon> Tez bron
-                  </span>
+                  <span class="badge instant"> <mat-icon>bolt</mat-icon> Tez bron </span>
                 }
               </div>
-              
+
               <h1 class="property-title">{{ property()?.title }}</h1>
-              
+
               <div class="location">
                 <mat-icon>location_on</mat-icon>
-                <span>{{ property()?.address }}, {{ property()?.district }}, {{ property()?.city }}</span>
+                <span
+                  >{{ property()?.address }}, {{ property()?.district }},
+                  {{ property()?.city }}</span
+                >
               </div>
             </div>
 
@@ -162,20 +170,32 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
             <div class="price-card">
               <div class="price-display">
                 @if (property()?.listingType === ListingType.Sale && property()?.salePrice) {
-                  <span class="price-amount">{{ property()?.salePrice | number }} {{ property()?.currency }}</span>
+                  <span class="price-amount"
+                    >{{ property()?.salePrice | number }} {{ property()?.currency }}</span
+                  >
                   <span class="price-type sale">Sotuv</span>
-                } @else if (property()?.listingType === ListingType.Rent && property()?.monthlyRent) {
-                  <span class="price-amount">{{ property()?.monthlyRent | number }} {{ property()?.currency }}</span>
+                } @else if (
+                  property()?.listingType === ListingType.Rent && property()?.monthlyRent
+                ) {
+                  <span class="price-amount"
+                    >{{ property()?.monthlyRent | number }} {{ property()?.currency }}</span
+                  >
                   <span class="price-period">/oy</span>
-                } @else if (property()?.listingType === ListingType.ShortTermRent && property()?.pricePerNight) {
-                  <span class="price-amount">{{ property()?.pricePerNight | number }} {{ property()?.currency }}</span>
+                } @else if (
+                  property()?.listingType === ListingType.ShortTermRent && property()?.pricePerNight
+                ) {
+                  <span class="price-amount"
+                    >{{ property()?.pricePerNight | number }} {{ property()?.currency }}</span
+                  >
                   <span class="price-period">/tun</span>
                 }
               </div>
               @if (property()?.averageRating) {
                 <div class="rating-display">
                   <mat-icon>star</mat-icon>
-                  <span class="rating-value">{{ property()?.averageRating | number:'1.1-1' }}</span>
+                  <span class="rating-value">{{
+                    property()?.averageRating | number: '1.1-1'
+                  }}</span>
                   <span class="rating-count">({{ property()?.viewsCount }} ko'rish)</span>
                 </div>
               }
@@ -325,17 +345,22 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                       <mat-icon>message</mat-icon>
                       Host bilan bog'lanish
                     </button>
-                    <button 
+                    <button
                       class="favorite-btn"
                       [class.active]="isFavorite()"
                       (click)="toggleFavorite()"
-                      [matTooltip]="getFavoriteTooltip()">
+                      [matTooltip]="getFavoriteTooltip()"
+                    >
                       <mat-icon>{{ isFavorite() ? 'favorite' : 'favorite_border' }}</mat-icon>
                     </button>
                   </div>
                 } @else {
                   <div class="owner-actions">
-                    <button mat-raised-button class="edit-btn" [routerLink]="['/host/properties/edit', property()?.id]">
+                    <button
+                      mat-raised-button
+                      class="edit-btn"
+                      [routerLink]="['/host/properties/edit', property()?.id]"
+                    >
                       <mat-icon>edit</mat-icon>
                       Tahrirlash
                     </button>
@@ -357,7 +382,11 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
             </div>
 
             <!-- Booking Panel -->
-            @if (isAuthenticated() && !isOwner() && property()?.listingType === ListingType.ShortTermRent) {
+            @if (
+              isAuthenticated() &&
+              !isOwner() &&
+              property()?.listingType === ListingType.ShortTermRent
+            ) {
               <app-booking-panel [property]="property()!"></app-booking-panel>
             }
           </div>
@@ -365,862 +394,874 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
       }
     </div>
   `,
-  styles: [`
-    /* ===== CSS Variables ===== */
-    :host {
-      --color-navy: #1B3A6B;
-      --color-navy-light: #2a4a7c;
-      --color-gold: #C9A84C;
-      --color-white: #ffffff;
-      --color-gray-50: #f8fafc;
-      --color-gray-100: #f1f5f9;
-      --color-gray-200: #e2e8f0;
-      --color-gray-500: #64748b;
-      --color-gray-600: #475569;
-      --color-gray-800: #1e293b;
-      --color-gray-900: #0f172a;
-      --radius: 8px;
-      --radius-lg: 12px;
-      --radius-xl: 16px;
-      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-    }
-
-    /* ===== Layout ===== */
-    .property-detail-container {
-      min-height: 100vh;
-      background: var(--color-gray-50);
-    }
-
-    .loading-container,
-    .error-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 60vh;
-      gap: 16px;
-    }
-
-    .error-container mat-icon {
-      font-size: 64px;
-      width: 64px;
-      height: 64px;
-      color: var(--color-navy);
-    }
-
-    .back-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 24px;
-      background: var(--color-navy);
-      color: var(--color-white);
-      border: none;
-      border-radius: var(--radius);
-      font-size: 1rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .back-btn:hover {
-      background: var(--color-navy-light);
-    }
-
-    /* ===== Property Content ===== */
-    .property-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 24px;
-      display: grid;
-      grid-template-columns: 1.5fr 1fr;
-      gap: 32px;
-    }
-
-    /* ===== Breadcrumb ===== */
-    .breadcrumb {
-      grid-column: 1 / -1;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.875rem;
-      color: var(--color-gray-500);
-    }
-
-    .breadcrumb a {
-      color: var(--color-navy);
-      text-decoration: none;
-      transition: color 0.3s ease;
-    }
-
-    .breadcrumb a:hover {
-      color: var(--color-gold);
-    }
-
-    .breadcrumb mat-icon {
-      font-size: 18px;
-      color: var(--color-gray-400);
-    }
-
-    /* ===== Mobile Header ===== */
-    .property-header-mobile {
-      grid-column: 1 / -1;
-      display: none;
-    }
-
-    .property-header-mobile .property-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--color-gray-900);
-      margin: 0;
-    }
-
-    /* ===== Gallery Section ===== */
-    .gallery-section {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .main-image {
-      position: relative;
-      height: 450px;
-      border-radius: var(--radius-xl);
-      overflow: hidden;
-      background: var(--color-gray-200);
-    }
-
-    .main-image img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .no-image {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-    }
-
-    .no-image mat-icon {
-      font-size: 64px;
-      color: var(--color-gray-400);
-    }
-
-    .no-image p {
-      color: var(--color-gray-500);
-    }
-
-    .nav-btn {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 48px;
-      height: 48px;
-      background: rgba(255, 255, 255, 0.95);
-      border: none;
-      border-radius: 50%;
-      color: var(--color-navy);
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: var(--shadow);
-    }
-
-    .nav-btn:hover {
-      background: var(--color-white);
-      transform: translateY(-50%) scale(1.1);
-    }
-
-    .nav-btn.prev { left: 16px; }
-    .nav-btn.next { right: 16px; }
-
-    .image-counter {
-      position: absolute;
-      bottom: 16px;
-      right: 16px;
-      background: rgba(27, 58, 107, 0.9);
-      color: var(--color-white);
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 0.9rem;
-      font-weight: 500;
-    }
-
-    .thumbnail-list {
-      display: flex;
-      gap: 12px;
-      overflow-x: auto;
-      padding-bottom: 8px;
-    }
-
-    .thumbnail {
-      flex-shrink: 0;
-      width: 100px;
-      height: 75px;
-      border-radius: var(--radius);
-      overflow: hidden;
-      cursor: pointer;
-      opacity: 0.6;
-      transition: all 0.3s ease;
-      border: 2px solid transparent;
-    }
-
-    .thumbnail.active {
-      opacity: 1;
-      border-color: var(--color-gold);
-    }
-
-    .thumbnail:hover {
-      opacity: 1;
-    }
-
-    .thumbnail img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    /* ===== Info Section ===== */
-    .info-section {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
-    .property-header-desktop {
-      display: block;
-    }
-
-    .info-header {
-      margin-bottom: 24px;
-    }
-
-    .badges {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-
-    .badge.featured {
-      background: var(--color-gold);
-      color: var(--color-navy);
-    }
-
-    .badge.verified {
-      background: rgba(34, 197, 94, 0.1);
-      color: #16a34a;
-    }
-
-    .badge.instant {
-      background: rgba(27, 58, 107, 0.1);
-      color: var(--color-navy);
-    }
-
-    .badge mat-icon {
-      font-size: 16px;
-    }
-
-    .badge mat-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-    }
-
-    .property-title {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: var(--color-gray-900);
-      margin: 0 0 12px 0;
-      line-height: 1.3;
-    }
-
-    .location {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--color-gray-500);
-      font-size: 0.95rem;
-    }
-
-    .location mat-icon {
-      font-size: 20px;
-      color: var(--color-navy);
-    }
-
-    .location mat-icon {
-      color: #667eea;
-    }
-
-    /* ===== Price Card ===== */
-    .price-card {
-      background: var(--color-white);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      box-shadow: var(--shadow);
-    }
-
-    .price-display {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    .price-amount {
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--color-navy);
-    }
-
-    .price-period {
-      font-size: 1.125rem;
-      color: var(--color-gray-500);
-    }
-
-    .price-type {
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.875rem;
-      font-weight: 500;
-      background: rgba(27, 58, 107, 0.1);
-      color: var(--color-navy);
-    }
-
-    .rating-display {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding-top: 12px;
-      border-top: 1px solid var(--color-gray-200);
-    }
-
-    .rating-display mat-icon {
-      font-size: 20px;
-      color: #f59e0b;
-    }
-
-    .rating-value {
-      font-weight: 600;
-      color: var(--color-gray-800);
-    }
-
-    .rating-count {
-      color: var(--color-gray-500);
-      font-size: 0.875rem;
-    }
-
-    mat-divider {
-      margin: 24px 0;
-    }
-
-    /* ===== Quick Stats ===== */
-    .quick-stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      padding: 4px 0;
-    }
-
-    .stat-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 16px;
-      background: var(--color-gray-100);
-      border-radius: var(--radius);
-    }
-
-    .stat-icon {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      background: var(--color-navy);
-      border-radius: var(--radius);
-    }
-
-    .stat-icon mat-icon {
-      font-size: 20px;
-      color: var(--color-gold);
-    }
-
-    .stat-info {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .stat-value {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--color-gray-900);
-    }
-
-    .stat-label {
-      font-size: 0.8rem;
-      color: var(--color-gray-500);
-    }
-
-    /* ===== Section Title ===== */
-    .section-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--color-gray-900);
-      margin: 0 0 16px 0;
-    }
-
-    .section-title mat-icon {
-      font-size: 24px;
-      color: var(--color-navy);
-    }
-
-    /* ===== Description ===== */
-    .description-text {
-      color: var(--color-gray-600);
-      line-height: 1.8;
-      white-space: pre-line;
-    }
-
-    /* ===== Amenities ===== */
-    .amenities-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
-
-    .amenity-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-      border-radius: var(--radius);
-      background: var(--color-gray-100);
-      color: var(--color-gray-400);
-    }
-
-    .amenity-item.available {
-      background: rgba(27, 58, 107, 0.05);
-      color: var(--color-gray-800);
-    }
-
-    .amenity-icon mat-icon {
-      font-size: 20px;
-    }
-
-    .amenity-item.available .amenity-icon mat-icon {
-      color: var(--color-navy);
-    }
-
-    /* ===== Location Grid ===== */
-    .location-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-    }
-
-    .location-item {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .location-item.full-width {
-      grid-column: 1 / -1;
-    }
-
-    .location-label {
-      font-size: 0.8rem;
-      color: var(--color-gray-500);
-    }
-
-    .location-value {
-      font-size: 1rem;
-      font-weight: 500;
-      color: var(--color-gray-800);
-    }
-
-    /* ===== Host Card ===== */
-    .host-card {
-      background: var(--color-white);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      box-shadow: var(--shadow);
-    }
-
-    .host-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .host-header mat-icon {
-      font-size: 24px;
-      color: var(--color-navy);
-    }
-
-    .host-header h3 {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--color-gray-900);
-      margin: 0;
-    }
-
-    .host-content {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .avatar-placeholder {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 56px;
-      height: 56px;
-      background: var(--color-navy);
-      border-radius: 50%;
-    }
-
-    .avatar-placeholder mat-icon {
-      font-size: 28px;
-      color: var(--color-gold);
-    }
-
-    .host-name {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--color-gray-900);
-      margin: 0 0 8px 0;
-    }
-
-    .host-badge {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.875rem;
-      color: #16a34a;
-    }
-
-    .host-badge mat-icon {
-      font-size: 16px;
-    }
-
-    /* ===== Actions ===== */
-    .actions-section {
-      padding: 4px 0;
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .action-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 14px 24px;
-      border-radius: var(--radius);
-      font-size: 1rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      border: none;
-    }
-
-    .action-btn.primary {
-      flex: 1;
-      min-width: 160px;
-      background: var(--color-navy);
-      color: var(--color-white);
-    }
-
-    .action-btn.primary:hover {
-      background: var(--color-navy-light);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-lg);
-    }
-
-    .action-btn.secondary {
-      flex: 1;
-      min-width: 160px;
-      background: var(--color-white);
-      color: var(--color-navy);
-      border: 2px solid var(--color-navy);
-    }
-
-    .action-btn.secondary:hover {
-      background: rgba(27, 58, 107, 0.05);
-    }
-
-    .favorite-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 52px;
-      height: 52px;
-      background: var(--color-white);
-      border: 2px solid var(--color-gray-200);
-      border-radius: var(--radius);
-      color: var(--color-gray-400);
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .favorite-btn:hover {
-      border-color: #ef4444;
-      color: #ef4444;
-    }
-
-    .favorite-btn.active {
-      background: #fef2f2;
-      border-color: #ef4444;
-      color: #ef4444;
-    }
-
-    .owner-actions {
-      display: flex;
-      gap: 12px;
-    }
-
-    .edit-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 14px 24px;
-      background: var(--color-navy);
-      color: var(--color-white);
-      border: none;
-      border-radius: var(--radius);
-      font-size: 1rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .edit-btn:hover {
-      background: var(--color-navy-light);
-    }
-
-    .delete-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 14px 24px;
-      background: var(--color-white);
-      color: #dc2626;
-      border: 2px solid #dc2626;
-      border-radius: var(--radius);
-      font-size: 1rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .delete-btn:hover {
-      background: #fef2f2;
-    }
-
-    .auth-prompt {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      padding: 32px;
-      background: var(--color-gray-100);
-      border-radius: var(--radius-lg);
-      text-align: center;
-    }
-
-    .auth-prompt mat-icon {
-      font-size: 48px;
-      color: var(--color-navy);
-    }
-
-    .auth-prompt p {
-      color: var(--color-gray-600);
-      margin: 0;
-    }
-
-    .login-btn {
-      padding: 12px 32px;
-      background: var(--color-navy);
-      color: var(--color-white);
-      border: none;
-      border-radius: var(--radius);
-      font-size: 1rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .login-btn:hover {
-      background: var(--color-navy-light);
-    }
-
-    mat-divider {
-      margin: 8px 0;
-      border-top-color: var(--color-gray-200);
-    }
-
-    /* ===== Responsive Design ===== */
-    @media (max-width: 1024px) {
+  styles: [
+    `
+      /* ===== CSS Variables ===== */
+      :host {
+        --color-navy: #1b3a6b;
+        --color-navy-light: #2a4a7c;
+        --color-gold: #c9a84c;
+        --color-white: #ffffff;
+        --color-gray-50: #f8fafc;
+        --color-gray-100: #f1f5f9;
+        --color-gray-200: #e2e8f0;
+        --color-gray-500: #64748b;
+        --color-gray-600: #475569;
+        --color-gray-800: #1e293b;
+        --color-gray-900: #0f172a;
+        --radius: 8px;
+        --radius-lg: 12px;
+        --radius-xl: 16px;
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+      }
+
+      /* ===== Layout ===== */
+      .property-detail-container {
+        min-height: 100vh;
+        background: var(--color-gray-50);
+      }
+
+      .loading-container,
+      .error-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        gap: 16px;
+      }
+
+      .error-container mat-icon {
+        font-size: 64px;
+        width: 64px;
+        height: 64px;
+        color: var(--color-navy);
+      }
+
+      .back-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: var(--color-navy);
+        color: var(--color-white);
+        border: none;
+        border-radius: var(--radius);
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .back-btn:hover {
+        background: var(--color-navy-light);
+      }
+
+      /* ===== Property Content ===== */
       .property-content {
-        grid-template-columns: 1fr;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 32px;
       }
 
-      .main-image {
-        height: 350px;
+      /* ===== Breadcrumb ===== */
+      .breadcrumb {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.875rem;
+        color: var(--color-gray-500);
       }
 
-      .quick-stats {
-        grid-template-columns: repeat(2, 1fr);
+      .breadcrumb a {
+        color: var(--color-navy);
+        text-decoration: none;
+        transition: color 0.3s ease;
       }
 
-      .property-header-desktop {
+      .breadcrumb a:hover {
+        color: var(--color-gold);
+      }
+
+      .breadcrumb mat-icon {
+        font-size: 18px;
+        color: var(--color-gray-400);
+      }
+
+      /* ===== Mobile Header ===== */
+      .property-header-mobile {
+        grid-column: 1 / -1;
         display: none;
       }
 
-      .property-header-mobile {
-        display: block;
+      .property-header-mobile .property-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--color-gray-900);
+        margin: 0;
       }
-    }
 
-    @media (max-width: 768px) {
-      .property-content {
-        padding: 16px;
+      /* ===== Gallery Section ===== */
+      .gallery-section {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
       }
 
       .main-image {
-        height: 300px;
+        position: relative;
+        height: 450px;
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        background: var(--color-gray-200);
+      }
+
+      .main-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .no-image {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .no-image mat-icon {
+        font-size: 64px;
+        color: var(--color-gray-400);
+      }
+
+      .no-image p {
+        color: var(--color-gray-500);
       }
 
       .nav-btn {
-        width: 40px;
-        height: 40px;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        background: rgba(255, 255, 255, 0.95);
+        border: none;
+        border-radius: 50%;
+        color: var(--color-navy);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow);
       }
 
-      .price-amount {
-        font-size: 1.5rem;
+      .nav-btn:hover {
+        background: var(--color-white);
+        transform: translateY(-50%) scale(1.1);
+      }
+
+      .nav-btn.prev {
+        left: 16px;
+      }
+      .nav-btn.next {
+        right: 16px;
+      }
+
+      .image-counter {
+        position: absolute;
+        bottom: 16px;
+        right: 16px;
+        background: rgba(27, 58, 107, 0.9);
+        color: var(--color-white);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+
+      .thumbnail-list {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+      }
+
+      .thumbnail {
+        flex-shrink: 0;
+        width: 100px;
+        height: 75px;
+        border-radius: var(--radius);
+        overflow: hidden;
+        cursor: pointer;
+        opacity: 0.6;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+      }
+
+      .thumbnail.active {
+        opacity: 1;
+        border-color: var(--color-gold);
+      }
+
+      .thumbnail:hover {
+        opacity: 1;
+      }
+
+      .thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* ===== Info Section ===== */
+      .info-section {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .property-header-desktop {
+        display: block;
+      }
+
+      .info-header {
+        margin-bottom: 24px;
+      }
+
+      .badges {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+      }
+
+      .badge.featured {
+        background: var(--color-gold);
+        color: var(--color-navy);
+      }
+
+      .badge.verified {
+        background: rgba(34, 197, 94, 0.1);
+        color: #16a34a;
+      }
+
+      .badge.instant {
+        background: rgba(27, 58, 107, 0.1);
+        color: var(--color-navy);
+      }
+
+      .badge mat-icon {
+        font-size: 16px;
+      }
+
+      .badge mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
       }
 
       .property-title {
-        font-size: 1.5rem;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--color-gray-900);
+        margin: 0 0 12px 0;
+        line-height: 1.3;
       }
 
+      .location {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--color-gray-500);
+        font-size: 0.95rem;
+      }
+
+      .location mat-icon {
+        font-size: 20px;
+        color: var(--color-navy);
+      }
+
+      .location mat-icon {
+        color: #667eea;
+      }
+
+      /* ===== Price Card ===== */
+      .price-card {
+        background: var(--color-white);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        box-shadow: var(--shadow);
+      }
+
+      .price-display {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .price-amount {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--color-navy);
+      }
+
+      .price-period {
+        font-size: 1.125rem;
+        color: var(--color-gray-500);
+      }
+
+      .price-type {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        background: rgba(27, 58, 107, 0.1);
+        color: var(--color-navy);
+      }
+
+      .rating-display {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-top: 12px;
+        border-top: 1px solid var(--color-gray-200);
+      }
+
+      .rating-display mat-icon {
+        font-size: 20px;
+        color: #f59e0b;
+      }
+
+      .rating-value {
+        font-weight: 600;
+        color: var(--color-gray-800);
+      }
+
+      .rating-count {
+        color: var(--color-gray-500);
+        font-size: 0.875rem;
+      }
+
+      mat-divider {
+        margin: 24px 0;
+      }
+
+      /* ===== Quick Stats ===== */
       .quick-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        padding: 4px 0;
+      }
+
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: var(--color-gray-100);
+        border-radius: var(--radius);
+      }
+
+      .stat-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: var(--color-navy);
+        border-radius: var(--radius);
+      }
+
+      .stat-icon mat-icon {
+        font-size: 20px;
+        color: var(--color-gold);
+      }
+
+      .stat-info {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .stat-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--color-gray-900);
+      }
+
+      .stat-label {
+        font-size: 0.8rem;
+        color: var(--color-gray-500);
+      }
+
+      /* ===== Section Title ===== */
+      .section-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--color-gray-900);
+        margin: 0 0 16px 0;
+      }
+
+      .section-title mat-icon {
+        font-size: 24px;
+        color: var(--color-navy);
+      }
+
+      /* ===== Description ===== */
+      .description-text {
+        color: var(--color-gray-600);
+        line-height: 1.8;
+        white-space: pre-line;
+      }
+
+      /* ===== Amenities ===== */
+      .amenities-grid {
+        display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 12px;
       }
 
-      .stat-item {
+      .amenity-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
         padding: 12px;
+        border-radius: var(--radius);
+        background: var(--color-gray-100);
+        color: var(--color-gray-400);
       }
 
-      .action-buttons {
-        flex-direction: column;
+      .amenity-item.available {
+        background: rgba(27, 58, 107, 0.05);
+        color: var(--color-gray-800);
       }
 
-      .action-btn {
-        width: 100%;
+      .amenity-icon mat-icon {
+        font-size: 20px;
       }
 
-      .owner-actions {
-        flex-direction: column;
+      .amenity-item.available .amenity-icon mat-icon {
+        color: var(--color-navy);
       }
 
-      .edit-btn,
-      .delete-btn {
-        width: 100%;
-        justify-content: center;
-      }
-
-      .amenities-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .property-content {
-        padding: 12px;
-      }
-
-      .main-image {
-        height: 250px;
-        border-radius: var(--radius-lg);
-      }
-
-      .thumbnail {
-        width: 80px;
-        height: 60px;
-      }
-
-      .quick-stats {
+      /* ===== Location Grid ===== */
+      .location-grid {
+        display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
+        gap: 16px;
       }
 
-      .stat-icon {
-        width: 32px;
-        height: 32px;
+      .location-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
       }
 
-      .stat-icon mat-icon {
+      .location-item.full-width {
+        grid-column: 1 / -1;
+      }
+
+      .location-label {
+        font-size: 0.8rem;
+        color: var(--color-gray-500);
+      }
+
+      .location-value {
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--color-gray-800);
+      }
+
+      /* ===== Host Card ===== */
+      .host-card {
+        background: var(--color-white);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        box-shadow: var(--shadow);
+      }
+
+      .host-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .host-header mat-icon {
+        font-size: 24px;
+        color: var(--color-navy);
+      }
+
+      .host-header h3 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--color-gray-900);
+        margin: 0;
+      }
+
+      .host-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .avatar-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
+        height: 56px;
+        background: var(--color-navy);
+        border-radius: 50%;
+      }
+
+      .avatar-placeholder mat-icon {
+        font-size: 28px;
+        color: var(--color-gold);
+      }
+
+      .host-name {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--color-gray-900);
+        margin: 0 0 8px 0;
+      }
+
+      .host-badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.875rem;
+        color: #16a34a;
+      }
+
+      .host-badge mat-icon {
         font-size: 16px;
       }
 
-      .stat-value {
+      /* ===== Actions ===== */
+      .actions-section {
+        padding: 4px 0;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 24px;
+        border-radius: var(--radius);
         font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
       }
 
-      .location-grid {
-        grid-template-columns: 1fr;
+      .action-btn.primary {
+        flex: 1;
+        min-width: 160px;
+        background: var(--color-navy);
+        color: var(--color-white);
       }
 
-      .price-card {
-        padding: 20px;
+      .action-btn.primary:hover {
+        background: var(--color-navy-light);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
       }
-    }
-  `]
+
+      .action-btn.secondary {
+        flex: 1;
+        min-width: 160px;
+        background: var(--color-white);
+        color: var(--color-navy);
+        border: 2px solid var(--color-navy);
+      }
+
+      .action-btn.secondary:hover {
+        background: rgba(27, 58, 107, 0.05);
+      }
+
+      .favorite-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 52px;
+        height: 52px;
+        background: var(--color-white);
+        border: 2px solid var(--color-gray-200);
+        border-radius: var(--radius);
+        color: var(--color-gray-400);
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .favorite-btn:hover {
+        border-color: #ef4444;
+        color: #ef4444;
+      }
+
+      .favorite-btn.active {
+        background: #fef2f2;
+        border-color: #ef4444;
+        color: #ef4444;
+      }
+
+      .owner-actions {
+        display: flex;
+        gap: 12px;
+      }
+
+      .edit-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 24px;
+        background: var(--color-navy);
+        color: var(--color-white);
+        border: none;
+        border-radius: var(--radius);
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .edit-btn:hover {
+        background: var(--color-navy-light);
+      }
+
+      .delete-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 24px;
+        background: var(--color-white);
+        color: #dc2626;
+        border: 2px solid #dc2626;
+        border-radius: var(--radius);
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .delete-btn:hover {
+        background: #fef2f2;
+      }
+
+      .auth-prompt {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        padding: 32px;
+        background: var(--color-gray-100);
+        border-radius: var(--radius-lg);
+        text-align: center;
+      }
+
+      .auth-prompt mat-icon {
+        font-size: 48px;
+        color: var(--color-navy);
+      }
+
+      .auth-prompt p {
+        color: var(--color-gray-600);
+        margin: 0;
+      }
+
+      .login-btn {
+        padding: 12px 32px;
+        background: var(--color-navy);
+        color: var(--color-white);
+        border: none;
+        border-radius: var(--radius);
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .login-btn:hover {
+        background: var(--color-navy-light);
+      }
+
+      mat-divider {
+        margin: 8px 0;
+        border-top-color: var(--color-gray-200);
+      }
+
+      /* ===== Responsive Design ===== */
+      @media (max-width: 1024px) {
+        .property-content {
+          grid-template-columns: 1fr;
+        }
+
+        .main-image {
+          height: 350px;
+        }
+
+        .quick-stats {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .property-header-desktop {
+          display: none;
+        }
+
+        .property-header-mobile {
+          display: block;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .property-content {
+          padding: 16px;
+        }
+
+        .main-image {
+          height: 300px;
+        }
+
+        .nav-btn {
+          width: 40px;
+          height: 40px;
+        }
+
+        .price-amount {
+          font-size: 1.5rem;
+        }
+
+        .property-title {
+          font-size: 1.5rem;
+        }
+
+        .quick-stats {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+        }
+
+        .stat-item {
+          padding: 12px;
+        }
+
+        .action-buttons {
+          flex-direction: column;
+        }
+
+        .action-btn {
+          width: 100%;
+        }
+
+        .owner-actions {
+          flex-direction: column;
+        }
+
+        .edit-btn,
+        .delete-btn {
+          width: 100%;
+          justify-content: center;
+        }
+
+        .amenities-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .property-content {
+          padding: 12px;
+        }
+
+        .main-image {
+          height: 250px;
+          border-radius: var(--radius-lg);
+        }
+
+        .thumbnail {
+          width: 80px;
+          height: 60px;
+        }
+
+        .quick-stats {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 8px;
+        }
+
+        .stat-icon {
+          width: 32px;
+          height: 32px;
+        }
+
+        .stat-icon mat-icon {
+          font-size: 16px;
+        }
+
+        .stat-value {
+          font-size: 1rem;
+        }
+
+        .location-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .price-card {
+          padding: 20px;
+        }
+      }
+    `,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PropertyDetailComponent implements OnInit {
+export class PropertyDetailComponent {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private propertyService = inject(PropertyService);
   private authService = inject(AuthService);
-  private snackBar = inject(MatSnackBar);
+  private favoritesService = inject(FavoritesService);
   private dialog = inject(MatDialog);
+  private toastService = inject(ToastService);
 
   property = this.propertyService.currentProperty;
   loading = this.propertyService.loading;
   error = signal<string | null>(null);
   currentImageIndex = signal(0);
   isFavorite = signal(false);
+  private readonly propertyId = toSignal(
+    this.route.paramMap.pipe(map((params) => params.get('id'))),
+    { initialValue: this.route.snapshot.paramMap.get('id') },
+  );
 
   currentImage = computed(() => {
     const prop = this.property();
@@ -1231,9 +1272,7 @@ export class PropertyDetailComponent implements OnInit {
     return null;
   });
 
-  // Get thumbnail URL for an image
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getThumbnailUrl(image: any): string {
+  getThumbnailUrl(image: PropertyImage): string {
     return image.thumbnailUrl || image.url || image.imageUrl || '';
   }
 
@@ -1263,7 +1302,7 @@ export class PropertyDetailComponent implements OnInit {
       { name: 'washer', label: 'Kir yuvish', available: prop.hasWasher },
       { name: 'workspace', label: 'Ish joyi', available: prop.hasWorkspace },
       { name: 'elevator', label: 'Lift', available: prop.hasElevator },
-      { name: 'security', label: 'Qo\'riqlash', available: prop.hasSecurity },
+      { name: 'security', label: "Qo'riqlash", available: prop.hasSecurity },
       { name: 'generator', label: 'Generator', available: prop.hasGenerator },
       { name: 'furniture', label: 'Mebel', available: prop.hasFurniture },
       { name: 'renovated', label: 'Tamirlangan', available: prop.isRenovated },
@@ -1271,26 +1310,54 @@ export class PropertyDetailComponent implements OnInit {
       { name: 'metro', label: 'Metro yaqinida', available: prop.hasMetroNearby },
       { name: 'market', label: 'Bozor yaqinida', available: prop.hasMarketNearby },
       { name: 'school', label: 'Maktab yaqinida', available: prop.hasSchoolNearby },
-      { name: 'hospital', label: 'Shifoxona yaqinida', available: prop.hasHospitalNearby }
+      { name: 'hospital', label: 'Shifoxona yaqinida', available: prop.hasHospitalNearby },
     ];
   });
 
-  ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.loadProperty(id);
-    } else {
-      this.error.set('Mulk ID topilmadi');
-    }
+  constructor() {
+    effect(() => {
+      const id = this.propertyId();
+
+      if (id) {
+        this.loadProperty(id);
+      } else {
+        this.error.set('Mulk ID topilmadi');
+      }
+    });
+
+    effect(() => {
+      if (!this.isAuthenticated()) {
+        this.favoritesService.clear();
+        this.isFavorite.set(false);
+        return;
+      }
+
+      this.favoritesService.loadFavorites().subscribe({
+        error: () => undefined,
+      });
+    });
+
+    effect(() => {
+      const prop = this.property();
+      const favoriteItems = this.favoritesService.favoriteItems();
+
+      if (!prop) {
+        this.isFavorite.set(false);
+        return;
+      }
+
+      this.isFavorite.set(favoriteItems.some((item) => item.favorite.propertyId === prop.id));
+    });
   }
 
   loadProperty(id: string): void {
     this.error.set(null);
-    
+    this.currentImageIndex.set(0);
+
     this.propertyService.getPropertyById(id).subscribe({
       error: () => {
-        this.error.set('Mulk ma\'lumotlarini yuklashda xatolik yuz berdi');
-      }
+        this.error.set("Mulk ma'lumotlarini yuklashda xatolik yuz berdi");
+      },
     });
   }
 
@@ -1299,7 +1366,7 @@ export class PropertyDetailComponent implements OnInit {
   }
 
   prevImage(): void {
-    this.currentImageIndex.update(i => {
+    this.currentImageIndex.update((i) => {
       const prop = this.property();
       if (!prop?.images) return 0;
       return i === 0 ? prop.images.length - 1 : i - 1;
@@ -1307,7 +1374,7 @@ export class PropertyDetailComponent implements OnInit {
   }
 
   nextImage(): void {
-    this.currentImageIndex.update(i => {
+    this.currentImageIndex.update((i) => {
       const prop = this.property();
       if (!prop?.images) return 0;
       return i === prop.images.length - 1 ? 0 : i + 1;
@@ -1317,11 +1384,11 @@ export class PropertyDetailComponent implements OnInit {
   bookNow(): void {
     if (!this.isAuthenticated()) {
       this.router.navigate(['/auth/login'], {
-        queryParams: { returnUrl: this.router.url }
+        queryParams: { returnUrl: this.router.url },
       });
       return;
     }
-    
+
     // Scroll to booking panel
     const bookingPanel = document.querySelector('app-booking-panel');
     if (bookingPanel) {
@@ -1332,14 +1399,12 @@ export class PropertyDetailComponent implements OnInit {
   contactHost(): void {
     if (!this.isAuthenticated()) {
       this.router.navigate(['/auth/login'], {
-        queryParams: { returnUrl: this.router.url }
+        queryParams: { returnUrl: this.router.url },
       });
       return;
     }
-    
-    this.snackBar.open('Xabar yuborish funksiyasi tez orada qo\'shiladi', 'Yopish', {
-      duration: 3000
-    });
+
+    this.toastService.info('Xabar yuborish oqimi shu sahifaga ulanmoqda.');
   }
 
   toggleFavorite(): void {
@@ -1348,13 +1413,27 @@ export class PropertyDetailComponent implements OnInit {
       return;
     }
 
-    this.isFavorite.update(v => !v);
-    
-    this.snackBar.open(
-      this.isFavorite() ? 'Sevimlilarga qo\'shildi' : 'Sevimlilardan olib tashlandi',
-      'Yopish',
-      { duration: 2000 }
-    );
+    const prop = this.property();
+    if (!prop) {
+      return;
+    }
+
+    const favoriteId = this.favoritesService.getFavoriteIdByPropertyId(prop.id);
+
+    const request = favoriteId
+      ? this.favoritesService.removeFavoriteById(favoriteId)
+      : this.favoritesService.addFavorite(prop.id).pipe(map(() => void 0));
+
+    request.subscribe({
+      next: () => {
+        this.toastService.success(
+          favoriteId ? 'Sevimlilardan olib tashlandi.' : "Sevimlilarga qo'shildi.",
+        );
+      },
+      error: () => {
+        this.toastService.error('Sevimlilar bilan ishlashda xatolik yuz berdi.');
+      },
+    });
   }
 
   getFavoriteTooltip(): string {
@@ -1365,16 +1444,35 @@ export class PropertyDetailComponent implements OnInit {
     const prop = this.property();
     if (!prop) return;
 
-    if (confirm('Haqiqatan ham bu mulkni o\'chirmoqchimisiz?')) {
-      this.propertyService.deleteProperty(prop.id).subscribe({
-        next: () => {
-          this.snackBar.open('Mulk o\'chirildi', 'Yopish', { duration: 3000 });
-          this.router.navigate(['/properties']);
-        },
-        error: () => {
-          this.snackBar.open('O\'chirishda xatolik yuz berdi', 'Yopish', { duration: 3000 });
+    const dialogData: ConfirmationDialogData = {
+      title: "E'lonni o'chirish",
+      message: "Bu amalni qaytarib bo'lmaydi. E'lon va unga bog'liq ma'lumotlar o'chiriladi.",
+      confirmLabel: "O'chirish",
+      cancelLabel: 'Bekor qilish',
+      tone: 'danger',
+    };
+
+    this.dialog
+      .open(ConfirmationDialogComponent, {
+        data: dialogData,
+        autoFocus: false,
+        restoreFocus: true,
+      })
+      .afterClosed()
+      .subscribe((confirmed) => {
+        if (!confirmed) {
+          return;
         }
+
+        this.propertyService.deleteProperty(prop.id).subscribe({
+          next: () => {
+            this.toastService.success("Mulk o'chirildi.");
+            void this.router.navigate(['/properties']);
+          },
+          error: () => {
+            this.toastService.error("O'chirishda xatolik yuz berdi.");
+          },
+        });
       });
-    }
   }
 }

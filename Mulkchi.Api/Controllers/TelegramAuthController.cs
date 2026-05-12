@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 using Mulkchi.Api.Models.Foundations.Auth;
 using Mulkchi.Api.Services.Foundations.Auth;
+using Mulkchi.Api.Controllers.Auth;
+using Mulkchi.Api.Models.Foundations.Users;
 
 namespace Mulkchi.Api.Controllers;
 
@@ -54,6 +57,17 @@ public class TelegramAuthController : ControllerBase
         try
         {
             var status = await _telegramAuthService.CheckSessionStatusAsync(sessionId);
+
+            if (status.Status == "verified" &&
+                status.AccessToken is not null &&
+                status.RefreshToken is not null &&
+                status.User is not null)
+            {
+                AuthCookieHelper.SetAuthCookies(Response, BuildAuthResponse(status));
+                status.AccessToken = string.Empty;
+                status.RefreshToken = string.Empty;
+            }
+
             return Ok(status);
         }
         catch (Exception ex)
@@ -92,5 +106,27 @@ public class TelegramAuthController : ControllerBase
             // Telegram 200 javob kutadi, aks holda qayta yuboradi
             return Ok();
         }
+    }
+
+    private static AuthResponse BuildAuthResponse(TelegramSessionStatus status)
+    {
+        var token = new JwtSecurityTokenHandler().ReadJwtToken(status.AccessToken);
+        var parts = (status.User?.FullName ?? string.Empty)
+            .Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+
+        return new AuthResponse
+        {
+            Token = status.AccessToken!,
+            RefreshToken = status.RefreshToken!,
+            ExpiresAt = new DateTimeOffset(token.ValidTo, TimeSpan.Zero),
+            RefreshExpiresAt = DateTimeOffset.UtcNow.AddDays(AuthService.RefreshTokenExpiryDays),
+            UserId = status.User!.Id,
+            Email = status.User.Username,
+            FirstName = parts.FirstOrDefault() ?? status.User.FullName,
+            LastName = parts.Skip(1).FirstOrDefault() ?? string.Empty,
+            AvatarUrl = string.Empty,
+            Role = UserRole.Guest,
+            CurrentMode = UserRole.Guest
+        };
     }
 }

@@ -31,6 +31,7 @@ public class User
     public int TotalPropertiesListed { get; set; }  // Track host activity
     public DateTimeOffset? HostSince { get; set; }
     public DateTimeOffset? ModeSwitchedAt { get; set; }  // Last mode switch timestamp
+    public long? TelegramId { get; set; }
     public string PreferredLanguage { get; set; } // "uz", "ru", "en"
     public DateTimeOffset CreatedDate { get; set; }
     public DateTimeOffset UpdatedDate { get; set; }

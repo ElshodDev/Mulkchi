@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal, viewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { AfterViewChecked, Component, DestroyRef, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -12,6 +13,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { AuthService } from '../../core/services/auth.service';
 import { ChatService } from '../../core/services/chat.service';
 import { Conversation, Message } from '../../core/models';
 
@@ -480,6 +482,8 @@ import { Conversation, Message } from '../../core/models';
 })
 export class MessagesComponent implements OnInit, AfterViewChecked {
   chatService = inject(ChatService);
+  private authService = inject(AuthService);
+  private destroyRef = inject(DestroyRef);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   
@@ -494,12 +498,7 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
   currentMessages = this.chatService.currentMessages;
 
   ngOnInit(): void {
-    // Token tekshiruvi
-    const token = localStorage.getItem('access_token')
-               || localStorage.getItem('accessToken')
-               || localStorage.getItem('token')
-               || localStorage.getItem('jwt');
-    if (!token) {
+    if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/auth/login']);
       return;
     }
@@ -511,13 +510,14 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
     this.chatService.getConversations();
 
     // Check for query param (userId to chat with)
-    this.route.queryParams.subscribe(params => {
-      const userId = params['userId'];
-      if (userId) {
-        // Find or create conversation with this user
-        this.startConversationWithUser(userId);
-      }
-    });
+    this.route.queryParams
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(params => {
+        const userId = params['userId'];
+        if (userId) {
+          this.startConversationWithUser(userId);
+        }
+      });
   }
 
   ngAfterViewChecked(): void {
@@ -594,15 +594,6 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
   }
 
   private getCurrentUserId(): string | null {
-    const userJson = localStorage.getItem('user');
-    if (userJson) {
-      try {
-        const user = JSON.parse(userJson);
-        return user.id;
-      } catch {
-        return null;
-      }
-    }
-    return null;
+    return this.authService.currentUser()?.id ?? null;
   }
 }

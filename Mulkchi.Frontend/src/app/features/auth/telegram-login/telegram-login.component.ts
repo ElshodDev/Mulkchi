@@ -278,7 +278,7 @@ export class TelegramLoginComponent implements OnInit, OnDestroy {
       // Telegram ni avtomatik ochish
       window.open(response.deepLink, '_blank');
     } catch (error) {
-      console.error('Telegram login xatosi:', error);
+      console.error('Telegram login xatosi', error);
     } finally {
       this.loading.set(false);
     }

@@ -1,118 +1,106 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-not-found',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterLink,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule
-  ],
+  imports: [RouterLink, MatButtonModule, MatIconModule],
   template: `
-    <div class="not-found-container">
-      <mat-card class="not-found-card">
-        <div class="error-code">404</div>
-        <mat-icon class="error-icon">search_off</mat-icon>
-        <h1>Sahifa topilmadi</h1>
-        <p>So'ralgan sahifa mavjud emas yoki o'chirilgan bo'lishi mumkin.</p>
-        <div class="actions">
-          <button mat-raised-button color="primary" routerLink="/">
-            <mat-icon>home</mat-icon>
-            Bosh sahifaga qaytish
-          </button>
-          <button mat-stroked-button color="primary" routerLink="/properties">
-            <mat-icon>apartment</mat-icon>
-            Mulk qidirish
-          </button>
+    <section class="not-found-shell">
+      <div class="not-found-card">
+        <div class="map-pin">
+          <mat-icon>map_search</mat-icon>
         </div>
-      </mat-card>
-    </div>
+        <span class="status">404</span>
+        <h1>Qidirgan joyimiz topilmadi</h1>
+        <p>
+          Havola eskirgan bo‘lishi mumkin yoki sahifa boshqa manzilga ko‘chgan. Keling, asosiy yo‘lga
+          qaytamiz.
+        </p>
+
+        <div class="actions">
+          <a mat-flat-button routerLink="/">Bosh sahifaga qaytish</a>
+          <a mat-stroked-button routerLink="/properties">Mulk qidirish</a>
+        </div>
+      </div>
+    </section>
   `,
-  styles: [`
-    .not-found-container {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 20px;
-    }
-
-    .not-found-card {
-      text-align: center;
-      padding: 64px 48px;
-      max-width: 500px;
-    }
-
-    .error-code {
-      font-size: 8rem;
-      font-weight: 700;
-      color: #667eea;
-      line-height: 1;
-      margin-bottom: 16px;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .error-icon {
-      font-size: 64px;
-      width: 64px;
-      height: 64px;
-      color: #999;
-      margin-bottom: 24px;
-    }
-
-    h1 {
-      font-size: 1.75rem;
-      font-weight: 600;
-      margin-bottom: 16px;
-      color: #333;
-    }
-
-    p {
-      color: #666;
-      font-size: 1.1rem;
-      margin-bottom: 32px;
-      line-height: 1.5;
-    }
-
-    .actions {
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .actions button {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    @media (max-width: 480px) {
-      .not-found-card {
-        padding: 48px 24px;
+  styles: [
+    `
+      .not-found-shell {
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: var(--space-8) var(--space-4);
+        background:
+          radial-gradient(circle at top, rgba(245, 158, 11, 0.12), transparent 30%),
+          var(--color-surface-canvas);
       }
 
-      .error-code {
-        font-size: 6rem;
+      .not-found-card {
+        display: grid;
+        justify-items: center;
+        gap: var(--space-4);
+        width: min(100%, 42rem);
+        padding: clamp(var(--space-6), 5vw, var(--space-8));
+        border: 1px solid var(--color-border-soft);
+        border-radius: var(--radius-4);
+        background: var(--color-surface-elevated);
+        box-shadow: var(--shadow-xl);
+        text-align: center;
+      }
+
+      .map-pin {
+        display: grid;
+        place-items: center;
+        inline-size: 5rem;
+        aspect-ratio: 1;
+        border-radius: 1.5rem;
+        background: rgba(245, 158, 11, 0.14);
+        color: var(--color-accent-600);
+      }
+
+      .map-pin mat-icon {
+        font-size: 2rem;
+        width: 2rem;
+        height: 2rem;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2.5rem;
+        padding: 0 var(--space-4);
+        border-radius: var(--radius-round);
+        background: rgba(15, 118, 110, 0.08);
+        color: var(--color-brand-600);
+        font-weight: var(--font-weight-semibold);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2rem, 4vw, 3.25rem);
+        line-height: var(--line-height-tight);
+      }
+
+      p {
+        margin: 0;
+        max-width: 34rem;
+        color: var(--color-text-secondary);
+        line-height: var(--line-height-relaxed);
       }
 
       .actions {
-        flex-direction: column;
-      }
-
-      .actions button {
-        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
         justify-content: center;
+        gap: var(--space-3);
       }
-    }
-  `]
+    `,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NotFoundComponent {}

@@ -31,8 +31,6 @@ import { SessionService } from './session.service';
   providedIn: 'root',
 })
 export class AuthService {
-  private static readonly refreshTokenStorageKey = 'mulkchi_refresh_token';
-
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly sessionService = inject(SessionService);
@@ -42,7 +40,6 @@ export class AuthService {
 
   private readonly _currentUser = signal<User | null>(null);
   private readonly _accessToken = signal<string | null>(null);
-  private readonly _refreshToken = signal<string | null>(this.readStoredRefreshToken());
   private readonly _currentMode = signal<UserRole>(UserRole.Guest);
   private readonly _isRestoringSession = signal(false);
 
@@ -133,7 +130,7 @@ export class AuthService {
 
     return {
       token,
-      refreshToken: getValue('refreshToken', 'RefreshToken') as string,
+      refreshToken: (getValue('refreshToken', 'RefreshToken') as string | undefined) ?? '',
       expiresAt: new Date(getValue('expiresAt', 'ExpiresAt') as string),
       userId: getValue('userId', 'UserId') as string,
       email: getValue('email', 'Email') as string,
@@ -150,11 +147,8 @@ export class AuthService {
       return this.refreshRequest$;
     }
 
-    const refreshToken = this._refreshToken();
-    const requestBody = refreshToken ? { refreshToken } : {};
-
     this.refreshRequest$ = this.http
-      .post<ApiAuthResponse>(`${this.apiUrl}/refresh-token`, requestBody)
+      .post<ApiAuthResponse>(`${this.apiUrl}/refresh-token`, null)
       .pipe(
         map((apiResponse) => this.mapApiAuthResponse(apiResponse)),
         tap((response) => {
@@ -175,11 +169,8 @@ export class AuthService {
   }
 
   logout(): void {
-    const refreshToken = this._refreshToken();
-    const body = refreshToken ? { refreshToken } : {};
-
     this.http
-      .post<void>(`${this.apiUrl}/logout`, body)
+      .post<void>(`${this.apiUrl}/logout`, null)
       .pipe(take(1))
       .subscribe({
         next: () => this.clearAuth(),
@@ -215,8 +206,6 @@ export class AuthService {
 
   handleAuthResponse(response: AuthResponse, fetchProfile = true): void {
     this._accessToken.set(response.token);
-    this._refreshToken.set(response.refreshToken);
-    this.storeRefreshToken(response.refreshToken);
     this._currentMode.set(response.currentMode ?? response.role ?? UserRole.Guest);
     this._currentUser.set({
       id: response.userId,
@@ -253,8 +242,6 @@ export class AuthService {
 
   clearAuth(redirectToLogin = true): void {
     this._accessToken.set(null);
-    this._refreshToken.set(null);
-    this.clearStoredRefreshToken();
     this._currentUser.set(null);
     this._currentMode.set(UserRole.Guest);
     this.sessionService.emitLogout();
@@ -267,7 +254,6 @@ export class AuthService {
   switchMode(request: { TargetMode: UserRole }): Observable<AuthResponse> {
     const body = {
       TargetMode: request.TargetMode,
-      RefreshToken: this._refreshToken() ?? '',
     };
 
     return this.http.post<Record<string, unknown>>(`${this.apiUrl}/switch-role`, body).pipe(
@@ -324,42 +310,18 @@ export class AuthService {
     );
   }
 
-  private readStoredRefreshToken(): string | null {
-    if (typeof localStorage === 'undefined') {
-      return null;
-    }
-
-    return localStorage.getItem(AuthService.refreshTokenStorageKey);
-  }
-
-  private storeRefreshToken(refreshToken: string): void {
-    if (typeof localStorage === 'undefined') {
-      return;
-    }
-
-    localStorage.setItem(AuthService.refreshTokenStorageKey, refreshToken);
-  }
-
-  private clearStoredRefreshToken(): void {
-    if (typeof localStorage === 'undefined') {
-      return;
-    }
-
-    localStorage.removeItem(AuthService.refreshTokenStorageKey);
-  }
-
   private handleError(error: HttpErrorResponse): string {
     if (error.error instanceof ErrorEvent) {
       return 'Tarmoq xatosi: ' + error.error.message;
     } else {
       if (error.status === 400) {
-        return 'Noto\'g\'ri ma\'lumot kiritildi';
+        return "Noto'g'ri ma'lumot kiritildi";
       } else if (error.status === 401) {
-        return 'Email yoki parol noto\'g\'ri';
+        return "Email yoki parol noto'g'ri";
       } else if (error.status === 409) {
-        return 'Bu email allaqachon ro\'yxatdan o\'tgan';
+        return "Bu email allaqachon ro'yxatdan o'tgan";
       } else if (error.status === 500) {
-        return 'Server xatosi. Iltimos keyinroq urinib ko\'ring';
+        return "Server xatosi. Iltimos keyinroq urinib ko'ring";
       }
       return `Xatolik: ${error.status} - ${error.message}`;
     }

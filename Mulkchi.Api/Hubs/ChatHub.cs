@@ -76,8 +76,12 @@ public class ChatHub : Hub
 
             Message savedMessage = await this.messageService.AddMessageAsync(message);
 
-            await Clients.User(receiverId.ToString())
-                .SendAsync("ReceiveMessage", savedMessage);
+            // Only send to receiver if they have a valid user ID
+            if (!string.IsNullOrEmpty(receiverId.ToString()))
+            {
+                await Clients.User(receiverId.ToString())
+                    .SendAsync("ReceiveMessage", savedMessage);
+            }
 
             await Clients.Caller
                 .SendAsync("MessageSent", savedMessage);
@@ -85,7 +89,7 @@ public class ChatHub : Hub
         catch (Exception exception)
         {
             this.loggingBroker.LogError(exception);
-            throw;
+            throw new HubException("Failed to send message: " + exception.Message);
         }
     }
 
@@ -177,9 +181,17 @@ public class ChatHub : Hub
 
     public override async Task OnConnectedAsync()
     {
-        this.loggingBroker.LogInformation(
-            $"Client connected: {Context.ConnectionId}");
-        await base.OnConnectedAsync();
+        try
+        {
+            this.loggingBroker.LogInformation(
+                $"Client connected: {Context.ConnectionId}, UserId: {Context.UserIdentifier ?? "anonymous"}");
+            await base.OnConnectedAsync();
+        }
+        catch (Exception exception)
+        {
+            this.loggingBroker.LogError(exception);
+            throw;
+        }
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)

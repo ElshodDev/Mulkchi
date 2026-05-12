@@ -163,8 +163,11 @@ public partial class SubscriptionService : ISubscriptionService
         subscription.UpdatedDate = now;
 
         var updated = await this.storageBroker.UpdateUserSubscriptionAsync(subscription);
-        updated.Plan = subscription.Plan;
-
+        if (updated == null)
+            throw new InvalidOperationException("Failed to update subscription");
+        
+        if (subscription.Plan != null)
+            updated.Plan = subscription.Plan;
         return ToSubscriptionResponse(updated);
     }
 

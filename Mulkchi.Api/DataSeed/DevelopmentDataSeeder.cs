@@ -283,7 +283,7 @@ public static class DevelopmentDataSeeder
         {
             Property property = properties[i % properties.Count];
             User guest = guests[i % guests.Count];
-            DateTimeOffset checkIn = now.Date.AddDays(i - 5);
+            DateTimeOffset checkIn = new DateTimeOffset(now.UtcDateTime.Date, TimeSpan.Zero).AddDays(i - 5);
             DateTimeOffset checkOut = checkIn.AddDays(2 + (i % 4));
             decimal totalPrice = property.ListingType switch
             {

@@ -23,6 +23,9 @@ public partial class StorageBroker
     public async ValueTask<User?> SelectUserByEmailAsync(string email)
         => await this.Users.FirstOrDefaultAsync(u => u.Email == email);
 
+    public async ValueTask<User?> SelectUserByTelegramIdAsync(long telegramId)
+        => await this.Users.FirstOrDefaultAsync(u => u.TelegramId == telegramId);
+
     public async ValueTask<User> UpdateUserAsync(User user)
     {
         this.Entry(user).State = EntityState.Modified;

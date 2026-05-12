@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { AuthService } from './auth.service';
 
 export interface TelegramInitResponse {
   botUsername: string;
@@ -25,6 +26,7 @@ export interface TelegramSessionStatus {
 @Injectable({ providedIn: 'root' })
 export class TelegramAuthService {
   private readonly baseUrl = `${environment.apiUrl}/auth/telegram`;
+  private readonly authService = inject(AuthService);
 
   // Polling holati
   isPolling = signal(false);
@@ -80,7 +82,7 @@ export class TelegramAuthService {
           this.pollingStatus.set('expired');
         }
       } catch (error) {
-        console.error('Polling xatosi:', error);
+        console.error('Telegram polling xatosi', error);
       }
     }, 2000);
   }
@@ -94,14 +96,7 @@ export class TelegramAuthService {
   }
 
   private handleSuccessfulLogin(status: TelegramSessionStatus): void {
-    // Tokenlarni saqlash
-    localStorage.setItem('accessToken', status.accessToken!);
-    localStorage.setItem('refreshToken', status.refreshToken!);
-
-    // Auth store yangilash (mavjud auth.store.ts)
-    // this.authStore.setUser(status.user);
-
-    // Bosh sahifaga yo'naltirish
+    this.authService.bootstrapSession();
     this.router.navigate(['/']);
   }
 

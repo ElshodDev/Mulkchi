@@ -1,29 +1,42 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZoneChangeDetection, Injectable } from '@angular/core';
-import { provideRouter, RouterStateSnapshot, TitleStrategy } from '@angular/router';
+import {
+  ApplicationConfig,
+  inject,
+  Injectable,
+  provideBrowserGlobalErrorListeners,
+  provideZoneChangeDetection,
+} from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import {
+  provideRouter,
+  RouterStateSnapshot,
+  TitleStrategy,
+  withPreloading,
+  withViewTransitions,
+} from '@angular/router';
 import { Title } from '@angular/platform-browser';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 import { routes } from './app.routes';
-import { jwtInterceptor } from './core/interceptors/jwt.interceptor';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { cacheInterceptor } from './core/interceptors/cache.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
+import { loadingInterceptor } from './core/interceptors/loading.interceptor';
+import { SelectivePreloadingStrategy } from './core/strategies/selective-preloading.strategy';
 
-// Custom Title Strategy
 @Injectable()
 class MulkchiTitleStrategy extends TitleStrategy {
-  private baseTitle = 'Mulkchi';
-
-  constructor(private readonly title: Title) {
-    super();
-  }
+  private readonly title = inject(Title);
+  private readonly baseTitle = 'Mulkchi';
 
   override updateTitle(snapshot: RouterStateSnapshot): void {
-    const title = this.buildTitle(snapshot);
-    if (title) {
-      this.title.setTitle(`${title} | ${this.baseTitle}`);
-    } else {
-      this.title.setTitle(`${this.baseTitle} - O'zbekistonda Ko'chmas Mulk`);
+    const pageTitle = this.buildTitle(snapshot);
+
+    if (pageTitle) {
+      this.title.setTitle(`${pageTitle} | ${this.baseTitle}`);
+      return;
     }
+
+    this.title.setTitle(`${this.baseTitle} - O'zbekistonda ko'chmas mulk`);
   }
 }
 
@@ -31,14 +44,15 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(routes, 
-      // Title is handled by custom strategy
+    provideRouter(
+      routes,
+      withPreloading(SelectivePreloadingStrategy),
+      withViewTransitions(),
     ),
     provideHttpClient(
-      withInterceptors([jwtInterceptor, errorInterceptor])
+      withInterceptors([authInterceptor, cacheInterceptor, loadingInterceptor, errorInterceptor]),
     ),
     provideAnimationsAsync(),
-    Title,
-    { provide: TitleStrategy, useClass: MulkchiTitleStrategy }
-  ]
+    { provide: TitleStrategy, useClass: MulkchiTitleStrategy },
+  ],
 };

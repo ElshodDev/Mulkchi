@@ -1,17 +1,18 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTabsModule } from '@angular/material/tabs';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
+import { RouterLink } from '@angular/router';
+import { Property, User } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
+import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { PropertyService } from '../../../core/services/property.service';
-import { User, Property } from '../../../core/models';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -25,7 +26,7 @@ import { User, Property } from '../../../core/models';
     MatTableModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
-    MatTabsModule
+    MatTabsModule,
   ],
   template: `
     <div class="admin-dashboard-container">
@@ -91,7 +92,7 @@ import { User, Property } from '../../../core/models';
                       <div class="user-cell">
                         <div class="user-avatar">
                           @if (user.avatarUrl) {
-                            <img [src]="user.avatarUrl" [alt]="user.firstName">
+                            <img [src]="user.avatarUrl" [alt]="user.firstName" />
                           } @else {
                             <mat-icon>person</mat-icon>
                           }
@@ -137,7 +138,7 @@ import { User, Property } from '../../../core/models';
                   <ng-container matColumnDef="joined">
                     <th mat-header-cell *matHeaderCellDef>Qo'shilgan</th>
                     <td mat-cell *matCellDef="let user">
-                      {{ user.createdAt | date:'dd.MM.yyyy' }}
+                      {{ user.createdAt | date: 'dd.MM.yyyy' }}
                     </td>
                   </ng-container>
 
@@ -145,10 +146,19 @@ import { User, Property } from '../../../core/models';
                     <th mat-header-cell *matHeaderCellDef>Amallar</th>
                     <td mat-cell *matCellDef="let user">
                       <div class="actions-cell">
-                        <button mat-icon-button [routerLink]="['/profile', user.id]" matTooltip="Ko'rish">
+                        <button
+                          mat-icon-button
+                          [routerLink]="['/profile', user.id]"
+                          matTooltip="Ko'rish"
+                        >
                           <mat-icon>visibility</mat-icon>
                         </button>
-                        <button mat-icon-button color="warn" (click)="deleteUser(user.id)" matTooltip="O'chirish">
+                        <button
+                          mat-icon-button
+                          color="warn"
+                          (click)="deleteUser(user.id)"
+                          matTooltip="O'chirish"
+                        >
                           <mat-icon>delete</mat-icon>
                         </button>
                       </div>
@@ -156,7 +166,7 @@ import { User, Property } from '../../../core/models';
                   </ng-container>
 
                   <tr mat-header-row *matHeaderRowDef="userColumns"></tr>
-                  <tr mat-row *matRowDef="let row; columns: userColumns;"></tr>
+                  <tr mat-row *matRowDef="let row; columns: userColumns"></tr>
                 </table>
               }
             </mat-card>
@@ -177,7 +187,7 @@ import { User, Property } from '../../../core/models';
                       <div class="property-cell">
                         <div class="property-thumb">
                           @if (property.images && property.images.length > 0) {
-                            <img [src]="property.images[0].imageUrl" [alt]="property.title">
+                            <img [src]="property.images[0].imageUrl" [alt]="property.title" />
                           } @else {
                             <mat-icon>home</mat-icon>
                           }
@@ -200,7 +210,9 @@ import { User, Property } from '../../../core/models';
                   <ng-container matColumnDef="price">
                     <th mat-header-cell *matHeaderCellDef>Narx</th>
                     <td mat-cell *matCellDef="let property">
-                      <span class="price">{{ getPrice(property) | number }} {{ property.currency }}</span>
+                      <span class="price"
+                        >{{ getPrice(property) | number }} {{ property.currency }}</span
+                      >
                     </td>
                   </ng-container>
 
@@ -224,13 +236,27 @@ import { User, Property } from '../../../core/models';
                     <th mat-header-cell *matHeaderCellDef>Amallar</th>
                     <td mat-cell *matCellDef="let property">
                       <div class="actions-cell">
-                        <a mat-icon-button [routerLink]="['/properties', property.id]" matTooltip="Ko'rish">
+                        <a
+                          mat-icon-button
+                          [routerLink]="['/properties', property.id]"
+                          matTooltip="Ko'rish"
+                        >
                           <mat-icon>visibility</mat-icon>
                         </a>
-                        <button mat-icon-button color="primary" (click)="verifyProperty(property.id)" matTooltip="Tasdiqlash">
+                        <button
+                          mat-icon-button
+                          color="primary"
+                          (click)="verifyProperty(property.id)"
+                          matTooltip="Tasdiqlash"
+                        >
                           <mat-icon>verified</mat-icon>
                         </button>
-                        <button mat-icon-button color="warn" (click)="deleteProperty(property.id)" matTooltip="O'chirish">
+                        <button
+                          mat-icon-button
+                          color="warn"
+                          (click)="deleteProperty(property.id)"
+                          matTooltip="O'chirish"
+                        >
                           <mat-icon>delete</mat-icon>
                         </button>
                       </div>
@@ -238,272 +264,314 @@ import { User, Property } from '../../../core/models';
                   </ng-container>
 
                   <tr mat-header-row *matHeaderRowDef="propertyColumns"></tr>
-                  <tr mat-row *matRowDef="let row; columns: propertyColumns;"></tr>
+                  <tr mat-row *matRowDef="let row; columns: propertyColumns"></tr>
                 </table>
               }
             </mat-card>
+          </mat-tab>
+
+          <!-- Announcements Tab -->
+          <mat-tab label="E'lonlar">
+            <div class="tab-content">
+              <p class="announcement-info">
+                <mat-icon>info</mat-icon>
+                E'lonlarni boshqarish uchun quyidagi tugmani bosing
+              </p>
+              <a mat-raised-button color="primary" routerLink="/admin/announcements">
+                <mat-icon>edit</mat-icon>
+                E'lonlarni boshqarish
+              </a>
+            </div>
           </mat-tab>
         </mat-tab-group>
       </div>
     </div>
   `,
-  styles: [`
-    .admin-dashboard-container {
-      min-height: calc(100vh - 64px);
-      background: #f5f5f5;
-      padding: 40px 0;
-    }
-
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0 20px;
-    }
-
-    .page-header {
-      margin-bottom: 32px;
-    }
-
-    .page-header h1 {
-      font-size: 2rem;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-
-    .page-header p {
-      color: #666;
-    }
-
-    .overview-cards {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 24px;
-      margin-bottom: 32px;
-    }
-
-    .overview-card {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 24px;
-    }
-
-    .card-icon {
-      width: 56px;
-      height: 56px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .users .card-icon {
-      background: #e3f2fd;
-      color: #1976d2;
-    }
-
-    .properties .card-icon {
-      background: #e8f5e9;
-      color: #388e3c;
-    }
-
-    .bookings .card-icon {
-      background: #fff3e0;
-      color: #f57c00;
-    }
-
-    .revenue .card-icon {
-      background: #f3e5f5;
-      color: #7b1fa2;
-    }
-
-    .card-icon mat-icon {
-      font-size: 28px;
-    }
-
-    .card-info {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .card-info .value {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #333;
-    }
-
-    .card-info .label {
-      font-size: 0.9rem;
-      color: #666;
-    }
-
-    .dashboard-tabs {
-      margin-top: 24px;
-    }
-
-    .table-card {
-      margin-top: 16px;
-      overflow: auto;
-    }
-
-    .loading-container {
-      display: flex;
-      justify-content: center;
-      padding: 40px;
-    }
-
-    table {
-      width: 100%;
-    }
-
-    .user-cell,
-    .property-cell {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .user-avatar,
-    .property-thumb {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: #e0e0e0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-
-    .user-avatar img,
-    .property-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .user-avatar mat-icon,
-    .property-thumb mat-icon {
-      font-size: 24px;
-      color: #999;
-    }
-
-    .user-info,
-    .property-info {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .user-info .name,
-    .property-info .title {
-      font-weight: 500;
-      color: #333;
-    }
-
-    .user-info .email,
-    .property-info .location {
-      font-size: 0.85rem;
-      color: #666;
-    }
-
-    .role-badge {
-      padding: 4px 12px;
-      border-radius: 16px;
-      font-size: 0.75rem;
-      font-weight: 500;
-    }
-
-    .role-badge.guest {
-      background: #e3f2fd;
-      color: #1976d2;
-    }
-
-    .role-badge.host {
-      background: #e8f5e9;
-      color: #388e3c;
-    }
-
-    .role-badge.admin {
-      background: #fff3e0;
-      color: #f57c00;
-    }
-
-    .verified {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      color: #4caf50;
-    }
-
-    .verified mat-icon {
-      font-size: 18px;
-    }
-
-    .unverified {
-      color: #999;
-    }
-
-    .type-badge {
-      padding: 4px 12px;
-      background: #e3f2fd;
-      color: #1976d2;
-      border-radius: 4px;
-      font-size: 0.85rem;
-    }
-
-    .price {
-      font-weight: 600;
-      color: #667eea;
-    }
-
-    .status-badge {
-      padding: 4px 12px;
-      border-radius: 16px;
-      font-size: 0.75rem;
-      font-weight: 500;
-    }
-
-    .status-badge.active {
-      background: #e8f5e9;
-      color: #388e3c;
-    }
-
-    .status-badge.pending {
-      background: #fff3e0;
-      color: #f57c00;
-    }
-
-    .actions-cell {
-      display: flex;
-      gap: 8px;
-    }
-
-    @media (max-width: 1200px) {
-      .overview-cards {
-        grid-template-columns: repeat(2, 1fr);
+  styles: [
+    `
+      .admin-dashboard-container {
+        min-height: calc(100vh - 64px);
+        background: #f5f5f5;
+        padding: 40px 0;
       }
-    }
 
-    @media (max-width: 768px) {
-      .overview-cards {
-        grid-template-columns: 1fr;
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      .page-header {
+        margin-bottom: 32px;
       }
 
       .page-header h1 {
-        font-size: 1.5rem;
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 8px;
       }
-    }
-  `]
+
+      .page-header p {
+        color: #666;
+      }
+
+      .overview-cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 24px;
+        margin-bottom: 32px;
+      }
+
+      .overview-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 24px;
+      }
+
+      .card-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .users .card-icon {
+        background: #e3f2fd;
+        color: #1976d2;
+      }
+
+      .properties .card-icon {
+        background: #e8f5e9;
+        color: #388e3c;
+      }
+
+      .bookings .card-icon {
+        background: #fff3e0;
+        color: #f57c00;
+      }
+
+      .revenue .card-icon {
+        background: #f3e5f5;
+        color: #7b1fa2;
+      }
+
+      .card-icon mat-icon {
+        font-size: 28px;
+      }
+
+      .card-info {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .card-info .value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #333;
+      }
+
+      .card-info .label {
+        font-size: 0.9rem;
+        color: #666;
+      }
+
+      .dashboard-tabs {
+        margin-top: 24px;
+      }
+
+      .table-card {
+        margin-top: 16px;
+        overflow: auto;
+      }
+
+      .loading-container {
+        display: flex;
+        justify-content: center;
+        padding: 40px;
+      }
+
+      table {
+        width: 100%;
+      }
+
+      .user-cell,
+      .property-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .user-avatar,
+      .property-thumb {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #e0e0e0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .user-avatar img,
+      .property-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .user-avatar mat-icon,
+      .property-thumb mat-icon {
+        font-size: 24px;
+        color: #999;
+      }
+
+      .user-info,
+      .property-info {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .user-info .name,
+      .property-info .title {
+        font-weight: 500;
+        color: #333;
+      }
+
+      .user-info .email,
+      .property-info .location {
+        font-size: 0.85rem;
+        color: #666;
+      }
+
+      .role-badge {
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+
+      .role-badge.guest {
+        background: #e3f2fd;
+        color: #1976d2;
+      }
+
+      .role-badge.host {
+        background: #e8f5e9;
+        color: #388e3c;
+      }
+
+      .role-badge.admin {
+        background: #fff3e0;
+        color: #f57c00;
+      }
+
+      .verified {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: #4caf50;
+      }
+
+      .verified mat-icon {
+        font-size: 18px;
+      }
+
+      .unverified {
+        color: #999;
+      }
+
+      .type-badge {
+        padding: 4px 12px;
+        background: #e3f2fd;
+        color: #1976d2;
+        border-radius: 4px;
+        font-size: 0.85rem;
+      }
+
+      .price {
+        font-weight: 600;
+        color: #667eea;
+      }
+
+      .status-badge {
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+
+      .status-badge.active {
+        background: #e8f5e9;
+        color: #388e3c;
+      }
+
+      .status-badge.pending {
+        background: #fff3e0;
+        color: #f57c00;
+      }
+
+      .actions-cell {
+        display: flex;
+        gap: 8px;
+      }
+
+      .tab-content {
+        padding: 32px 16px;
+        text-align: center;
+      }
+
+      .announcement-info {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 24px;
+        color: #666;
+        font-size: 16px;
+      }
+
+      .announcement-info mat-icon {
+        color: #1976d2;
+      }
+
+      .tab-content a {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      @media (max-width: 1200px) {
+        .overview-cards {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .overview-cards {
+          grid-template-columns: 1fr;
+        }
+
+        .page-header h1 {
+          font-size: 1.5rem;
+        }
+      }
+    `,
+  ],
 })
 export class AdminDashboardComponent implements OnInit {
   private authService = inject(AuthService);
   private propertyService = inject(PropertyService);
   private snackBar = inject(MatSnackBar);
+  private confirmationService = inject(ConfirmationService);
 
   users = signal<User[]>([]);
   properties = signal<Property[]>([]);
   loading = signal(true);
-  
+
   totalUsers = signal(0);
   totalProperties = signal(0);
   totalBookings = signal(0);
@@ -518,7 +586,7 @@ export class AdminDashboardComponent implements OnInit {
 
   loadDashboardData(): void {
     this.loading.set(true);
-    
+
     // Simulate loading data - would be replaced with actual API calls
     setTimeout(() => {
       this.users.set([]);
@@ -533,22 +601,33 @@ export class AdminDashboardComponent implements OnInit {
 
   getRoleLabel(role: string): string {
     switch (role) {
-      case 'Guest': return 'Mehmon';
-      case 'Host': return 'Host';
-      case 'Admin': return 'Admin';
-      case 'SuperAdmin': return 'Super Admin';
-      default: return role;
+      case 'Guest':
+        return 'Mehmon';
+      case 'Host':
+        return 'Host';
+      case 'Admin':
+        return 'Admin';
+      case 'SuperAdmin':
+        return 'Super Admin';
+      default:
+        return role;
     }
   }
 
   getPropertyStatusLabel(status: string): string {
     switch (status) {
-      case 'Active': return 'Faol';
-      case 'Draft': return 'Qoralama';
-      case 'Sold': return 'Sotildi';
-      case 'Rented': return 'Ijarada';
-      case 'Archived': return 'Arxivlangan';
-      default: return status;
+      case 'Active':
+        return 'Faol';
+      case 'Draft':
+        return 'Qoralama';
+      case 'Sold':
+        return 'Sotildi';
+      case 'Rented':
+        return 'Ijarada';
+      case 'Archived':
+        return 'Arxivlangan';
+      default:
+        return status;
     }
   }
 
@@ -557,10 +636,21 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   deleteUser(_id: string): void {
-    if (confirm('Haqiqatan ham bu foydalanuvchini o\'chirmoqchimisiz?')) {
-      this.snackBar.open('Foydalanuvchi o\'chirildi', 'Yopish', { duration: 3000 });
-      this.loadDashboardData();
-    }
+    this.confirmationService
+      .confirm({
+        title: "Foydalanuvchini o'chirish",
+        message: 'Bu foydalanuvchini rostdan ham o‘chirmoqchimisiz?',
+        confirmLabel: "O'chirish",
+        tone: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) {
+          return;
+        }
+
+        this.snackBar.open("Foydalanuvchi o'chirildi", 'Yopish', { duration: 3000 });
+        this.loadDashboardData();
+      });
   }
 
   verifyProperty(_id: string): void {
@@ -569,9 +659,20 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   deleteProperty(_id: string): void {
-    if (confirm('Haqiqatan ham bu mulkni o\'chirmoqchimisiz?')) {
-      this.snackBar.open('Mulk o\'chirildi', 'Yopish', { duration: 3000 });
-      this.loadDashboardData();
-    }
+    this.confirmationService
+      .confirm({
+        title: "Mulkni o'chirish",
+        message: 'Bu mulkni rostdan ham o‘chirmoqchimisiz?',
+        confirmLabel: "O'chirish",
+        tone: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) {
+          return;
+        }
+
+        this.snackBar.open("Mulk o'chirildi", 'Yopish', { duration: 3000 });
+        this.loadDashboardData();
+      });
   }
 }

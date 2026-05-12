@@ -1,23 +1,41 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
-import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs/operators';
+
+import { AuthService } from './core/services/auth.service';
+import { TopLoadingBarComponent } from './shared/components/top-loading-bar/top-loading-bar.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, TopLoadingBarComponent],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrl: './app.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class App implements OnInit {
-  protected readonly title = signal('Mulkchi.Frontend');
-  private router = inject(Router);
+export class App {
+  protected readonly title = signal('Mulkchi');
 
-  ngOnInit(): void {
-    // Scroll to top on route change
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+  private readonly authService = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
+
+  constructor() {
+    this.authService.bootstrapSession();
+
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
   }
 }

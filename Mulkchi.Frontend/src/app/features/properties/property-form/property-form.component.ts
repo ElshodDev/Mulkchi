@@ -1,21 +1,30 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatStepperModule } from '@angular/material/stepper';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { PropertyService } from '../../../core/services/property.service';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatStepperModule } from '@angular/material/stepper';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import {
+  ListingType,
+  Property,
+  PropertyCategory,
+  PropertyType,
+  UzbekistanRegion,
+} from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
-import { Property, PropertyType, PropertyCategory, ListingType, UzbekistanRegion } from '../../../core/models';
-import { ImageUploadComponent, UploadedImage } from '../../../shared/components/image-upload/image-upload.component';
+import { PropertyService } from '../../../core/services/property.service';
+import {
+  ImageUploadComponent,
+  UploadedImage,
+} from '../../../shared/components/image-upload/image-upload.component';
 
 @Component({
   selector: 'app-property-form',
@@ -33,7 +42,7 @@ import { ImageUploadComponent, UploadedImage } from '../../../shared/components/
     MatStepperModule,
     MatChipsModule,
     MatProgressSpinnerModule,
-    ImageUploadComponent
+    ImageUploadComponent,
   ],
   template: `
     <div class="property-form-container">
@@ -57,8 +66,14 @@ import { ImageUploadComponent, UploadedImage } from '../../../shared/components/
                   <div class="form-row">
                     <mat-form-field appearance="outline" class="full-width">
                       <mat-label>Sarlavha</mat-label>
-                      <input matInput formControlName="title" placeholder="Masalan: 3 xonali kvartira">
-                      @if (basicInfoForm.get('title')?.invalid && basicInfoForm.get('title')?.touched) {
+                      <input
+                        matInput
+                        formControlName="title"
+                        placeholder="Masalan: 3 xonali kvartira"
+                      />
+                      @if (
+                        basicInfoForm.get('title')?.invalid && basicInfoForm.get('title')?.touched
+                      ) {
                         <mat-error>Sarlavha kiritilishi shart</mat-error>
                       }
                     </mat-form-field>
@@ -97,7 +112,7 @@ import { ImageUploadComponent, UploadedImage } from '../../../shared/components/
                     @if (basicInfoForm.get('listingType')?.value === 'Sale') {
                       <mat-form-field appearance="outline">
                         <mat-label>Sotuv narxi</mat-label>
-                        <input matInput type="number" formControlName="salePrice">
+                        <input matInput type="number" formControlName="salePrice" />
                         <span matSuffix>UZS</span>
                       </mat-form-field>
                     }
@@ -105,7 +120,7 @@ import { ImageUploadComponent, UploadedImage } from '../../../shared/components/
                     @if (basicInfoForm.get('listingType')?.value === 'Rent') {
                       <mat-form-field appearance="outline">
                         <mat-label>Oylik ijara</mat-label>
-                        <input matInput type="number" formControlName="monthlyRent">
+                        <input matInput type="number" formControlName="monthlyRent" />
                         <span matSuffix>UZS/oy</span>
                       </mat-form-field>
                     }
@@ -113,7 +128,7 @@ import { ImageUploadComponent, UploadedImage } from '../../../shared/components/
                     @if (basicInfoForm.get('listingType')?.value === 'ShortTermRent') {
                       <mat-form-field appearance="outline">
                         <mat-label>Kunlik ijara</mat-label>
-                        <input matInput type="number" formControlName="pricePerNight">
+                        <input matInput type="number" formControlName="pricePerNight" />
                         <span matSuffix>UZS/tun</span>
                       </mat-form-field>
                     }
@@ -122,23 +137,27 @@ import { ImageUploadComponent, UploadedImage } from '../../../shared/components/
                   <div class="form-row three-col">
                     <mat-form-field appearance="outline">
                       <mat-label>Maydoni (m²)</mat-label>
-                      <input matInput type="number" formControlName="area">
+                      <input matInput type="number" formControlName="area" />
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
                       <mat-label>Xonalar</mat-label>
-                      <input matInput type="number" formControlName="numberOfBedrooms">
+                      <input matInput type="number" formControlName="numberOfBedrooms" />
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
                       <mat-label>Hammomlar</mat-label>
-                      <input matInput type="number" formControlName="numberOfBathrooms">
+                      <input matInput type="number" formControlName="numberOfBathrooms" />
                     </mat-form-field>
                   </div>
 
                   <div class="step-actions">
-                    <button mat-button type="button" routerLink="/host/properties">Bekor qilish</button>
-                    <button mat-raised-button color="primary" type="button" matStepperNext>Keyingisi</button>
+                    <button mat-button type="button" routerLink="/host/properties">
+                      Bekor qilish
+                    </button>
+                    <button mat-raised-button color="primary" type="button" matStepperNext>
+                      Keyingisi
+                    </button>
                   </div>
                 </form>
               </mat-step>
@@ -158,32 +177,43 @@ import { ImageUploadComponent, UploadedImage } from '../../../shared/components/
 
                     <mat-form-field appearance="outline">
                       <mat-label>Shahar/Tuman</mat-label>
-                      <input matInput formControlName="city" placeholder="Masalan: Yunusobod">
+                      <input matInput formControlName="city" placeholder="Masalan: Yunusobod" />
                     </mat-form-field>
                   </div>
 
                   <div class="form-row two-col">
                     <mat-form-field appearance="outline">
                       <mat-label>Tuman</mat-label>
-                      <input matInput formControlName="district" placeholder="Masalan: Yunusobod tumani">
+                      <input
+                        matInput
+                        formControlName="district"
+                        placeholder="Masalan: Yunusobod tumani"
+                      />
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
                       <mat-label>Mahalla</mat-label>
-                      <input matInput formControlName="mahalla" placeholder="Masalan: Chinobod">
+                      <input matInput formControlName="mahalla" placeholder="Masalan: Chinobod" />
                     </mat-form-field>
                   </div>
 
                   <div class="form-row">
                     <mat-form-field appearance="outline" class="full-width">
                       <mat-label>To'liq manzil</mat-label>
-                      <textarea matInput formControlName="address" rows="3" placeholder="Ko'cha, uy raqami..."></textarea>
+                      <textarea
+                        matInput
+                        formControlName="address"
+                        rows="3"
+                        placeholder="Ko'cha, uy raqami..."
+                      ></textarea>
                     </mat-form-field>
                   </div>
 
                   <div class="step-actions">
                     <button mat-button type="button" matStepperPrevious>Orqaga</button>
-                    <button mat-raised-button color="primary" type="button" matStepperNext>Keyingisi</button>
+                    <button mat-raised-button color="primary" type="button" matStepperNext>
+                      Keyingisi
+                    </button>
                   </div>
                 </form>
               </mat-step>
@@ -215,7 +245,9 @@ import { ImageUploadComponent, UploadedImage } from '../../../shared/components/
                       <mat-checkbox formControlName="hasFurniture">Mebel</mat-checkbox>
                       <mat-checkbox formControlName="isRenovated">Tamirlangan</mat-checkbox>
                       <mat-checkbox formControlName="isSelfCheckIn">O'z kabineti</mat-checkbox>
-                      <mat-checkbox formControlName="petsAllowed">Uy hayvonlariga ruxsat</mat-checkbox>
+                      <mat-checkbox formControlName="petsAllowed"
+                        >Uy hayvonlariga ruxsat</mat-checkbox
+                      >
                     </div>
                   </div>
 
@@ -226,13 +258,17 @@ import { ImageUploadComponent, UploadedImage } from '../../../shared/components/
                       <mat-checkbox formControlName="hasBusStop">Avtobus bekatlari</mat-checkbox>
                       <mat-checkbox formControlName="hasMarketNearby">Bozor yaqinida</mat-checkbox>
                       <mat-checkbox formControlName="hasSchoolNearby">Maktab yaqinida</mat-checkbox>
-                      <mat-checkbox formControlName="hasHospitalNearby">Shifoxona yaqinida</mat-checkbox>
+                      <mat-checkbox formControlName="hasHospitalNearby"
+                        >Shifoxona yaqinida</mat-checkbox
+                      >
                     </div>
                   </div>
 
                   <div class="step-actions">
                     <button mat-button type="button" matStepperPrevious>Orqaga</button>
-                    <button mat-raised-button color="primary" type="button" matStepperNext>Keyingisi</button>
+                    <button mat-raised-button color="primary" type="button" matStepperNext>
+                      Keyingisi
+                    </button>
                   </div>
                 </form>
               </mat-step>
@@ -243,39 +279,55 @@ import { ImageUploadComponent, UploadedImage } from '../../../shared/components/
                   <div class="form-row">
                     <mat-form-field appearance="outline" class="full-width">
                       <mat-label>Batafsil tavsif</mat-label>
-                      <textarea matInput formControlName="description" rows="8" placeholder="Mulk haqida batafsil ma'lumot..."></textarea>
+                      <textarea
+                        matInput
+                        formControlName="description"
+                        rows="8"
+                        placeholder="Mulk haqida batafsil ma'lumot..."
+                      ></textarea>
+                      @if (
+                        descriptionForm.get('description')?.errors?.['minlength'] &&
+                        descriptionForm.get('description')?.touched
+                      ) {
+                        <mat-error>Tavsif kamida 20 ta belgidan iborat bo'lishi kerak</mat-error>
+                      }
                     </mat-form-field>
                   </div>
 
                   <div class="form-row">
                     <mat-form-field appearance="outline">
                       <mat-label>Maksimal mehmonlar</mat-label>
-                      <input matInput type="number" formControlName="maxGuests">
+                      <input matInput type="number" formControlName="maxGuests" />
                     </mat-form-field>
 
                     <mat-checkbox formControlName="isInstantBook">Tez bron yoqish</mat-checkbox>
                   </div>
 
                   <div class="photo-upload-section">
-                    <app-image-upload 
+                    <app-image-upload
                       (imagesChange)="onImagesChange($event)"
-                      (imageUpload)="onImageUpload($event)">
+                      (imageUpload)="onImageUpload($event)"
+                    >
                     </app-image-upload>
                   </div>
 
                   <div class="step-actions">
                     <button mat-button type="button" matStepperPrevious>Orqaga</button>
-                    <button 
-                      mat-raised-button 
-                      color="primary" 
+                    <button
+                      mat-raised-button
+                      color="primary"
                       type="button"
                       (click)="submitForm()"
-                      [disabled]="isSubmitting()">
+                      [disabled]="isSubmitting()"
+                    >
                       @if (isSubmitting()) {
-                        <mat-progress-spinner diameter="20" class="inline-spinner"></mat-progress-spinner>
+                        <mat-progress-spinner
+                          diameter="20"
+                          class="inline-spinner"
+                        ></mat-progress-spinner>
                         <span>Saqlanmoqda...</span>
                       } @else {
-                        <span>{{ isEditMode() ? 'Yangilash' : 'E'lon qilish' }}</span>
+                        <span>{{ isEditMode() ? 'Yangilash' : "E'lon qilish" }}</span>
                       }
                     </button>
                   </div>
@@ -287,152 +339,154 @@ import { ImageUploadComponent, UploadedImage } from '../../../shared/components/
       </div>
     </div>
   `,
-  styles: [`
-    .property-form-container {
-      min-height: calc(100vh - 64px);
-      background: #f5f5f5;
-      padding: 40px 0;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 0 20px;
-    }
-
-    .page-header {
-      margin-bottom: 32px;
-    }
-
-    .page-header h1 {
-      font-size: 2rem;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-
-    .page-header p {
-      color: #666;
-    }
-
-    .loading-container {
-      text-align: center;
-      padding: 60px;
-    }
-
-    .step-form {
-      padding: 24px 0;
-    }
-
-    .form-row {
-      margin-bottom: 16px;
-    }
-
-    .form-row.two-col {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    .form-row.three-col {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-    }
-
-    .full-width {
-      width: 100%;
-    }
-
-    .step-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 16px;
-      margin-top: 24px;
-      padding-top: 24px;
-      border-top: 1px solid #eee;
-    }
-
-    .amenities-section {
-      margin-bottom: 32px;
-    }
-
-    .amenities-section h3 {
-      font-size: 1rem;
-      font-weight: 500;
-      margin-bottom: 16px;
-      color: #333;
-    }
-
-    .checkbox-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-    }
-
-    .photo-upload-section {
-      margin-top: 24px;
-    }
-
-    .photo-upload-section h3 {
-      font-size: 1rem;
-      font-weight: 500;
-      margin-bottom: 16px;
-    }
-
-    .upload-area {
-      border: 2px dashed #ccc;
-      border-radius: 8px;
-      padding: 48px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.2s;
-    }
-
-    .upload-area:hover {
-      border-color: #667eea;
-    }
-
-    .upload-area mat-icon {
-      font-size: 48px;
-      color: #999;
-      margin-bottom: 16px;
-    }
-
-    .upload-area p {
-      font-weight: 500;
-      color: #333;
-      margin-bottom: 4px;
-    }
-
-    .upload-area span {
-      font-size: 0.9rem;
-      color: #666;
-    }
-
-    .inline-spinner {
-      display: inline-block;
-      margin-right: 8px;
-    }
-
-    @media (max-width: 768px) {
-      .form-row.two-col,
-      .form-row.three-col {
-        grid-template-columns: 1fr;
+  styles: [
+    `
+      .property-form-container {
+        min-height: calc(100vh - 64px);
+        background: #f5f5f5;
+        padding: 40px 0;
       }
 
-      .checkbox-grid {
-        grid-template-columns: repeat(2, 1fr);
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      .page-header {
+        margin-bottom: 32px;
+      }
+
+      .page-header h1 {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .page-header p {
+        color: #666;
+      }
+
+      .loading-container {
+        text-align: center;
+        padding: 60px;
+      }
+
+      .step-form {
+        padding: 24px 0;
+      }
+
+      .form-row {
+        margin-bottom: 16px;
+      }
+
+      .form-row.two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      .form-row.three-col {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+
+      .full-width {
+        width: 100%;
       }
 
       .step-actions {
-        flex-direction: column;
+        display: flex;
+        justify-content: flex-end;
+        gap: 16px;
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid #eee;
       }
 
-      .step-actions button {
-        width: 100%;
+      .amenities-section {
+        margin-bottom: 32px;
       }
-    }
-  `]
+
+      .amenities-section h3 {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 16px;
+        color: #333;
+      }
+
+      .checkbox-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+      }
+
+      .photo-upload-section {
+        margin-top: 24px;
+      }
+
+      .photo-upload-section h3 {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 16px;
+      }
+
+      .upload-area {
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        padding: 48px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.2s;
+      }
+
+      .upload-area:hover {
+        border-color: #667eea;
+      }
+
+      .upload-area mat-icon {
+        font-size: 48px;
+        color: #999;
+        margin-bottom: 16px;
+      }
+
+      .upload-area p {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 4px;
+      }
+
+      .upload-area span {
+        font-size: 0.9rem;
+        color: #666;
+      }
+
+      .inline-spinner {
+        display: inline-block;
+        margin-right: 8px;
+      }
+
+      @media (max-width: 768px) {
+        .form-row.two-col,
+        .form-row.three-col {
+          grid-template-columns: 1fr;
+        }
+
+        .checkbox-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .step-actions {
+          flex-direction: column;
+        }
+
+        .step-actions button {
+          width: 100%;
+        }
+      }
+    `,
+  ],
 })
 export class PropertyFormComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -453,19 +507,19 @@ export class PropertyFormComponent implements OnInit {
     { value: 'Villa', label: 'Villa' },
     { value: 'Office', label: 'Ofis' },
     { value: 'Commercial', label: 'Tijorat' },
-    { value: 'Land', label: 'Yer' }
+    { value: 'Land', label: 'Yer' },
   ];
 
   categories = [
     { value: 'Residential', label: 'Turar joy' },
     { value: 'Commercial', label: 'Tijorat' },
-    { value: 'Industrial', label: 'Sanoat' }
+    { value: 'Industrial', label: 'Sanoat' },
   ];
 
   listingTypes = [
     { value: 'Sale', label: 'Sotish' },
     { value: 'Rent', label: 'Ijaraga' },
-    { value: 'ShortTermRent', label: 'Qisqa muddatli' }
+    { value: 'ShortTermRent', label: 'Qisqa muddatli' },
   ];
 
   regions = [
@@ -481,9 +535,9 @@ export class PropertyFormComponent implements OnInit {
     { value: 'Jizzax', label: 'Jizzax' },
     { value: 'Sirdaryo', label: 'Sirdaryo' },
     { value: 'Surxondaryo', label: 'Surxondaryo' },
-    { value: 'Qashqadaryo', label: "Qashqadaryo" },
+    { value: 'Qashqadaryo', label: 'Qashqadaryo' },
     { value: 'Guliston', label: 'Sirdaryo' },
-    { value: 'Nukus', label: "Qoraqalpog'iston" }
+    { value: 'Nukus', label: "Qoraqalpog'iston" },
   ];
 
   basicInfoForm = this.fb.group({
@@ -496,7 +550,7 @@ export class PropertyFormComponent implements OnInit {
     pricePerNight: [0],
     area: [0, [Validators.required, Validators.min(1)]],
     numberOfBedrooms: [1, [Validators.required, Validators.min(0)]],
-    numberOfBathrooms: [1, [Validators.required, Validators.min(0)]]
+    numberOfBathrooms: [1, [Validators.required, Validators.min(0)]],
   });
 
   locationForm = this.fb.group({
@@ -504,7 +558,7 @@ export class PropertyFormComponent implements OnInit {
     city: ['', Validators.required],
     district: ['', Validators.required],
     mahalla: [''],
-    address: ['', Validators.required]
+    address: ['', Validators.required],
   });
 
   amenitiesForm = this.fb.group({
@@ -528,13 +582,13 @@ export class PropertyFormComponent implements OnInit {
     hasBusStop: [false],
     hasMarketNearby: [false],
     hasSchoolNearby: [false],
-    hasHospitalNearby: [false]
+    hasHospitalNearby: [false],
   });
 
   descriptionForm = this.fb.group({
-    description: ['', Validators.required],
+    description: ['', [Validators.required, Validators.minLength(20)]],
     maxGuests: [1, [Validators.required, Validators.min(1)]],
-    isInstantBook: [false]
+    isInstantBook: [false],
   });
 
   ngOnInit(): void {
@@ -557,7 +611,7 @@ export class PropertyFormComponent implements OnInit {
         this.loading.set(false);
         this.snackBar.open('Mulk yuklashda xatolik', 'Yopish', { duration: 3000 });
         this.router.navigate(['/host/properties']);
-      }
+      },
     });
   }
 
@@ -572,7 +626,7 @@ export class PropertyFormComponent implements OnInit {
       pricePerNight: property.pricePerNight || 0,
       area: property.area,
       numberOfBedrooms: property.numberOfBedrooms,
-      numberOfBathrooms: property.numberOfBathrooms
+      numberOfBathrooms: property.numberOfBathrooms,
     });
 
     this.locationForm.patchValue({
@@ -580,7 +634,7 @@ export class PropertyFormComponent implements OnInit {
       city: property.city,
       district: property.district,
       mahalla: property.mahalla || '',
-      address: property.address
+      address: property.address,
     });
 
     this.amenitiesForm.patchValue({
@@ -604,23 +658,74 @@ export class PropertyFormComponent implements OnInit {
       hasBusStop: property.hasBusStop,
       hasMarketNearby: property.hasMarketNearby,
       hasSchoolNearby: property.hasSchoolNearby,
-      hasHospitalNearby: property.hasHospitalNearby
+      hasHospitalNearby: property.hasHospitalNearby,
     });
 
     this.descriptionForm.patchValue({
       description: property.description,
       maxGuests: property.maxGuests,
-      isInstantBook: property.isInstantBook
+      isInstantBook: property.isInstantBook,
     });
+
+    this.markFormsPristine();
   }
 
   submitForm(): void {
     if (this.basicInfoForm.invalid || this.locationForm.invalid || this.descriptionForm.invalid) {
-      this.snackBar.open('Iltimos, barcha majburiy maydonlarni to\'ldiring', 'Yopish', { duration: 3000 });
+      this.snackBar.open("Iltimos, barcha majburiy maydonlarni to'ldiring", 'Yopish', {
+        duration: 3000,
+      });
       return;
     }
 
+    // Ensure conditional price fields required by listing type are provided
+    const listingType = this.basicInfoForm.value.listingType;
+    if (listingType === 'Sale') {
+      const salePrice = this.basicInfoForm.value.salePrice;
+      if (salePrice == null || salePrice <= 0) {
+        this.snackBar.open('Sotish narxi kiritilishi shart', 'Yopish', { duration: 3000 });
+        return;
+      }
+    }
+
+    if (listingType === 'Rent') {
+      const monthlyRent = this.basicInfoForm.value.monthlyRent;
+      if (monthlyRent == null || monthlyRent <= 0) {
+        this.snackBar.open('Oylik ijara narxi kiritilishi shart', 'Yopish', { duration: 3000 });
+        return;
+      }
+    }
+
+    if (listingType === 'ShortTermRent') {
+      const pricePerNight = this.basicInfoForm.value.pricePerNight;
+      if (pricePerNight == null || pricePerNight <= 0) {
+        this.snackBar.open('Kunlik ijara narxi kiritilishi shart', 'Yopish', { duration: 3000 });
+        return;
+      }
+    }
+
     this.isSubmitting.set(true);
+
+    // Map frontend region string values to backend UzbekistanRegion enum integer values
+    const selectedRegion: string = this.locationForm.value.region ?? '';
+    const regionMap: Record<string, number> = {
+      Toshkent: 0, // ToshkentShahar
+      ToshkentViloyati: 1, // ToshkentViloyat
+      Samarqand: 2,
+      Buxoro: 3,
+      Andijon: 4,
+      Fargona: 5,
+      Namangan: 6,
+      Qashqadaryo: 7,
+      Surxondaryo: 8,
+      Xiva: 9, // maps to Xorazm
+      Navoi: 10,
+      Jizzax: 11,
+      Sirdaryo: 12,
+      Guliston: 12, // frontend uses Guliston for Sirdaryo
+      Nukus: 13, // Qoraqalpogiston
+      Qoraqalpogiston: 13,
+    };
 
     const a = this.amenitiesForm.value;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -629,19 +734,19 @@ export class PropertyFormComponent implements OnInit {
       type: this.basicInfoForm.value.type!,
       category: this.basicInfoForm.value.category!,
       listingType: this.basicInfoForm.value.listingType!,
-      salePrice: this.basicInfoForm.value.salePrice || undefined,
-      monthlyRent: this.basicInfoForm.value.monthlyRent || undefined,
-      pricePerNight: this.basicInfoForm.value.pricePerNight || undefined,
-      area: this.basicInfoForm.value.area!,
-      numberOfBedrooms: this.basicInfoForm.value.numberOfBedrooms!,
-      numberOfBathrooms: this.basicInfoForm.value.numberOfBathrooms!,
-      region: this.locationForm.value.region!,
+      salePrice: this.basicInfoForm.value.salePrice ?? null,
+      monthlyRent: this.basicInfoForm.value.monthlyRent ?? null,
+      pricePerNight: this.basicInfoForm.value.pricePerNight ?? null,
+      area: this.basicInfoForm.value.area ?? 0,
+      numberOfBedrooms: this.basicInfoForm.value.numberOfBedrooms ?? 0,
+      numberOfBathrooms: this.basicInfoForm.value.numberOfBathrooms ?? 0,
+      region: selectedRegion ? (regionMap[selectedRegion] ?? selectedRegion) : 0,
       city: this.locationForm.value.city!,
       district: this.locationForm.value.district!,
       mahalla: this.locationForm.value.mahalla || undefined,
       address: this.locationForm.value.address!,
       description: this.descriptionForm.value.description!,
-      maxGuests: this.descriptionForm.value.maxGuests!,
+      maxGuests: this.descriptionForm.value.maxGuests ?? 0,
       isInstantBook: this.descriptionForm.value.isInstantBook || false,
       hasWifi: !!a.hasWifi,
       hasParking: !!a.hasParking,
@@ -663,7 +768,7 @@ export class PropertyFormComponent implements OnInit {
       hasBusStop: !!a.hasBusStop,
       hasMarketNearby: !!a.hasMarketNearby,
       hasSchoolNearby: !!a.hasSchoolNearby,
-      hasHospitalNearby: !!a.hasHospitalNearby
+      hasHospitalNearby: !!a.hasHospitalNearby,
     };
 
     if (this.isEditMode() && this.propertyId()) {
@@ -671,20 +776,22 @@ export class PropertyFormComponent implements OnInit {
       this.propertyService.updateProperty(this.propertyId()!, formData as any).subscribe({
         next: () => {
           this.isSubmitting.set(false);
+          this.markFormsPristine();
           this.snackBar.open('Mulk yangilandi', 'Yopish', { duration: 3000 });
           this.router.navigate(['/host/properties']);
         },
         error: () => {
           this.isSubmitting.set(false);
           this.snackBar.open('Yangilashda xatolik', 'Yopish', { duration: 3000 });
-        }
+        },
       });
     } else {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.propertyService.createProperty(formData as any).subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          this.snackBar.open('Mulk e\'lon qilindi', 'Yopish', { duration: 3000 });
+          this.markFormsPristine();
+          this.snackBar.open("Mulk e'lon qilindi", 'Yopish', { duration: 3000 });
           // Refresh user data to get updated Host role from backend
           this.authService.getCurrentUser().subscribe({
             next: () => {
@@ -694,13 +801,13 @@ export class PropertyFormComponent implements OnInit {
             error: () => {
               // Even if refresh fails, navigate to host properties
               this.router.navigate(['/host/properties']);
-            }
+            },
           });
         },
         error: () => {
           this.isSubmitting.set(false);
-          this.snackBar.open('E\'lon qilishda xatolik', 'Yopish', { duration: 3000 });
-        }
+          this.snackBar.open("E'lon qilishda xatolik", 'Yopish', { duration: 3000 });
+        },
       });
     }
   }
@@ -713,12 +820,26 @@ export class PropertyFormComponent implements OnInit {
   }
 
   onImageUpload(image: UploadedImage): void {
-    // Image is ready for upload when form is submitted
-    console.log('Image selected:', image.file.name);
+    void image;
   }
 
   uploadPhotos(): void {
-    // This method is now handled by the image upload component
-    console.log('Using image upload component instead');
+    // Image upload is handled by the dedicated component.
+  }
+
+  hasUnsavedChanges(): boolean {
+    return (
+      this.basicInfoForm.dirty ||
+      this.locationForm.dirty ||
+      this.amenitiesForm.dirty ||
+      this.descriptionForm.dirty
+    );
+  }
+
+  private markFormsPristine(): void {
+    this.basicInfoForm.markAsPristine();
+    this.locationForm.markAsPristine();
+    this.amenitiesForm.markAsPristine();
+    this.descriptionForm.markAsPristine();
   }
 }

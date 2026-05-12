@@ -5,11 +5,11 @@ export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
   WARN = 2,
-  ERROR = 3
+  ERROR = 3,
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class LoggerService {
   private readonly isProduction = environment.production;
@@ -39,14 +39,13 @@ export class LoggerService {
 
     // In production, send to external logging service (e.g., Sentry)
     if (this.isProduction && level >= LogLevel.ERROR) {
-      // TODO: Send to external logging service
-      // Example: Sentry.captureException(data[0] as Error);
+      // Note: External logging integration (e.g., Sentry) should be configured in main.ts
     }
 
     // Development: safe logging (no sensitive data)
     if (!this.isProduction) {
-      const sanitizedData = data.map(d => this.sanitizeForLogging(d));
-      
+      const sanitizedData = data.map((d) => this.sanitizeForLogging(d));
+
       switch (level) {
         case LogLevel.DEBUG:
           console.debug(prefix, message, ...sanitizedData);
@@ -66,17 +65,24 @@ export class LoggerService {
 
   private sanitizeForLogging(data: unknown): unknown {
     if (typeof data !== 'object' || data === null) return data;
-    
-    const sensitiveKeys = ['token', 'password', 'secret', 'authorization', 'accessToken', 'refreshToken'];
-    const sanitized = { ...data as object };
-    
+
+    const sensitiveKeys = [
+      'token',
+      'password',
+      'secret',
+      'authorization',
+      'accessToken',
+      'refreshToken',
+    ];
+    const sanitized = { ...(data as object) };
+
     for (const key of Object.keys(sanitized)) {
       const lowerKey = key.toLowerCase();
-      if (sensitiveKeys.some(sk => lowerKey.includes(sk))) {
+      if (sensitiveKeys.some((sk) => lowerKey.includes(sk))) {
         (sanitized as Record<string, unknown>)[key] = '[REDACTED]';
       }
     }
-    
+
     return sanitized;
   }
 }

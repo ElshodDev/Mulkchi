@@ -312,7 +312,7 @@ namespace Mulkchi.Api.Controllers
         {
             try
             {
-                string idempotencyKey = Request.Headers["X-Idempotency-Key"].FirstOrDefault();
+                string? idempotencyKey = Request.Headers["X-Idempotency-Key"].FirstOrDefault();
                 var result = await this.confirmBookingPaymentHandler.HandleAsync(
                     new ConfirmBookingPaymentCommand(
                         request.HoldId,

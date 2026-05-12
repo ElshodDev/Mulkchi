@@ -9,4 +9,12 @@ export const ADMIN_ROUTES: Routes = [
       ),
     title: 'Administrator paneli',
   },
+  {
+    path: 'announcements',
+    loadComponent: () =>
+      import('./admin-dashboard/announcements-management.component').then(
+        (module) => module.AnnouncementsManagementComponent,
+      ),
+    title: "E'lonlarni boshqarish",
+  },
 ];

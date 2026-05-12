@@ -27,6 +27,7 @@ public partial class AuthService : IAuthService
     private readonly ISmsBroker smsBroker;
     private readonly IConfiguration configuration;
     private readonly IHttpClientFactory httpClientFactory;
+    private readonly IRefreshTokenGuard refreshTokenGuard;
 
     public AuthService(
         IStorageBroker storageBroker,
@@ -36,7 +37,8 @@ public partial class AuthService : IAuthService
         IEmailBroker emailBroker,
         ISmsBroker smsBroker,
         IConfiguration configuration,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        IRefreshTokenGuard refreshTokenGuard)
     {
         this.storageBroker = storageBroker;
         this.loggingBroker = loggingBroker;
@@ -46,6 +48,7 @@ public partial class AuthService : IAuthService
         this.smsBroker = smsBroker;
         this.configuration = configuration;
         this.httpClientFactory = httpClientFactory;
+        this.refreshTokenGuard = refreshTokenGuard;
     }
 
     public ValueTask<AuthResponse> LoginAsync(LoginRequest request) =>
@@ -125,27 +128,43 @@ public partial class AuthService : IAuthService
 
             string hashedToken = HashToken(refreshToken);
 
-            UserRefreshToken? storedToken =
-                await this.storageBroker.SelectRefreshTokenAsync(hashedToken);
-
-            if (storedToken is null || storedToken.IsRevoked)
+            if (this.refreshTokenGuard.IsRevoked(hashedToken) ||
+                !this.refreshTokenGuard.TryReserve(hashedToken, TimeSpan.FromSeconds(15)))
+            {
                 throw new InvalidRefreshTokenException(
                     message: "Refresh token is invalid or has been revoked.");
+            }
 
-            if (storedToken.ExpiresAt <= this.dateTimeBroker.GetCurrentDateTimeOffset())
-                throw new InvalidRefreshTokenException(
-                    message: "Refresh token is invalid or expired.");
+            try
+            {
+                UserRefreshToken? storedToken =
+                    await this.storageBroker.SelectRefreshTokenAsync(hashedToken);
 
-            User? maybeUser = await this.storageBroker.SelectUserByIdAsync(storedToken.UserId);
+                if (storedToken is null || storedToken.IsRevoked)
+                    throw new InvalidRefreshTokenException(
+                        message: "Refresh token is invalid or has been revoked.");
 
-            if (maybeUser is null)
-                throw new InvalidRefreshTokenException(
-                    message: "Refresh token references a user that no longer exists.");
+                if (storedToken.ExpiresAt <= this.dateTimeBroker.GetCurrentDateTimeOffset())
+                    throw new InvalidRefreshTokenException(
+                        message: "Refresh token is invalid or expired.");
 
-            storedToken.IsRevoked = true;
-            await this.storageBroker.UpdateRefreshTokenAsync(storedToken);
+                User? maybeUser = await this.storageBroker.SelectUserByIdAsync(storedToken.UserId);
 
-            return await GenerateAndSaveAuthResponseAsync(maybeUser);
+                if (maybeUser is null)
+                    throw new InvalidRefreshTokenException(
+                        message: "Refresh token references a user that no longer exists.");
+
+                storedToken.IsRevoked = true;
+                var remainingLifetime = storedToken.ExpiresAt - this.dateTimeBroker.GetCurrentDateTimeOffset();
+                this.refreshTokenGuard.Revoke(hashedToken, remainingLifetime);
+                await this.storageBroker.UpdateRefreshTokenAsync(storedToken);
+
+                return await GenerateAndSaveAuthResponseAsync(maybeUser);
+            }
+            finally
+            {
+                this.refreshTokenGuard.ReleaseReservation(hashedToken);
+            }
         });
 
     public ValueTask LogoutAsync(string refreshToken) =>
@@ -157,13 +176,32 @@ public partial class AuthService : IAuthService
 
             string hashedToken = HashToken(refreshToken);
 
-            UserRefreshToken? storedToken =
-                await this.storageBroker.SelectRefreshTokenAsync(hashedToken);
-
-            if (storedToken is not null && !storedToken.IsRevoked)
+            if (!this.refreshTokenGuard.TryReserve(hashedToken, TimeSpan.FromSeconds(15)))
             {
-                storedToken.IsRevoked = true;
-                await this.storageBroker.UpdateRefreshTokenAsync(storedToken);
+                this.refreshTokenGuard.Revoke(hashedToken, TimeSpan.FromDays(RefreshTokenExpiryDays));
+                return;
+            }
+
+            try
+            {
+                UserRefreshToken? storedToken =
+                    await this.storageBroker.SelectRefreshTokenAsync(hashedToken);
+
+                if (storedToken is not null && !storedToken.IsRevoked)
+                {
+                    storedToken.IsRevoked = true;
+                    var remainingLifetime = storedToken.ExpiresAt - this.dateTimeBroker.GetCurrentDateTimeOffset();
+                    this.refreshTokenGuard.Revoke(hashedToken, remainingLifetime);
+                    await this.storageBroker.UpdateRefreshTokenAsync(storedToken);
+                }
+                else
+                {
+                    this.refreshTokenGuard.Revoke(hashedToken, TimeSpan.FromDays(RefreshTokenExpiryDays));
+                }
+            }
+            finally
+            {
+                this.refreshTokenGuard.ReleaseReservation(hashedToken);
             }
         });
 
@@ -195,6 +233,7 @@ public partial class AuthService : IAuthService
             Token = accessToken,
             RefreshToken = rawRefreshToken,
             ExpiresAt = expiresAt,
+            RefreshExpiresAt = refreshExpiresAt,
             UserId = user.Id,
             Email = user.Email,
             FirstName = user.FirstName,

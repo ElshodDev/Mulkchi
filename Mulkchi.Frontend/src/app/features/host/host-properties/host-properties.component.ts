@@ -11,6 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PropertyService } from '../../../core/services/property.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { Property, PropertyStatus } from '../../../core/models';
 
 @Component({
@@ -587,6 +588,7 @@ export class HostPropertiesComponent implements OnInit {
   private propertyService = inject(PropertyService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private confirmationService = inject(ConfirmationService);
 
   properties = signal<Property[]>([]);
   loading = signal(true);
@@ -618,9 +620,11 @@ export class HostPropertiesComponent implements OnInit {
     });
   }
 
-  calculateStats(properties: Property[]): void {
-    const views = properties.reduce((sum, p) => sum + (p.viewsCount || 0), 0);
-    const favorites = properties.reduce((sum, p) => sum + (p.favoritesCount || 0), 0);
+  calculateStats(properties: Property[] | any): void {
+    // Ensure properties is an array
+    const propsArray = Array.isArray(properties) ? properties : [];
+    const views = propsArray.reduce((sum, p) => sum + (p.viewsCount || 0), 0);
+    const favorites = propsArray.reduce((sum, p) => sum + (p.favoritesCount || 0), 0);
     
     this.totalViews.set(views);
     this.totalFavorites.set(favorites);
@@ -654,16 +658,28 @@ export class HostPropertiesComponent implements OnInit {
   }
 
   deleteProperty(id: string): void {
-    if (confirm('Haqiqatan ham bu mulkni o\'chirmoqchimisiz?')) {
-      this.propertyService.deleteProperty(id).subscribe({
-        next: () => {
-          this.snackBar.open('Mulk o\'chirildi', 'Yopish', { duration: 3000 });
-          this.loadProperties();
-        },
-        error: () => {
-          this.snackBar.open('O\'chirishda xatolik', 'Yopish', { duration: 3000 });
+    this.confirmationService
+      .confirm({
+        title: "Mulkni o'chirish",
+        message: "Bu e'lonni rostdan ham o'chirmoqchimisiz?",
+        confirmLabel: "O'chirish",
+        cancelLabel: 'Bekor qilish',
+        tone: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) {
+          return;
         }
+
+        this.propertyService.deleteProperty(id).subscribe({
+          next: () => {
+            this.snackBar.open('Mulk o\'chirildi', 'Yopish', { duration: 3000 });
+            this.loadProperties();
+          },
+          error: () => {
+            this.snackBar.open('O\'chirishda xatolik', 'Yopish', { duration: 3000 });
+          }
+        });
       });
-    }
   }
 }

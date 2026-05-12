@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import * as signalR from '@microsoft/signalr';
@@ -12,6 +13,7 @@ import { SessionService } from './session.service';
   providedIn: 'root',
 })
 export class ChatService {
+  private readonly destroyRef = inject(DestroyRef);
   private http = inject(HttpClient);
   private router = inject(Router);
   private snackBar = inject(MatSnackBar);
@@ -44,13 +46,15 @@ export class ChatService {
   });
 
   constructor() {
-    this.sessionService.authChanges$.subscribe((isLoggedIn) => {
-      if (isLoggedIn) {
-        void this.tryConnect();
-      } else {
-        this.disconnect();
-      }
-    });
+    this.sessionService.authChanges$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((isLoggedIn) => {
+        if (isLoggedIn) {
+          void this.tryConnect();
+        } else {
+          void this.disconnect();
+        }
+      });
 
     if (this.authService.isAuthenticated()) {
       void this.tryConnect();
@@ -70,8 +74,12 @@ export class ChatService {
       return;
     }
 
-    if (this.hubConnection && this._isConnected()) {
-      return;
+    if (this.hubConnection) {
+      if (this.hubConnection.state !== signalR.HubConnectionState.Disconnected) {
+        return;
+      }
+
+      await this.disconnect();
     }
 
     await this.startConnection();
@@ -114,6 +122,7 @@ export class ChatService {
       this._isConnected.set(true);
     } catch {
       this._isConnected.set(false);
+      this.hubConnection = null;
     }
   }
 
@@ -279,9 +288,14 @@ export class ChatService {
   }
 
   // Disconnect
-  disconnect(): void {
+  async disconnect(): Promise<void> {
     if (this.hubConnection) {
-      this.hubConnection.stop();
+      try {
+        await this.hubConnection.stop();
+      } catch {
+        /* Ignore shutdown errors */
+      }
+
       this.hubConnection = null;
       this._isConnected.set(false);
     }

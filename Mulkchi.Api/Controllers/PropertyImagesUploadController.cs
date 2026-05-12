@@ -147,7 +147,7 @@ public class PropertyImagesUploadController : ControllerBase
         if (User.IsInRole("Admin"))
             return Ok();
 
-        Property property = await this.propertyService.RetrievePropertyByIdAsync(propertyId);
+        Property? property = await this.propertyService.RetrievePropertyByIdAsync(propertyId);
         if (property is null)
             return NotFound(new { message = "Property not found." });
 

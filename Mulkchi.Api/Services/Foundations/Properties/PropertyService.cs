@@ -1,5 +1,6 @@
 using Mulkchi.Api.Models.Foundations.Properties;
 using Mulkchi.Api.Models.Foundations.Properties.Exceptions;
+using Mulkchi.Api.Models.Foundations.PropertyImages;
 using Mulkchi.Api.Brokers.DateTimes;
 using Mulkchi.Api.Brokers.Loggings;
 using Mulkchi.Api.Brokers.Storages;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.Localization;
 using Mulkchi.Api.Models.Foundations.Properties.Extensions;
 using Mulkchi.Api.Resources;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.FeatureManagement;
 using System.Text.Json;
@@ -26,6 +28,7 @@ namespace Mulkchi.Api.Services.Foundations.Properties;
 public partial class PropertyService : IPropertyService
 {
     private const string PropertyCacheVersionKey = "properties:list:version";
+    private const string PropertyCacheVersionFallback = "v1";
     private readonly IStorageBroker storageBroker;
     private readonly ILoggingBroker loggingBroker;
     private readonly IDateTimeBroker dateTimeBroker;
@@ -155,15 +158,19 @@ public partial class PropertyService : IPropertyService
 
     public async ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> RetrieveAllPropertiesAsync(PropertyQueryParams queryParams)
     {
-        long cacheVersion = await GetPropertyCacheVersionAsync();
-        string cacheKey = BuildPropertyListCacheKey(queryParams, cacheVersion);
-        string cachedJson = await this.distributedCache.GetStringAsync(cacheKey);
-        if (!string.IsNullOrWhiteSpace(cachedJson))
+        string cacheVersion = await GetPropertyCacheVersionAsync();
+
+        if (cacheVersion != PropertyCacheVersionFallback)
         {
-            var cached = JsonSerializer.Deserialize<CachedPropertyListResult>(cachedJson);
-            if (cached is not null)
+            string cacheKey = BuildPropertyListCacheKey(queryParams, cacheVersion);
+            string? cachedJson = await this.distributedCache.GetStringAsync(cacheKey);
+            if (!string.IsNullOrWhiteSpace(cachedJson))
             {
-                return (cached.Items, cached.TotalCount);
+                var cached = JsonSerializer.Deserialize<CachedPropertyListResult>(cachedJson);
+                if (cached is not null)
+                {
+                    return (cached.Items, cached.TotalCount);
+                }
             }
         }
 
@@ -232,53 +239,81 @@ public partial class PropertyService : IPropertyService
 
         var responseItems = properties.Select(ToPropertyResponse).ToList();
 
-        await this.distributedCache.SetStringAsync(
-            cacheKey,
-            JsonSerializer.Serialize(new CachedPropertyListResult
-            {
-                TotalCount = totalCount,
-                Items = responseItems
-            }),
-            new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2)
-            });
+        if (cacheVersion != PropertyCacheVersionFallback)
+        {
+            string cacheKey = BuildPropertyListCacheKey(queryParams, cacheVersion);
+            await this.distributedCache.SetStringAsync(
+                cacheKey,
+                JsonSerializer.Serialize(new CachedPropertyListResult
+                {
+                    TotalCount = totalCount,
+                    Items = responseItems
+                }),
+                new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2)
+                });
+        }
 
         return (responseItems, totalCount);
     }
 
-    private static string BuildPropertyListCacheKey(PropertyQueryParams queryParams, long version) =>
-        $"properties:list:v{version}:{queryParams.Page}:{queryParams.PageSize}:{queryParams.SortBy}:{queryParams.City}:{queryParams.Region}:{queryParams.ListingType}:{queryParams.PropertyType}:{queryParams.MinPrice}:{queryParams.MaxPrice}:{queryParams.Bedrooms}:{queryParams.SearchQuery}";
+    private static string BuildPropertyListCacheKey(PropertyQueryParams queryParams, string version) =>
+        $"properties:list:{version}:{queryParams.Page}:{queryParams.PageSize}:{queryParams.SortBy}:{queryParams.City}:{queryParams.Region}:{queryParams.ListingType}:{queryParams.PropertyType}:{queryParams.MinPrice}:{queryParams.MaxPrice}:{queryParams.Bedrooms}:{queryParams.SearchQuery}";
 
-    private async ValueTask<long> GetPropertyCacheVersionAsync()
+    private async ValueTask<string> GetPropertyCacheVersionAsync()
     {
-        string cachedVersion = await this.distributedCache.GetStringAsync(PropertyCacheVersionKey);
-        if (long.TryParse(cachedVersion, out long version) && version > 0)
+        try
         {
-            return version;
-        }
-
-        await this.distributedCache.SetStringAsync(
-            PropertyCacheVersionKey,
-            "1",
-            new DistributedCacheEntryOptions
+            string? cachedVersion = await this.distributedCache.GetStringAsync(PropertyCacheVersionKey);
+            if (long.TryParse(cachedVersion, out long version) && version > 0)
             {
-                SlidingExpiration = TimeSpan.FromDays(1)
-            });
+                return version.ToString();
+            }
 
-        return 1;
+            await this.distributedCache.SetStringAsync(
+                PropertyCacheVersionKey,
+                "1",
+                new DistributedCacheEntryOptions
+                {
+                    SlidingExpiration = TimeSpan.FromDays(1)
+                });
+
+            return "1";
+        }
+        catch (Exception exception)
+        {
+            this.loggingBroker.LogWarning($"Property cache version lookup failed, skipping cache and querying database directly: {exception.Message}");
+            return PropertyCacheVersionFallback;
+        }
     }
 
     private async ValueTask InvalidatePropertyListCacheAsync()
     {
-        long currentVersion = await GetPropertyCacheVersionAsync();
-        await this.distributedCache.SetStringAsync(
-            PropertyCacheVersionKey,
-            (currentVersion + 1).ToString(),
-            new DistributedCacheEntryOptions
-            {
-                SlidingExpiration = TimeSpan.FromDays(1)
-            });
+        try
+        {
+            string currentVersionValue = await GetPropertyCacheVersionAsync();
+            long currentVersion = long.TryParse(currentVersionValue, out long parsedVersion) ? parsedVersion : 1;
+            await this.distributedCache.SetStringAsync(
+                PropertyCacheVersionKey,
+                (currentVersion + 1).ToString(),
+                new DistributedCacheEntryOptions
+                {
+                    SlidingExpiration = TimeSpan.FromDays(1)
+                });
+        }
+        catch (RedisConnectionException exception)
+        {
+            this.loggingBroker.LogWarning($"Redis connection failed while invalidating property cache: {exception.Message}");
+        }
+        catch (RedisTimeoutException exception)
+        {
+            this.loggingBroker.LogWarning($"Redis timeout while invalidating property cache: {exception.Message}");
+        }
+        catch (Exception exception)
+        {
+            this.loggingBroker.LogWarning($"Cache invalidation skipped due to unexpected error: {exception.Message}");
+        }
     }
 
     private sealed class CachedPropertyListResult
@@ -374,17 +409,16 @@ public partial class PropertyService : IPropertyService
     public IQueryable<Property> RetrieveAllProperties() =>
         TryCatch(() => this.storageBroker.SelectAllProperties());
 
-    public ValueTask<Property> RetrievePropertyByIdAsync(Guid propertyId) =>
-        TryCatch(async () =>
-        {
-            ValidatePropertyId(propertyId);
-            Property maybeProperty = await this.storageBroker.SelectPropertyByIdAsync(propertyId);
+    public async ValueTask<Property?> RetrievePropertyByIdAsync(Guid propertyId)
+    {
+        ValidatePropertyId(propertyId);
+        Property maybeProperty = await this.storageBroker.SelectPropertyByIdAsync(propertyId);
 
-            if (maybeProperty is null)
-                throw new NotFoundPropertyException(propertyId);
+        if (maybeProperty is null)
+            throw new NotFoundPropertyException(propertyId);
 
-            return maybeProperty;
-        });
+        return maybeProperty;
+    }
 
     public ValueTask<Property> ModifyPropertyAsync(Property property) =>
         TryCatch(async () =>
@@ -538,7 +572,21 @@ public partial class PropertyService : IPropertyService
             MonthlyRentUSD = (p.MonthlyRent.HasValue && p.ExchangeRate > 0) ? p.MonthlyRent.Value / p.ExchangeRate : null,
             SalePriceUSD = (p.SalePrice.HasValue && p.ExchangeRate > 0) ? p.SalePrice.Value / p.ExchangeRate : null,
             PricePerNightUSD = (p.PricePerNight.HasValue && p.ExchangeRate > 0) ? p.PricePerNight.Value / p.ExchangeRate : null,
-            SecurityDepositUSD = (p.SecurityDeposit.HasValue && p.ExchangeRate > 0) ? p.SecurityDeposit.Value / p.ExchangeRate : null
+            SecurityDepositUSD = (p.SecurityDeposit.HasValue && p.ExchangeRate > 0) ? p.SecurityDeposit.Value / p.ExchangeRate : null,
+            Images = p.Images != null ? p.Images.Select(img => new PropertyImage
+            {
+                Id = img.Id,
+                PropertyId = img.PropertyId,
+                Url = img.Url,
+                MediumUrl = img.MediumUrl,
+                ThumbnailUrl = img.ThumbnailUrl,
+                Caption = img.Caption,
+                SortOrder = img.SortOrder,
+                IsPrimary = img.IsPrimary,
+                CreatedDate = img.CreatedDate,
+                UpdatedDate = img.UpdatedDate,
+                DeletedDate = img.DeletedDate
+            }).ToList() : new List<PropertyImage>()
         };
     }
 
