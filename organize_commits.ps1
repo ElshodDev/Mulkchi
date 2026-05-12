@@ -248,7 +248,11 @@ git commit -m "chore: update dependencies and configuration
 # 11. Documentation cleanup
 Write-Host "11. Committing documentation changes..." -ForegroundColor Cyan
 git add -u  # Stage deletions
-git add ".github/" || $true  # If .github folder exists
+try {
+    git add ".github/"  # If .github folder exists
+} catch {
+    Write-Host "No .github folder to add" -ForegroundColor Gray
+}
 
 git commit -m "docs: cleanup documentation files
 
