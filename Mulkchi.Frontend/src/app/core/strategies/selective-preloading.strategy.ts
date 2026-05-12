@@ -3,14 +3,19 @@ import { PreloadingStrategy, Route } from '@angular/router';
 import { Observable, of, timer } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
+interface NavigatorConnection {
+  saveData?: boolean;
+  effectiveType?: 'slow-2g' | '2g' | '3g' | '4g';
+}
+
 /**
  * Selective Preloading Strategy
  * Preloads modules based on priority after a delay
  */
 @Injectable({ providedIn: 'root' })
 export class SelectivePreloadingStrategy implements PreloadingStrategy {
-  private preloadDelay = 2000; // 2 seconds delay before preloading
-  private preloadedModules: string[] = [];
+  private readonly preloadDelay = 2000;
+  private readonly preloadedModules: string[] = [];
 
   preload(route: Route, load: () => Observable<unknown>): Observable<unknown> {
     // Check if route has data with preload flag
@@ -49,29 +54,18 @@ export class SelectivePreloadingStrategy implements PreloadingStrategy {
    * Check if we should preload based on connection
    */
   private shouldPreload(): boolean {
-    // Check if user prefers reduced data
     if ('connection' in navigator) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const connection = (navigator as any).connection;
-      
-      // Don't preload on slow connections
+      const connection = (navigator as Navigator & { connection?: NavigatorConnection }).connection;
+
       if (connection) {
-        // Save Data mode is on
         if (connection.saveData) {
           return false;
         }
-        
-        // Slow connection (2G or slow 2G)
+
         if (connection.effectiveType === '2g' || connection.effectiveType === 'slow-2g') {
           return false;
         }
       }
-    }
-
-    // Check battery status (if available)
-    if ('getBattery' in navigator) {
-      // Defer to actual battery check in real implementation
-      // For now, we assume it's OK
     }
 
     return true;
@@ -91,64 +85,5 @@ export class SelectivePreloadingStrategy implements PreloadingStrategy {
    */
   getPreloadedModules(): string[] {
     return this.preloadedModules;
-  }
-}
-
-/**
- * Quicklink Preloading Strategy
- * Preloads routes when they are likely to be navigated to
- */
-@Injectable({ providedIn: 'root' })
-export class QuicklinkStrategy implements PreloadingStrategy {
-  private preloadedModules: string[] = [];
-
-  preload(route: Route, load: () => Observable<unknown>): Observable<unknown> {
-    // Only preload if link is in viewport
-    if (this.hasVisibleLink(route.path)) {
-      this.logQuicklink(route);
-      return load();
-    }
-
-    return of(null);
-  }
-
-  /**
-   * Check if there's a visible link to this route
-   */
-  private hasVisibleLink(path: string | undefined): boolean {
-    if (!path) return false;
-
-    // Check if any links to this route are in viewport
-    const links = document.querySelectorAll(`a[href^="/${path}"]`);
-    
-    for (const link of links) {
-      if (this.isInViewport(link)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  /**
-   * Check if element is in viewport
-   */
-  private isInViewport(element: Element): boolean {
-    const rect = element.getBoundingClientRect();
-    return (
-      rect.top >= 0 &&
-      rect.left >= 0 &&
-      rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-      rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-    );
-  }
-
-  /**
-   * Quicklink specific tracking
-   */
-  private logQuicklink(route: Route): void {
-    if (route.path) {
-      this.preloadedModules.push(route.path);
-    }
   }
 }

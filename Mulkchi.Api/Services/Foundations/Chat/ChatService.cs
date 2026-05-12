@@ -71,7 +71,7 @@ public partial class ChatService : IChatService
         var now = this.dateTimeBroker.GetCurrentDateTimeOffset();
 
         // Get or create session
-        ChatSession session;
+        ChatSession? session;
         if (!string.IsNullOrEmpty(request.SessionId))
         {
             session = await this.storageBroker.SelectChatSessionByIdAsync(request.SessionId);

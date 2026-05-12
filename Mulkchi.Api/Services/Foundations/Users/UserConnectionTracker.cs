@@ -13,6 +13,7 @@ public interface IUserConnectionTracker
     int GetOnlineUserCount();
     void UpdateUserActivity(string userId);
     DateTimeOffset? GetUserLastActivity(string userId);
+    Task CleanupExpiredConnectionsAsync(CancellationToken cancellationToken = default);
 }
 
 public class UserConnectionTracker : IUserConnectionTracker
@@ -50,6 +51,7 @@ public class UserConnectionTracker : IUserConnectionTracker
                     if (connections.Count == 0)
                     {
                         userConnections.TryRemove(userId, out _);
+                        userActivity.TryRemove(userId, out _);
                     }
                 }
             }
@@ -97,5 +99,10 @@ public class UserConnectionTracker : IUserConnectionTracker
     public DateTimeOffset? GetUserLastActivity(string userId)
     {
         return userActivity.TryGetValue(userId, out var lastActivity) ? lastActivity : null;
+    }
+
+    public Task CleanupExpiredConnectionsAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
     }
 }

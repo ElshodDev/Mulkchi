@@ -1,21 +1,23 @@
-import { Component, Input, inject, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDividerModule } from '@angular/material/divider';
-import { provideNativeDateAdapter } from '@angular/material/core';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { BookingService } from '../../../core/services/booking.service';
-import { Property, ListingType } from '../../../core/models';
+import { firstValueFrom } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { provideNativeDateAdapter } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+
+import { ListingType, Property } from '../../../core/models';
+import { BookingService } from '../../../core/services/booking.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-booking-panel',
@@ -24,361 +26,354 @@ import { HttpErrorResponse } from '@angular/common/http';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    MatCardModule,
     MatButtonModule,
-    MatIconModule,
+    MatCardModule,
     MatDatepickerModule,
-    MatInputModule,
+    MatDividerModule,
     MatFormFieldModule,
-    MatSelectModule,
+    MatIconModule,
+    MatInputModule,
     MatProgressSpinnerModule,
-    MatDividerModule
+    MatSelectModule,
   ],
   template: `
-    <mat-card class="booking-panel">
-      <mat-card-header>
-        <mat-card-title>
-          <mat-icon>calendar_today</mat-icon>
-          Bron qilish
-        </mat-card-title>
-      </mat-card-header>
-
-      <mat-card-content>
-        <!-- Price Display -->
-        <div class="price-display">
-          @if (property.listingType === ListingType.ShortTermRent && property.pricePerNight) {
-            <span class="amount">{{ property.pricePerNight | number }} {{ property.currency }}</span>
-            <span class="period">/tun</span>
-          } @else if (property.listingType === ListingType.Rent && property.monthlyRent) {
-            <span class="amount">{{ property.monthlyRent | number }} {{ property.currency }}</span>
-            <span class="period">/oy</span>
+    <article class="booking-card surface-card">
+      <div class="booking-card__header">
+        <div>
+          <span class="eyebrow">Bron</span>
+          <h2>Sanalarni band qiling</h2>
+        </div>
+        <div class="booking-price">
+          @if (property().listingType === listingType.ShortTermRent && property().pricePerNight) {
+            <strong>{{ property().pricePerNight | number }} {{ property().currency }}</strong>
+            <span>/ tun</span>
+          } @else if (property().listingType === listingType.Rent && property().monthlyRent) {
+            <strong>{{ property().monthlyRent | number }} {{ property().currency }}</strong>
+            <span>/ oy</span>
           }
         </div>
+      </div>
 
-        <!-- Booking Form -->
-        <form [formGroup]="bookingForm" (ngSubmit)="onSubmit()">
-          <!-- Check-in Date -->
-          <mat-form-field appearance="outline" class="full-width">
+      <form [formGroup]="bookingForm" class="booking-form" (ngSubmit)="onSubmit()">
+        <div class="booking-grid">
+          <mat-form-field appearance="outline">
             <mat-label>Kirish sanasi</mat-label>
-            <input matInput [matDatepicker]="checkInPicker" formControlName="checkInDate" [min]="minDate">
+            <input matInput [matDatepicker]="checkInPicker" formControlName="checkInDate" [min]="minDate" />
             <mat-datepicker-toggle matIconSuffix [for]="checkInPicker"></mat-datepicker-toggle>
             <mat-datepicker #checkInPicker></mat-datepicker>
-            @if (bookingForm.get('checkInDate')?.hasError('required')) {
-              <mat-error>Kirish sanasini tanlang</mat-error>
+            @if (bookingForm.controls.checkInDate.invalid && bookingForm.controls.checkInDate.touched) {
+              <mat-error>Iltimos, kirish sanasini tanlang.</mat-error>
             }
           </mat-form-field>
 
-          <!-- Check-out Date -->
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field appearance="outline">
             <mat-label>Chiqish sanasi</mat-label>
-            <input matInput [matDatepicker]="checkOutPicker" formControlName="checkOutDate" [min]="minCheckOutDate()">
+            <input
+              matInput
+              [matDatepicker]="checkOutPicker"
+              formControlName="checkOutDate"
+              [min]="minCheckOutDate()"
+            />
             <mat-datepicker-toggle matIconSuffix [for]="checkOutPicker"></mat-datepicker-toggle>
             <mat-datepicker #checkOutPicker></mat-datepicker>
-            @if (bookingForm.get('checkOutDate')?.hasError('required')) {
-              <mat-error>Chiqish sanasini tanlang</mat-error>
+            @if (bookingForm.controls.checkOutDate.invalid && bookingForm.controls.checkOutDate.touched) {
+              <mat-error>Iltimos, chiqish sanasini tanlang.</mat-error>
             }
           </mat-form-field>
+        </div>
 
-          <!-- Number of Guests -->
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Mehmonlar soni</mat-label>
-            <mat-select formControlName="numberOfGuests">
-              @for (num of guestOptions(); track num) {
-                <mat-option [value]="num">{{ num }} mehmon</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Mehmonlar soni</mat-label>
+          <mat-select formControlName="numberOfGuests">
+            @for (guest of guestOptions(); track guest) {
+              <mat-option [value]="guest">{{ guest }} mehmon</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
 
-          <!-- Notes -->
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Qo'shimcha izohlar</mat-label>
-            <textarea matInput formControlName="notes" rows="2" placeholder="Maxsus so'rovlar..."></textarea>
-          </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Qo'shimcha izoh</mat-label>
+          <textarea
+            matInput
+            rows="3"
+            formControlName="notes"
+            placeholder="Kelib kelish vaqti yoki maxsus ehtiyojlaringiz bo‘lsa yozing"
+          ></textarea>
+        </mat-form-field>
 
-          <!-- Price Calculation -->
-          @if (totalPrice() > 0) {
-            <div class="price-calculation">
-              <div class="calc-row">
-                <span>{{ nightsCount() }} tun × {{ property.pricePerNight | number }} {{ property.currency }}</span>
-                <span>{{ basePrice() | number }} {{ property.currency }}</span>
-              </div>
-              @if (serviceFee() > 0) {
-                <div class="calc-row">
-                  <span>Xizmat haqi (10%)</span>
-                  <span>{{ serviceFee() | number }} {{ property.currency }}</span>
-                </div>
-              }
-              <mat-divider></mat-divider>
-              <div class="calc-row total">
-                <span>Jami</span>
-                <span>{{ totalPrice() | number }} {{ property.currency }}</span>
-              </div>
+        <div class="price-sheet">
+          @if (nightsCount() > 0 && property().listingType === listingType.ShortTermRent) {
+            <div class="price-row">
+              <span>{{ nightsCount() }} tun x {{ property().pricePerNight | number }}</span>
+              <strong>{{ basePrice() | number }} {{ property().currency }}</strong>
+            </div>
+            <div class="price-row">
+              <span>Xizmat haqi</span>
+              <strong>{{ serviceFee() | number }} {{ property().currency }}</strong>
+            </div>
+          } @else {
+            <div class="price-row">
+              <span>Oylik to'lov</span>
+              <strong>{{ property().monthlyRent || 0 | number }} {{ property().currency }}</strong>
             </div>
           }
 
-          <!-- Error Message -->
-          @if (errorMessage()) {
-            <div class="error-message">
-              <mat-icon color="warn">error</mat-icon>
-              <span>{{ errorMessage() }}</span>
-            </div>
-          }
+          <mat-divider></mat-divider>
 
-          <!-- Submit Button -->
-          <button 
-            mat-raised-button 
-            color="primary" 
-            class="full-width book-button"
-            type="submit"
-            [disabled]="bookingForm.invalid || isLoading()">
-            @if (isLoading()) {
-              <mat-progress-spinner diameter="20" mode="indeterminate"></mat-progress-spinner>
-              <span>Yuklanmoqda...</span>
-            } @else {
-              <ng-container>
-                <mat-icon>calendar_today</mat-icon>
-                <span>Bron qilish</span>
-              </ng-container>
-            }
-          </button>
-        </form>
-      </mat-card-content>
-    </mat-card>
+          <div class="price-row price-row--total">
+            <span>Jami</span>
+            <strong>{{ totalPrice() | number }} {{ property().currency }}</strong>
+          </div>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="form-alert">
+            <mat-icon>error</mat-icon>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <button mat-flat-button type="submit" class="submit-button" [disabled]="submitDisabled()">
+          @if (isLoading()) {
+            <mat-progress-spinner diameter="18" mode="indeterminate"></mat-progress-spinner>
+            <span>Yuborilyapti...</span>
+          } @else {
+            <ng-container>
+              <mat-icon>calendar_month</mat-icon>
+              <span>Bron qilish</span>
+            </ng-container>
+          }
+        </button>
+      </form>
+    </article>
   `,
-  styles: [`
-    .booking-panel {
-      margin-top: 24px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
+  styles: [
+    `
+      .booking-card {
+        display: grid;
+        gap: var(--space-5);
+        padding: var(--space-5);
+      }
 
-    mat-card-header {
-      padding: 16px 16px 0;
-    }
+      .booking-card__header,
+      .booking-price,
+      .price-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-3);
+      }
 
-    mat-card-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 1.25rem;
-      font-weight: 600;
-    }
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        min-height: 2rem;
+        padding: 0 var(--space-3);
+        border-radius: var(--radius-round);
+        background: rgba(15, 118, 110, 0.1);
+        color: var(--color-brand-600);
+        font-size: var(--font-size-2);
+        font-weight: var(--font-weight-semibold);
+      }
 
-    mat-card-content {
-      padding: 16px;
-    }
+      h2 {
+        margin: var(--space-2) 0 0;
+        font-size: var(--font-size-6);
+      }
 
-    .price-display {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-      margin-bottom: 20px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #eee;
-    }
+      .booking-price {
+        flex-direction: column;
+        align-items: flex-end;
+      }
 
-    .price-display .amount {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #667eea;
-    }
+      .booking-price strong {
+        font-size: var(--font-size-6);
+        color: var(--color-brand-600);
+      }
 
-    .price-display .period {
-      font-size: 1rem;
-      color: #666;
-    }
+      .booking-price span,
+      .price-row span {
+        color: var(--color-text-secondary);
+      }
 
-    .full-width {
-      width: 100%;
-      margin-bottom: 16px;
-    }
+      .booking-form,
+      .price-sheet {
+        display: grid;
+        gap: var(--space-4);
+      }
 
-    .price-calculation {
-      background: #f8f9fa;
-      border-radius: 8px;
-      padding: 16px;
-      margin: 16px 0;
-    }
+      .booking-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-4);
+      }
 
-    .calc-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      font-size: 0.9rem;
-      color: #555;
-    }
+      .price-sheet {
+        padding: var(--space-4);
+        border-radius: var(--radius-3);
+        background: rgba(15, 118, 110, 0.05);
+      }
 
-    .calc-row.total {
-      font-weight: 700;
-      font-size: 1.1rem;
-      color: #333;
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px solid #ddd;
-    }
+      .price-row--total strong {
+        font-size: var(--font-size-5);
+      }
 
-    .error-message {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #f44336;
-      font-size: 0.9rem;
-      margin: 12px 0;
-      padding: 8px 12px;
-      background: #ffebee;
-      border-radius: 8px;
-    }
+      .form-alert {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-3) var(--space-4);
+        border-radius: var(--radius-3);
+        background: rgba(220, 38, 38, 0.08);
+        color: var(--color-danger-600);
+      }
 
-    .book-button {
-      height: 48px;
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
+      .submit-button {
+        gap: var(--space-2);
+        min-height: 52px;
+        background: linear-gradient(135deg, var(--color-brand-500), var(--color-brand-700));
+        color: white !important;
+      }
 
-    .book-button mat-progress-spinner {
-      display: inline-block;
-      margin-right: 8px;
-    }
+      @media (max-width: 640px) {
+        .booking-card__header,
+        .booking-grid {
+          grid-template-columns: 1fr;
+        }
 
-    mat-divider {
-      margin: 8px 0;
-    }
-  `]
+        .booking-card__header {
+          align-items: flex-start;
+        }
+
+        .booking-price {
+          align-items: flex-start;
+        }
+      }
+    `,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BookingPanelComponent {
-  @Input({ required: true }) property!: Property;
+  readonly property = input.required<Property>();
+  protected readonly listingType = ListingType;
+  protected readonly minDate = new Date();
 
-  private fb = inject(FormBuilder);
-  private bookingService = inject(BookingService);
-  private snackBar = inject(MatSnackBar);
-  private router = inject(Router);
+  private readonly fb = inject(FormBuilder);
+  private readonly bookingService = inject(BookingService);
+  private readonly router = inject(Router);
+  private readonly toastService = inject(ToastService);
 
-  ListingType = ListingType;
-  minDate = new Date();
-
-  isLoading = signal(false);
-  errorMessage = signal<string | null>(null);
-
-  bookingForm = this.fb.group({
+  protected readonly isLoading = signal(false);
+  protected readonly errorMessage = signal<string | null>(null);
+  protected readonly bookingForm = this.fb.nonNullable.group({
     checkInDate: [null as Date | null, Validators.required],
     checkOutDate: [null as Date | null, Validators.required],
     numberOfGuests: [1, [Validators.required, Validators.min(1)]],
-    notes: ['']
+    notes: [''],
   });
 
-  // Computed values
-  guestOptions = computed(() => {
-    const max = this.property?.maxGuests || 10;
-    return Array.from({ length: max }, (_, i) => i + 1);
+  protected readonly submitDisabled = computed(
+    () => this.bookingForm.invalid || this.isLoading(),
+  );
+
+  protected readonly guestOptions = computed(() => {
+    const maxGuests = this.property().maxGuests || 10;
+    return Array.from({ length: maxGuests }, (_, index) => index + 1);
   });
 
-  minCheckOutDate = computed(() => {
-    const checkIn = this.bookingForm.get('checkInDate')?.value;
-    if (!checkIn) return this.minDate;
+  protected readonly minCheckOutDate = computed(() => {
+    const checkIn = this.bookingForm.controls.checkInDate.value;
+    if (!checkIn) {
+      return this.minDate;
+    }
+
     const nextDay = new Date(checkIn);
     nextDay.setDate(nextDay.getDate() + 1);
     return nextDay;
   });
 
-  nightsCount = computed(() => {
-    const checkIn = this.bookingForm.get('checkInDate')?.value;
-    const checkOut = this.bookingForm.get('checkOutDate')?.value;
-    if (!checkIn || !checkOut) return 0;
-    const diffTime = checkOut.getTime() - checkIn.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  protected readonly nightsCount = computed(() => {
+    const checkIn = this.bookingForm.controls.checkInDate.value;
+    const checkOut = this.bookingForm.controls.checkOutDate.value;
+
+    if (!checkIn || !checkOut) {
+      return 0;
+    }
+
+    return Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
   });
 
-  basePrice = computed(() => {
-    if (this.property?.listingType !== ListingType.ShortTermRent) return 0;
-    return this.nightsCount() * (this.property?.pricePerNight || 0);
+  protected readonly basePrice = computed(() => {
+    if (this.property().listingType !== ListingType.ShortTermRent) {
+      return this.property().monthlyRent ?? 0;
+    }
+
+    return this.nightsCount() * (this.property().pricePerNight || 0);
   });
 
-  serviceFee = computed(() => {
-    return Math.round(this.basePrice() * 0.1);
-  });
+  protected readonly serviceFee = computed(() => Math.round(this.basePrice() * 0.1));
+  protected readonly totalPrice = computed(() =>
+    this.property().listingType === ListingType.ShortTermRent
+      ? this.basePrice() + this.serviceFee()
+      : this.basePrice(),
+  );
 
-  totalPrice = computed(() => {
-    return this.basePrice() + this.serviceFee();
-  });
+  protected async onSubmit(): Promise<void> {
+    if (this.bookingForm.invalid) {
+      this.bookingForm.markAllAsTouched();
+      return;
+    }
 
-  onSubmit(): void {
-    if (this.bookingForm.invalid) return;
+    const { checkInDate, checkOutDate, numberOfGuests, notes } = this.bookingForm.getRawValue();
 
-    const formValue = this.bookingForm.value;
-    const checkInDate = formValue.checkInDate!;
-    const checkOutDate = formValue.checkOutDate!;
-
-    // Validate dates
-    if (checkOutDate <= checkInDate) {
-      this.errorMessage.set('Chiqish sanasi kirish sanasidan keyin bo\'lishi kerak');
+    if (!checkInDate || !checkOutDate || checkOutDate <= checkInDate) {
+      this.errorMessage.set("Chiqish sanasi kirish sanasidan keyin bo'lishi kerak.");
       return;
     }
 
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    const request = {
-      propertyId: this.property.id,
-      checkInDate: checkInDate,
-      checkOutDate: checkOutDate,
-      numberOfGuests: formValue.numberOfGuests || 1,
-      notes: formValue.notes || undefined
-    };
+    try {
+      await firstValueFrom(
+        this.bookingService.createBooking({
+          propertyId: this.property().id,
+          checkInDate,
+          checkOutDate,
+          numberOfGuests,
+          notes: notes || undefined,
+        }),
+      );
 
-    this.bookingService.createBooking(request).subscribe({
-      next: () => {
-        this.isLoading.set(false);
-        this.snackBar.open('Bron tasdiqlandi!', 'Yopish', {
-          duration: 3000,
-          panelClass: 'success-snackbar'
-        });
-        // Redirect to my bookings
-        this.router.navigate(['/bookings/my']);
-      },
-      error: (error: HttpErrorResponse) => {
-        this.isLoading.set(false);
-        this.handleError(error);
-      }
-    });
+      this.toastService.success('Bron muvaffaqiyatli yuborildi.');
+      await this.router.navigate(['/bookings']);
+    } catch (error: unknown) {
+      this.handleError(error as HttpErrorResponse);
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
   private handleError(error: HttpErrorResponse): void {
     switch (error.status) {
       case 401:
-        this.errorMessage.set('Tizimga kirish talab qilinadi');
-        this.snackBar.open('Iltimos, tizimga kiring', 'Kirish', {
-          duration: 5000
-        }).onAction().subscribe(() => {
-          this.router.navigate(['/auth/login'], {
-            queryParams: { returnUrl: this.router.url }
-          });
+        this.errorMessage.set('Bron qilish uchun avval tizimga kiring.');
+        this.toastService.warning('Iltimos, avval tizimga kiring.');
+        void this.router.navigate(['/auth/login'], {
+          queryParams: { returnUrl: this.router.url },
         });
         break;
-
       case 409:
-        this.errorMessage.set('Bu sana band. Boshqa sanani tanlang.');
+        this.errorMessage.set('Bu sana allaqachon band. Boshqa sanani tanlang.');
         break;
-
-      case 400: {
-        const message = error.error?.message || 'Ma\'lumotlar noto\'g\'ri kiritildi';
-        this.errorMessage.set(message);
+      case 400:
+        this.errorMessage.set(error.error?.message || "Ma'lumotlarni qayta tekshirib ko‘ring.");
         break;
-      }
-
       case 403:
-        this.errorMessage.set('Bu amalni bajarishga ruxsat yo\'q');
+        this.errorMessage.set("Bu amalni bajarish uchun ruxsat yetarli emas.");
         break;
-
-      case 500:
-        this.errorMessage.set('Server xatosi. Iltimos, keyinroq urinib ko\'ring.');
-        break;
-
       default:
-        this.errorMessage.set('Xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.');
+        this.errorMessage.set('Bron yuborishda xatolik yuz berdi. Qayta urinib ko‘ring.');
     }
   }
 }

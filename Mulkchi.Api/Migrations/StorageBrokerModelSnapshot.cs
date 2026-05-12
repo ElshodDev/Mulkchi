@@ -328,8 +328,8 @@ namespace Mulkchi.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("YearMonth")
-                        .HasDatabaseName("IX_MarketTrends_YearMonth");
+                    b.HasIndex("CalculatedAt")
+                        .HasDatabaseName("IX_MarketTrends_CalculatedAt");
 
                     b.HasIndex("Region", "District", "YearMonth")
                         .IsUnique()
@@ -369,11 +369,11 @@ namespace Mulkchi.Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PropertyId")
+                        .HasDatabaseName("IX_PriceHistories_PropertyId");
+
                     b.HasIndex("RecordedDate")
                         .HasDatabaseName("IX_PriceHistories_RecordedDate");
-
-                    b.HasIndex("PropertyId", "RecordedDate")
-                        .HasDatabaseName("IX_PriceHistories_PropertyId_RecordedDate");
 
                     b.ToTable("PriceHistories");
                 });
@@ -1877,6 +1877,9 @@ namespace Mulkchi.Api.Migrations
 
                     b.Property<int>("Role")
                         .HasColumnType("integer");
+
+                    b.Property<long?>("TelegramId")
+                        .HasColumnType("bigint");
 
                     b.Property<int>("TotalBookings")
                         .HasColumnType("integer");

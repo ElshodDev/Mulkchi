@@ -460,4 +460,256 @@ public class AnalyticsController : ControllerBase
             return StatusCode(500, new { message = "Internal server error." });
         }
     }
+
+    #region Smart Property Analysis
+
+    /// <summary>
+    /// Analyze a property to determine if it's overpriced or underpriced
+    /// </summary>
+    [HttpGet("property-analysis/{propertyId}")]
+    [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Any, NoStore = false)]
+    public async Task<ActionResult<PropertyAnalysisResult>> AnalyzeProperty(Guid propertyId)
+    {
+        try
+        {
+            var analysis = await this.analyticsService.AnalyzePropertyAsync(propertyId);
+            return Ok(analysis);
+        }
+        catch (Exception ex) when (ex.Message == "Property not found")
+        {
+            return NotFound(new { message = "Property not found" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error analyzing property {PropertyId}", propertyId);
+            return StatusCode(500, new { message = "Failed to analyze property" });
+        }
+    }
+
+    /// <summary>
+    /// Get best deals - properties significantly below market price
+    /// </summary>
+    [HttpGet("smart-filters/best-deals")]
+    [ResponseCache(Duration = 600, Location = ResponseCacheLocation.Any, NoStore = false)]
+    public async Task<ActionResult<List<PropertyDealScore>>> GetBestDeals([FromQuery] int limit = 10)
+    {
+        try
+        {
+            var deals = await this.analyticsService.FindBestDealsAsync(limit);
+            return Ok(deals);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error finding best deals");
+            return StatusCode(500, new { message = "Failed to find best deals" });
+        }
+    }
+
+    /// <summary>
+    /// Get high ROI properties - good for rental investment
+    /// </summary>
+    [HttpGet("smart-filters/high-roi")]
+    [ResponseCache(Duration = 600, Location = ResponseCacheLocation.Any, NoStore = false)]
+    public async Task<ActionResult<List<PropertyDealScore>>> GetHighRoiProperties([FromQuery] int limit = 10)
+    {
+        try
+        {
+            var properties = await this.analyticsService.FindHighRoiPropertiesAsync(limit);
+            return Ok(properties);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error finding high ROI properties");
+            return StatusCode(500, new { message = "Failed to find high ROI properties" });
+        }
+    }
+
+    /// <summary>
+    /// Get fast selling properties - high demand indicators
+    /// </summary>
+    [HttpGet("smart-filters/fast-selling")]
+    [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Any, NoStore = false)]
+    public async Task<ActionResult<List<PropertyDealScore>>> GetFastSellingProperties([FromQuery] int limit = 10)
+    {
+        try
+        {
+            var properties = await this.analyticsService.FindFastSellingPropertiesAsync(limit);
+            return Ok(properties);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error finding fast selling properties");
+            return StatusCode(500, new { message = "Failed to find fast selling properties" });
+        }
+    }
+
+    /// <summary>
+    /// Get all smart filters in one call
+    /// </summary>
+    [HttpGet("smart-filters/all")]
+    [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Any, NoStore = false)]
+    public async Task<ActionResult> GetAllSmartFilters([FromQuery] int limit = 10)
+    {
+        try
+        {
+            var bestDeals = await this.analyticsService.FindBestDealsAsync(limit);
+            var highRoi = await this.analyticsService.FindHighRoiPropertiesAsync(limit);
+            var fastSelling = await this.analyticsService.FindFastSellingPropertiesAsync(limit);
+
+            return Ok(new
+            {
+                bestDeals,
+                highRoi,
+                fastSelling,
+                summary = new
+                {
+                    bestDealsCount = bestDeals.Count,
+                    highRoiCount = highRoi.Count,
+                    fastSellingCount = fastSelling.Count,
+                    generatedAt = DateTimeOffset.UtcNow
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting smart filters");
+            return StatusCode(500, new { message = "Failed to get smart filters" });
+        }
+    }
+
+    #endregion
+
+    #region Location Intelligence
+
+    /// <summary>
+    /// Get location living score and metrics
+    /// </summary>
+    [HttpGet("location-score")]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any, NoStore = false)]
+    public async Task<ActionResult<LocationScore>> GetLocationScore(
+        [FromQuery] string region,
+        [FromQuery] string district)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(region) || string.IsNullOrWhiteSpace(district))
+            {
+                return BadRequest(new { message = "Region and district are required" });
+            }
+
+            var score = await this.analyticsService.GetLocationScoreAsync(region, district);
+            return Ok(score);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting location score for {Region}, {District}", region, district);
+            return StatusCode(500, new { message = "Failed to get location score" });
+        }
+    }
+
+    /// <summary>
+    /// Get detailed insights about a location
+    /// </summary>
+    [HttpGet("location-insights")]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any, NoStore = false)]
+    public async Task<ActionResult<List<LocationInsight>>> GetLocationInsights(
+        [FromQuery] string region,
+        [FromQuery] string district)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(region) || string.IsNullOrWhiteSpace(district))
+            {
+                return BadRequest(new { message = "Region and district are required" });
+            }
+
+            var insights = await this.analyticsService.GetLocationInsightsAsync(region, district);
+            return Ok(insights);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting location insights for {Region}, {District}", region, district);
+            return StatusCode(500, new { message = "Failed to get location insights" });
+        }
+    }
+
+    /// <summary>
+    /// Compare multiple districts
+    /// </summary>
+    [HttpPost("district-comparison")]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any, NoStore = false)]
+    public async Task<ActionResult> CompareDistricts([FromBody] string[] districts)
+    {
+        try
+        {
+            if (districts == null || districts.Length < 2)
+            {
+                return BadRequest(new { message = "At least 2 districts are required for comparison" });
+            }
+
+            var comparison = await this.analyticsService.GetDistrictComparisonAsync(districts);
+            return Ok(comparison);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error comparing districts");
+            return StatusCode(500, new { message = "Failed to compare districts" });
+        }
+    }
+
+    #endregion
+
+    #region Price Intelligence
+
+    /// <summary>
+    /// Predict property price based on market data
+    /// </summary>
+    [HttpGet("price-prediction/{propertyId}")]
+    [ResponseCache(Duration = 600, Location = ResponseCacheLocation.Any, NoStore = false)]
+    public async Task<ActionResult<PricePrediction>> PredictPropertyPrice(Guid propertyId)
+    {
+        try
+        {
+            var prediction = await this.analyticsService.PredictPriceAsync(propertyId);
+            return Ok(prediction);
+        }
+        catch (Exception ex) when (ex.Message == "Property not found")
+        {
+            return NotFound(new { message = "Property not found" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error predicting price for property {PropertyId}", propertyId);
+            return StatusCode(500, new { message = "Failed to predict price" });
+        }
+    }
+
+    /// <summary>
+    /// Get price trend forecast for a location
+    /// </summary>
+    [HttpGet("price-forecast")]
+    [ResponseCache(Duration = 1800, Location = ResponseCacheLocation.Any, NoStore = false)]
+    public async Task<ActionResult<PriceTrendForecast>> GetPriceForecast(
+        [FromQuery] string region,
+        [FromQuery] string district,
+        [FromQuery] int months = 6)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(region) || string.IsNullOrWhiteSpace(district))
+            {
+                return BadRequest(new { message = "Region and district are required" });
+            }
+
+            var forecast = await this.analyticsService.GetPriceForecastAsync(region, district, months);
+            return Ok(forecast);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting price forecast for {Region}, {District}", region, district);
+            return StatusCode(500, new { message = "Failed to get price forecast" });
+        }
+    }
+
+    #endregion
 }

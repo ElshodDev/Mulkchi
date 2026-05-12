@@ -15,7 +15,9 @@ public partial class PropertyService
         (Rule: IsInvalid(property.City), Parameter: nameof(Property.City)),
         (Rule: IsInvalid(property.Address), Parameter: nameof(Property.Address)),
         (Rule: IsInvalidArea(property.Area), Parameter: nameof(Property.Area)),
-        (Rule: IsInvalidMonthlyRent(property.MonthlyRent), Parameter: nameof(Property.MonthlyRent)),
+        (Rule: property.ListingType == ListingType.Rent ? IsInvalidMonthlyRent(property.MonthlyRent) : new { Condition = false, Message = string.Empty }, Parameter: nameof(Property.MonthlyRent)),
+        (Rule: property.ListingType == ListingType.Sale ? IsInvalidSalePrice(property.SalePrice) : new { Condition = false, Message = string.Empty }, Parameter: nameof(Property.SalePrice)),
+        (Rule: property.ListingType == ListingType.ShortTermRent ? IsInvalidPricePerNight(property.PricePerNight) : new { Condition = false, Message = string.Empty }, Parameter: nameof(Property.PricePerNight)),
         (Rule: IsInvalidListingType(property.ListingType), Parameter: nameof(Property.ListingType)));
     }
 
@@ -70,6 +72,18 @@ public partial class PropertyService
     {
         Condition = !monthlyRent.HasValue || monthlyRent.Value <= 0,
         Message = "Monthly rent must be greater than 0."
+    };
+
+    private static dynamic IsInvalidSalePrice(decimal? salePrice) => new
+    {
+        Condition = !salePrice.HasValue || salePrice.Value <= 0,
+        Message = "Sale price must be greater than 0."
+    };
+
+    private static dynamic IsInvalidPricePerNight(decimal? pricePerNight) => new
+    {
+        Condition = !pricePerNight.HasValue || pricePerNight.Value <= 0,
+        Message = "Price per night must be greater than 0."
     };
 
     private static dynamic IsInvalidListingType(ListingType listingType) => new

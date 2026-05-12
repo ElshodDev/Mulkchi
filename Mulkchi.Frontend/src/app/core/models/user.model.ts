@@ -2,20 +2,20 @@ export enum UserRole {
   Guest = 'Guest',
   Host = 'Host',
   Admin = 'Admin',
-  SuperAdmin = 'SuperAdmin'
+  SuperAdmin = 'SuperAdmin',
 }
 
 export enum Gender {
   Male = 'Male',
   Female = 'Female',
-  Other = 'Other'
+  Other = 'Other',
 }
 
 export enum HostBadge {
   New = 'New',
   Rising = 'Rising',
   Super = 'Super',
-  Legend = 'Legend'
+  Legend = 'Legend',
 }
 
 export interface User {
@@ -32,7 +32,7 @@ export interface User {
   isVerified: boolean;
   emailConfirmed: boolean;
   role: UserRole;
-  currentMode?: UserRole;  // For Single Identity: Guest/Host switch
+  currentMode?: UserRole; // For Single Identity: Guest/Host switch
   badge: HostBadge;
   rating: number;
   responseRate: number;
@@ -47,7 +47,7 @@ export interface User {
 
 export interface AuthResponse {
   token: string;
-  refreshToken: string;
+  refreshToken?: string;
   expiresAt: Date;
   userId: string;
   email: string;
@@ -55,7 +55,7 @@ export interface AuthResponse {
   lastName: string;
   avatarUrl?: string;
   role: UserRole;
-  currentMode?: UserRole;  // Current active mode for Single Identity
+  currentMode?: UserRole; // Current active mode for Single Identity
 }
 
 export interface LoginRequest {

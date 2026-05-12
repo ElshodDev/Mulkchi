@@ -4,7 +4,6 @@ using Mulkchi.Api.Application.DTOs.Common;
 using Mulkchi.Api.Application.Interfaces;
 using Mulkchi.Api.Brokers.Storages;
 using Mulkchi.Api.Models.Foundations.Properties;
-using Mulkchi.Api.Models.Foundations.Users;
 
 namespace Mulkchi.Api.Application.Services;
 
@@ -15,18 +14,15 @@ namespace Mulkchi.Api.Application.Services;
 public class PropertyService : IPropertyService
 {
     private readonly IRepository<Property> _propertyRepository;
-    private readonly IRepository<User> _userRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IStorageBroker _storageBroker;
 
     public PropertyService(
         IRepository<Property> propertyRepository,
-        IRepository<User> userRepository,
         IUnitOfWork unitOfWork,
         IStorageBroker storageBroker)
     {
         _propertyRepository = propertyRepository;
-        _userRepository = userRepository;
         _unitOfWork = unitOfWork;
         _storageBroker = storageBroker;
     }
@@ -41,15 +37,18 @@ public class PropertyService : IPropertyService
 
     public async Task<PaginatedResult<PropertyDto>> GetAllAsync(PaginationRequest request)
     {
-        var query = (await _propertyRepository.GetAllAsync())
-            .Where(p => p.DeletedDate == null)
-            .AsQueryable();
+        var query = _storageBroker
+            .SelectAllProperties()
+            .AsNoTracking()
+            .Include(property => property.Images)
+            .Where(property => property.DeletedDate == null)
+            .OrderByDescending(property => property.CreatedDate);
 
-        var totalCount = query.Count();
-        var items = query
+        var totalCount = await query.CountAsync();
+        var items = await query
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
-            .ToList();
+            .ToListAsync();
 
         return new PaginatedResult<PropertyDto>
         {
@@ -62,18 +61,19 @@ public class PropertyService : IPropertyService
 
     public async Task<PaginatedResult<PropertyDto>> SearchAsync(PropertySearchRequest request)
     {
-        var query = _storageBroker.SelectAllProperties()
-            .Where(p => p.DeletedDate == null)
-            .AsQueryable();
+        var query = _storageBroker
+            .SelectAllProperties()
+            .AsNoTracking()
+            .Include(property => property.Images)
+            .Where(property => property.DeletedDate == null);
 
-        // Apply filters
-        if (!string.IsNullOrEmpty(request.Keyword))
+        if (!string.IsNullOrWhiteSpace(request.Keyword))
         {
-            var keyword = request.Keyword.ToLower();
-            query = query.Where(p => 
-                p.Title.ToLower().Contains(keyword) ||
-                p.Description.ToLower().Contains(keyword) ||
-                p.Address.ToLower().Contains(keyword));
+            var keywordPattern = $"%{request.Keyword.Trim()}%";
+            query = query.Where(property =>
+                EF.Functions.ILike(property.Title, keywordPattern) ||
+                EF.Functions.ILike(property.Description, keywordPattern) ||
+                EF.Functions.ILike(property.Address, keywordPattern));
         }
 
         if (!string.IsNullOrEmpty(request.City))
@@ -81,7 +81,7 @@ public class PropertyService : IPropertyService
 
         if (!string.IsNullOrEmpty(request.Region))
         {
-            if (Enum.TryParse<UzbekistanRegion>(request.Region, out var regionValue))
+            if (Enum.TryParse<UzbekistanRegion>(request.Region, ignoreCase: true, out var regionValue))
                 query = query.Where(p => p.Region == regionValue);
         }
 
@@ -103,32 +103,28 @@ public class PropertyService : IPropertyService
         if (request.MaxArea.HasValue)
             query = query.Where(p => p.Area <= request.MaxArea.Value);
 
-        if (!string.IsNullOrEmpty(request.PropertyType) && 
-            Enum.TryParse<PropertyType>(request.PropertyType, out var propertyType))
+        if (!string.IsNullOrEmpty(request.PropertyType) &&
+            Enum.TryParse<PropertyType>(request.PropertyType, ignoreCase: true, out var propertyType))
         {
             query = query.Where(p => p.PropertyType == propertyType);
         }
 
-        // Apply sorting
-        query = request.SortBy?.ToLower() switch
+        query = (request.SortBy?.Trim().ToLowerInvariant(), request.SortOrder?.Trim().ToLowerInvariant()) switch
         {
-            "price" => request.SortOrder?.ToLower() == "asc" 
-                ? query.OrderBy(p => p.Price) 
-                : query.OrderByDescending(p => p.Price),
-            "area" => request.SortOrder?.ToLower() == "asc" 
-                ? query.OrderBy(p => p.Area) 
-                : query.OrderByDescending(p => p.Area),
-            "rooms" => request.SortOrder?.ToLower() == "asc" 
-                ? query.OrderBy(p => p.Rooms) 
-                : query.OrderByDescending(p => p.Rooms),
+            ("price", "asc") => query.OrderBy(p => p.Price),
+            ("price", _) => query.OrderByDescending(p => p.Price),
+            ("area", "asc") => query.OrderBy(p => p.Area),
+            ("area", _) => query.OrderByDescending(p => p.Area),
+            ("rooms", "asc") => query.OrderBy(p => p.Rooms),
+            ("rooms", _) => query.OrderByDescending(p => p.Rooms),
             _ => query.OrderByDescending(p => p.CreatedDate)
         };
 
-        var totalCount = query.Count();
-        var items = query
+        var totalCount = await query.CountAsync();
+        var items = await query
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
-            .ToList();
+            .ToListAsync();
 
         return new PaginatedResult<PropertyDto>
         {

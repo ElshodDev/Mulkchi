@@ -157,7 +157,7 @@ public class AnalyticsCollectionService : BackgroundService
 
             var pricePerSqm = await properties
                 .Where(p => p.SalePrice.HasValue && p.SalePrice > 0 && p.Area > 0)
-                .Select(p => p.SalePrice.Value / (decimal)p.Area)
+                .Select(p => p.SalePrice.GetValueOrDefault() / (decimal)p.Area)
                 .AverageAsync(p => (decimal?)p) ?? 0;
 
             // Calculate price change from previous month
@@ -221,8 +221,20 @@ public class AnalyticsCollectionService : BackgroundService
             }
         }
 
-        await broker.SaveChangesAsync(ct);
-        _logger.LogInformation("Updated market trends for {Count} locations", locations.Count);
+        try
+        {
+            await broker.SaveChangesAsync(ct);
+            _logger.LogInformation("Updated market trends for {Count} locations", locations.Count);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("duplicate key") == true)
+        {
+            _logger.LogWarning("Duplicate key conflict in MarketTrends, skipping: {Message}", ex.InnerException?.Message);
+            // Entry ni detach qilish
+            foreach (var entry in broker.ChangeTracker.Entries().ToList())
+            {
+                entry.State = EntityState.Detached;
+            }
+        }
     }
 
     /// <summary>
@@ -251,7 +263,7 @@ public class AnalyticsCollectionService : BackgroundService
 
             // Price statistics
             var salePrices = properties.Where(p => p.SalePrice.HasValue && p.SalePrice > 0)
-                .Select(p => p.SalePrice.Value)
+                .Select(p => p.SalePrice.GetValueOrDefault())
                 .OrderBy(p => p)
                 .ToList();
 
@@ -264,7 +276,7 @@ public class AnalyticsCollectionService : BackgroundService
             var q75 = salePrices.Any() ? salePrices[(salePrices.Count * 3) / 4] : 0;
 
             var rentPrices = properties.Where(p => p.MonthlyRent.HasValue && p.MonthlyRent > 0)
-                .Select(p => p.MonthlyRent.Value)
+                .Select(p => p.MonthlyRent.GetValueOrDefault())
                 .ToList();
 
             var avgRent = rentPrices.Any() ? rentPrices.Average() : 0;

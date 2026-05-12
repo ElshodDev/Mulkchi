@@ -7,6 +7,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
+import { ConfirmationService } from '../../../core/services/confirmation.service';
 
 export interface UploadedImage {
   id?: string;
@@ -438,6 +439,7 @@ export interface UploadedImage {
 })
 export class ImageUploadComponent {
   private snackBar = inject(MatSnackBar);
+  private confirmationService = inject(ConfirmationService);
   
   @Input() maxFileSize = 10 * 1024 * 1024; // 10MB
   @Input() maxFiles = 20;
@@ -560,10 +562,19 @@ export class ImageUploadComponent {
   }
   
   clearAll(): void {
-    if (confirm('Barcha rasmlar o\'chirilsinmi?')) {
-      this.images.set([]);
-      this.imagesChange.emit([]);
-    }
+    this.confirmationService
+      .confirm({
+        title: 'Rasmlarni tozalash',
+        message: 'Barcha tanlangan rasmlarni olib tashlamoqchimisiz?',
+        confirmLabel: 'Tozalash',
+        tone: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.images.set([]);
+          this.imagesChange.emit([]);
+        }
+      });
   }
   
   openCaptionDialog(index: number): void {

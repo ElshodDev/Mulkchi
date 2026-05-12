@@ -18,7 +18,7 @@ export interface ApiLoginRequest {
 // Backend response (camelCase - actual format from API)
 export interface ApiAuthResponse {
   token: string;
-  refreshToken: string;
+  refreshToken?: string;
   expiresAt: string; // ISO date string
   userId: string;
   email: string;

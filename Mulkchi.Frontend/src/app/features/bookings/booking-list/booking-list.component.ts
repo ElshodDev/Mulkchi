@@ -10,6 +10,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BookingService } from '../../../core/services/booking.service';
+import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { BookingStatus } from '../../../core/models';
 
 @Component({
@@ -520,6 +521,7 @@ import { BookingStatus } from '../../../core/models';
 export class BookingListComponent implements OnInit {
   private bookingService = inject(BookingService);
   private snackBar = inject(MatSnackBar);
+  private confirmationService = inject(ConfirmationService);
 
   // Expose enum to template
   readonly BookingStatus = BookingStatus;
@@ -585,16 +587,27 @@ export class BookingListComponent implements OnInit {
   }
 
   cancelBooking(id: string): void {
-    if (confirm('Bu bronni bekor qilmoqchimisiz?')) {
-      this.bookingService.cancelBooking(id).subscribe({
-        next: () => {
-          this.snackBar.open('Bron bekor qilindi', 'Yopish', { duration: 3000 });
-          this.loadBookings();
-        },
-        error: () => {
-          this.snackBar.open('Bekor qilishda xatolik', 'Yopish', { duration: 3000 });
+    this.confirmationService
+      .confirm({
+        title: 'Bronni bekor qilish',
+        message: 'Bu bronni bekor qilishni tasdiqlaysizmi?',
+        confirmLabel: 'Bekor qilish',
+        tone: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) {
+          return;
         }
+
+        this.bookingService.cancelBooking(id).subscribe({
+          next: () => {
+            this.snackBar.open('Bron bekor qilindi', 'Yopish', { duration: 3000 });
+            this.loadBookings();
+          },
+          error: () => {
+            this.snackBar.open('Bekor qilishda xatolik', 'Yopish', { duration: 3000 });
+          }
+        });
       });
-    }
   }
 }

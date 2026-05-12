@@ -39,7 +39,13 @@ public class TelegramAuthService : ITelegramAuthService
     {
         var sessionId = GenerateSessionId();
         var code = GenerateOtpCode();
-        var botUsername = _configuration["TelegramAuth:BotUsername"]!;
+        var botUsername = _configuration["TelegramAuth:BotUsername"];
+        
+        if (string.IsNullOrWhiteSpace(botUsername))
+        {
+            _logger.LogError("TelegramAuth:BotUsername konfiguratsiyada topilmadi");
+            throw new InvalidOperationException("Telegram bot username sozlanmagan");
+        }
 
         var session = new TelegramSession
         {

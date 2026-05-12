@@ -15,10 +15,14 @@ public partial class StorageBroker
     }
 
     public IQueryable<Property> SelectAllProperties()
-        => this.Properties.AsQueryable();
+        => this.Properties
+            .Include(p => p.Images.OrderBy(img => img.SortOrder))
+            .AsQueryable();
 
     public async ValueTask<Property> SelectPropertyByIdAsync(Guid propertyId)
-        => (await this.Properties.FindAsync(propertyId))!;
+        => (await this.Properties
+            .Include(p => p.Images.OrderBy(img => img.SortOrder))
+            .FirstOrDefaultAsync(p => p.Id == propertyId))!;
 
     public async ValueTask<Property> UpdatePropertyAsync(Property property)
     {
@@ -39,8 +43,14 @@ public partial class StorageBroker
 
     // Admin methods to bypass soft delete filters
     public IQueryable<Property> SelectAllPropertiesIncludingDeleted()
-        => this.Properties.IgnoreQueryFilters().AsQueryable();
+        => this.Properties
+            .IgnoreQueryFilters()
+            .Include(p => p.Images.OrderBy(img => img.SortOrder))
+            .AsQueryable();
 
     public async ValueTask<Property> SelectPropertyByIdIncludingDeletedAsync(Guid propertyId)
-        => (await this.Properties.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == propertyId))!;
+        => (await this.Properties
+            .IgnoreQueryFilters()
+            .Include(p => p.Images.OrderBy(img => img.SortOrder))
+            .FirstOrDefaultAsync(p => p.Id == propertyId))!;
 }

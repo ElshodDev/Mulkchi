@@ -1,14 +1,12 @@
 using Xunit;
 using Moq;
+using Mulkchi.Api.Application.DTOs;
 using Mulkchi.Api.Application.Interfaces;
 using Mulkchi.Api.Application.Services;
-using Mulkchi.Api.Application.DTOs;
+using Mulkchi.Api.Brokers.Storages;
 using Mulkchi.Api.Models.Foundations.Properties;
-using Mulkchi.Api.Models.Foundations.Users;
 using System;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Mulkchi.Api.Tests.Application.Services
 {
@@ -19,20 +17,20 @@ namespace Mulkchi.Api.Tests.Application.Services
     public class PropertyServiceTests
     {
         private readonly Mock<IRepository<Property>> _mockPropertyRepo;
-        private readonly Mock<IRepository<PropertyImage>> _mockImageRepo;
         private readonly Mock<IUnitOfWork> _mockUnitOfWork;
+        private readonly Mock<IStorageBroker> _mockStorageBroker;
         private readonly PropertyService _propertyService;
 
         public PropertyServiceTests()
         {
             _mockPropertyRepo = new Mock<IRepository<Property>>();
-            _mockImageRepo = new Mock<IRepository<PropertyImage>>();
             _mockUnitOfWork = new Mock<IUnitOfWork>();
+            _mockStorageBroker = new Mock<IStorageBroker>();
             
             _propertyService = new PropertyService(
                 _mockPropertyRepo.Object,
-                _mockImageRepo.Object,
-                _mockUnitOfWork.Object);
+                _mockUnitOfWork.Object,
+                _mockStorageBroker.Object);
         }
 
         [Fact]
@@ -44,17 +42,15 @@ namespace Mulkchi.Api.Tests.Application.Services
                 Title = "3-xonali kvartira",
                 Description = "Markaziy qismda joylashgan",
                 Price = 50000000,
-                Currency = "UZS",
                 Rooms = 3,
                 Bathrooms = 2,
                 Area = 75.5,
                 Floor = 5,
                 TotalFloors = 9,
                 PropertyType = PropertyType.Apartment,
-                ListingType = ListingType.ForSale,
                 Address = "Amir Temur 45",
                 City = "Toshkent",
-                Region = "Yunusobod",
+                Region = nameof(UzbekistanRegion.ToshkentShahar),
                 Latitude = 41.2995,
                 Longitude = 69.2401
             };
@@ -99,7 +95,7 @@ namespace Mulkchi.Api.Tests.Application.Services
                 IsVerified = true
             };
             
-            _mockPropertyRepo.Setup(r => r.GetByIdAsync(propertyId))
+            _mockStorageBroker.Setup(broker => broker.SelectPropertyByIdAsync(propertyId))
                 .ReturnsAsync(property);
 
             // Act
@@ -117,8 +113,8 @@ namespace Mulkchi.Api.Tests.Application.Services
             // Arrange
             var propertyId = Guid.NewGuid();
             
-            _mockPropertyRepo.Setup(r => r.GetByIdAsync(propertyId))
-                .ReturnsAsync((Property?)null);
+            _mockStorageBroker.Setup(broker => broker.SelectPropertyByIdAsync(propertyId))
+                .ReturnsAsync((Property)null!);
 
             // Act
             var result = await _propertyService.GetByIdAsync(propertyId);
@@ -177,7 +173,7 @@ namespace Mulkchi.Api.Tests.Application.Services
         }
 
         [Fact]
-        public async Task DeleteAsync_WithExistingProperty_SoftDeletesAndReturnsTrue()
+        public async Task DeleteAsync_WithExistingProperty_SoftDeletes()
         {
             // Arrange
             var propertyId = Guid.NewGuid();
@@ -197,15 +193,13 @@ namespace Mulkchi.Api.Tests.Application.Services
                 .Returns(Task.CompletedTask);
 
             // Act
-            var result = await _propertyService.DeleteAsync(propertyId);
+            await _propertyService.DeleteAsync(propertyId);
 
             // Assert
-            Assert.True(result);
             Assert.False(property.IsActive); // Soft delete
             Assert.NotNull(property.DeletedDate);
             
             _mockPropertyRepo.Verify(r => r.UpdateAsync(property), Times.Once);
-            _mockUnitOfWork.Verify(u => u.CommitTransactionAsync(), Times.Once);
         }
     }
 }

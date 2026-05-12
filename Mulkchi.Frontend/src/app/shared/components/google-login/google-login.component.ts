@@ -1,35 +1,20 @@
-import { Component, ViewChild, ElementRef, OnInit, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
+
+import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../core/services/toast.service';
 
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        id: {
-          initialize: (config: {
-            client_id: string;
-            callback: (response: { credential: string }) => void;
-          }) => void;
-          renderButton: (
-            element: HTMLElement,
-            options: {
-              theme?: 'outline' | 'filled_blue' | 'filled_black';
-              size?: 'large' | 'medium' | 'small';
-              width?: string;
-            }
-          ) => void;
-        };
-      };
-    };
-  }
-}
-
-// Global flag to track initialization across component instances
 declare global {
   interface Window {
     __googleInitialized?: boolean;
@@ -46,7 +31,7 @@ declare global {
               theme?: 'outline' | 'filled_blue' | 'filled_black';
               size?: 'large' | 'medium' | 'small';
               width?: string;
-            }
+            },
           ) => void;
         };
       };
@@ -57,89 +42,73 @@ declare global {
 @Component({
   selector: 'app-google-login',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule],
+  imports: [MatButtonModule, MatIconModule],
   template: `
-    <div class="google-login-container">
-      <div *ngIf="isLoading()" class="loading-wrapper">
-        <button mat-stroked-button disabled class="google-btn">
+    <div class="google-login">
+      @if (isLoading()) {
+        <button mat-stroked-button type="button" disabled class="google-fallback">
           <mat-icon>hourglass_empty</mat-icon>
           <span>Google bilan davom etish</span>
         </button>
-      </div>
-      <div #googleButtonContainer class="google-button-wrapper" [class.hidden]="isLoading()"></div>
+      }
+
+      <div #googleButtonContainer class="google-slot" [class.hidden]="isLoading()"></div>
     </div>
   `,
-  styles: [`
-    .google-login-container {
-      display: flex;
-      justify-content: center;
-      width: 100%;
-    }
-    
-    .loading-wrapper {
-      width: 100%;
-    }
-    
-    .google-button-wrapper {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-    }
-    
-    .google-btn {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 8px 16px;
-      border: 1px solid #dadce0;
-      background: white;
-      color: #3c4043;
-      font-size: 14px;
-      font-weight: 500;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-    
-    .google-btn:hover {
-      background: #f8f9fa;
-    }
-    
-    .google-btn mat-icon {
-      color: #4285f4;
-    }
-    
-    :host ::ng-deep .google-button-wrapper iframe {
-      width: 100% !important;
-    }
-    
-    .google-button-wrapper.hidden {
-      display: none;
-    }
-  `]
+  styles: [
+    `
+      .google-login,
+      .google-slot {
+        display: grid;
+        width: 100%;
+      }
+
+      .google-fallback {
+        justify-content: center;
+        gap: var(--space-2);
+        width: 100%;
+        min-height: 48px;
+        border-radius: var(--radius-round) !important;
+      }
+
+      .google-slot.hidden {
+        display: none;
+      }
+
+      :host ::ng-deep .google-slot iframe {
+        width: 100% !important;
+        border-radius: var(--radius-round);
+      }
+    `,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class GoogleLoginComponent implements OnInit {
-  private authService = inject(AuthService);
-  private router = inject(Router);
-  private snackBar = inject(MatSnackBar);
-  
-  isLoading = signal(true);
-  
-  @ViewChild('googleButtonContainer') googleButtonContainer!: ElementRef;
-  
-  ngOnInit(): void {
-    this.loadGoogleScript();
+export class GoogleLoginComponent {
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly toastService = inject(ToastService);
+
+  protected readonly googleClientId = environment.googleClientId;
+  protected readonly isLoading = signal(true);
+  private readonly googleButtonContainer = viewChild.required<ElementRef<HTMLElement>>('googleButtonContainer');
+
+  constructor() {
+    afterNextRender(() => {
+      if (!this.googleClientId) {
+        this.isLoading.set(false);
+        return;
+      }
+
+      this.loadGoogleScript();
+    });
   }
-  
+
   private loadGoogleScript(): void {
-    // Check if script is already loaded globally
     if (document.getElementById('google-identity-script')) {
       this.initializeAndRender();
       return;
     }
-    
+
     const script = document.createElement('script');
     script.id = 'google-identity-script';
     script.src = 'https://accounts.google.com/gsi/client';
@@ -148,60 +117,49 @@ export class GoogleLoginComponent implements OnInit {
     script.onload = () => this.initializeAndRender();
     script.onerror = () => {
       this.isLoading.set(false);
-      this.snackBar.open('Google login yuklanmadi', 'Yopish', { duration: 3000 });
+      this.toastService.warning('Google login vaqtincha yuklanmadi.');
     };
     document.head.appendChild(script);
   }
-  
+
   private initializeAndRender(): void {
-    if (!window.google?.accounts?.id) {
+    if (!window.google?.accounts?.id || !this.googleClientId) {
       this.isLoading.set(false);
       return;
     }
-    
-    const clientId = '875022387846-46rckl1kpnk2hujvd53nasu9dr4v3i2k.apps.googleusercontent.com';
-    
-    // Initialize only once globally
+
     if (!window.__googleInitialized) {
-      try {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: (response) => this.handleGoogleResponse(response)
-        });
-        window.__googleInitialized = true;
-      } catch { /* ignore */
-      }
-    }
-    
-    // Render button
-    const container = this.googleButtonContainer?.nativeElement;
-    if (container) {
-      window.google?.accounts?.id.renderButton(container, {
-        theme: 'outline',
-        size: 'large'
+      window.google.accounts.id.initialize({
+        client_id: this.googleClientId,
+        callback: (response) => this.handleGoogleResponse(response),
       });
-      this.isLoading.set(false);
+      window.__googleInitialized = true;
     }
+
+    window.google.accounts.id.renderButton(this.googleButtonContainer().nativeElement, {
+      theme: 'outline',
+      size: 'large',
+      width: '100%',
+    });
+
+    this.isLoading.set(false);
   }
-  
+
   private handleGoogleResponse(response: { credential: string }): void {
     if (!response.credential) {
-      this.snackBar.open('Google orqali kirish bekor qilindi', 'Yopish', { duration: 3000 });
+      this.toastService.warning('Google orqali kirish bekor qilindi.');
       return;
     }
-    
+
     this.authService.googleLogin(response.credential).subscribe({
       next: () => {
-        this.snackBar.open('Google orqali muvaffaqiyatli kirdingiz!', 'Yopish', { duration: 3000 });
-        // Small delay to ensure token is saved before navigation
-        setTimeout(() => {
-          this.router.navigate(['/']);
-        }, 100);
+        this.toastService.success('Google orqali muvaffaqiyatli kirdingiz.');
+        void this.router.navigate(['/']);
       },
-      error: (err) => {
-        const message = err.error?.message || err.message || 'Google orqali kirishda xatolik';
-        this.snackBar.open(message, 'Yopish', { duration: 5000 });
-      }
+      error: (error) => {
+        const message = error.error?.message || error.message || 'Google login bajarilmadi.';
+        this.toastService.error(message);
+      },
     });
   }
 }

@@ -17,7 +17,7 @@ public partial class StorageBroker
     public IQueryable<Boost> SelectAllBoosts() =>
         this.Boosts.AsQueryable();
 
-    public async ValueTask<Boost> SelectBoostByIdAsync(Guid id) =>
+    public async ValueTask<Boost?> SelectBoostByIdAsync(Guid id) =>
         await this.Boosts
             .Include(b => b.Property)
             .Include(b => b.User)

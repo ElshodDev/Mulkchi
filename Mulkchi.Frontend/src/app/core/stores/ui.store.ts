@@ -6,6 +6,7 @@ type LanguageCode = 'uz' | 'ru' | 'en';
 
 const THEME_KEY = 'mulkchi-theme';
 const LANGUAGE_KEY = 'mulkchi-language';
+const LEGACY_LANGUAGE_KEY = 'language';
 
 @Injectable({ providedIn: 'root' })
 export class UIStore {
@@ -28,6 +29,8 @@ export class UIStore {
 
     effect(() => {
       localStorage.setItem(LANGUAGE_KEY, this.language());
+      localStorage.setItem(LEGACY_LANGUAGE_KEY, this.language());
+      this.document.documentElement.lang = this.language();
     });
   }
 
@@ -53,7 +56,8 @@ export class UIStore {
   }
 
   private readLanguage(): LanguageCode {
-    const storedLanguage = localStorage.getItem(LANGUAGE_KEY);
+    const storedLanguage =
+      localStorage.getItem(LANGUAGE_KEY) || localStorage.getItem(LEGACY_LANGUAGE_KEY);
 
     if (storedLanguage === 'ru' || storedLanguage === 'en') {
       return storedLanguage;

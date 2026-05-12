@@ -9,9 +9,6 @@ namespace Mulkchi.Api.Controllers.Auth;
 [Route("api/auth")]
 public class SocialAuthController : ControllerBase
 {
-    private const string AccessTokenCookie = "access_token";
-    private const string RefreshTokenCookie = "refresh_token";
-
     private readonly IAuthService authService;
 
     public SocialAuthController(IAuthService authService)
@@ -83,15 +80,6 @@ public class SocialAuthController : ControllerBase
 
     private void SetAuthCookies(AuthResponse response)
     {
-        var cookieOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict,
-            Expires = response.ExpiresAt
-        };
-
-        Response.Cookies.Append(AccessTokenCookie, response.Token, cookieOptions);
-        Response.Cookies.Append(RefreshTokenCookie, response.RefreshToken, cookieOptions);
+        AuthCookieHelper.SetAuthCookies(Response, response);
     }
 }

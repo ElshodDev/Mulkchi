@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialogModule } from '@angular/material/dialog';
 import { BookingService } from '../../../core/services/booking.service';
+import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { Booking, BookingStatus } from '../../../core/models';
 
 @Component({
@@ -473,6 +474,7 @@ import { Booking, BookingStatus } from '../../../core/models';
 export class HostBookingsComponent implements OnInit {
   private bookingService = inject(BookingService);
   private snackBar = inject(MatSnackBar);
+  private confirmationService = inject(ConfirmationService);
 
   bookings = signal<Booking[]>([]);
   loading = signal(true);
@@ -533,23 +535,54 @@ export class HostBookingsComponent implements OnInit {
   }
 
   confirmBooking(_id: string): void {
-    if (confirm('Bu bronni tasdiqlamoqchimisiz?')) {
-      this.snackBar.open('Bron tasdiqlandi', 'Yopish', { duration: 3000 });
-      this.loadBookings();
-    }
+    this.confirmationService
+      .confirm({
+        title: 'Bronni tasdiqlash',
+        message: 'Bu bronni tasdiqlashni xohlaysizmi?',
+        confirmLabel: 'Tasdiqlash',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) {
+          return;
+        }
+
+        this.snackBar.open('Bron tasdiqlandi', 'Yopish', { duration: 3000 });
+        this.loadBookings();
+      });
   }
 
   completeBooking(_id: string): void {
-    if (confirm('Bu bronni yakunlansinmi?')) {
-      this.snackBar.open('Bron yakunlandi', 'Yopish', { duration: 3000 });
-      this.loadBookings();
-    }
+    this.confirmationService
+      .confirm({
+        title: 'Bronni yakunlash',
+        message: 'Ushbu bronni yakunlangan deb belgilaymizmi?',
+        confirmLabel: 'Yakunlash',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) {
+          return;
+        }
+
+        this.snackBar.open('Bron yakunlandi', 'Yopish', { duration: 3000 });
+        this.loadBookings();
+      });
   }
 
   cancelBooking(_id: string): void {
-    if (confirm('Bu bronni bekor qilmoqchimisiz?')) {
-      this.snackBar.open('Bron bekor qilindi', 'Yopish', { duration: 3000 });
-      this.loadBookings();
-    }
+    this.confirmationService
+      .confirm({
+        title: 'Bronni bekor qilish',
+        message: 'Bu bronni bekor qilishni xohlaysizmi?',
+        confirmLabel: 'Bekor qilish',
+        tone: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) {
+          return;
+        }
+
+        this.snackBar.open('Bron bekor qilindi', 'Yopish', { duration: 3000 });
+        this.loadBookings();
+      });
   }
 }

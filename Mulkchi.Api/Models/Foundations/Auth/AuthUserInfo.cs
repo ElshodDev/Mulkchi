@@ -6,7 +6,7 @@ namespace Mulkchi.Api.Models.Foundations.Auth;
 
 /// <summary>
 /// Returned in the HTTP response body after login / register / refresh.
-/// Does NOT contain tokens — those are delivered via httpOnly cookies.
+/// Refresh tokens are delivered via httpOnly cookies.
 /// The <see cref="AccessToken"/> field is included solely for in-memory
 /// use by the SignalR client (accessTokenFactory); it must never be
 /// written to persistent storage (localStorage / sessionStorage).
@@ -28,12 +28,6 @@ public class AuthUserInfo
     /// </summary>
     public string AccessToken { get; set; }
 
-    /// <summary>
-    /// Refresh token for obtaining new access tokens.
-    /// Frontend stores this in localStorage for session management.
-    /// </summary>
-    public string RefreshToken { get; set; }
-
     public AuthUserInfo() { }
 
     public AuthUserInfo(AuthResponse response)
@@ -47,6 +41,5 @@ public class AuthUserInfo
         CurrentMode = response.CurrentMode;
         ExpiresAt = response.ExpiresAt;
         AccessToken = response.Token;
-        RefreshToken = response.RefreshToken;
     }
 }

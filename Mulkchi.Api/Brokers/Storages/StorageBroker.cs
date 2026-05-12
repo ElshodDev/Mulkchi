@@ -1,11 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.Extensions.DependencyInjection;
 using Mulkchi.Api.Models.Foundations.AIs;
 using Mulkchi.Api.Models.Foundations.Announcements;
 using Mulkchi.Api.Models.Foundations.Auth;
+using Mulkchi.Api.Models.Foundations.Analytics;
 using Mulkchi.Api.Models.Foundations.Bookings;
 using Mulkchi.Api.Models.Foundations.Boosts;
 using Mulkchi.Api.Models.Foundations.Discounts;
@@ -30,16 +28,8 @@ namespace Mulkchi.Api.Brokers.Storages;
 
 public partial class StorageBroker : DbContext, IStorageBroker
 {
-    private readonly IConfiguration configuration;
-    private readonly IWebHostEnvironment environment;
-
-    public StorageBroker(
-        DbContextOptions<StorageBroker> options,
-        IConfiguration configuration,
-        IWebHostEnvironment environment)
-        : base(options)
-    {
-    }
+    public StorageBroker(DbContextOptions<StorageBroker> options)
+        : base(options) { }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -257,6 +247,13 @@ public partial class StorageBroker : DbContext, IStorageBroker
         modelBuilder.Entity<PasswordResetToken>().HasQueryFilter(e => e.DeletedDate == null);
         modelBuilder.Entity<EmailVerificationToken>().HasQueryFilter(e => e.DeletedDate == null);
         modelBuilder.Entity<PhoneOtp>().HasQueryFilter(e => e.DeletedDate == null);
+
+        // Analytics models configuration
+        ConfigureAnalytics(modelBuilder);
+        
+        // Analytics query filters - only filter by CalculatedAt to exclude invalid records
+        modelBuilder.Entity<MarketTrend>().HasQueryFilter(e => e.CalculatedAt > DateTimeOffset.MinValue);
+        modelBuilder.Entity<DistrictStat>().HasQueryFilter(e => e.CalculatedAt > DateTimeOffset.MinValue);
     }
 
     // DbSet<Booking> Bookings property is defined in StorageBroker.Bookings.cs partial class.

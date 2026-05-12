@@ -16,8 +16,11 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { ScrollingModule } from '@angular/cdk/scrolling';
+import { OptimizedImageComponent } from '../../../shared/components/optimized-image/optimized-image.component';
 import { PropertyService } from '../../../core/services/property.service';
 import { ComparisonService } from '../../../core/services/comparison.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { Property, ListingType, PropertySearchParams, PropertyResponse, UzbekistanRegion } from '../../../core/models';
 import { Subject } from 'rxjs';
 import * as L from 'leaflet';
@@ -41,7 +44,9 @@ import * as L from 'leaflet';
     MatDividerModule,
     MatBadgeModule,
     MatTooltipModule,
-    MatAutocompleteModule
+    MatAutocompleteModule,
+    ScrollingModule,
+    OptimizedImageComponent
   ],
   template: `
     <div class="property-list-container">
@@ -354,22 +359,33 @@ import * as L from 'leaflet';
             </div>
           }
 
-          <!-- Properties Grid -->
+          <!-- Properties Grid with Virtual Scrolling -->
           @if (!loading() && !error() && properties().length > 0 && viewMode() !== 'map') {
-            <div class="properties-grid" [class.list-view]="viewMode() === 'list'">
-              @for (property of properties(); track property.id) {
-                <mat-card class="property-card" (click)="navigateToProperty(property.id)">
+            <div class="virtual-scroll-container" [class.list-view]="viewMode() === 'list'">
+              <cdk-virtual-scroll-viewport 
+                itemSize="320" 
+                [class.list-view-item]="viewMode() === 'list'"
+                class="property-viewport">
+                <div *cdkVirtualFor="let property of properties(); trackBy: trackByPropertyFn" 
+                     class="virtual-item">
+                  <mat-card class="property-card" (click)="navigateToProperty(property.id)">
                   <div class="property-image">
                     @if (property.images && property.images.length > 0) {
-                      <img [src]="getImageUrl(property)" 
-                           [attr.data-property-type]="property.type"
-                           [alt]="property.title" 
-                           (error)="onImgError($event)"
-                           style="width:100%; height:220px; object-fit:cover;">
+                      <app-optimized-image 
+                        [src]="getImageUrl(property)"
+                        [alt]="property.title"
+                        [width]="400"
+                        [height]="220"
+                        [placeholder]="getLowQualityPlaceholder(property)"
+                        [placeholderBlur]="true">
+                      </app-optimized-image>
                     } @else {
-                      <img [src]="getPlaceholderImage(property)" 
-                           [alt]="property.title"
-                           style="width:100%; height:220px; object-fit:cover;">
+                      <app-optimized-image 
+                        [src]="getPlaceholderImage(property)"
+                        [alt]="property.title"
+                        [width]="400"
+                        [height]="220">
+                      </app-optimized-image>
                     }
                     
                     <!-- Compare Button -->
@@ -455,7 +471,8 @@ import * as L from 'leaflet';
                     </div>
                   </mat-card-content>
                 </mat-card>
-              }
+                </div>
+              </cdk-virtual-scroll-viewport>
             </div>
 
             <!-- Pagination -->
@@ -1100,12 +1117,41 @@ import * as L from 'leaflet';
       text-decoration: underline;
     }
 
-    /* ===== Properties Grid ===== */
+    /* ===== Virtual Scrolling Container ===== */
+    .virtual-scroll-container {
+      height: calc(100vh - 300px);
+      min-height: 600px;
+      margin-bottom: 32px;
+    }
+
+    .property-viewport {
+      height: 100%;
+      width: 100%;
+    }
+
+    .virtual-item {
+      padding: 12px;
+      box-sizing: border-box;
+    }
+
+    .virtual-scroll-container.list-view {
+      height: calc(100vh - 200px);
+    }
+
+    .virtual-scroll-container.list-view .property-viewport {
+      min-height: 180px;
+    }
+
+    .virtual-scroll-container.list-view .virtual-item {
+      padding: 8px;
+    }
+
+    /* ===== Properties Grid (Fallback) ===== */
     .properties-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 24px;
-      margin-bottom: 24px;
+      margin-bottom: 32px;
     }
 
     .properties-grid.list-view {
@@ -1409,6 +1455,7 @@ import * as L from 'leaflet';
 export class PropertyListComponent implements OnInit {
   private propertyService = inject(PropertyService);
   public comparisonService = inject(ComparisonService);
+  private toastService = inject(ToastService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -1434,6 +1481,22 @@ export class PropertyListComponent implements OnInit {
   private searchSubject = new Subject<string>();
 
   ListingType = ListingType;
+
+  // Track by function for virtual scrolling optimization
+  trackByPropertyFn(index: number, property: Property): string {
+    return property.id;
+  }
+
+  // Generate low quality placeholder for progressive loading
+  getLowQualityPlaceholder(property: Property): string {
+    if (!property.images || property.images.length === 0) {
+      return '';
+    }
+    
+    // Generate a very small, blurred version of the image
+    const imageUrl = property.images[0];
+    return `${imageUrl}?w=20&q=10&blur=10`; // Tiny blurred placeholder
+  }
 
   getCompareTooltip(propertyId: string): string {
     return this.comparisonService.isInComparison(propertyId)
@@ -1632,7 +1695,7 @@ export class PropertyListComponent implements OnInit {
     } else {
       const added = this.comparisonService.addToCompare(propertyResponse);
       if (!added) {
-        alert('Maksimal 4 ta mulkni solishtirish mumkin');
+        this.toastService.warning('Bir vaqtning o‘zida eng ko‘pi bilan 4 ta mulkni solishtirish mumkin.');
       }
     }
   }
