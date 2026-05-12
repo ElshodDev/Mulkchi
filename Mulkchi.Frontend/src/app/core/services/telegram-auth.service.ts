@@ -95,7 +95,7 @@ export class TelegramAuthService {
     this.isPolling.set(false);
   }
 
-  private handleSuccessfulLogin(status: TelegramSessionStatus): void {
+  private handleSuccessfulLogin(_status: TelegramSessionStatus): void {
     this.authService.bootstrapSession();
     this.router.navigate(['/']);
   }

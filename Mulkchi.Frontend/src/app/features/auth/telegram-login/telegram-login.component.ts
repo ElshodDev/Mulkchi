@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, signal } from '@angular/core';
 import { TelegramAuthService } from '../../../core/services/telegram-auth.service';
 
 @Component({
@@ -258,7 +258,7 @@ import { TelegramAuthService } from '../../../core/services/telegram-auth.servic
     `,
   ],
 })
-export class TelegramLoginComponent implements OnInit, OnDestroy {
+export class TelegramLoginComponent implements OnDestroy {
   loading = signal(false);
   deepLink = signal<string | null>(null);
 
@@ -267,8 +267,6 @@ export class TelegramLoginComponent implements OnInit, OnDestroy {
   }
 
   constructor(private telegramAuth: TelegramAuthService) {}
-
-  ngOnInit() {}
 
   async startLogin() {
     this.loading.set(true);

@@ -305,7 +305,7 @@ export class AnnouncementsWidgetComponent implements OnInit, OnDestroy {
     return typeMap[type] || '';
   }
 
-  truncateContent(content: string, maxLength: number = 100): string {
+  truncateContent(content: string, maxLength = 100): string {
     if (!content) return '';
     return content.length > maxLength ? content.substring(0, maxLength) + '...' : content;
   }
