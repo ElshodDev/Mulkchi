@@ -32,7 +32,7 @@ import { MatDividerModule } from '@angular/material/divider';
             [attr.aria-expanded]="isExpanded()"
             [attr.aria-controls]="'advanced-content-' + uniqueId()">
             <mat-icon>{{ isExpanded() ? 'expand_less' : 'expand_more' }}</mat-icon>
-            <span>{{ isExpanded() ? 'Kamroq' : "Ko'proq" }} imkoniyatlar</span>
+            <span>{{ isExpanded() ? "Kamroq" : "Ko'proq" }} imkoniyatlar</span>
             <span class="feature-count">({{ advancedCount() }})</span>
           </button>
         </div>
