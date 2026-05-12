@@ -71,7 +71,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
           <h3>{{ emptyTitle() }}</h3>
           <p>{{ emptyMessage() }}</p>
           @if (actionText()) {
-            <button mat-button (click)="onAction.emit()">
+            <button mat-button (click)="action.emit()">
               <mat-icon>{{ actionIcon() }}</mat-icon>
               {{ actionText() }}
             </button>
@@ -85,7 +85,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
           <mat-icon color="warn">error</mat-icon>
           <h3>Xatolik yuz berdi</h3>
           <p>{{ errorMessage() }}</p>
-          <button mat-button (click)="onRetry.emit()">
+          <button mat-button (click)="retry.emit()">
             <mat-icon>refresh</mat-icon>
             Qayta urinish
           </button>
@@ -364,6 +364,6 @@ export class SmartLoadingComponent {
   // Adapter for template compatibility: keep `skeletonItems()` call in template working
   protected skeletonItems = computed(() => this.skeletonItemsArray());
 
-  @Output() onAction = new EventEmitter<void>();
-  @Output() onRetry = new EventEmitter<void>();
+  @Output() action = new EventEmitter<void>();
+  @Output() retry = new EventEmitter<void>();
 }

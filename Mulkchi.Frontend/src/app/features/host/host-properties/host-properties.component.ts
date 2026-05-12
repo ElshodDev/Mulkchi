@@ -620,7 +620,7 @@ export class HostPropertiesComponent implements OnInit {
     });
   }
 
-  calculateStats(properties: Property[] | any): void {
+  calculateStats(properties: Property[] | null | undefined): void {
     // Ensure properties is an array
     const propsArray = Array.isArray(properties) ? properties : [];
     const views = propsArray.reduce((sum, p) => sum + (p.viewsCount || 0), 0);

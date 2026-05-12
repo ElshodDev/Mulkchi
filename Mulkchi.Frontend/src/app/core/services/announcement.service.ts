@@ -45,7 +45,7 @@ export class AnnouncementService {
   /**
    * Barcha faol e'lonlarni yuklash (paginated)
    */
-  getAnnouncements(page: number = 1, pageSize: number = 10): Observable<PagedResult<Announcement>> {
+  getAnnouncements(page = 1, pageSize = 10): Observable<PagedResult<Announcement>> {
     const params = new HttpParams()
       .set('page', page.toString())
       .set('pageSize', pageSize.toString());

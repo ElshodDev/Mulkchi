@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Observable, catchError, tap, throwError } from 'rxjs';
 import { PropertyResponse } from '../models/property.model';
@@ -235,8 +235,10 @@ export class AnalyticsService {
    * Get location score for a district
    */
   getLocationScore(district: string, region?: string): Observable<LocationScore> {
-    const params: any = { district };
-    if (region) params.region = region;
+    let params = new HttpParams().set('district', district);
+    if (region) {
+      params = params.set('region', region);
+    }
     return this.http.get<LocationScore>(`${this.apiUrl}/location-score`, { params });
   }
 
@@ -244,27 +246,29 @@ export class AnalyticsService {
    * Get detailed location insights
    */
   getLocationInsights(district: string, region?: string): Observable<LocationInsight> {
-    const params: any = { district };
-    if (region) params.region = region;
+    let params = new HttpParams().set('district', district);
+    if (region) {
+      params = params.set('region', region);
+    }
     return this.http.get<LocationInsight>(`${this.apiUrl}/location-insights`, { params });
   }
 
   /**
    * Get smart filtered properties
    */
-  getSmartDeals(limit: number = 10): Observable<SmartFilterResult> {
+  getSmartDeals(limit = 10): Observable<SmartFilterResult> {
     return this.http.get<SmartFilterResult>(`${this.apiUrl}/smart-filters/best-deals`, {
       params: { limit: limit.toString() }
     });
   }
 
-  getHighRoiProperties(limit: number = 10): Observable<SmartFilterResult> {
+  getHighRoiProperties(limit = 10): Observable<SmartFilterResult> {
     return this.http.get<SmartFilterResult>(`${this.apiUrl}/smart-filters/high-roi`, {
       params: { limit: limit.toString() }
     });
   }
 
-  getFastSellingProperties(limit: number = 10): Observable<SmartFilterResult> {
+  getFastSellingProperties(limit = 10): Observable<SmartFilterResult> {
     return this.http.get<SmartFilterResult>(`${this.apiUrl}/smart-filters/fast-selling`, {
       params: { limit: limit.toString() }
     });
@@ -280,9 +284,11 @@ export class AnalyticsService {
   /**
    * Get price forecast for a region/district
    */
-  getPriceForecast(district: string, region?: string, months: number = 6): Observable<PriceTrendForecast> {
-    const params: any = { district, months: months.toString() };
-    if (region) params.region = region;
+  getPriceForecast(district: string, region?: string, months = 6): Observable<PriceTrendForecast> {
+    let params = new HttpParams().set('district', district).set('months', months.toString());
+    if (region) {
+      params = params.set('region', region);
+    }
     return this.http.get<PriceTrendForecast>(`${this.apiUrl}/price-forecast`, { params });
   }
 

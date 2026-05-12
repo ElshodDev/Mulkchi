@@ -1351,7 +1351,7 @@ export class SmartAnalyticsComponent implements OnInit {
             value: `${locationScore.district} — ${locationScore.overallScore.toFixed(0)}/100`,
           }
         : null,
-    ].filter(Boolean) as Array<{ icon: string; label: string; value: string }>;
+    ].filter(Boolean) as { icon: string; label: string; value: string }[];
 
     const summaryParts: string[] = [];
     if (smartDeals?.properties?.length) {

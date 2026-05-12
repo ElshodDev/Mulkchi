@@ -76,7 +76,7 @@ export class TelegramAuthService {
         if (status!.status === 'verified') {
           this.stopPolling();
           this.pollingStatus.set('verified');
-          this.handleSuccessfulLogin(status!);
+          this.handleSuccessfulLogin();
         } else if (status!.status === 'expired') {
           this.stopPolling();
           this.pollingStatus.set('expired');
@@ -95,7 +95,7 @@ export class TelegramAuthService {
     this.isPolling.set(false);
   }
 
-  private handleSuccessfulLogin(status: TelegramSessionStatus): void {
+  private handleSuccessfulLogin(): void {
     this.authService.bootstrapSession();
     this.router.navigate(['/']);
   }

@@ -17,7 +17,12 @@ import { MatTableModule } from '@angular/material/table';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
-import { Announcement, CreateAnnouncementRequest } from '../../../core/models';
+import {
+  Announcement,
+  AnnouncementTarget,
+  AnnouncementType,
+  CreateAnnouncementRequest,
+} from '../../../core/models';
 import {
   AnnouncementService,
   AuthService,
@@ -477,7 +482,7 @@ export class AnnouncementsManagementComponent implements OnInit, OnDestroy {
           this.announcements = result.items;
           this.loading.set(false);
         },
-        error: (error) => {
+        error: () => {
           this.toast.error("E'lonlarni yuklashda xato");
           this.loading.set(false);
         },
@@ -513,7 +518,7 @@ export class AnnouncementsManagementComponent implements OnInit, OnDestroy {
           }
         }, 300);
       },
-      error: (error) => {
+      error: () => {
         this.toast.error(this.editingId() ? "E'lonni yangilashda xato" : "E'lonni yaratishda xato");
         this.loading.set(false);
       },
@@ -566,7 +571,7 @@ export class AnnouncementsManagementComponent implements OnInit, OnDestroy {
     this.resetForm();
   }
 
-  getTypeLabel(type: any): string {
+  getTypeLabel(type: AnnouncementType): string {
     const labels: Record<string, string> = {
       General: 'Umumiy',
       Maintenance: 'Texnik ishlar',
@@ -576,7 +581,7 @@ export class AnnouncementsManagementComponent implements OnInit, OnDestroy {
     return labels[type] || type;
   }
 
-  getTargetLabel(target: any): string {
+  getTargetLabel(target: AnnouncementTarget): string {
     const labels: Record<string, string> = {
       AllUsers: 'Barcha foydalanuvchilar',
       Hosts: 'Uy egalari',

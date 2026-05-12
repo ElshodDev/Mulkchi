@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -387,8 +387,4 @@ import { MatChipsModule } from '@angular/material/chips';
     }
   `]
 })
-export class MarketComponent implements OnInit {
-  ngOnInit(): void {
-    // Load market data
-  }
-}
+export class MarketComponent {}
