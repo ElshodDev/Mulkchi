@@ -23,7 +23,7 @@ interface SpeechRecognitionAlternativeLite {
 }
 
 interface SpeechRecognitionEventLite extends Event {
-  results: Record<number, Record<number, SpeechRecognitionAlternativeLite>>;
+  results: SpeechRecognitionAlternativeLite[][];
 }
 
 interface SpeechRecognitionInstance {
