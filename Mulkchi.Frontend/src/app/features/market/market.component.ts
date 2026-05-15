@@ -6,8 +6,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
-import { AnalyticsService, MarketOverview, PriceTrend, RegionAnalytics } from '../../core/services/analytics.service';
-import { Chart, ChartConfiguration } from 'chart.js/auto';
+import { AnalyticsService, MarketOverview } from '../../core/services/analytics.service';
+import { Chart } from 'chart.js/auto';
 import { animate, style, transition, trigger } from '@angular/animations';
 
 @Component({
@@ -397,7 +397,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
     }
   `]
 })
-export class MarketComponent implements OnInit, AfterViewInit {
+export class MarketComponent implements OnInit {
   private analyticsService = inject(AnalyticsService);
   
   trendChart = viewChild<ElementRef>('trendChart');
@@ -412,9 +412,7 @@ export class MarketComponent implements OnInit, AfterViewInit {
     this.loadData();
   }
 
-  ngAfterViewInit(): void {
-    // Charts will be rendered after data is loaded
-  }
+
 
   loadData(): void {
     this.isLoading.set(true);

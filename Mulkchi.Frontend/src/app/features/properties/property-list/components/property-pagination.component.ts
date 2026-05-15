@@ -146,9 +146,9 @@ import { MatPaginatorModule } from '@angular/material/paginator';
   ],
 })
 export class PropertyPaginationComponent {
-  @Input() currentPage: number = 1;
-  @Input() totalPages: number = 1;
-  @Input() pageSize: number = 12;
+  @Input() currentPage = 1;
+  @Input() totalPages = 1;
+  @Input() pageSize = 12;
 
   @Output() pageChange = new EventEmitter<number>();
   @Output() pageSizeChange = new EventEmitter<number>();
@@ -159,7 +159,7 @@ export class PropertyPaginationComponent {
     const halfVisible = Math.floor(maxVisible / 2);
 
     let startPage = Math.max(1, this.currentPage - halfVisible);
-    let endPage = Math.min(this.totalPages, startPage + maxVisible - 1);
+    const endPage = Math.min(this.totalPages, startPage + maxVisible - 1);
 
     if (endPage - startPage + 1 < maxVisible) {
       startPage = Math.max(1, endPage - maxVisible + 1);

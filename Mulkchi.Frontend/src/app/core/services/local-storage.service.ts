@@ -90,7 +90,7 @@ export class LocalStorageService {
   /**
    * Add to array in storage
    */
-  addToArray<T>(key: string, value: T, maxItems: number = 20): void {
+  addToArray<T>(key: string, value: T, maxItems = 20): void {
     let array = this.getItem<T[]>(key) || [];
 
     // Remove duplicates if it's a string or object with id

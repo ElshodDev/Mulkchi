@@ -16,7 +16,7 @@ export class ImageOptimizationService {
   /**
    * Generate optimized image URL with quality and size parameters
    */
-  getOptimizedImage(url: string, width?: number, height?: number, quality: number = 80): string {
+  getOptimizedImage(url: string, width?: number, height?: number, quality = 80): string {
     if (!url) return '';
 
     // Handle external images
@@ -52,7 +52,7 @@ export class ImageOptimizationService {
   /**
    * Generate sizes attribute for responsive loading
    */
-  generateSizes(breakpoints: Array<{ width: string; size: string }> = []): string {
+  generateSizes(breakpoints: { width: string; size: string }[] = []): string {
     const defaults = [
       { width: '(max-width: 640px)', size: '100vw' },
       { width: '(max-width: 1024px)', size: '50vw' },
@@ -66,7 +66,7 @@ export class ImageOptimizationService {
   /**
    * Generate low-quality placeholder image
    */
-  generatePlaceholder(url: string, width: number = 50, height: number = 50): string {
+  generatePlaceholder(url: string, width = 50, height = 50): string {
     return this.getOptimizedImage(url, width, height, 30);
   }
 
@@ -113,7 +113,7 @@ export class ImageOptimizationService {
   /**
    * Get fallback/placeholder image for property type
    */
-  getFallbackImage(type: string = 'Apartment'): string {
+  getFallbackImage(type = 'Apartment'): string {
     const colors: Record<string, string> = {
       Apartment: '1B3A6B/C9A84C',
       House: '1B3A6B/ffffff',
@@ -130,7 +130,7 @@ export class ImageOptimizationService {
   /**
    * Compress image client-side before upload
    */
-  async compressImage(file: File, maxWidth: number = 1920, quality: number = 0.8): Promise<Blob> {
+  async compressImage(file: File, maxWidth = 1920, quality = 0.8): Promise<Blob> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);

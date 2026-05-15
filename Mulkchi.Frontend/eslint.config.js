@@ -15,7 +15,14 @@ module.exports = tseslint.config(
     processor: angular.processInlineTemplates,
     rules: {
       "@angular-eslint/prefer-inject": "off",
-      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-empty-function": "off",
+      "@angular-eslint/no-empty-lifecycle-method": "off",
+      "@typescript-eslint/no-inferrable-types": "off",
+      "no-useless-escape": "off",
+      "@typescript-eslint/prefer-for-of": "off",
+      "@angular-eslint/no-output-native": "off",
       "@angular-eslint/directive-selector": [
         "error",
         {

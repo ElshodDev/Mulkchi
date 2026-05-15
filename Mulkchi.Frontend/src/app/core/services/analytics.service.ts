@@ -252,19 +252,19 @@ export class AnalyticsService {
   /**
    * Get smart filtered properties
    */
-  getSmartDeals(limit: number = 10): Observable<SmartFilterResult> {
+  getSmartDeals(limit = 10): Observable<SmartFilterResult> {
     return this.http.get<SmartFilterResult>(`${this.apiUrl}/smart-filters/best-deals`, {
       params: { limit: limit.toString() }
     });
   }
 
-  getHighRoiProperties(limit: number = 10): Observable<SmartFilterResult> {
+  getHighRoiProperties(limit = 10): Observable<SmartFilterResult> {
     return this.http.get<SmartFilterResult>(`${this.apiUrl}/smart-filters/high-roi`, {
       params: { limit: limit.toString() }
     });
   }
 
-  getFastSellingProperties(limit: number = 10): Observable<SmartFilterResult> {
+  getFastSellingProperties(limit = 10): Observable<SmartFilterResult> {
     return this.http.get<SmartFilterResult>(`${this.apiUrl}/smart-filters/fast-selling`, {
       params: { limit: limit.toString() }
     });
@@ -280,7 +280,7 @@ export class AnalyticsService {
   /**
    * Get price forecast for a region/district
    */
-  getPriceForecast(district: string, region?: string, months: number = 6): Observable<PriceTrendForecast> {
+  getPriceForecast(district: string, region?: string, months = 6): Observable<PriceTrendForecast> {
     const params: any = { district, months: months.toString() };
     if (region) params.region = region;
     return this.http.get<PriceTrendForecast>(`${this.apiUrl}/price-forecast`, { params });

@@ -17,7 +17,7 @@ import { environment } from '../../../environments/environment';
 describe('authInterceptor', () => {
   let httpMock: HttpTestingController;
   let httpClient: HttpClient;
-  let authServiceSpy: jasmine.SpyObj<AuthService>;
+  let authServiceSpy: any;
 
   const apiUrl = environment.apiUrl;
 
@@ -58,7 +58,7 @@ describe('authInterceptor', () => {
     httpClient.get(`${apiUrl}/properties`).subscribe();
 
     const req = httpMock.expectOne(`${apiUrl}/properties`);
-    expect(req.request.headers.has('Authorization')).toBeFalse();
+    expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush([]);
   });
 
@@ -70,7 +70,7 @@ describe('authInterceptor', () => {
     httpClient.post(`${apiUrl}/auth/login`, {}).subscribe();
 
     const req = httpMock.expectOne(`${apiUrl}/auth/login`);
-    expect(req.request.headers.has('Authorization')).toBeFalse();
+    expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush({});
   });
 
@@ -80,7 +80,7 @@ describe('authInterceptor', () => {
     httpClient.post(`${apiUrl}/auth/register`, {}).subscribe();
 
     const req = httpMock.expectOne(`${apiUrl}/auth/register`);
-    expect(req.request.headers.has('Authorization')).toBeFalse();
+    expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush({});
   });
 
@@ -90,7 +90,7 @@ describe('authInterceptor', () => {
     httpClient.post(`${apiUrl}/auth/refresh-token`, null).subscribe();
 
     const req = httpMock.expectOne(`${apiUrl}/auth/refresh-token`);
-    expect(req.request.headers.has('Authorization')).toBeFalse();
+    expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush({});
   });
 
@@ -102,7 +102,7 @@ describe('authInterceptor', () => {
     httpClient.get('https://external-api.com/data').subscribe();
 
     const req = httpMock.expectOne('https://external-api.com/data');
-    expect(req.request.headers.has('Authorization')).toBeFalse();
+    expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush([]);
   });
 
@@ -114,7 +114,7 @@ describe('authInterceptor', () => {
     httpClient.get(`${apiUrl}/properties`).subscribe();
 
     const req = httpMock.expectOne(`${apiUrl}/properties`);
-    expect(req.request.withCredentials).toBeTrue();
+    expect(req.request.withCredentials).toBe(true);
     req.flush([]);
   });
 });
