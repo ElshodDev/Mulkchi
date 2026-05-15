@@ -38,6 +38,9 @@ describe('PropertyService', () => {
     totalCount: 1,
     page: 1,
     pageSize: 20,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPreviousPage: false,
   };
 
   beforeEach(() => {
@@ -71,7 +74,7 @@ describe('PropertyService', () => {
     expect(service.featuredProperties()).toEqual([]);
     expect(service.currentProperty()).toBeNull();
     expect(service.totalCount()).toBe(0);
-    expect(service.loading()).toBeFalse();
+    expect(service.loading()).toBe(false);
   });
 
   // ─── getAllProperties ─────────────────────────────────────────────────────
@@ -83,7 +86,7 @@ describe('PropertyService', () => {
       expect(service.properties().length).toBe(1);
       expect(service.properties()[0].title).toBe('3-xonali kvartira Yunusobodda');
       expect(service.totalCount()).toBe(1);
-      expect(service.loading()).toBeFalse();
+      expect(service.loading()).toBe(false);
     });
 
     const req = httpMock.expectOne(`${apiUrl}?page=1&pageSize=20`);
@@ -94,7 +97,7 @@ describe('PropertyService', () => {
   it('getAllProperties() — should set loading to false on error', () => {
     service.getAllProperties().subscribe({
       error: () => {
-        expect(service.loading()).toBeFalse();
+        expect(service.loading()).toBe(false);
       },
     });
 

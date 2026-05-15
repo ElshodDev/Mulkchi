@@ -15,8 +15,8 @@ import { UserRole } from '../models';
 describe('AuthService', () => {
   let service: AuthService;
   let httpMock: HttpTestingController;
-  let routerSpy: jasmine.SpyObj<Router>;
-  let sessionServiceSpy: jasmine.SpyObj<SessionService>;
+  let routerSpy: any;
+  let sessionServiceSpy: any;
 
   const apiUrl = `${environment.apiUrl}/auth`;
 
@@ -33,10 +33,10 @@ describe('AuthService', () => {
   };
 
   beforeEach(() => {
-    routerSpy = jasmine.createSpyObj('Router', ['navigate'], { url: '/home' });
-    sessionServiceSpy = jasmine.createSpyObj('SessionService', ['emitLogin', 'emitLogout'], {
-      authChanges$: { pipe: () => ({ subscribe: () => ({}) }) },
-    });
+    routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    (routerSpy as any).url = '/home';
+    sessionServiceSpy = jasmine.createSpyObj('SessionService', ['emitLogin', 'emitLogout']);
+    (sessionServiceSpy as any).authChanges$ = { pipe: () => ({ subscribe: () => ({}) }) };
 
     TestBed.configureTestingModule({
       providers: [
@@ -59,7 +59,7 @@ describe('AuthService', () => {
   // ─── isAuthenticated ───────────────────────────────────────────────────────
 
   it('should initially be unauthenticated', () => {
-    expect(service.isAuthenticated()).toBeFalse();
+    expect(service.isAuthenticated()).toBe(false);
     expect(service.currentUser()).toBeNull();
   });
 
@@ -71,7 +71,7 @@ describe('AuthService', () => {
       .subscribe((response) => {
         expect(response.token).toBe('mock-access-token');
         expect(response.email).toBe('test@example.com');
-        expect(service.isAuthenticated()).toBeTrue();
+        expect(service.isAuthenticated()).toBe(true);
       });
 
     const req = httpMock.expectOne(`${apiUrl}/login`);
@@ -121,11 +121,11 @@ describe('AuthService', () => {
       false,
     );
 
-    expect(service.isAuthenticated()).toBeTrue();
+    expect(service.isAuthenticated()).toBe(true);
 
     service.clearAuth(false);
 
-    expect(service.isAuthenticated()).toBeFalse();
+    expect(service.isAuthenticated()).toBe(false);
     expect(service.getAccessToken()).toBeNull();
     expect(service.currentUser()).toBeNull();
     expect(sessionServiceSpy.emitLogout).toHaveBeenCalled();
@@ -148,8 +148,8 @@ describe('AuthService', () => {
       false,
     );
 
-    expect(service.isHost()).toBeFalse();
-    expect(service.isAdmin()).toBeFalse();
+    expect(service.isHost()).toBe(false);
+    expect(service.isAdmin()).toBe(false);
   });
 
   it('isHost() — should return true for Host role', () => {
@@ -167,13 +167,23 @@ describe('AuthService', () => {
       false,
     );
 
-    expect(service.isHost()).toBeTrue();
-    expect(service.isAdmin()).toBeFalse();
+    expect(service.isHost()).toBe(true);
+    expect(service.isHost()).toBe(true);
+    expect(service.isAdmin()).toBe(false);
   });
 
   // ─── mapApiAuthResponse ───────────────────────────────────────────────────
 
   it('mapApiAuthResponse() — should handle both camelCase and PascalCase fields', () => {
+    const mockPagedResult = {
+      items: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 20,
+      totalPages: 0,
+      hasNextPage: false,
+      hasPreviousPage: false,
+    };
     const camelCase = {
       accessToken: 'tok',
       refreshToken: 'ref',
