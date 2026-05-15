@@ -11,6 +11,7 @@ using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Mulkchi.Api.Controllers;
 
@@ -23,15 +24,18 @@ public class PropertyImagesUploadController : ControllerBase
     private readonly IPropertyImageService propertyImageService;
     private readonly IFileStorageBroker fileStorageBroker;
     private readonly IPropertyService propertyService;
+    private readonly ILogger<PropertyImagesUploadController> logger;
 
     public PropertyImagesUploadController(
         IPropertyImageService propertyImageService,
         IFileStorageBroker fileStorageBroker,
-        IPropertyService propertyService)
+        IPropertyService propertyService,
+        ILogger<PropertyImagesUploadController> logger)
     {
         this.propertyImageService = propertyImageService;
         this.fileStorageBroker = fileStorageBroker;
         this.propertyService = propertyService;
+        this.logger = logger;
     }
 
     [HttpPost("upload")]
@@ -42,6 +46,8 @@ public class PropertyImagesUploadController : ControllerBase
         {
             if (request.File == null || request.PropertyId == Guid.Empty)
                 return BadRequest(new { message = "Fayl va PropertyId majburiy." });
+
+            this.logger.LogInformation("Attempting to upload image for property {PropertyId}", request.PropertyId);
 
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userIdClaim is null || !Guid.TryParse(userIdClaim, out Guid currentUserId))
@@ -77,6 +83,7 @@ public class PropertyImagesUploadController : ControllerBase
             };
 
             PropertyImage addedPropertyImage = await propertyImageService.AddPropertyImageAsync(propertyImage);
+            this.logger.LogInformation("Successfully uploaded image {ImageId} for property {PropertyId}", addedPropertyImage.Id, request.PropertyId);
             return Created($"property-images/{addedPropertyImage.Id}", addedPropertyImage);
         }
         catch (ArgumentException ex)
@@ -125,6 +132,7 @@ public class PropertyImagesUploadController : ControllerBase
             // Delete record from database
             await propertyImageService.RemovePropertyImageByIdAsync(id);
 
+            this.logger.LogInformation("Successfully deleted property image {ImageId}", id);
             return NoContent();
         }
         catch (PropertyImageValidationException propertyImageValidationException)
