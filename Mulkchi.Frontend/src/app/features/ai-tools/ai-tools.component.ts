@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -254,10 +254,6 @@ import { AIService } from '../../core/services/ai.service';
     }
   `]
 })
-export class AiToolsComponent implements OnInit {
+export class AiToolsComponent {
   protected readonly aiService = inject(AIService);
-
-  ngOnInit(): void {
-    // Preload AI data if needed
-  }
 }

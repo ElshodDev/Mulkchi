@@ -18,6 +18,29 @@ interface SmartSuggestion {
   description?: string;
 }
 
+interface SpeechRecognitionAlternativeLite {
+  transcript: string;
+}
+
+interface SpeechRecognitionEventLite extends Event {
+  results: SpeechRecognitionAlternativeLite[][];
+}
+
+interface SpeechRecognitionInstance {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onresult: ((event: SpeechRecognitionEventLite) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+}
+
+interface SpeechRecognitionWindow extends Window {
+  SpeechRecognition?: new () => SpeechRecognitionInstance;
+  webkitSpeechRecognition?: new () => SpeechRecognitionInstance;
+}
+
 @Component({
   selector: 'app-smart-search',
   standalone: true,
@@ -442,10 +465,10 @@ export class SmartSearchComponent {
   showSuggestions = signal(false);
   suggestions = signal<SmartSuggestion[]>([]);
   selectedFilters = signal<Set<string>>(new Set());
-  recentSearches = signal<Array<{ id: string; query: string; timestamp: number }>>([]);
+  recentSearches = signal<{ id: string; query: string; timestamp: number }[]>([]);
 
   // Outputs
-  search = output<{ query: string; filters: string[] }>();
+  searchSubmitted = output<{ query: string; filters: string[] }>();
   voiceSearch = output<string>();
 
   // Accessibility label helper to avoid nested quotes in template
@@ -485,7 +508,7 @@ export class SmartSearchComponent {
     }
   }
 
-  async fetchSuggestions(query: string): Promise<void> {
+  async fetchSuggestions(_query: string): Promise<void> {
     this.isLoading.set(true);
 
     try {
@@ -548,7 +571,7 @@ export class SmartSearchComponent {
     this.addToRecentSearches(query);
 
     // Emit search event
-    this.search.emit({
+    this.searchSubmitted.emit({
       query,
       filters: Array.from(this.selectedFilters()),
     });
@@ -578,15 +601,20 @@ export class SmartSearchComponent {
 
   private initializeVoiceRecognition(): void {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const speechWindow = window as SpeechRecognitionWindow;
       const SpeechRecognition =
-        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        this.stopVoiceSearch();
+        return;
+      }
       const recognition = new SpeechRecognition();
 
       recognition.lang = 'uz-UZ';
       recognition.continuous = false;
       recognition.interimResults = false;
 
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: SpeechRecognitionEventLite) => {
         const transcript = event.results[0][0].transcript;
         this.searchForm.patchValue({ query: transcript });
         this.voiceSearch.emit(transcript);

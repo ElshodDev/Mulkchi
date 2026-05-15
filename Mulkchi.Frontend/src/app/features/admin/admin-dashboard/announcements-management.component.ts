@@ -477,7 +477,7 @@ export class AnnouncementsManagementComponent implements OnInit, OnDestroy {
           this.announcements = result.items;
           this.loading.set(false);
         },
-        error: (error) => {
+        error: (_error) => {
           this.toast.error("E'lonlarni yuklashda xato");
           this.loading.set(false);
         },
@@ -513,7 +513,7 @@ export class AnnouncementsManagementComponent implements OnInit, OnDestroy {
           }
         }, 300);
       },
-      error: (error) => {
+      error: (_error) => {
         this.toast.error(this.editingId() ? "E'lonni yangilashda xato" : "E'lonni yaratishda xato");
         this.loading.set(false);
       },
@@ -566,7 +566,7 @@ export class AnnouncementsManagementComponent implements OnInit, OnDestroy {
     this.resetForm();
   }
 
-  getTypeLabel(type: any): string {
+  getTypeLabel(type: Announcement['type']): string {
     const labels: Record<string, string> = {
       General: 'Umumiy',
       Maintenance: 'Texnik ishlar',
@@ -576,7 +576,7 @@ export class AnnouncementsManagementComponent implements OnInit, OnDestroy {
     return labels[type] || type;
   }
 
-  getTargetLabel(target: any): string {
+  getTargetLabel(target: Announcement['target']): string {
     const labels: Record<string, string> = {
       AllUsers: 'Barcha foydalanuvchilar',
       Hosts: 'Uy egalari',

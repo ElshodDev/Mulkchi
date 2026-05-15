@@ -552,7 +552,7 @@ export class NavbarComponent {
     return labels[language];
   });
 
-  protected readonly navItems = computed<Array<{ label: string; link: string; exact?: boolean }>>(
+  protected readonly navItems = computed<{ label: string; link: string; exact?: boolean }[]>(
     () => {
       const t = this.text();
       return [
@@ -580,7 +580,7 @@ export class NavbarComponent {
   );
 
   protected readonly mobileNavItems = computed<
-    Array<{ label: string; link: string; icon: string; exact?: boolean }>
+    { label: string; link: string; icon: string; exact?: boolean }[]
   >(() => {
     const t = this.text();
     const baseItems = [
