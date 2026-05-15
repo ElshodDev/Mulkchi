@@ -63,7 +63,7 @@ import { OptimizedImageComponent } from '../../../../shared/components/optimized
                 mat-icon-button
                 class="compare-action-btn"
                 (click)="compareToggle.emit(property.id); $event.stopPropagation()"
-                [matTooltip]="'Solishtirishga qo\\'shish'"
+                matTooltip="Solishtirishga qo'shish"
               >
                 <mat-icon aria-hidden="false">add_circle_outline</mat-icon>
               </button>
@@ -408,8 +408,8 @@ import { OptimizedImageComponent } from '../../../../shared/components/optimized
 })
 export class PropertyGridComponent {
   @Input() properties: Property[] = [];
-  @Input() viewMode: string = 'grid';
-  @Input() isLoading: boolean = false;
+  @Input() viewMode = 'grid';
+  @Input() isLoading = false;
 
   @Output() propertyClick = new EventEmitter<string>();
   @Output() compareToggle = new EventEmitter<string>();

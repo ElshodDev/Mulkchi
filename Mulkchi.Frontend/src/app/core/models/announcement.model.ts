@@ -35,7 +35,7 @@ export interface CreateAnnouncementRequest {
   ExpiresAt?: Date;
 }
 
-export interface UpdateAnnouncementRequest extends CreateAnnouncementRequest {}
+export type UpdateAnnouncementRequest = CreateAnnouncementRequest;
 
 export enum AnnouncementType {
   General = 'General',

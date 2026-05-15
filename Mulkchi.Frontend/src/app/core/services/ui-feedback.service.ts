@@ -19,7 +19,7 @@ export class UIFeedbackService {
   /**
    * Show success notification
    */
-  success(message: string, action: string = 'OK', config?: MatSnackBarConfig): void {
+  success(message: string, action = 'OK', config?: MatSnackBarConfig): void {
     this.snackBar.open(`✅ ${message}`, action, {
       ...this.defaultConfig,
       ...config,
@@ -31,7 +31,7 @@ export class UIFeedbackService {
   /**
    * Show error notification
    */
-  error(message: string, action: string = 'Yopish', config?: MatSnackBarConfig): void {
+  error(message: string, action = 'Yopish', config?: MatSnackBarConfig): void {
     this.snackBar.open(`❌ ${message}`, action, {
       ...this.defaultConfig,
       ...config,
@@ -43,7 +43,7 @@ export class UIFeedbackService {
   /**
    * Show info notification
    */
-  info(message: string, action: string = 'OK', config?: MatSnackBarConfig): void {
+  info(message: string, action = 'OK', config?: MatSnackBarConfig): void {
     this.snackBar.open(`ℹ️ ${message}`, action, {
       ...this.defaultConfig,
       ...config,
@@ -55,7 +55,7 @@ export class UIFeedbackService {
   /**
    * Show warning notification
    */
-  warning(message: string, action: string = 'OK', config?: MatSnackBarConfig): void {
+  warning(message: string, action = 'OK', config?: MatSnackBarConfig): void {
     this.snackBar.open(`⚠️ ${message}`, action, {
       ...this.defaultConfig,
       ...config,
@@ -70,7 +70,7 @@ export class UIFeedbackService {
   notify(
     message: string,
     type: NotificationType = 'info',
-    action: string = 'OK',
+    action = 'OK',
     config?: MatSnackBarConfig,
   ): void {
     switch (type) {
@@ -92,7 +92,7 @@ export class UIFeedbackService {
   /**
    * Show loading notification (persistent until closed)
    */
-  loading(message: string = 'Yuklanmoqda...', config?: MatSnackBarConfig): void {
+  loading(message = 'Yuklanmoqda...', config?: MatSnackBarConfig): void {
     this.snackBar.open(`⏳ ${message}`, 'Yopish', {
       ...this.defaultConfig,
       ...config,
@@ -104,7 +104,7 @@ export class UIFeedbackService {
   /**
    * Show action confirmation
    */
-  confirm(message: string, action: string = 'Tasdiqlash'): Promise<boolean> {
+  confirm(message: string, action = 'Tasdiqlash'): Promise<boolean> {
     return new Promise((resolve) => {
       const snackRef = this.snackBar.open(message, action, {
         ...this.defaultConfig,

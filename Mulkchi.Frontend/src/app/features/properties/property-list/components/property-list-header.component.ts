@@ -144,9 +144,9 @@ import { MatSelectModule } from '@angular/material/select';
   `]
 })
 export class PropertyListHeaderComponent {
-  @Input() totalCount: number = 0;
-  @Input() currentView: string = 'grid';
-  @Input() currentSort: string = 'featured';
+  @Input() totalCount = 0;
+  @Input() currentView = 'grid';
+  @Input() currentSort = 'featured';
 
   @Output() viewChange = new EventEmitter<string>();
   @Output() sortChange = new EventEmitter<string>();
