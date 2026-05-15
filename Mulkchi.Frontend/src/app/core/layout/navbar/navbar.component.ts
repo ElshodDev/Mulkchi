@@ -8,7 +8,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { fromEvent, map, startWith } from 'rxjs';
 
-import { UserRole } from '../../models';
 import { ChatService } from '../../services/chat.service';
 import { ComparisonService } from '../../services/comparison.service';
 import { AuthStore } from '../../stores/auth.store';
@@ -49,7 +48,7 @@ import { UIStore } from '../../stores/ui.store';
               {{ item.label }}
             </a>
           }
-          @if (isInHostMode()) {
+          @if (authStore.isHost()) {
             <a routerLink="/host/properties" routerLinkActive="active">{{
               text().navHostProperties
             }}</a>
@@ -81,7 +80,11 @@ import { UIStore } from '../../stores/ui.store';
 
             <mat-menu #languageMenu="matMenu">
               @for (language of languages; track language.code) {
-                <button mat-menu-item type="button" (click)="uiStore.setLanguage(language.code)">
+                <button
+                  mat-menu-item
+                  type="button"
+                  (click)="uiStore.setLanguage(language.code)"
+                >
                   <span>{{ language.label }}</span>
                 </button>
               }
@@ -89,7 +92,7 @@ import { UIStore } from '../../stores/ui.store';
           </div>
 
           @if (authStore.isLoggedIn()) {
-            <a mat-flat-button class="post-button" routerLink="/listings/create">
+            <a mat-flat-button class="post-button" routerLink="/elon-berish/tur">
               <mat-icon>add_home</mat-icon>
               <span>{{ text().postListing }}</span>
             </a>
@@ -98,20 +101,12 @@ import { UIStore } from '../../stores/ui.store';
               <a mat-icon-button routerLink="/favorites" aria-label="Sevimlilar">
                 <mat-icon>favorite</mat-icon>
               </a>
-              <a mat-icon-button routerLink="/compare" aria-label="Taqqoslash">
-                <mat-icon
-                  [matBadge]="comparisonService.count() || null"
-                  [matBadgeHidden]="comparisonService.isEmpty()"
-                  matBadgeColor="accent"
-                >
-                  compare_arrows
-                </mat-icon>
-              </a>
               <a mat-icon-button routerLink="/messages" aria-label="Xabarlar">
                 <mat-icon
                   [matBadge]="chatService.totalUnreadCount() || null"
                   [matBadgeHidden]="chatService.totalUnreadCount() === 0"
                   matBadgeColor="warn"
+                  aria-hidden="false"
                 >
                   chat
                 </mat-icon>
@@ -128,12 +123,19 @@ import { UIStore } from '../../stores/ui.store';
               </span>
               <span class="profile-copy desktop-utilities">
                 <strong>{{ authStore.currentUser()?.firstName }}</strong>
-                <small>{{ authStore.currentMode() }}</small>
+                <small>{{ text().profile }}</small>
               </span>
               <mat-icon class="desktop-utilities">expand_more</mat-icon>
             </button>
 
             <mat-menu #userMenu="matMenu">
+              <div class="user-menu-header">
+                <div class="user-name">
+                  {{ authStore.currentUser()?.firstName }} {{ authStore.currentUser()?.lastName }}
+                </div>
+                <div class="user-role">{{ text().profile }}</div>
+              </div>
+              <mat-divider></mat-divider>
               <a mat-menu-item routerLink="/profile">
                 <mat-icon>person</mat-icon>
                 <span>{{ text().profile }}</span>
@@ -142,12 +144,10 @@ import { UIStore } from '../../stores/ui.store';
                 <mat-icon>calendar_month</mat-icon>
                 <span>{{ text().bookings }}</span>
               </a>
-              @if (isRoleSwitchVisible()) {
-                <button mat-menu-item type="button" (click)="toggleRoleMode()">
-                  <mat-icon>swap_horiz</mat-icon>
-                  <span>{{ roleSwitchLabel() }}</span>
-                </button>
-              }
+              <a mat-menu-item routerLink="/favorites">
+                <mat-icon>favorite</mat-icon>
+                <span>{{ text().favorites }}</span>
+              </a>
               <mat-divider></mat-divider>
               <button mat-menu-item type="button" (click)="authStore.logout()">
                 <mat-icon>logout</mat-icon>
@@ -368,6 +368,28 @@ import { UIStore } from '../../stores/ui.store';
         color: var(--color-text-muted);
       }
 
+      .profile-copy small.role-host {
+        color: var(--color-brand-600);
+        font-weight: var(--font-weight-semibold);
+      }
+
+      .user-menu-header {
+        padding: var(--space-3) var(--space-4);
+        text-align: left;
+      }
+
+      .user-name {
+        font-weight: var(--font-weight-semibold);
+        font-size: var(--font-size-3);
+        color: var(--color-text-primary);
+      }
+
+      .user-role {
+        font-size: var(--font-size-2);
+        color: var(--color-text-secondary);
+        margin-top: 2px;
+      }
+
       .menu-toggle {
         display: none;
         align-items: center;
@@ -473,26 +495,27 @@ export class NavbarComponent {
 
     const labels = {
       uz: {
-        brandTagline: 'Ijaraga yaqinroq yo‘l',
+        brandTagline: "Ijaraga yaqinroq yo'l",
         navHome: 'Bosh sahifa',
         navProperties: 'Mulklar',
         navAiRecommend: 'AI tavsiya',
-        navAnalytics: 'AQILLI tahlil',
+        navAnalytics: 'Aqilli tahlil',
         navMarket: 'Bozor',
         navHostProperties: 'Mening mulklarim',
         navAdmin: 'Admin',
         postListing: "E'lon berish",
         profile: 'Profil',
+        favorites: 'Sevimlilar',
         bookings: 'Bronlar',
         logout: 'Chiqish',
         login: 'Kirish',
         register: "Ro'yxatdan o'tish",
-        themeLight: 'Yorug‘ rejim',
-        themeDark: 'Qorong‘i rejim',
+        themeLight: "Yorug' rejim",
+        themeDark: "Qorong'i rejim",
         language: 'Til',
         languagePrefix: 'Til: ',
-        roleSwitchToGuest: 'Guest rejimiga o‘tish',
-        roleSwitchToHost: 'Host rejimiga o‘tish',
+        roleSwitchToGuest: "Mehmon rejimiga o'tish",
+        roleSwitchToHost: "Uy egasi rejimiga o'tish",
         ariaTheme: 'Mavzuni almashtirish',
         ariaLanguage: 'Til tanlash',
         ariaMenu: 'Menyuni ochish',
@@ -502,12 +525,13 @@ export class NavbarComponent {
         navHome: 'Главная',
         navProperties: 'Недвижимость',
         navAiRecommend: 'AI рекомендации',
-        navAnalytics: 'АНАЛИТИКА',
+        navAnalytics: 'Аналитика',
         navMarket: 'Рынок',
         navHostProperties: 'Моя недвижимость',
         navAdmin: 'Админ',
         postListing: 'Разместить',
         profile: 'Профиль',
+        favorites: 'Избранное',
         bookings: 'Бронирования',
         logout: 'Выйти',
         login: 'Войти',
@@ -527,12 +551,13 @@ export class NavbarComponent {
         navHome: 'Home',
         navProperties: 'Properties',
         navAiRecommend: 'AI recommendations',
-        navAnalytics: 'SMART analytics',
+        navAnalytics: 'Smart analytics',
         navMarket: 'Market',
         navHostProperties: 'My properties',
         navAdmin: 'Admin',
         postListing: 'Post listing',
         profile: 'Profile',
+        favorites: 'Favorites',
         bookings: 'Bookings',
         logout: 'Log out',
         login: 'Sign in',
@@ -560,7 +585,6 @@ export class NavbarComponent {
         { label: t.navProperties, link: '/properties' },
         { label: 'AI Yordamchi', link: '/ai-tools' }, // Combined AI features
         { label: 'Bozor', link: '/market' }, // Combined analytics
-        { label: t.profile, link: '/profile' },
       ];
     },
   );
@@ -597,11 +621,11 @@ export class NavbarComponent {
     const authItems = [
       { label: t.profile, link: '/profile', icon: 'person' },
       { label: 'Xabarlar', link: '/messages', icon: 'chat' },
-      { label: t.postListing, link: '/listings/create', icon: 'add_home' },
+      { label: t.postListing, link: '/elon-berish/tur', icon: 'add_home' },
     ];
 
-    if (this.isInHostMode()) {
-      authItems.push({ label: 'Host panel', link: '/host/properties', icon: 'business' });
+    if (this.authStore.isHost()) {
+      authItems.push({ label: 'Uy egasi paneli', link: '/host/properties', icon: 'business' });
     }
 
     return [...baseItems, ...authItems];
@@ -613,24 +637,4 @@ export class NavbarComponent {
       "O'zbekcha"
     );
   });
-
-  protected readonly roleSwitchLabel = computed(() => {
-    const t = this.text();
-    return this.isInHostMode() ? t.roleSwitchToGuest : t.roleSwitchToHost;
-  });
-
-  protected isInHostMode(): boolean {
-    const mode = this.authStore.currentMode();
-    return mode === UserRole.Host || mode === UserRole.Admin || mode === UserRole.SuperAdmin;
-  }
-
-  protected isRoleSwitchVisible(): boolean {
-    const role = this.authStore.currentUser()?.role;
-    return role === UserRole.Host || role === UserRole.Admin || role === UserRole.SuperAdmin;
-  }
-
-  protected toggleRoleMode(): void {
-    const nextMode = this.isInHostMode() ? UserRole.Guest : UserRole.Host;
-    this.authStore.switchMode({ targetMode: nextMode }).subscribe();
-  }
 }

@@ -14,10 +14,14 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ListingType } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
+import { GeolocationService } from '../../core/services/geolocation.service';
 import { NotificationsService } from '../../core/services/notifications.service';
 import { PropertyService } from '../../core/services/property.service';
 import { ReviewService } from '../../core/services/review.service';
 import { AnnouncementsWidgetComponent } from './announcements-widget.component';
+import { LocationPickerMapComponent } from './location-picker-map.component';
+import { VoiceSearchService } from '../../core/services/voice-search.service';
+import { UIStore } from '../../core/stores/ui.store';
 
 @Component({
   selector: 'app-home',
@@ -97,10 +101,27 @@ import { AnnouncementsWidgetComponent } from './announcements-widget.component';
                 (keyup.enter)="onSearch()"
                 class="search-input"
               />
+              <button 
+                mat-icon-button 
+                class="voice-btn" 
+                [class.listening]="voiceService.isListening()"
+                (click)="toggleVoiceSearch()"
+                [title]="voiceService.isListening() ? 'Eshitilmoqda...' : 'Ovozli qidiruv'"
+              >
+                <mat-icon>{{ voiceService.isListening() ? 'mic' : 'mic_none' }}</mat-icon>
+              </button>
             </div>
             <button mat-raised-button class="search-btn" (click)="onSearch()">
               <mat-icon>search</mat-icon>
               Qidirish
+            </button>
+            <button
+              mat-raised-button
+              class="map-btn"
+              (click)="openMapPicker()"
+              title="Xarita orqali tanlang"
+            >
+              <mat-icon>map</mat-icon>
             </button>
           </div>
 
@@ -229,7 +250,7 @@ import { AnnouncementsWidgetComponent } from './announcements-widget.component';
               <mat-icon class="empty-icon">home_work</mat-icon>
               <h3>Hozircha e'lonlar yo'q</h3>
               <p>Birinchi bo'lib e'lon joylashtiring</p>
-              <button mat-raised-button color="primary" routerLink="/host/dashboard">
+              <button mat-raised-button color="primary" routerLink="/elon-berish/tur">
                 E'lon berish
               </button>
             </div>
@@ -407,58 +428,57 @@ import { AnnouncementsWidgetComponent } from './announcements-widget.component';
               </div>
               <h3 class="feature-title">AI Narx Bashorati</h3>
               <p class="feature-description">
-                Sun'iy intellekt yordamida mulk narxi tahlil qilinadi va eng yaxshi takliflar
-                tanlanadi
+                Sun'iy intellekt bozor holatini tahlil qilib, mulkingiz uchun eng aniq va adolatli narxni tavsiya etadi.
               </p>
             </div>
 
             <div class="feature-card">
               <div class="feature-icon-wrapper gold">
-                <mat-icon>security</mat-icon>
+                <mat-icon>auto_awesome</mat-icon>
               </div>
-              <h3 class="feature-title">Xavfsiz To'lov</h3>
+              <h3 class="feature-title">Aqlli Tavsiflar</h3>
               <p class="feature-description">
-                Payme va Click orqali xavfsiz to'lov. Mablag'lar bron tasdiqlangunicha himoyalangan
+                AI yordamida e'lonlar uchun professional va jozibali matnlarni bir necha soniyada yarating.
               </p>
             </div>
 
             <div class="feature-card">
               <div class="feature-icon-wrapper navy">
-                <mat-icon>chat_bubble</mat-icon>
+                <mat-icon>camera</mat-icon>
               </div>
-              <h3 class="feature-title">Real-time Chat</h3>
+              <h3 class="feature-title">Rasm Analitikasi</h3>
               <p class="feature-description">
-                E'lon egasi bilan to'g'ridan-to'g'ri chat orqali suhbatlashing
+                Yuklangan rasmlarni AI tahlil qilib, ularga avtomatik teglar va tavsiflar qo'shadi.
               </p>
             </div>
 
             <div class="feature-card">
               <div class="feature-icon-wrapper gold">
+                <mat-icon>trending_up</mat-icon>
+              </div>
+              <h3 class="feature-title">Bozor Tahlili</h3>
+              <p class="feature-description">
+                Real vaqt rejimidagi grafiklar va tahlillar orqali ko'chmas mulk bozoridagi o'zgarishlarni kuzating.
+              </p>
+            </div>
+
+            <div class="feature-card">
+              <div class="feature-icon-wrapper navy">
                 <mat-icon>verified_user</mat-icon>
               </div>
               <h3 class="feature-title">Tekshirilgan E'lonlar</h3>
               <p class="feature-description">
-                Barcha e'lonlar moderator tomonidan tekshiriladi va tasdiqlanadi
-              </p>
-            </div>
-
-            <div class="feature-card">
-              <div class="feature-icon-wrapper navy">
-                <mat-icon>map</mat-icon>
-              </div>
-              <h3 class="feature-title">Xarita Integratsiyasi</h3>
-              <p class="feature-description">
-                Leaflet xarita orqali mulklar joylashuvini ko'rish imkoniyati
+                Barcha e'lonlar moderatorlar va AI algoritmlari tomonidan sifat va ishonchlilik uchun tekshiriladi.
               </p>
             </div>
 
             <div class="feature-card">
               <div class="feature-icon-wrapper gold">
-                <mat-icon>support_agent</mat-icon>
+                <mat-icon>smartphone</mat-icon>
               </div>
-              <h3 class="feature-title">24/7 Qo'llab-quvvatlash</h3>
+              <h3 class="feature-title">PWA Mobil Ilova</h3>
               <p class="feature-description">
-                Mutaxassislarimiz har qanday savolingizga yordam berishga tayyor
+                Saytni mobil qurilmangizga o'rnating va platformadan istalgan vaqtda qulay foydalaning.
               </p>
             </div>
           </div>
@@ -546,7 +566,10 @@ import { AnnouncementsWidgetComponent } from './announcements-widget.component';
           <mat-divider class="footer-divider"></mat-divider>
 
           <div class="footer-bottom">
-            <p class="copyright">© 2026 Mulkchi. Barcha huquqlar himoyalangan.</p>
+            <div class="footer-info">
+              <p class="copyright">© 2026 Mulkchi. Barcha huquqlar himoyalangan.</p>
+              <p class="bmi-info">BMI mavzusi: Ma'lumotlar bazasiga asoslangan uy-joy savdosi va ijarasi uchun veb-sayt ishlab chiqish</p>
+            </div>
             <div class="footer-payments">
               <span>To'lov tizimlari:</span>
               <div class="payment-icons">
@@ -561,14 +584,8 @@ import { AnnouncementsWidgetComponent } from './announcements-widget.component';
   `,
   styles: [
     `
-      /* ===== CSS Variables ===== */
+      /* ===== CSS Variables — global tokenlardan foydalanamiz ===== */
       :host {
-        --color-navy: #1b3a6b;
-        --color-navy-light: #2a4a7c;
-        --color-navy-dark: #122a4d;
-        --color-gold: #c9a84c;
-        --color-gold-light: #d4b86a;
-        --color-gold-dark: #a88a3d;
         --color-white: #ffffff;
         --color-gray-50: #f8fafc;
         --color-gray-100: #f1f5f9;
@@ -662,6 +679,10 @@ import { AnnouncementsWidgetComponent } from './announcements-widget.component';
         justify-content: center;
         background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-dark) 100%);
         overflow: hidden;
+      }
+
+      :host-context(.theme-dark) .hero {
+        background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
       }
 
       .hero::before {
@@ -777,7 +798,7 @@ import { AnnouncementsWidgetComponent } from './announcements-widget.component';
         flex: 1;
         display: flex;
         align-items: center;
-        background: var(--color-white);
+        background: var(--color-surface-elevated);
         border-radius: var(--radius);
         padding: 0 20px;
       }
@@ -795,6 +816,22 @@ import { AnnouncementsWidgetComponent } from './announcements-widget.component';
         font-size: 1rem;
         color: var(--color-gray-800);
         background: transparent;
+      }
+
+      .voice-btn {
+        color: var(--color-gray-500);
+        transition: all 0.3s ease;
+      }
+
+      .voice-btn.listening {
+        color: #ef4444;
+        animation: pulse 1.5s infinite;
+      }
+
+      @keyframes pulse {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.2); opacity: 0.7; }
+        100% { transform: scale(1); opacity: 1; }
       }
 
       .search-input::placeholder {
@@ -820,6 +857,46 @@ import { AnnouncementsWidgetComponent } from './announcements-widget.component';
         background: var(--color-gold-light);
         transform: translateY(-2px);
         box-shadow: var(--shadow-lg);
+      }
+
+      .map-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
+        height: 56px;
+        padding: 0;
+        background: var(--color-navy);
+        color: var(--color-gold);
+        border: 2px solid var(--color-gold);
+        border-radius: var(--radius);
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .map-btn:hover {
+        background: var(--color-navy-light);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+      }
+
+      @media (max-width: 768px) {
+        .search-bar {
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .search-btn,
+        .map-btn {
+          width: 100%;
+          height: auto;
+          padding: 12px 20px;
+        }
+
+        .map-btn {
+          width: 100%;
+        }
       }
 
       /* Hero Stats */
@@ -1226,6 +1303,33 @@ import { AnnouncementsWidgetComponent } from './announcements-widget.component';
         color: var(--color-gray-400);
       }
 
+      .footer-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--space-4) 0;
+        flex-wrap: wrap;
+        gap: var(--space-4);
+      }
+
+      .footer-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .bmi-info {
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+        margin: 0;
+      }
+
+      .copyright {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--color-text-secondary);
+      }
+
       .property-footer {
         display: flex;
         justify-content: space-between;
@@ -1562,13 +1666,27 @@ import { AnnouncementsWidgetComponent } from './announcements-widget.component';
         display: flex;
         justify-content: space-between;
         align-items: center;
+        padding: var(--space-4) 0;
         flex-wrap: wrap;
-        gap: 16px;
+        gap: var(--space-4);
+      }
+
+      .footer-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .bmi-info {
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+        margin: 0;
       }
 
       .copyright {
-        color: var(--color-gray-500);
         margin: 0;
+        font-size: 0.9rem;
+        color: var(--color-text-secondary);
       }
 
       .footer-payments {
@@ -1691,19 +1809,37 @@ export class HomeComponent implements OnInit {
     private propertyService: PropertyService,
     private reviewService: ReviewService,
     private notificationService: NotificationsService,
-    private dialog: MatDialog,
     private router: Router,
+    private geolocationService: GeolocationService,
   ) {}
+
+  private dialog = inject(MatDialog);
+  protected readonly voiceService = inject(VoiceSearchService);
+  protected readonly uiStore = inject(UIStore);
 
   onFreeListingClick(): void {
     if (this.authService.isAuthenticated()) {
-      this.router.navigate(['/host/properties/create']);
+      this.router.navigate(['/elon-berish/tur']);
     } else {
       this.router.navigate(['/auth/register']);
     }
   }
 
   private route = inject(ActivatedRoute);
+
+  toggleVoiceSearch() {
+    if (this.voiceService.isListening()) {
+      this.voiceService.stop();
+    } else {
+      const langMap: Record<string, string> = {
+        uz: 'uz-UZ',
+        ru: 'ru-RU',
+        en: 'en-US'
+      };
+      this.voiceService.setLanguage(langMap[this.uiStore.language()] || 'uz-UZ');
+      this.voiceService.start();
+    }
+  }
   private snackBar = inject(MatSnackBar);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1717,6 +1853,10 @@ export class HomeComponent implements OnInit {
   listingType: 'Sale' | 'Rent' | 'ShortTermRent' = 'Rent';
 
   ngOnInit(): void {
+    this.voiceService.textResult$.subscribe(text => {
+      this.searchQuery = text;
+      this.onSearch();
+    });
     this.loadFeaturedProperties();
   }
 
@@ -1730,6 +1870,64 @@ export class HomeComponent implements OnInit {
         queryParams: { listingType: this.listingType },
       });
     }
+  }
+
+  openMapPicker(): void {
+    this.dialog
+      .open(LocationPickerMapComponent, {
+        width: '90%',
+        maxWidth: '600px',
+        panelClass: 'location-picker-dialog',
+      })
+      .afterClosed()
+      .subscribe((result) => {
+        if (result) {
+          const { coordinates, name } = result;
+          // Set search query with location name if available
+          if (name?.city) {
+            this.searchQuery = `${name.city}${name.district ? ', ' + name.district : ''}`;
+          }
+          // Navigate to properties with coordinates
+          this.router.navigate(['/properties'], {
+            queryParams: {
+              lat: coordinates.latitude.toFixed(4),
+              lng: coordinates.longitude.toFixed(4),
+              listingType: this.listingType,
+              searchType: 'geolocation',
+            },
+          });
+        }
+      });
+  }
+
+  useGeolocation(): void {
+    this.geolocationService.getCurrentLocation().subscribe({
+      next: async (coordinates) => {
+        // Get location name
+        const locName = await this.geolocationService.getReverseGeocode(
+          coordinates.latitude,
+          coordinates.longitude,
+        );
+
+        // Set search query with location name
+        if (locName?.city) {
+          this.searchQuery = `${locName.city}${locName.district ? ', ' + locName.district : ''}`;
+        }
+
+        // Navigate to properties with coordinates
+        this.router.navigate(['/properties'], {
+          queryParams: {
+            lat: coordinates.latitude.toFixed(4),
+            lng: coordinates.longitude.toFixed(4),
+            listingType: this.listingType,
+            searchType: 'geolocation',
+          },
+        });
+      },
+      error: () => {
+        this.snackBar.open('❌ Joylashuvni aniqlash imkonsiz', 'OK', { duration: 3000 });
+      },
+    });
   }
 
   loadFeaturedProperties(): void {

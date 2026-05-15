@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Webp;
@@ -15,7 +16,7 @@ namespace Mulkchi.Api.Brokers.Storages;
 /// </summary>
 public class LocalFileStorageBroker : IFileStorageBroker
 {
-    private readonly IHostEnvironment environment;
+    private readonly IWebHostEnvironment environment;
     private readonly string[] allowedExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
     private const long maxFileSize = 10 * 1024 * 1024; // 10 MB
 
@@ -30,10 +31,12 @@ public class LocalFileStorageBroker : IFileStorageBroker
     private const int MediumWidth = 800;
     private const int MediumHeight = 600;
 
-    public LocalFileStorageBroker(IHostEnvironment environment)
+    public LocalFileStorageBroker(IWebHostEnvironment environment)
     {
         this.environment = environment;
     }
+
+    private string WebRootPath => this.environment.WebRootPath ?? Path.Combine(this.environment.ContentRootPath, "wwwroot");
 
     // ─── IFileStorageBroker ───────────────────────────────────────────────
 
@@ -61,7 +64,7 @@ public class LocalFileStorageBroker : IFileStorageBroker
         foreach (var suffix in new[] { "", "-medium", "-thumb" })
         {
             var candidate = AppendSuffix(imageUrl, suffix);
-            var fullPath = Path.Combine(environment.ContentRootPath, "wwwroot", candidate.TrimStart('/'));
+            var fullPath = Path.Combine(WebRootPath, candidate.TrimStart('/'));
             if (File.Exists(fullPath))
                 File.Delete(fullPath);
         }
@@ -71,7 +74,7 @@ public class LocalFileStorageBroker : IFileStorageBroker
 
     public async ValueTask<string> UploadFileAsync(IFormFile file, string path)
     {
-        var uploadsFolder = Path.Combine(environment.ContentRootPath, "wwwroot", path);
+        var uploadsFolder = Path.Combine(WebRootPath, path);
         Directory.CreateDirectory(uploadsFolder);
 
         string uniqueFileName = $"{System.Guid.NewGuid()}{Path.GetExtension(file.FileName).ToLowerInvariant()}";
@@ -88,7 +91,7 @@ public class LocalFileStorageBroker : IFileStorageBroker
         if (string.IsNullOrEmpty(filePath))
             return ValueTask.CompletedTask;
 
-        string fullPath = Path.Combine(environment.ContentRootPath, "wwwroot", filePath.TrimStart('/'));
+        string fullPath = Path.Combine(WebRootPath, filePath.TrimStart('/'));
 
         if (File.Exists(fullPath))
             File.Delete(fullPath);
@@ -100,7 +103,7 @@ public class LocalFileStorageBroker : IFileStorageBroker
 
     private async Task<ImageVariants> SaveImageVariantsAsync(IFormFile file, string folder)
     {
-        string uploadsFolder = Path.Combine(environment.ContentRootPath, "wwwroot", "uploads", folder);
+        string uploadsFolder = Path.Combine(WebRootPath, "uploads", folder);
         Directory.CreateDirectory(uploadsFolder);
 
         string baseName = System.Guid.NewGuid().ToString();
@@ -141,9 +144,7 @@ public class LocalFileStorageBroker : IFileStorageBroker
         await image.SaveAsync(filePath, encoder);
 
         // Derive the folder name from the full path to keep it relative
-        string relativeFolder = Path.GetRelativePath(
-            Path.Combine(environment.ContentRootPath, "wwwroot"),
-            uploadsFolder).Replace('\\', '/');
+        string relativeFolder = Path.GetRelativePath(WebRootPath, uploadsFolder).Replace('\\', '/');
 
         return $"/{relativeFolder}/{fileName}";
     }

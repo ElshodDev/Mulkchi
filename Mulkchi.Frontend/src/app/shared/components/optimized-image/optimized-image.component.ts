@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ImageOptimizationService } from '../../../core/services/image-optimization.service';
 
 @Component({
   selector: 'app-optimized-image',
@@ -9,11 +10,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   template: `
     <div class="optimized-image-container" [style.aspect-ratio]="aspectRatio()">
       <!-- Loading State -->
-      @if (isLoading()) {
-        <div class="image-loading">
-          <mat-progress-spinner diameter="30" mode="indeterminate"></mat-progress-spinner>
-        </div>
-      }
+      <div *ngIf="isLoading()" class="image-loading">
+        <mat-progress-spinner diameter="30" mode="indeterminate"></mat-progress-spinner>
+      </div>
 
       <!-- Main Image -->
       <img
@@ -25,7 +24,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
         [style.height.%]="100"
         [style.object-fit]="objectFit()"
         (load)="onImageLoad()"
-        (error)="onImageError()"
+        (error)="onImageError($event)"
         [class.loaded]="isLoaded()"
         [class.error]="hasError()"
         loading="lazy"
@@ -33,21 +32,18 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
       />
 
       <!-- Error State -->
-      @if (hasError()) {
-        <div class="image-error">
-          <span class="error-icon">🖼️</span>
-          <span class="error-text">Rasm yuklanmadi</span>
-        </div>
-      }
+      <div *ngIf="hasError()" class="image-error">
+        <span class="error-icon">🖼️</span>
+        <span class="error-text">Rasm yuklanmadi</span>
+      </div>
 
       <!-- Low Quality Placeholder (LQIP) -->
-      @if (placeholder() && !isLoaded()) {
-        <div
-          class="image-placeholder"
-          [style.background-image]="'url(' + placeholder() + ')'"
-          [style.filter]="placeholderBlur() ? 'blur(10px)' : 'none'"
-        ></div>
-      }
+      <div
+        *ngIf="placeholder() && !isLoaded()"
+        class="image-placeholder"
+        [style.background-image]="'url(' + placeholder() + ')'"
+        [style.filter]="placeholderBlur() ? 'blur(10px)' : 'none'"
+      ></div>
     </div>
   `,
   styles: [
@@ -146,6 +142,8 @@ export class OptimizedImageComponent {
   private _hasError = signal(false);
   private _isLoading = signal(true);
 
+  private imageOptimizationService = inject(ImageOptimizationService);
+
   // Computed properties
   isLoaded = computed(() => this._isLoaded());
   hasError = computed(() => this._hasError());
@@ -154,28 +152,15 @@ export class OptimizedImageComponent {
 
   // Generate optimized image URLs
   currentSrc = computed(() => {
-    if (!this.src()) return '';
-
-    // Check if WebP is supported
-    const supportsWebP = this.checkWebPSupport();
-    const extension = supportsWebP ? 'webp' : this.getFileExtension(this.src());
-
-    // Generate different sizes for responsive images
-    return this.generateImageUrl(this.src(), extension, this.width());
+    return this.imageOptimizationService.getOptimizedImage(
+      this.src(),
+      this.width(),
+      this.height()
+    );
   });
 
   srcset = computed(() => {
-    if (!this.src()) return '';
-
-    const supportsWebP = this.checkWebPSupport();
-    const extension = supportsWebP ? 'webp' : this.getFileExtension(this.src());
-
-    // Generate srcset for different screen sizes
-    const sizes = [320, 640, 960, 1280, 1920];
-    return sizes
-      .filter((size) => size <= this.width() * 2) // Don't generate unnecessarily large images
-      .map((size) => `${this.generateImageUrl(this.src(), extension, size)} ${size}w`)
-      .join(', ');
+    return this.imageOptimizationService.generateSrcset(this.src());
   });
 
   sizes = computed(() => {
@@ -189,9 +174,17 @@ export class OptimizedImageComponent {
     this._isLoading.set(false);
   }
 
-  onImageError(): void {
+  onImageError(event?: Event): void {
     this._hasError.set(true);
     this._isLoading.set(false);
+    
+    // Fallback to a high-quality house image from Unsplash if the original fails
+    if (event && event.target) {
+      this._isLoaded.set(false);
+      this._hasError.set(false);
+      const img = event.target as HTMLImageElement;
+      img.src = `https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=400&auto=format&fit=crop`;
+    }
   }
 
   // Utility methods
@@ -201,25 +194,5 @@ export class OptimizedImageComponent {
     canvas.width = 1;
     canvas.height = 1;
     return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
-  }
-
-  private getFileExtension(url: string): string {
-    const extension = url.split('.').pop()?.toLowerCase();
-    return extension || 'jpg';
-  }
-
-  private generateImageUrl(baseUrl: string, extension: string, width: number): string {
-    // In a real application, this would connect to an image CDN or service
-    // For now, we'll simulate image optimization
-
-    if (!baseUrl) return '';
-
-    // Remove existing extension and add new one
-    const urlWithoutExt = baseUrl.replace(/\.[^/.]+$/, '');
-
-    // Add size and quality parameters
-    const quality = width <= 640 ? 80 : 60; // Higher quality for smaller images
-
-    return `${urlWithoutExt}_${width}w_q${quality}.${extension}`;
   }
 }

@@ -28,6 +28,7 @@ import {
   ConfirmationDialogData,
 } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { BookingPanelComponent } from '../booking-panel/booking-panel.component';
+import { ImageOptimizationService } from '../../../core/services/image-optimization.service';
 
 @Component({
   selector: 'app-property-detail',
@@ -46,7 +47,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
   ],
   template: `
     <div class="property-detail-container">
-      @if (loading()) {
+      <ng-container *ngIf="loading(); else checkError">
         <div class="loading-container">
           <div class="skeleton-loader">
             <div class="skeleton-main-image"></div>
@@ -57,16 +58,20 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
             </div>
           </div>
         </div>
-      } @else if (error()) {
-        <div class="error-container">
-          <mat-icon>error</mat-icon>
-          <h2>{{ error() }}</h2>
-          <button mat-raised-button routerLink="/properties" class="back-btn">
-            <mat-icon>arrow_back</mat-icon>
-            Barcha mulklarga qaytish
-          </button>
-        </div>
-      } @else if (property()) {
+      </ng-container>
+      <ng-template #checkError>
+        <ng-container *ngIf="error(); else propertyContent">
+          <div class="error-container">
+            <mat-icon>error</mat-icon>
+            <h2>{{ error() }}</h2>
+            <button mat-raised-button routerLink="/properties" class="back-btn">
+              <mat-icon>arrow_back</mat-icon>
+              Barcha mulklarga qaytish
+            </button>
+          </div>
+        </ng-container>
+      </ng-template>
+      <ng-template #propertyContent>
         <div class="property-content">
           <!-- Breadcrumb -->
           <div class="breadcrumb">
@@ -80,38 +85,45 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
           <!-- Property Header (Mobile: Top, Desktop: Sidebar) -->
           <div class="property-header-mobile">
             <div class="badges">
-              @if (property()?.isFeatured) {
-                <span class="badge featured"> <mat-icon>star</mat-icon> Featured </span>
-              }
-              @if (property()?.isVerified) {
-                <span class="badge verified"> <mat-icon>verified</mat-icon> Tasdiqlangan </span>
-              }
-              @if (property()?.isInstantBook) {
-                <span class="badge instant"> <mat-icon>bolt</mat-icon> Tez bron </span>
-              }
+              <span *ngIf="property()?.isFeatured" class="badge featured"
+                ><mat-icon>star</mat-icon> Featured</span
+              >
+              <span *ngIf="property()?.isVerified" class="badge verified"
+                ><mat-icon>verified</mat-icon> Tasdiqlangan</span
+              >
+              <span *ngIf="property()?.isInstantBook" class="badge instant"
+                ><mat-icon>bolt</mat-icon> Tez bron</span
+              >
             </div>
             <h1 class="property-title">{{ property()?.title }}</h1>
-            <div class="location">
-              <mat-icon>location_on</mat-icon>
-              <span
-                >{{ property()?.address }}, {{ property()?.district }}, {{ property()?.city }}</span
-              >
+            <div class="location-row">
+              <div class="location">
+                <mat-icon>location_on</mat-icon>
+                <span
+                  >{{ property()?.address }}, {{ property()?.district }}, {{ property()?.city }}</span
+                >
+              </div>
+              <button mat-stroked-button class="btn-pdf" (click)="exportToPDF()">
+                <mat-icon>picture_as_pdf</mat-icon>
+                <span>PDF Hisobot</span>
+              </button>
             </div>
           </div>
 
           <!-- Image Gallery -->
           <div class="gallery-section">
             <div class="main-image">
-              @if (currentImage()) {
+              <ng-container *ngIf="currentImage(); else noImage">
                 <img [src]="currentImage()" [alt]="property()?.title" />
-              } @else {
+              </ng-container>
+              <ng-template #noImage>
                 <div class="no-image">
                   <mat-icon>image_not_supported</mat-icon>
                   <p>Rasm mavjud emas</p>
                 </div>
-              }
+              </ng-template>
 
-              @if (property()?.images && property()!.images!.length > 1) {
+              <ng-container *ngIf="property()?.images && property()!.images!.length > 1">
                 <button class="nav-btn prev" (click)="prevImage()">
                   <mat-icon>chevron_left</mat-icon>
                 </button>
@@ -121,22 +133,22 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                 <div class="image-counter">
                   {{ currentImageIndex() + 1 }} / {{ property()!.images!.length }}
                 </div>
-              }
+              </ng-container>
             </div>
 
-            @if (property()?.images && property()!.images!.length > 1) {
-              <div class="thumbnail-list">
-                @for (image of property()!.images; track image.id; let i = $index) {
-                  <div
-                    class="thumbnail"
-                    [class.active]="i === currentImageIndex()"
-                    (click)="selectImage(i)"
-                  >
-                    <img [src]="getThumbnailUrl(image)" [alt]="image.caption || ''" />
-                  </div>
-                }
+            <div
+              *ngIf="property()?.images && property()!.images!.length > 1"
+              class="thumbnail-list"
+            >
+              <div
+                *ngFor="let image of property()!.images; let i = index"
+                class="thumbnail"
+                [class.active]="i === currentImageIndex()"
+                (click)="selectImage(i)"
+              >
+                <img [src]="getThumbnailUrl(image)" [alt]="image.caption || ''" />
               </div>
-            }
+            </div>
           </div>
 
           <!-- Property Info -->
@@ -144,61 +156,81 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
             <!-- Desktop Header -->
             <div class="property-header-desktop">
               <div class="badges">
-                @if (property()?.isFeatured) {
-                  <span class="badge featured"> <mat-icon>star</mat-icon> Featured </span>
-                }
-                @if (property()?.isVerified) {
-                  <span class="badge verified"> <mat-icon>verified</mat-icon> Tasdiqlangan </span>
-                }
-                @if (property()?.isInstantBook) {
-                  <span class="badge instant"> <mat-icon>bolt</mat-icon> Tez bron </span>
-                }
+                <span *ngIf="property()?.isFeatured" class="badge featured"
+                  ><mat-icon>star</mat-icon> Featured</span
+                >
+                <span *ngIf="property()?.isVerified" class="badge verified"
+                  ><mat-icon>verified</mat-icon> Tasdiqlangan</span
+                >
+                <span *ngIf="property()?.isInstantBook" class="badge instant"
+                  ><mat-icon>bolt</mat-icon> Tez bron</span
+                >
               </div>
 
               <h1 class="property-title">{{ property()?.title }}</h1>
 
-              <div class="location">
-                <mat-icon>location_on</mat-icon>
-                <span
-                  >{{ property()?.address }}, {{ property()?.district }},
-                  {{ property()?.city }}</span
-                >
+              <div class="location-row">
+                <div class="location">
+                  <mat-icon>location_on</mat-icon>
+                  <span
+                    >{{ property()?.address }}, {{ property()?.district }},
+                    {{ property()?.city }}</span
+                  >
+                </div>
+                <button mat-stroked-button class="btn-pdf" (click)="exportToPDF()">
+                  <mat-icon>picture_as_pdf</mat-icon>
+                  <span>PDF Hisobot</span>
+                </button>
               </div>
             </div>
 
             <!-- Price Card -->
             <div class="price-card">
               <div class="price-display">
-                @if (property()?.listingType === ListingType.Sale && property()?.salePrice) {
-                  <span class="price-amount"
-                    >{{ property()?.salePrice | number }} {{ property()?.currency }}</span
-                  >
-                  <span class="price-type sale">Sotuv</span>
-                } @else if (
-                  property()?.listingType === ListingType.Rent && property()?.monthlyRent
-                ) {
-                  <span class="price-amount"
-                    >{{ property()?.monthlyRent | number }} {{ property()?.currency }}</span
-                  >
-                  <span class="price-period">/oy</span>
-                } @else if (
-                  property()?.listingType === ListingType.ShortTermRent && property()?.pricePerNight
-                ) {
-                  <span class="price-amount"
-                    >{{ property()?.pricePerNight | number }} {{ property()?.currency }}</span
-                  >
-                  <span class="price-period">/tun</span>
-                }
+                <span
+                  *ngIf="property()?.listingType === ListingType.Sale && property()?.salePrice"
+                  class="price-amount"
+                  >{{ property()?.salePrice | number }} {{ property()?.currency }}</span
+                >
+                <span
+                  *ngIf="property()?.listingType === ListingType.Sale && property()?.salePrice"
+                  class="price-type sale"
+                  >Sotuv</span
+                >
+
+                <span
+                  *ngIf="property()?.listingType === ListingType.Rent && property()?.monthlyRent"
+                  class="price-amount"
+                  >{{ property()?.monthlyRent | number }} {{ property()?.currency }}</span
+                >
+                <span
+                  *ngIf="property()?.listingType === ListingType.Rent && property()?.monthlyRent"
+                  class="price-period"
+                  >/oy</span
+                >
+
+                <span
+                  *ngIf="
+                    property()?.listingType === ListingType.ShortTermRent &&
+                    property()?.pricePerNight
+                  "
+                  class="price-amount"
+                  >{{ property()?.pricePerNight | number }} {{ property()?.currency }}</span
+                >
+                <span
+                  *ngIf="
+                    property()?.listingType === ListingType.ShortTermRent &&
+                    property()?.pricePerNight
+                  "
+                  class="price-period"
+                  >/tun</span
+                >
               </div>
-              @if (property()?.averageRating) {
-                <div class="rating-display">
-                  <mat-icon>star</mat-icon>
-                  <span class="rating-value">{{
-                    property()?.averageRating | number: '1.1-1'
-                  }}</span>
-                  <span class="rating-count">({{ property()?.viewsCount }} ko'rish)</span>
-                </div>
-              }
+              <div *ngIf="property()?.averageRating" class="rating-display">
+                <mat-icon>star</mat-icon>
+                <span class="rating-value">{{ property()?.averageRating | number: '1.1-1' }}</span>
+                <span class="rating-count">({{ property()?.viewsCount }} ko'rish)</span>
+              </div>
             </div>
 
             <mat-divider></mat-divider>
@@ -261,14 +293,16 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                 Qulayliklar
               </h2>
               <div class="amenities-grid">
-                @for (amenity of amenitiesList(); track amenity.name) {
-                  <div class="amenity-item" [class.available]="amenity.available">
-                    <div class="amenity-icon">
-                      <mat-icon>{{ amenity.available ? 'check_circle' : 'cancel' }}</mat-icon>
-                    </div>
-                    <span class="amenity-label">{{ amenity.label }}</span>
+                <div
+                  *ngFor="let amenity of amenitiesList()"
+                  class="amenity-item"
+                  [class.available]="amenity.available"
+                >
+                  <div class="amenity-icon">
+                    <mat-icon>{{ amenity.available ? 'check_circle' : 'cancel' }}</mat-icon>
                   </div>
-                }
+                  <span class="amenity-label">{{ amenity.label }}</span>
+                </div>
               </div>
             </div>
 
@@ -301,12 +335,10 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                   <span class="location-label">Manzil</span>
                   <span class="location-value">{{ property()?.address }}</span>
                 </div>
-                @if (property()?.distanceToCityCenter) {
-                  <div class="location-item">
-                    <span class="location-label">Shahar markazigacha</span>
-                    <span class="location-value">{{ property()?.distanceToCityCenter }} km</span>
-                  </div>
-                }
+                <div *ngIf="property()?.distanceToCityCenter" class="location-item">
+                  <span class="location-label">Shahar markazigacha</span>
+                  <span class="location-value">{{ property()?.distanceToCityCenter }} km</span>
+                </div>
               </div>
             </div>
 
@@ -314,63 +346,69 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
             <div class="host-card">
               <div class="host-header">
                 <mat-icon>account_circle</mat-icon>
-                <h3>Host haqida</h3>
+                <h3>Uy egasi haqida</h3>
               </div>
               <div class="host-content">
                 <div class="host-avatar">
-                  <div class="avatar-placeholder">
+                  <img *ngIf="property()?.hostAvatarUrl" [src]="property()?.hostAvatarUrl" [alt]="property()?.hostName">
+                  <div *ngIf="!property()?.hostAvatarUrl" class="avatar-placeholder">
                     <mat-icon>person</mat-icon>
                   </div>
                 </div>
                 <div class="host-details">
-                  <h4 class="host-name">Host</h4>
+                  <h4 class="host-name">{{ property()?.hostName || 'Uy egasi' }}</h4>
                   <div class="host-badge">
                     <mat-icon>verified</mat-icon>
-                    <span>Tasdiqlangan host</span>
+                    <span>Tasdiqlangan uy egasi</span>
                   </div>
+                </div>
+                <div class="host-actions" style="margin-left: auto;">
+                  <button mat-icon-button color="primary" (click)="contactHost()" matTooltip="Xabar yuborish">
+                    <mat-icon>chat</mat-icon>
+                  </button>
                 </div>
               </div>
             </div>
 
             <!-- Actions -->
             <div class="actions-section">
-              @if (isAuthenticated()) {
-                @if (!isOwner()) {
-                  <div class="action-buttons">
-                    <button mat-raised-button class="action-btn primary" (click)="bookNow()">
-                      <mat-icon>calendar_today</mat-icon>
-                      Bron qilish
-                    </button>
-                    <button mat-stroked-button class="action-btn secondary" (click)="contactHost()">
-                      <mat-icon>message</mat-icon>
-                      Host bilan bog'lanish
-                    </button>
-                    <button
-                      class="favorite-btn"
-                      [class.active]="isFavorite()"
-                      (click)="toggleFavorite()"
-                      [matTooltip]="getFavoriteTooltip()"
-                    >
-                      <mat-icon>{{ isFavorite() ? 'favorite' : 'favorite_border' }}</mat-icon>
-                    </button>
-                  </div>
-                } @else {
-                  <div class="owner-actions">
-                    <button
-                      mat-raised-button
-                      class="edit-btn"
-                      [routerLink]="['/host/properties/edit', property()?.id]"
-                    >
-                      <mat-icon>edit</mat-icon>
-                      Tahrirlash
-                    </button>
-                    <button mat-stroked-button class="delete-btn" (click)="deleteProperty()">
-                      <mat-icon>delete</mat-icon>
-                      O'chirish
-                    </button>
-                  </div>
-                }
-              } @else {
+              <ng-container *ngIf="isAuthenticated() && !isOwner()">
+                <div class="action-buttons">
+                  <button mat-raised-button class="action-btn primary" (click)="bookNow()">
+                    <mat-icon>calendar_today</mat-icon>
+                    Bron qilish
+                  </button>
+                  <button mat-stroked-button class="action-btn secondary" (click)="contactHost()">
+                    <mat-icon>message</mat-icon>
+                    Uy egasi bilan bog'lanish
+                  </button>
+                  <button
+                    class="favorite-btn"
+                    [class.active]="isFavorite()"
+                    (click)="toggleFavorite()"
+                    [matTooltip]="getFavoriteTooltip()"
+                  >
+                    <mat-icon>{{ isFavorite() ? 'favorite' : 'favorite_border' }}</mat-icon>
+                  </button>
+                </div>
+              </ng-container>
+              <ng-container *ngIf="isAuthenticated() && isOwner()">
+                <div class="owner-actions">
+                  <button
+                    mat-raised-button
+                    class="edit-btn"
+                    [routerLink]="['/host/properties/edit', property()?.id]"
+                  >
+                    <mat-icon>edit</mat-icon>
+                    Tahrirlash
+                  </button>
+                  <button mat-stroked-button class="delete-btn" (click)="deleteProperty()">
+                    <mat-icon>delete</mat-icon>
+                    O'chirish
+                  </button>
+                </div>
+              </ng-container>
+              <ng-container *ngIf="!isAuthenticated()">
                 <div class="auth-prompt">
                   <mat-icon>login</mat-icon>
                   <p>Bron qilish yoki aloqa uchun tizimga kiring</p>
@@ -378,20 +416,21 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                     Kirish
                   </button>
                 </div>
-              }
+              </ng-container>
             </div>
 
             <!-- Booking Panel -->
-            @if (
-              isAuthenticated() &&
-              !isOwner() &&
-              property()?.listingType === ListingType.ShortTermRent
-            ) {
-              <app-booking-panel [property]="property()!"></app-booking-panel>
-            }
+            <app-booking-panel
+              *ngIf="
+                isAuthenticated() &&
+                !isOwner() &&
+                property()?.listingType === ListingType.ShortTermRent
+              "
+              [property]="property()!"
+            ></app-booking-panel>
           </div>
         </div>
-      }
+      </ng-template>
     </div>
   `,
   styles: [
@@ -687,6 +726,30 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         line-height: 1.3;
       }
 
+      .location-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-top: 12px;
+      }
+
+      .btn-pdf {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #ef4444 !important;
+        border-color: rgba(239, 68, 68, 0.2) !important;
+        background: rgba(239, 68, 68, 0.05) !important;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+
+      .btn-pdf:hover {
+        background: rgba(239, 68, 68, 0.1) !important;
+        border-color: #ef4444 !important;
+      }
+
       .location {
         display: flex;
         align-items: center;
@@ -926,6 +989,17 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         display: flex;
         align-items: center;
         gap: 16px;
+      }
+
+      .host-avatar {
+        flex-shrink: 0;
+      }
+
+      .host-avatar img {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        object-fit: cover;
       }
 
       .avatar-placeholder {
@@ -1252,6 +1326,7 @@ export class PropertyDetailComponent {
   private favoritesService = inject(FavoritesService);
   private dialog = inject(MatDialog);
   private toastService = inject(ToastService);
+  private imageOptimizationService = inject(ImageOptimizationService);
 
   property = this.propertyService.currentProperty;
   loading = this.propertyService.loading;
@@ -1263,17 +1338,76 @@ export class PropertyDetailComponent {
     { initialValue: this.route.snapshot.paramMap.get('id') },
   );
 
+  exportToPDF() {
+    const prop = this.property();
+    if (!prop) return;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const html = `
+      <html>
+        <head>
+          <title>${prop.title} - Mulkchi Hisoboti</title>
+          <style>
+            body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; }
+            .header { border-bottom: 2px solid #1b3a6b; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+            .logo { font-size: 24px; font-weight: bold; color: #1b3a6b; }
+            .title { font-size: 28px; margin: 20px 0; color: #0f172a; }
+            .price { font-size: 24px; color: #1b3a6b; font-weight: bold; margin-bottom: 10px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 30px 0; }
+            .info-item { padding: 15px; background: #f8fafc; border-radius: 8px; }
+            .label { font-size: 12px; color: #64748b; text-transform: uppercase; margin-bottom: 5px; }
+            .value { font-size: 16px; font-weight: 600; }
+            .description { line-height: 1.6; color: #475569; margin: 30px 0; }
+            .footer { margin-top: 50px; font-size: 12px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo">Mulkchi</div>
+            <div>${new Date().toLocaleDateString()}</div>
+          </div>
+          <h1 class="title">${prop.title}</h1>
+          <div class="price">${prop.salePrice || prop.monthlyRent || prop.pricePerNight} UZS</div>
+          <p><b>Manzil:</b> ${prop.address}, ${prop.district}, ${prop.city}</p>
+          
+          <div class="info-grid">
+            <div class="info-item"><div class="label">Xonalar</div><div class="value">${prop.numberOfBedrooms}</div></div>
+            <div class="info-item"><div class="label">Maydoni</div><div class="value">${prop.area} m²</div></div>
+            <div class="info-item"><div class="label">Mulk turi</div><div class="value">${prop.type}</div></div>
+            <div class="info-item"><div class="label">Viloyat</div><div class="value">${prop.region}</div></div>
+          </div>
+          
+          <h3>Mulk tavsifi</h3>
+          <div class="description">${prop.description}</div>
+          
+          <div class="footer">
+            Ushbu hisobot Mulkchi platformasi orqali avtomatik shakllantirildi. <br>
+            © 2026 Mulkchi. Barcha huquqlar himoyalangan.
+          </div>
+          <script>window.onload = function() { window.print(); }</script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+  }
+
   currentImage = computed(() => {
     const prop = this.property();
     if (prop?.images && prop.images.length > 0) {
       const image = prop.images[this.currentImageIndex()];
-      return image.url || image.imageUrl || '';
+      const url = image.url || image.imageUrl || '';
+      return this.imageOptimizationService.getOptimizedImage(url, 1200, 800);
     }
-    return null;
+    return 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=1200&auto=format&fit=crop';
   });
 
   getThumbnailUrl(image: PropertyImage): string {
-    return image.thumbnailUrl || image.url || image.imageUrl || '';
+    const url = image.thumbnailUrl || image.url || image.imageUrl || '';
+    return this.imageOptimizationService.getOptimizedImage(url, 200, 150);
   }
 
   isAuthenticated = this.authService.isAuthenticated;
@@ -1404,7 +1538,18 @@ export class PropertyDetailComponent {
       return;
     }
 
-    this.toastService.info('Xabar yuborish oqimi shu sahifaga ulanmoqda.');
+    const prop = this.property();
+    if (prop?.hostId) {
+      void this.router.navigate(['/messages'], {
+        queryParams: { 
+          userId: prop.hostId,
+          userName: prop.hostName || 'Host',
+          userAvatar: prop.hostAvatarUrl || ''
+        }
+      });
+    } else {
+      this.toastService.error("Host ma'lumotlari topilmadi.");
+    }
   }
 
   toggleFavorite(): void {

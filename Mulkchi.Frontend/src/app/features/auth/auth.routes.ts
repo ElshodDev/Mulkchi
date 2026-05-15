@@ -9,9 +9,8 @@ export const AUTH_ROUTES: Routes = [
   },
   {
     path: 'register',
-    loadComponent: () =>
-      import('./register/register.component').then((module) => module.RegisterComponent),
-    title: "Ro'yxatdan o'tish",
+    redirectTo: 'login',
+    pathMatch: 'full'
   },
   {
     path: 'forgot-password',

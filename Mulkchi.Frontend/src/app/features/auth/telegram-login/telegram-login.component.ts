@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { TelegramAuthService } from '../../../core/services/telegram-auth.service';
 
 @Component({
@@ -19,7 +19,7 @@ import { TelegramAuthService } from '../../../core/services/telegram-auth.servic
                 d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.927 13.78l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.83.779h-.01z"
               />
             </svg>
-            Telegram orqali kirish
+            {{ actionText() }}
           }
         </button>
       }
@@ -259,6 +259,7 @@ import { TelegramAuthService } from '../../../core/services/telegram-auth.servic
   ],
 })
 export class TelegramLoginComponent implements OnInit, OnDestroy {
+  actionText = input<string>('Telegram orqali kirish');
   loading = signal(false);
   deepLink = signal<string | null>(null);
 

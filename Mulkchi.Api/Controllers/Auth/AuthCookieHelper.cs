@@ -32,8 +32,8 @@ internal static class AuthCookieHelper
         {
             Path = "/",
             HttpOnly = false,
-            Secure = true,
-            SameSite = SameSiteMode.Strict,
+            Secure = false,
+            SameSite = SameSiteMode.Lax,
             Expires = DateTimeOffset.UtcNow.AddDays(-1)
         };
 
@@ -71,8 +71,8 @@ internal static class AuthCookieHelper
     {
         Path = "/",
         HttpOnly = true,
-        Secure = true,
-        SameSite = SameSiteMode.Strict,
+        Secure = false,
+        SameSite = SameSiteMode.Lax,
         Expires = expiresAt
     };
 
@@ -80,8 +80,8 @@ internal static class AuthCookieHelper
     {
         Path = "/",
         HttpOnly = false,
-        Secure = true,
-        SameSite = SameSiteMode.Strict,
+        Secure = false,
+        SameSite = SameSiteMode.Lax,
         Expires = expiresAt
     };
 
@@ -89,8 +89,8 @@ internal static class AuthCookieHelper
     {
         Path = "/",
         HttpOnly = true,
-        Secure = true,
-        SameSite = SameSiteMode.Strict,
+        Secure = false,
+        SameSite = SameSiteMode.Lax,
         Expires = expiresAt
     };
 

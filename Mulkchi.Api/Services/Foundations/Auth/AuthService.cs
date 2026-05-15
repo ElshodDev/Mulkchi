@@ -11,6 +11,7 @@ using Mulkchi.Api.Models.Foundations.Auth.Exceptions;
 using Mulkchi.Api.Models.Foundations.Users;
 using Mulkchi.Api.Models.Foundations.Users.Exceptions;
 using Microsoft.Extensions.Configuration;
+using System.Collections.Concurrent;
 
 namespace Mulkchi.Api.Services.Foundations.Auth;
 
@@ -28,6 +29,9 @@ public partial class AuthService : IAuthService
     private readonly IConfiguration configuration;
     private readonly IHttpClientFactory httpClientFactory;
     private readonly IRefreshTokenGuard refreshTokenGuard;
+
+    // In-memory session storage for Email OTPs
+    private static readonly ConcurrentDictionary<string, EmailAuthSession> _emailSessions = new();
 
     public AuthService(
         IStorageBroker storageBroker,
@@ -341,32 +345,6 @@ public partial class AuthService : IAuthService
             $"<p>If you did not request a password reset, please ignore this email.</p>");
     }
 
-    private static void ValidateEmail(string email)
-    {
-        if (string.IsNullOrWhiteSpace(email))
-            throw new InvalidAuthException("Email is required.");
-
-        if (!email.Contains("@"))
-            throw new InvalidAuthException("Invalid email format.");
-    }
-
-    private static void ValidateResetPasswordRequest(string token, string newPassword)
-    {
-        if (string.IsNullOrWhiteSpace(token))
-            throw new InvalidAuthException("Reset token is required.");
-
-        if (string.IsNullOrWhiteSpace(newPassword))
-            throw new InvalidAuthException("New password is required.");
-
-        if (newPassword.Length < 8)
-            throw new InvalidAuthException("Password must be at least 8 characters long.");
-
-        if (!System.Text.RegularExpressions.Regex.IsMatch(
-                newPassword,
-                @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$"))
-            throw new InvalidAuthException(
-                "Password must contain uppercase, lowercase, digit, and special character.");
-    }
 
     private static string GenerateSecureRefreshToken()
     {
@@ -429,18 +407,6 @@ public partial class AuthService : IAuthService
         await this.storageBroker.UpdateUserAsync(storageUser);
     }
 
-    private static void ValidateUserId(Guid userId)
-    {
-        if (userId == Guid.Empty)
-            throw new InvalidAuthException("User ID is required.");
-    }
-
-    private static void ValidateUpdateProfileRequest(UpdateProfileRequest request)
-    {
-        if (request == null)
-            throw new InvalidAuthException("Update profile request is required.");
-    }
-
     // ─── Email Verification ──────────────────────────────────────────────────
 
     public ValueTask VerifyEmailAsync(string token) =>
@@ -498,8 +464,127 @@ public partial class AuthService : IAuthService
             $"<p>Email manzilingizni tasdiqlash uchun quyidagi havolani bosing:</p>" +
             $"<p><a href='{verifyUrl}'>Email tasdiqlash</a></p>" +
             $"<p>Bu havola 24 soat davomida amal qiladi.</p>" +
-            $"<hr/>" +
             $"<p>If you did not create an account, please ignore this email.</p>");
+    }
+
+    // ─── Passwordless Email Auth ─────────────────────────────────────────────
+
+    public ValueTask<string> SendEmailCodeAsync(string email) =>
+        TryCatch(async () =>
+        {
+            ValidateEmail(email);
+
+            string code = GenerateOtpCode();
+            string sessionId = GenerateSessionId();
+            DateTimeOffset now = this.dateTimeBroker.GetCurrentDateTimeOffset();
+
+            var session = new EmailAuthSession
+            {
+                SessionId = sessionId,
+                Email = email.ToLowerInvariant(),
+                Code = HashToken(code),
+                IsVerified = false,
+                CreatedAt = now.UtcDateTime,
+                ExpiresAt = now.AddMinutes(10).UtcDateTime
+            };
+
+            _emailSessions.TryAdd(sessionId, session);
+
+            // 10 daqiqadan keyin session ni o'chirish
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(TimeSpan.FromMinutes(10));
+                _emailSessions.TryRemove(sessionId, out _);
+            });
+
+            // Send via email broker
+            var isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+            
+            try
+            {
+                await this.emailBroker.SendEmailAsync(
+                    email,
+                    "Tasdiqlash kodi / Verification Code",
+                    $"<h2>Mulkchi.uz</h2>" +
+                    $"<p>Sizning tasdiqlash kodingiz: <b>{code}</b></p>" +
+                    $"<p>Kod 10 daqiqa davomida amal qiladi.</p>");
+            }
+            catch (Exception ex) when (isDevelopment)
+            {
+                // Fallback for development if SMTP is not configured
+                this.loggingBroker.LogError(ex);
+                this.loggingBroker.LogWarning($"Development Mode: Email failed to send. Code is: {code}");
+                throw new InvalidAuthException($"Google bilan xatolik: {ex.Message}. \n(DEV REJIM UCHUN KOD: {code}, SESSION: {sessionId})");
+            }
+
+            return sessionId;
+        });
+
+    public ValueTask<AuthResponse> VerifyEmailCodeAsync(string sessionId, string code) =>
+        TryCatch(async () =>
+        {
+            if (string.IsNullOrWhiteSpace(sessionId) || string.IsNullOrWhiteSpace(code))
+                throw new InvalidAuthException("SessionId and Code are required.");
+
+            if (!_emailSessions.TryGetValue(sessionId, out var session))
+                throw new InvalidAuthException("Session expired or invalid.");
+
+            if (DateTime.UtcNow > session.ExpiresAt)
+            {
+                _emailSessions.TryRemove(sessionId, out _);
+                throw new InvalidAuthException("Session expired.");
+            }
+
+            if (session.Code != HashToken(code))
+                throw new InvalidAuthException("Invalid verification code.");
+
+            session.IsVerified = true;
+            _emailSessions.TryRemove(sessionId, out _);
+
+            User? existingUser = await this.storageBroker.SelectUserByEmailAsync(session.Email);
+            User user;
+
+            DateTimeOffset now = this.dateTimeBroker.GetCurrentDateTimeOffset();
+
+            if (existingUser is not null)
+            {
+                user = existingUser;
+                if (!user.EmailConfirmed || !user.IsVerified)
+                {
+                    user.EmailConfirmed = true;
+                    user.IsVerified = true;
+                    user.UpdatedDate = now;
+                    user = await this.storageBroker.UpdateUserAsync(user);
+                }
+            }
+            else
+            {
+                // Auto-register user
+                user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    FirstName = session.Email.Split('@')[0],
+                    LastName = string.Empty,
+                    Email = session.Email,
+                    Phone = string.Empty,
+                    PasswordHash = string.Empty, // No password needed
+                    EmailConfirmed = true,
+                    IsVerified = true,
+                    Role = UserRole.Guest,
+                    CreatedDate = now,
+                    UpdatedDate = now
+                };
+
+                user = await this.storageBroker.InsertUserAsync(user);
+            }
+
+            return await GenerateAndSaveAuthResponseAsync(user);
+        });
+
+    private static string GenerateSessionId()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(16);
+        return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 
     // ─── Phone OTP ───────────────────────────────────────────────────────────

@@ -7,11 +7,26 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
 
+/** API paths where 404 should NOT navigate to /not-found page */
+const SKIP_404_NAVIGATION_PATHS = [
+  '/properties/',
+  '/users/',
+  '/notifications/',
+  '/favorites',
+  '/bookings',
+  '/reviews',
+  '/messages',
+];
+
 function shouldRetryRequest(req: HttpRequest<unknown>, error: HttpErrorResponse): boolean {
   return (
     (req.method === 'GET' || req.method === 'HEAD') &&
     (error.status === 0 || error.status >= 500)
   );
+}
+
+function isDataEndpoint404(url: string): boolean {
+  return SKIP_404_NAVIGATION_PATHS.some((path) => url.includes(path));
 }
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
@@ -70,8 +85,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
             Object.values(validationErrors)
               .flat()
               .join(' ')) ||
+          error.error?.error?.message ||
           error.error?.message ||
-          "So'rovni qayta tekshirib ko‘ring.";
+          "So'rovni qayta tekshirib ko'ring.";
 
         toastService.warning(validationMessage);
       } else if (error.status === 401) {
@@ -81,13 +97,14 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         });
       } else if (error.status === 403) {
         void router.navigate(['/forbidden']);
-      } else if (error.status === 404 && isApiRequest) {
+      } else if (error.status === 404 && isApiRequest && !isDataEndpoint404(req.url)) {
+        // Only navigate to not-found for page-level 404s, not API data errors
         void router.navigate(['/not-found']);
       } else if (error.status >= 500) {
-        toastService.error('Kutilmagan xatolik yuz berdi. Bir ozdan keyin qayta urinib ko‘ring.');
+        toastService.error("Kutilmagan xatolik yuz berdi. Bir ozdan keyin qayta urinib ko'ring.");
         void router.navigate(['/server-error']);
       } else if (error.status === 0) {
-        toastService.error('Internet ulanishi topilmadi. Tarmoqni tekshirib ko‘ring.');
+        toastService.error("Internet ulanishi topilmadi. Tarmoqni tekshirib ko'ring.");
       }
 
       return throwError(() => error);

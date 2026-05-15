@@ -95,34 +95,73 @@ export class ChatService {
       .withUrl(this.hubUrl, {
         accessTokenFactory: () => this.getAccessToken() ?? '',
       })
-      .withAutomaticReconnect([0, 1000, 5000, 10000])
-      .configureLogging(signalR.LogLevel.Information)
+      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000, 60000]) // Progressive backoff: 0s, 2s, 5s, 10s, 30s, 60s
+      .configureLogging(signalR.LogLevel.Warning) // Reduce noise (Information -> Warning)
       .build();
+
+    // Set timeout to 60 seconds (default is 30)
+    this.hubConnection.serverTimeoutInMilliseconds = 60000;
 
     // Handle incoming messages
     this.hubConnection.on('ReceiveMessage', (message: Message) => {
       this.handleIncomingMessage(message);
     });
 
-    // Handle connection events
-    this.hubConnection.onreconnecting(() => {
+    // Handle message sent confirmation
+    this.hubConnection.on('MessageSent', (message: Message) => {
+      this.handleIncomingMessage(message);
+    });
+
+    // Handle message read status
+    this.hubConnection.on('MessageRead', (data: { messageId: string, readAt: string }) => {
+      this._currentMessages.update(msgs => 
+        msgs.map(m => m.id === data.messageId ? { ...m, isRead: true, readAt: data.readAt } : m)
+      );
+    });
+
+    // Handle typing indicator
+    this.hubConnection.on('UserTyping', (userId: string, isTyping: boolean) => {
+      // Logic for typing indicator can be added here
+    });
+
+    // Handle reconnecting
+    this.hubConnection.onreconnecting((error) => {
+      console.warn('[Chat] Reconnecting...', error?.message);
       this._isConnected.set(false);
     });
 
-    this.hubConnection.onreconnected(() => {
+    // Handle reconnected
+    this.hubConnection.onreconnected((connectionId) => {
+      console.log('[Chat] Reconnected successfully', connectionId);
       this._isConnected.set(true);
     });
 
-    this.hubConnection.onclose(() => {
+    // Handle close (final disconnection)
+    this.hubConnection.onclose((error) => {
+      console.warn('[Chat] Connection closed', error?.message);
       this._isConnected.set(false);
+      // Try to reconnect after delay if we're still authenticated
+      setTimeout(() => {
+        if (this.isAuthenticated() && !this.hubConnection) {
+          void this.tryConnect();
+        }
+      }, 5000);
     });
 
     try {
       await this.hubConnection.start();
       this._isConnected.set(true);
-    } catch {
+      console.log('[Chat] Connected successfully');
+    } catch (error) {
+      console.error('[Chat] Failed to start connection', error);
       this._isConnected.set(false);
       this.hubConnection = null;
+      // Retry after delay
+      setTimeout(() => {
+        if (this.isAuthenticated() && !this.hubConnection) {
+          void this.tryConnect();
+        }
+      }, 5000);
     }
   }
 
@@ -241,7 +280,7 @@ export class ChatService {
   getMessages(otherUserId: string): void {
     this._isLoading.set(true);
 
-    this.http.get<Message[]>(`${this.apiUrl}/${otherUserId}`).subscribe({
+    this.http.get<Message[]>(`${this.apiUrl}/conversation/${otherUserId}`).subscribe({
       next: (messages) => {
         this._currentMessages.set(messages);
         this._isLoading.set(false);
@@ -257,7 +296,7 @@ export class ChatService {
 
   // Mark messages as read
   markAsRead(otherUserId: string): void {
-    this.http.post(`${this.apiUrl}/${otherUserId}/read`, {}).subscribe({
+    this.http.put(`${this.apiUrl}/conversations/${otherUserId}/read-all`, {}).subscribe({
       next: () => {
         // Update unread count in conversations
         this._conversations.update((convs) =>

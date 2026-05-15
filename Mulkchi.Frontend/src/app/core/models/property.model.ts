@@ -5,13 +5,13 @@ export enum PropertyType {
   Land = 'Land',
   Villa = 'Villa',
   Cottage = 'Cottage',
-  Commercial = 'Commercial'
+  Commercial = 'Commercial',
 }
 
 export enum PropertyCategory {
   Residential = 'Residential',
   Commercial = 'Commercial',
-  Industrial = 'Industrial'
+  Industrial = 'Industrial',
 }
 
 export enum PropertyStatus {
@@ -19,19 +19,19 @@ export enum PropertyStatus {
   Active = 'Active',
   Sold = 'Sold',
   Rented = 'Rented',
-  Archived = 'Archived'
+  Archived = 'Archived',
 }
 
 export enum ListingType {
   Sale = 'Sale',
   Rent = 'Rent',
-  ShortTermRent = 'ShortTermRent'
+  ShortTermRent = 'ShortTermRent',
 }
 
 export enum Currency {
   UZS = 'UZS',
   USD = 'USD',
-  EUR = 'EUR'
+  EUR = 'EUR',
 }
 
 export enum UzbekistanRegion {
@@ -49,7 +49,7 @@ export enum UzbekistanRegion {
   Surxondaryo = 'Surxondaryo',
   Qashqadaryo = 'Qashqadaryo',
   Guliston = 'Guliston',
-  Nukus = 'Nukus'
+  Nukus = 'Nukus',
 }
 
 export interface Property {
@@ -75,7 +75,7 @@ export interface Property {
   mahalla?: string;
   latitude?: number;
   longitude?: number;
-  
+
   // Amenities
   hasWifi: boolean;
   hasParking: boolean;
@@ -85,7 +85,7 @@ export interface Property {
   isVacant: boolean;
   isFeatured: boolean;
   isVerified: boolean;
-  
+
   // Infrastructure
   hasMetroNearby: boolean;
   hasBusStop: boolean;
@@ -93,7 +93,7 @@ export interface Property {
   hasSchoolNearby: boolean;
   hasHospitalNearby: boolean;
   distanceToCityCenter: number;
-  
+
   // Comfort
   hasElevator: boolean;
   hasSecurity: boolean;
@@ -101,7 +101,7 @@ export interface Property {
   hasGas: boolean;
   hasFurniture: boolean;
   isRenovated: boolean;
-  
+
   // International standards
   hasAirConditioning: boolean;
   hasHeating: boolean;
@@ -112,24 +112,26 @@ export interface Property {
   isSelfCheckIn: boolean;
   isChildFriendly: boolean;
   isAccessible: boolean;
-  
+
   // Stats
   averageRating: number;
   viewsCount: number;
   favoritesCount: number;
-  
+
   // Relations
   hostId: string;
+  hostName?: string;
+  hostAvatarUrl?: string;
   currency: Currency;
   exchangeRate: number;
-  
+
   createdDate: Date;
   updatedDate: Date;
   deletedDate?: Date;
-  
+
   // Navigation
   images?: PropertyImage[];
-  
+
   // Additional image properties for API responses
   imageUrl?: string;
   mainImageUrl?: string;
@@ -146,16 +148,16 @@ export interface PropertyImage {
   id: string;
   propertyId: string;
   // Backend format (from LocalFileStorageBroker)
-  url: string;           // Full-size WebP URL
-  mediumUrl: string;     // Medium variant (800x600)
-  thumbnailUrl: string;  // Thumbnail variant (300x200)
+  url: string; // Full-size WebP URL
+  mediumUrl: string; // Medium variant (800x600)
+  thumbnailUrl: string; // Thumbnail variant (300x200)
   caption?: string;
   sortOrder: number;
-  isPrimary: boolean;    // Backend uses IsPrimary
+  isPrimary: boolean; // Backend uses IsPrimary
   createdDate: Date;
   // Legacy support
-  imageUrl?: string;     // For backwards compatibility
-  isMain?: boolean;      // For backwards compatibility
+  imageUrl?: string; // For backwards compatibility
+  isMain?: boolean; // For backwards compatibility
 }
 
 export interface PropertyCreateRequest {
@@ -178,14 +180,14 @@ export interface PropertyCreateRequest {
   mahalla?: string;
   latitude?: number;
   longitude?: number;
-  
+
   // Amenities
   hasWifi?: boolean;
   hasParking?: boolean;
   hasPool?: boolean;
   petsAllowed?: boolean;
   isInstantBook?: boolean;
-  
+
   // Infrastructure
   hasMetroNearby?: boolean;
   hasBusStop?: boolean;
@@ -193,7 +195,7 @@ export interface PropertyCreateRequest {
   hasSchoolNearby?: boolean;
   hasHospitalNearby?: boolean;
   distanceToCityCenter?: number;
-  
+
   // Comfort
   hasElevator?: boolean;
   hasSecurity?: boolean;
@@ -201,7 +203,7 @@ export interface PropertyCreateRequest {
   hasGas?: boolean;
   hasFurniture?: boolean;
   isRenovated?: boolean;
-  
+
   // International standards
   hasAirConditioning?: boolean;
   hasHeating?: boolean;
@@ -227,6 +229,9 @@ export interface PropertySearchParams {
   availableTo?: Date;
   page?: number;
   pageSize?: number;
+  latitude?: number;
+  longitude?: number;
+  radiusKm?: number;
 }
 
 import { ApiAuthResponse } from './api.models';
@@ -238,7 +243,7 @@ import { ApiAuthResponse } from './api.models';
 export interface PropertyCreateResponse {
   /** The newly created property listing */
   property: Property;
-  /** 
+  /**
    * New authentication tokens (only present if user was upgraded from Guest to Host).
    * When present, frontend should update stored tokens to access Host-only endpoints.
    */

@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,7 +10,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { RouterLink } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 import { Property, User } from '../../../core/models';
+import { AnalyticsService } from '../../../core/services/analytics.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { PropertyService } from '../../../core/services/property.service';
@@ -85,7 +89,7 @@ import { PropertyService } from '../../../core/services/property.service';
                   <mat-progress-spinner diameter="40"></mat-progress-spinner>
                 </div>
               } @else {
-                <table mat-table [dataSource]="users()">
+                <table mat-table [dataSource]="usersData">
                   <ng-container matColumnDef="user">
                     <th mat-header-cell *matHeaderCellDef>Foydalanuvchi</th>
                     <td mat-cell *matCellDef="let user">
@@ -180,7 +184,7 @@ import { PropertyService } from '../../../core/services/property.service';
                   <mat-progress-spinner diameter="40"></mat-progress-spinner>
                 </div>
               } @else {
-                <table mat-table [dataSource]="properties()">
+                <table mat-table [dataSource]="propertiesData">
                   <ng-container matColumnDef="property">
                     <th mat-header-cell *matHeaderCellDef>Mulk</th>
                     <td mat-cell *matCellDef="let property">
@@ -562,11 +566,14 @@ import { PropertyService } from '../../../core/services/property.service';
     `,
   ],
 })
-export class AdminDashboardComponent implements OnInit {
+export class AdminDashboardComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private propertyService = inject(PropertyService);
   private snackBar = inject(MatSnackBar);
   private confirmationService = inject(ConfirmationService);
+  private analyticsService = inject(AnalyticsService);
+  private http = inject(HttpClient);
+  private destroy$ = new Subject<void>();
 
   users = signal<User[]>([]);
   properties = signal<Property[]>([]);
@@ -580,23 +587,77 @@ export class AdminDashboardComponent implements OnInit {
   userColumns = ['user', 'role', 'phone', 'status', 'joined', 'actions'];
   propertyColumns = ['property', 'type', 'price', 'status', 'owner', 'actions'];
 
+  get usersData(): User[] {
+    return this.users();
+  }
+
+  get propertiesData(): Property[] {
+    return this.properties();
+  }
+
   ngOnInit(): void {
     this.loadDashboardData();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadDashboardData(): void {
     this.loading.set(true);
 
-    // Simulate loading data - would be replaced with actual API calls
-    setTimeout(() => {
-      this.users.set([]);
-      this.properties.set([]);
-      this.totalUsers.set(0);
-      this.totalProperties.set(0);
-      this.totalBookings.set(0);
-      this.totalRevenue.set(0);
-      this.loading.set(false);
-    }, 1000);
+    // Analytics overview
+    this.analyticsService
+      .getMarketOverview()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (overview) => {
+          this.totalProperties.set(overview.totalListings ?? 0);
+        },
+        error: () => {},
+      });
+
+    // Properties list
+    this.http
+      .get<any>(`${environment.apiUrl}/properties?page=1&pageSize=100`)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          this.properties.set(result.items ?? []);
+        },
+        error: () => {
+          this.properties.set([]);
+        },
+      });
+
+    // Users list (admin endpoint)
+    this.http
+      .get<any>(`${environment.apiUrl}/users?page=1&pageSize=100`)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          const list = Array.isArray(result) ? result : (result.items ?? []);
+          this.users.set(list);
+          this.totalUsers.set(list.length);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.users.set([]);
+          this.loading.set(false);
+        },
+      });
+
+    // Bookings count
+    this.http
+      .get<any>(`${environment.apiUrl}/bookings?page=1&pageSize=1`)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          this.totalBookings.set(result.totalCount ?? 0);
+        },
+        error: () => {},
+      });
   }
 
   getRoleLabel(role: string): string {
@@ -635,44 +696,67 @@ export class AdminDashboardComponent implements OnInit {
     return property.salePrice || property.monthlyRent || property.pricePerNight || 0;
   }
 
-  deleteUser(_id: string): void {
+  deleteUser(id: string): void {
     this.confirmationService
       .confirm({
         title: "Foydalanuvchini o'chirish",
-        message: 'Bu foydalanuvchini rostdan ham o‘chirmoqchimisiz?',
+        message: "Bu foydalanuvchini rostdan ham o'chirmoqchimisiz?",
         confirmLabel: "O'chirish",
         tone: 'danger',
       })
       .subscribe((confirmed) => {
-        if (!confirmed) {
-          return;
-        }
-
-        this.snackBar.open("Foydalanuvchi o'chirildi", 'Yopish', { duration: 3000 });
-        this.loadDashboardData();
+        if (!confirmed) return;
+        this.http
+          .delete(`${environment.apiUrl}/users/${id}`)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.snackBar.open("Foydalanuvchi o'chirildi", 'Yopish', { duration: 3000 });
+              this.loadDashboardData();
+            },
+            error: () => {
+              this.snackBar.open("O'chirishda xato yuz berdi", 'Yopish', { duration: 3000 });
+            },
+          });
+      });
+  }
+  verifyProperty(id: string): void {
+    this.http
+      .patch(`${environment.apiUrl}/properties/${id}/verify`, {})
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.snackBar.open('Mulk tasdiqlandi', 'Yopish', { duration: 3000 });
+          this.loadDashboardData();
+        },
+        error: () => {
+          this.snackBar.open('Tasdiqlashda xato yuz berdi', 'Yopish', { duration: 3000 });
+        },
       });
   }
 
-  verifyProperty(_id: string): void {
-    this.snackBar.open('Mulk tasdiqlandi', 'Yopish', { duration: 3000 });
-    this.loadDashboardData();
-  }
-
-  deleteProperty(_id: string): void {
+  deleteProperty(id: string): void {
     this.confirmationService
       .confirm({
         title: "Mulkni o'chirish",
-        message: 'Bu mulkni rostdan ham o‘chirmoqchimisiz?',
+        message: "Bu mulkni rostdan ham o'chirmoqchimisiz?",
         confirmLabel: "O'chirish",
         tone: 'danger',
       })
       .subscribe((confirmed) => {
-        if (!confirmed) {
-          return;
-        }
-
-        this.snackBar.open("Mulk o'chirildi", 'Yopish', { duration: 3000 });
-        this.loadDashboardData();
+        if (!confirmed) return;
+        this.http
+          .delete(`${environment.apiUrl}/properties/${id}`)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.snackBar.open("Mulk o'chirildi", 'Yopish', { duration: 3000 });
+              this.loadDashboardData();
+            },
+            error: () => {
+              this.snackBar.open("O'chirishda xato yuz berdi", 'Yopish', { duration: 3000 });
+            },
+          });
       });
   }
 }

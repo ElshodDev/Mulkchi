@@ -1,10 +1,14 @@
-﻿namespace Mulkchi.Api.Tests;
+namespace Mulkchi.Api.Tests;
 
-public class UnitTest1
+/// <summary>
+/// Test loyihasi smoke-testi.
+/// </summary>
+public class SmokeTests
 {
     [Fact]
-    public void Test1()
+    public void TestProject_ShouldCompileAndRun()
     {
-
+        // Arrange & Act & Assert
+        true.Should().BeTrue("test loyihasi muvaffaqiyatli kompilatsiya qilinishi kerak.");
     }
 }

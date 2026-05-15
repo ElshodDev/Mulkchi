@@ -80,6 +80,9 @@ public class Startup
                     System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
                 options.JsonSerializerOptions.DefaultIgnoreCondition =
                     System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+                options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+                options.JsonSerializerOptions.PropertyNamingPolicy = 
+                    System.Text.Json.JsonNamingPolicy.CamelCase;
                 options.JsonSerializerOptions.Converters.Add(
                     new System.Text.Json.Serialization.JsonStringEnumConverter());
             });
@@ -142,9 +145,6 @@ public class Startup
         // Add global exception handling
         app.UseGlobalExceptionHandling();
 
-        // Add rate limiting middleware
-        app.UseMiddleware<RateLimitMiddleware>();
-
         // Add request localization
         var supportedCultures = new[] { "uz", "ru", "en" };
         app.UseRequestLocalization(new RequestLocalizationOptions
@@ -160,6 +160,10 @@ public class Startup
 
         app.UseRouting();
         app.UseCors(env.IsDevelopment() ? "AllowAngular" : "Production");
+        
+        // Add rate limiting middleware AFTER CORS so 429 responses get CORS headers
+        app.UseMiddleware<RateLimitMiddleware>();
+        
         app.UseResponseCaching();
         app.UseAuthentication();
         app.UseAuthorization();
@@ -357,10 +361,9 @@ public class Startup
         services.AddTransient<Mulkchi.Api.Brokers.Tokens.ITokenBroker, Mulkchi.Api.Brokers.Tokens.TokenBroker>();
         services.AddSingleton<IFileStorageBroker, LocalFileStorageBroker>();
 
-        // Rate limiting — singleton because the in-memory window state must persist
-        // across requests.  Swap InMemoryRateLimitService for a Redis-backed
-        // implementation here when scaling out to multiple pods.
-        services.AddSingleton<IRateLimitService, InMemoryRateLimitService>();
+        // Rate limiting — using DistributedRateLimitService for scale-out support
+        // backed by IDistributedCache.
+        services.AddSingleton<IRateLimitService, DistributedRateLimitService>();
     }
 
     private void AddFoundationServices(IServiceCollection services)
@@ -400,12 +403,7 @@ public class Startup
         services.AddScoped<IAnalyticsService, AnalyticsService>();
         services.AddScoped<IPriceRecommendationService, PriceRecommendationService>();
         
-        // Clean Architecture: Repository Pattern
-        services.AddScoped(typeof(Application.Interfaces.IRepository<>), typeof(Infrastructure.Repositories.Repository<>));
-        services.AddScoped<Application.Interfaces.IUnitOfWork, Infrastructure.Repositories.UnitOfWork>();
-        
-        // Clean Architecture: Application Services
-        services.AddScoped<Application.Interfaces.IPropertyService, Application.Services.PropertyService>();
+
 
         // Configure EmailSettings
         services.Configure<EmailSettings>(this.configuration.GetSection("EmailSettings"));
@@ -444,10 +442,10 @@ public class Startup
         var signalRBuilder = services.AddSignalR(options =>
         {
             options.EnableDetailedErrors = this.environment.IsDevelopment();
-            options.MaximumReceiveMessageSize = 64 * 1024;
+            options.MaximumReceiveMessageSize = 128 * 1024; // Increased for larger payloads
             options.StreamBufferCapacity = 10;
             options.ClientTimeoutInterval = TimeSpan.FromSeconds(120);
-            options.KeepAliveInterval = TimeSpan.FromSeconds(30);
+            options.KeepAliveInterval = TimeSpan.FromSeconds(15); // More frequent pings
             options.HandshakeTimeout = TimeSpan.FromSeconds(30);
         });
 

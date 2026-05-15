@@ -36,34 +36,37 @@ public class PropertyImagesUploadController : ControllerBase
 
     [HttpPost("upload")]
     [Authorize(Roles = "Host,Admin")]
-    public async Task<ActionResult<PropertyImage>> UploadPropertyImage(IFormFile file, Guid propertyId)
+    public async Task<ActionResult<PropertyImage>> UploadPropertyImage([FromForm] PropertyImageUploadRequest request)
     {
         try
         {
+            if (request.File == null || request.PropertyId == Guid.Empty)
+                return BadRequest(new { message = "Fayl va PropertyId majburiy." });
+
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userIdClaim is null || !Guid.TryParse(userIdClaim, out Guid currentUserId))
                 return Unauthorized();
 
-            ActionResult ownershipResult = await VerifyPropertyOwnershipAsync(propertyId, currentUserId);
+            ActionResult ownershipResult = await VerifyPropertyOwnershipAsync(request.PropertyId, currentUserId);
             if (ownershipResult is not OkResult)
                 return ownershipResult;
 
             // Enforce 20-image limit per property
             var existingImages = this.propertyImageService.RetrieveAllPropertyImages()
-                .Where(img => img.PropertyId == propertyId);
+                .Where(img => img.PropertyId == request.PropertyId);
             int currentCount = existingImages.Count();
             if (currentCount >= MaxImagesPerProperty)
                 return BadRequest(new { message = $"Har bir mulk uchun maksimal {MaxImagesPerProperty} ta rasm yuklab olish mumkin." });
 
             // Upload file and create WebP variants after ownership is verified
-            ImageVariants variants = await fileStorageBroker.UploadImageVariantsAsync(file, "property-images");
+            ImageVariants variants = await fileStorageBroker.UploadImageVariantsAsync(request.File, "property-images");
 
             bool isFirst = currentCount == 0;
 
             var propertyImage = new PropertyImage
             {
                 Id = Guid.NewGuid(),
-                PropertyId = propertyId,
+                PropertyId = request.PropertyId,
                 Url = variants.Full,
                 MediumUrl = variants.Medium,
                 ThumbnailUrl = variants.Thumbnail,
@@ -156,4 +159,10 @@ public class PropertyImagesUploadController : ControllerBase
 
         return Ok();
     }
+}
+
+public class PropertyImageUploadRequest
+{
+    public IFormFile File { get; set; }
+    public Guid PropertyId { get; set; }
 }

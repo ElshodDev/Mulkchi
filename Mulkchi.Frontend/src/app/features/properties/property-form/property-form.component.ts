@@ -1,30 +1,32 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, signal, inject, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatStepperModule } from '@angular/material/stepper';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import {
-  ListingType,
-  Property,
-  PropertyCategory,
-  PropertyType,
-  UzbekistanRegion,
-} from '../../../core/models';
-import { AuthService } from '../../../core/services/auth.service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { trigger, transition, style, animate, query, group } from '@angular/animations';
+
 import { PropertyService } from '../../../core/services/property.service';
-import {
-  ImageUploadComponent,
-  UploadedImage,
-} from '../../../shared/components/image-upload/image-upload.component';
+import { AuthService } from '../../../core/services/auth.service';
+import { 
+  Property, 
+  PropertyType, 
+  PropertyCategory, 
+  ListingType, 
+  Currency, 
+  UzbekistanRegion 
+} from '../../../core/models/property.model';
+import { UploadedImage } from '../../../shared/components/image-upload/image-upload.component';
+
+import { StepBasicInfoComponent } from './steps/step-basic-info.component';
+import { StepLocationComponent } from './steps/step-location.component';
+import { StepDetailsComponent } from './steps/step-details.component';
+import { StepAmenitiesComponent } from './steps/step-amenities.component';
+import { StepImagesComponent } from './steps/step-images.component';
 
 @Component({
   selector: 'app-property-form',
@@ -32,458 +34,241 @@ import {
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    RouterLink,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatInputModule,
-    MatSelectModule,
-    MatCheckboxModule,
-    MatStepperModule,
-    MatChipsModule,
+    MatSnackBarModule,
     MatProgressSpinnerModule,
-    ImageUploadComponent,
+    StepBasicInfoComponent,
+    StepLocationComponent,
+    StepDetailsComponent,
+    StepAmenitiesComponent,
+    StepImagesComponent,
   ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  animations: [],
   template: `
-    <div class="property-form-container">
-      <div class="container">
-        <div class="page-header">
-          <h1>{{ isEditMode() ? 'Mulkni tahrirlash' : 'Yangi mulk qo'shish' }}</h1>
-          <p>E'lon ma'lumotlarini to'ldiring</p>
+    <div class="wizard-wrapper">
+      <!-- Progress Sidebar -->
+      <aside class="wizard-sidebar">
+        <div class="sidebar-header">
+          <div class="logo-box">
+            <mat-icon>home_work</mat-icon>
+          </div>
+          <div class="header-text">
+            <h2>Mulkchi</h2>
+            <p>E'lon yaratish</p>
+          </div>
         </div>
 
-        @if (loading()) {
-          <div class="loading-container">
-            <mat-progress-spinner diameter="50"></mat-progress-spinner>
-            <p>Yuklanmoqda...</p>
+        <nav class="step-nav">
+          <div 
+            *ngFor="let step of steps; let i = index" 
+            class="step-item"
+            [class.active]="currentStep() === i"
+            [class.completed]="currentStep() > i"
+            (click)="goToStep(i)"
+          >
+            <div class="step-indicator">
+              <span *ngIf="currentStep() <= i">{{ i + 1 }}</span>
+              <mat-icon *ngIf="currentStep() > i">check</mat-icon>
+            </div>
+            <div class="step-label">
+              <span class="label-title">{{ step.label }}</span>
+              <span class="label-desc">{{ step.desc }}</span>
+            </div>
           </div>
-        } @else {
-          <mat-card>
-            <mat-stepper linear #stepper>
-              <!-- Step 1: Basic Info -->
-              <mat-step [stepControl]="basicInfoForm" label="Asosiy ma'lumotlar">
-                <form [formGroup]="basicInfoForm" class="step-form">
-                  <div class="form-row">
-                    <mat-form-field appearance="outline" class="full-width">
-                      <mat-label>Sarlavha</mat-label>
-                      <input
-                        matInput
-                        formControlName="title"
-                        placeholder="Masalan: 3 xonali kvartira"
-                      />
-                      @if (
-                        basicInfoForm.get('title')?.invalid && basicInfoForm.get('title')?.touched
-                      ) {
-                        <mat-error>Sarlavha kiritilishi shart</mat-error>
-                      }
-                    </mat-form-field>
-                  </div>
+        </nav>
 
-                  <div class="form-row two-col">
-                    <mat-form-field appearance="outline">
-                      <mat-label>Mulk turi</mat-label>
-                      <mat-select formControlName="type">
-                        @for (type of propertyTypes; track type.value) {
-                          <mat-option [value]="type.value">{{ type.label }}</mat-option>
-                        }
-                      </mat-select>
-                    </mat-form-field>
+        <div class="sidebar-footer">
+          <p>Yordam kerakmi? <b>+998 90 123 45 67</b></p>
+        </div>
+      </aside>
 
-                    <mat-form-field appearance="outline">
-                      <mat-label>Kategoriya</mat-label>
-                      <mat-select formControlName="category">
-                        @for (cat of categories; track cat.value) {
-                          <mat-option [value]="cat.value">{{ cat.label }}</mat-option>
-                        }
-                      </mat-select>
-                    </mat-form-field>
-                  </div>
+      <!-- Content Area -->
+      <main class="wizard-content">
+        <div class="step-container">
+          <div class="loading-overlay" *ngIf="loading()">
+            <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
+          </div>
 
-                  <div class="form-row two-col">
-                    <mat-form-field appearance="outline">
-                      <mat-label>E'lon turi</mat-label>
-                      <mat-select formControlName="listingType">
-                        @for (type of listingTypes; track type.value) {
-                          <mat-option [value]="type.value">{{ type.label }}</mat-option>
-                        }
-                      </mat-select>
-                    </mat-form-field>
+          <div [ngSwitch]="currentStep()">
+            <app-step-basic-info
+              *ngSwitchCase="0"
+              [form]="basicInfoForm"
+              (stepComplete)="nextStep()"
+              (cancel)="onCancel()"
+            ></app-step-basic-info>
 
-                    @if (basicInfoForm.get('listingType')?.value === 'Sale') {
-                      <mat-form-field appearance="outline">
-                        <mat-label>Sotuv narxi</mat-label>
-                        <input matInput type="number" formControlName="salePrice" />
-                        <span matSuffix>UZS</span>
-                      </mat-form-field>
-                    }
+            <app-step-location
+              *ngSwitchCase="1"
+              [form]="locationForm"
+              (stepComplete)="nextStep()"
+              (previous)="prevStep()"
+            ></app-step-location>
 
-                    @if (basicInfoForm.get('listingType')?.value === 'Rent') {
-                      <mat-form-field appearance="outline">
-                        <mat-label>Oylik ijara</mat-label>
-                        <input matInput type="number" formControlName="monthlyRent" />
-                        <span matSuffix>UZS/oy</span>
-                      </mat-form-field>
-                    }
+            <app-step-details
+              *ngSwitchCase="2"
+              [form]="detailsForm"
+              (stepComplete)="nextStep()"
+              (previous)="prevStep()"
+            ></app-step-details>
 
-                    @if (basicInfoForm.get('listingType')?.value === 'ShortTermRent') {
-                      <mat-form-field appearance="outline">
-                        <mat-label>Kunlik ijara</mat-label>
-                        <input matInput type="number" formControlName="pricePerNight" />
-                        <span matSuffix>UZS/tun</span>
-                      </mat-form-field>
-                    }
-                  </div>
+            <app-step-amenities
+              *ngSwitchCase="3"
+              [form]="amenitiesForm"
+              (stepComplete)="nextStep()"
+              (previous)="prevStep()"
+            ></app-step-amenities>
 
-                  <div class="form-row three-col">
-                    <mat-form-field appearance="outline">
-                      <mat-label>Maydoni (m²)</mat-label>
-                      <input matInput type="number" formControlName="area" />
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline">
-                      <mat-label>Xonalar</mat-label>
-                      <input matInput type="number" formControlName="numberOfBedrooms" />
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline">
-                      <mat-label>Hammomlar</mat-label>
-                      <input matInput type="number" formControlName="numberOfBathrooms" />
-                    </mat-form-field>
-                  </div>
-
-                  <div class="step-actions">
-                    <button mat-button type="button" routerLink="/host/properties">
-                      Bekor qilish
-                    </button>
-                    <button mat-raised-button color="primary" type="button" matStepperNext>
-                      Keyingisi
-                    </button>
-                  </div>
-                </form>
-              </mat-step>
-
-              <!-- Step 2: Location -->
-              <mat-step [stepControl]="locationForm" label="Joylashuv">
-                <form [formGroup]="locationForm" class="step-form">
-                  <div class="form-row two-col">
-                    <mat-form-field appearance="outline">
-                      <mat-label>Viloyat</mat-label>
-                      <mat-select formControlName="region">
-                        @for (region of regions; track region.value) {
-                          <mat-option [value]="region.value">{{ region.label }}</mat-option>
-                        }
-                      </mat-select>
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline">
-                      <mat-label>Shahar/Tuman</mat-label>
-                      <input matInput formControlName="city" placeholder="Masalan: Yunusobod" />
-                    </mat-form-field>
-                  </div>
-
-                  <div class="form-row two-col">
-                    <mat-form-field appearance="outline">
-                      <mat-label>Tuman</mat-label>
-                      <input
-                        matInput
-                        formControlName="district"
-                        placeholder="Masalan: Yunusobod tumani"
-                      />
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline">
-                      <mat-label>Mahalla</mat-label>
-                      <input matInput formControlName="mahalla" placeholder="Masalan: Chinobod" />
-                    </mat-form-field>
-                  </div>
-
-                  <div class="form-row">
-                    <mat-form-field appearance="outline" class="full-width">
-                      <mat-label>To'liq manzil</mat-label>
-                      <textarea
-                        matInput
-                        formControlName="address"
-                        rows="3"
-                        placeholder="Ko'cha, uy raqami..."
-                      ></textarea>
-                    </mat-form-field>
-                  </div>
-
-                  <div class="step-actions">
-                    <button mat-button type="button" matStepperPrevious>Orqaga</button>
-                    <button mat-raised-button color="primary" type="button" matStepperNext>
-                      Keyingisi
-                    </button>
-                  </div>
-                </form>
-              </mat-step>
-
-              <!-- Step 3: Amenities -->
-              <mat-step label="Qulayliklar">
-                <form [formGroup]="amenitiesForm" class="step-form">
-                  <div class="amenities-section">
-                    <h3>Asosiy qulayliklar</h3>
-                    <div class="checkbox-grid">
-                      <mat-checkbox formControlName="hasWifi">Wi-Fi</mat-checkbox>
-                      <mat-checkbox formControlName="hasParking">Avtoturargoh</mat-checkbox>
-                      <mat-checkbox formControlName="hasPool">Hovuz</mat-checkbox>
-                      <mat-checkbox formControlName="hasAirConditioning">Konditsioner</mat-checkbox>
-                      <mat-checkbox formControlName="hasHeating">Isitish</mat-checkbox>
-                      <mat-checkbox formControlName="hasKitchen">Oshxona</mat-checkbox>
-                      <mat-checkbox formControlName="hasTV">Televizor</mat-checkbox>
-                      <mat-checkbox formControlName="hasWasher">Kir yuvish mashinasi</mat-checkbox>
-                    </div>
-                  </div>
-
-                  <div class="amenities-section">
-                    <h3>Xavfsizlik va qulaylik</h3>
-                    <div class="checkbox-grid">
-                      <mat-checkbox formControlName="hasElevator">Lift</mat-checkbox>
-                      <mat-checkbox formControlName="hasSecurity">Qo'riqlash</mat-checkbox>
-                      <mat-checkbox formControlName="hasGenerator">Generator</mat-checkbox>
-                      <mat-checkbox formControlName="hasGas">Gaz</mat-checkbox>
-                      <mat-checkbox formControlName="hasFurniture">Mebel</mat-checkbox>
-                      <mat-checkbox formControlName="isRenovated">Tamirlangan</mat-checkbox>
-                      <mat-checkbox formControlName="isSelfCheckIn">O'z kabineti</mat-checkbox>
-                      <mat-checkbox formControlName="petsAllowed"
-                        >Uy hayvonlariga ruxsat</mat-checkbox
-                      >
-                    </div>
-                  </div>
-
-                  <div class="amenities-section">
-                    <h3>Infratuzilma</h3>
-                    <div class="checkbox-grid">
-                      <mat-checkbox formControlName="hasMetroNearby">Metro yaqinida</mat-checkbox>
-                      <mat-checkbox formControlName="hasBusStop">Avtobus bekatlari</mat-checkbox>
-                      <mat-checkbox formControlName="hasMarketNearby">Bozor yaqinida</mat-checkbox>
-                      <mat-checkbox formControlName="hasSchoolNearby">Maktab yaqinida</mat-checkbox>
-                      <mat-checkbox formControlName="hasHospitalNearby"
-                        >Shifoxona yaqinida</mat-checkbox
-                      >
-                    </div>
-                  </div>
-
-                  <div class="step-actions">
-                    <button mat-button type="button" matStepperPrevious>Orqaga</button>
-                    <button mat-raised-button color="primary" type="button" matStepperNext>
-                      Keyingisi
-                    </button>
-                  </div>
-                </form>
-              </mat-step>
-
-              <!-- Step 4: Description & Photos -->
-              <mat-step label="Tavsif va rasmlar">
-                <form [formGroup]="descriptionForm" class="step-form">
-                  <div class="form-row">
-                    <mat-form-field appearance="outline" class="full-width">
-                      <mat-label>Batafsil tavsif</mat-label>
-                      <textarea
-                        matInput
-                        formControlName="description"
-                        rows="8"
-                        placeholder="Mulk haqida batafsil ma'lumot..."
-                      ></textarea>
-                      @if (
-                        descriptionForm.get('description')?.errors?.['minlength'] &&
-                        descriptionForm.get('description')?.touched
-                      ) {
-                        <mat-error>Tavsif kamida 20 ta belgidan iborat bo'lishi kerak</mat-error>
-                      }
-                    </mat-form-field>
-                  </div>
-
-                  <div class="form-row">
-                    <mat-form-field appearance="outline">
-                      <mat-label>Maksimal mehmonlar</mat-label>
-                      <input matInput type="number" formControlName="maxGuests" />
-                    </mat-form-field>
-
-                    <mat-checkbox formControlName="isInstantBook">Tez bron yoqish</mat-checkbox>
-                  </div>
-
-                  <div class="photo-upload-section">
-                    <app-image-upload
-                      (imagesChange)="onImagesChange($event)"
-                      (imageUpload)="onImageUpload($event)"
-                    >
-                    </app-image-upload>
-                  </div>
-
-                  <div class="step-actions">
-                    <button mat-button type="button" matStepperPrevious>Orqaga</button>
-                    <button
-                      mat-raised-button
-                      color="primary"
-                      type="button"
-                      (click)="submitForm()"
-                      [disabled]="isSubmitting()"
-                    >
-                      @if (isSubmitting()) {
-                        <mat-progress-spinner
-                          diameter="20"
-                          class="inline-spinner"
-                        ></mat-progress-spinner>
-                        <span>Saqlanmoqda...</span>
-                      } @else {
-                        <span>{{ isEditMode() ? 'Yangilash' : "E'lon qilish" }}</span>
-                      }
-                    </button>
-                  </div>
-                </form>
-              </mat-step>
-            </mat-stepper>
-          </mat-card>
-        }
-      </div>
+            <app-step-images
+              *ngSwitchCase="4"
+              [form]="descriptionForm"
+              [basicInfoForm]="basicInfoForm"
+              [locationForm]="locationForm"
+              [amenitiesForm]="amenitiesForm"
+              [isSubmitting]="isSubmitting()"
+              (stepComplete)="onFinalStep()"
+              (previous)="prevStep()"
+              (imagesChange)="handleImagesChange($event)"
+              (imageUpload)="onImageUpload($event)"
+            ></app-step-images>
+          </div>
+        </div>
+      </main>
     </div>
   `,
   styles: [
     `
-      .property-form-container {
-        min-height: calc(100vh - 64px);
-        background: #f5f5f5;
-        padding: 40px 0;
+      :host {
+        --sidebar-width: 340px;
+        --primary: #6366f1;
+        --slate-900: #0f172a;
+        --glass: rgba(255, 255, 255, 0.03);
       }
 
-      .container {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 0 20px;
-      }
-
-      .page-header {
-        margin-bottom: 32px;
-      }
-
-      .page-header h1 {
-        font-size: 2rem;
-        font-weight: 600;
-        margin-bottom: 8px;
-      }
-
-      .page-header p {
-        color: #666;
-      }
-
-      .loading-container {
-        text-align: center;
-        padding: 60px;
-      }
-
-      .step-form {
-        padding: 24px 0;
-      }
-
-      .form-row {
-        margin-bottom: 16px;
-      }
-
-      .form-row.two-col {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-      }
-
-      .form-row.three-col {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-      }
-
-      .full-width {
-        width: 100%;
-      }
-
-      .step-actions {
+      .wizard-wrapper {
         display: flex;
-        justify-content: flex-end;
+        min-height: 100vh;
+        background: #f8fafc;
+      }
+
+      .wizard-sidebar {
+        width: var(--sidebar-width);
+        background: var(--slate-900);
+        color: white;
+        padding: 48px 0;
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
+        z-index: 50;
+      }
+
+      .sidebar-header {
+        padding: 0 40px;
+        margin-bottom: 64px;
+        display: flex;
+        align-items: center;
         gap: 16px;
-        margin-top: 24px;
-        padding-top: 24px;
-        border-top: 1px solid #eee;
       }
 
-      .amenities-section {
-        margin-bottom: 32px;
+      .logo-box {
+        width: 52px;
+        height: 52px;
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
       }
 
-      .amenities-section h3 {
-        font-size: 1rem;
-        font-weight: 500;
-        margin-bottom: 16px;
-        color: #333;
-      }
+      .logo-box mat-icon { color: white; font-size: 30px; width: 30px; height: 30px; }
 
-      .checkbox-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
-      }
+      .header-text h2 { font-size: 1.6rem; font-weight: 800; margin: 0; letter-spacing: -0.5px; }
+      .header-text p { font-size: 0.85rem; color: #94a3b8; margin: 4px 0 0; }
 
-      .photo-upload-section {
-        margin-top: 24px;
-      }
+      .step-nav { flex: 1; padding: 0 20px; }
 
-      .photo-upload-section h3 {
-        font-size: 1rem;
-        font-weight: 500;
-        margin-bottom: 16px;
-      }
-
-      .upload-area {
-        border: 2px dashed #ccc;
-        border-radius: 8px;
-        padding: 48px;
-        text-align: center;
+      .step-item {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 20px;
+        border-radius: 20px;
         cursor: pointer;
-        transition: border-color 0.2s;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-bottom: 12px;
       }
 
-      .upload-area:hover {
-        border-color: #667eea;
+      .step-item:hover { background: var(--glass); }
+      .step-item.active { 
+        background: rgba(99, 102, 241, 0.1); 
+        border: 1px solid rgba(99, 102, 241, 0.2); 
       }
 
-      .upload-area mat-icon {
-        font-size: 48px;
-        color: #999;
-        margin-bottom: 16px;
+      .step-indicator {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: #334155;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+        transition: all 0.4s ease;
       }
 
-      .upload-area p {
-        font-weight: 500;
-        color: #333;
-        margin-bottom: 4px;
+      .active .step-indicator { 
+        background: #6366f1; 
+        color: white; 
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+        transform: scale(1.05);
       }
 
-      .upload-area span {
-        font-size: 0.9rem;
-        color: #666;
+      .completed .step-indicator { background: #10b981; color: white; }
+
+      .label-title { display: block; font-size: 1rem; font-weight: 600; color: #f8fafc; }
+      .label-desc { display: block; font-size: 0.8rem; color: #94a3b8; margin-top: 2px; }
+
+      .sidebar-footer { padding: 40px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
+      .sidebar-footer p { font-size: 0.85rem; color: #64748b; margin: 0; line-height: 1.6; }
+
+      .wizard-content {
+        flex: 1;
+        padding: 60px 80px;
+        max-width: 1200px;
+        margin: 0 auto;
+        position: relative;
       }
 
-      .inline-spinner {
-        display: inline-block;
-        margin-right: 8px;
+      .step-container {
+        animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
       }
 
-      @media (max-width: 768px) {
-        .form-row.two-col,
-        .form-row.three-col {
-          grid-template-columns: 1fr;
-        }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
 
-        .checkbox-grid {
-          grid-template-columns: repeat(2, 1fr);
-        }
+      .loading-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(8px);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
 
-        .step-actions {
-          flex-direction: column;
-        }
-
-        .step-actions button {
-          width: 100%;
-        }
+      @media (max-width: 1024px) {
+        .wizard-sidebar { display: none; }
+        .wizard-content { padding: 40px 24px; }
       }
     `,
   ],
@@ -496,10 +281,47 @@ export class PropertyFormComponent implements OnInit {
   private router = inject(Router);
   private snackBar = inject(MatSnackBar);
 
+  currentStep = signal(0);
   isEditMode = signal(false);
   propertyId = signal<string | null>(null);
   loading = signal(false);
   isSubmitting = signal(false);
+
+  steps = [
+    { label: 'Asosiy', desc: 'Tur va narx', fullDesc: "Mulkning asosiy parametrlarini kiriting" },
+    { label: 'Joylashuv', desc: 'Manzil va xarita', fullDesc: "Mulk qayerda joylashganini ko'rsating" },
+    { label: 'Tafsilotlar', desc: 'Xonalar va maydon', fullDesc: "Mulkning o'lchamlari va xonalari haqida" },
+    { label: 'Qulayliklar', desc: 'Sharoitlar', fullDesc: "Mulkdagi mavjud qulayliklarni belgilang" },
+    { label: 'Rasmlar', desc: 'Vizual ma\'lumot', fullDesc: "Mulkning rasmlari va tavsifini yuklang" }
+  ];
+
+  nextStep(): void {
+    if (this.currentStep() < this.steps.length - 1) {
+      this.currentStep.set(this.currentStep() + 1);
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const element = document.querySelector('.wizard-content');
+        element?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }
+
+  prevStep(): void {
+    if (this.currentStep() > 0) {
+      this.currentStep.set(this.currentStep() - 1);
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const element = document.querySelector('.wizard-content');
+        element?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }
+
+  goToStep(index: number): void {
+    if (index < this.currentStep()) {
+      this.currentStep.set(index);
+    }
+  }
 
   propertyTypes = [
     { value: 'Apartment', label: 'Kvartira' },
@@ -545,12 +367,20 @@ export class PropertyFormComponent implements OnInit {
     type: ['Apartment' as PropertyType, Validators.required],
     category: ['Residential' as PropertyCategory, Validators.required],
     listingType: ['Sale' as ListingType, Validators.required],
-    salePrice: [0],
-    monthlyRent: [0],
-    pricePerNight: [0],
-    area: [0, [Validators.required, Validators.min(1)]],
+    currency: ['UZS' as Currency, Validators.required],
+    salePrice: [null as number | null],
+    monthlyRent: [null as number | null],
+    pricePerNight: [null as number | null],
+    area: [null as number | null, [Validators.required, Validators.min(1)]],
     numberOfBedrooms: [1, [Validators.required, Validators.min(0)]],
     numberOfBathrooms: [1, [Validators.required, Validators.min(0)]],
+  });
+
+  detailsForm = this.fb.group({
+    floor: [0, [Validators.required, Validators.min(0)]],
+    totalFloors: [0, [Validators.required, Validators.min(1)]],
+    yearBuilt: [new Date().getFullYear()],
+    condition: ['Good'],
   });
 
   locationForm = this.fb.group({
@@ -559,6 +389,8 @@ export class PropertyFormComponent implements OnInit {
     district: ['', Validators.required],
     mahalla: [''],
     address: ['', Validators.required],
+    latitude: [41.2995],
+    longitude: [69.2401],
   });
 
   amenitiesForm = this.fb.group({
@@ -577,6 +409,9 @@ export class PropertyFormComponent implements OnInit {
     hasFurniture: [false],
     isRenovated: [false],
     isSelfCheckIn: [false],
+    isChildFriendly: [false],
+    isAccessible: [false],
+    hasWorkspace: [false],
     petsAllowed: [false],
     hasMetroNearby: [false],
     hasBusStop: [false],
@@ -591,8 +426,59 @@ export class PropertyFormComponent implements OnInit {
     isInstantBook: [false],
   });
 
+  private updatePriceValidators(type: ListingType | string): void {
+    const salePrice = this.basicInfoForm.get('salePrice');
+    const monthlyRent = this.basicInfoForm.get('monthlyRent');
+    const pricePerNight = this.basicInfoForm.get('pricePerNight');
+
+    // Clear all price validators first
+    salePrice?.clearValidators();
+    monthlyRent?.clearValidators();
+    pricePerNight?.clearValidators();
+
+    // Add validators based on listing type
+    if (type === 'Sale' || type === ListingType.Sale) {
+      salePrice?.setValidators([Validators.required, Validators.min(1)]);
+    } else if (type === 'Rent' || type === ListingType.Rent) {
+      monthlyRent?.setValidators([Validators.required, Validators.min(1)]);
+    } else if (type === 'ShortTermRent' || type === ListingType.ShortTermRent) {
+      pricePerNight?.setValidators([Validators.required, Validators.min(1)]);
+    }
+
+    // Force update status
+    salePrice?.updateValueAndValidity({ emitEvent: false });
+    monthlyRent?.updateValueAndValidity({ emitEvent: false });
+    pricePerNight?.updateValueAndValidity({ emitEvent: false });
+  }
+
   ngOnInit(): void {
+    // Initial validator setup
+    this.updatePriceValidators(this.basicInfoForm.get('listingType')?.value || 'Sale');
+
+    // Listen for listingType changes
+    this.basicInfoForm.get('listingType')?.valueChanges.subscribe(type => {
+      if (type) this.updatePriceValidators(type);
+    });
+
     const id = this.route.snapshot.paramMap.get('id');
+    const typeParam = this.route.snapshot.paramMap.get('type');
+
+    // Pre-select listing type from route parameter (/elon-berish/:type)
+    if (typeParam) {
+      const typeMap: Record<string, ListingType> = {
+        sale: ListingType.Sale,
+        sotish: ListingType.Sale,
+        rent: ListingType.Rent,
+        ijara: ListingType.Rent,
+        shorttermrent: ListingType.ShortTermRent,
+        kunlik: ListingType.ShortTermRent,
+      };
+      const selectedType = typeMap[typeParam.toLowerCase()];
+      if (selectedType) {
+        this.basicInfoForm.patchValue({ listingType: selectedType });
+      }
+    }
+
     if (id) {
       this.isEditMode.set(true);
       this.propertyId.set(id);
@@ -603,7 +489,7 @@ export class PropertyFormComponent implements OnInit {
   loadProperty(id: string): void {
     this.loading.set(true);
     this.propertyService.getPropertyById(id).subscribe({
-      next: (property) => {
+      next: (property: Property) => {
         this.populateForms(property);
         this.loading.set(false);
       },
@@ -621,12 +507,20 @@ export class PropertyFormComponent implements OnInit {
       type: property.type,
       category: property.category,
       listingType: property.listingType,
-      salePrice: property.salePrice || 0,
-      monthlyRent: property.monthlyRent || 0,
-      pricePerNight: property.pricePerNight || 0,
-      area: property.area,
-      numberOfBedrooms: property.numberOfBedrooms,
-      numberOfBathrooms: property.numberOfBathrooms,
+      currency: property.currency,
+      salePrice: property.salePrice ?? null,
+      monthlyRent: property.monthlyRent ?? null,
+      pricePerNight: property.pricePerNight ?? null,
+      area: property.area ?? null,
+      numberOfBedrooms: property.numberOfBedrooms || 0,
+      numberOfBathrooms: property.numberOfBathrooms || 0,
+    });
+
+    this.detailsForm.patchValue({
+      floor: (property as any).floor ?? 0,
+      totalFloors: (property as any).totalFloors ?? 1,
+      yearBuilt: (property as any).yearBuilt ?? new Date().getFullYear(),
+      condition: (property as any).condition ?? 'Good',
     });
 
     this.locationForm.patchValue({
@@ -635,6 +529,8 @@ export class PropertyFormComponent implements OnInit {
       district: property.district,
       mahalla: property.mahalla || '',
       address: property.address,
+      latitude: property.latitude ?? 41.2995,
+      longitude: property.longitude ?? 69.2401,
     });
 
     this.amenitiesForm.patchValue({
@@ -727,104 +623,184 @@ export class PropertyFormComponent implements OnInit {
       Qoraqalpogiston: 13,
     };
 
-    const a = this.amenitiesForm.value;
+    const amenities = this.amenitiesForm.value;
+    // Map frontend string enums to backend integer enums
+    const propertyTypeMap: Record<string, number> = {
+      'Apartment': 0, 'House': 1, 'Villa': 2, 'Room': 3, 'Office': 4, 'Land': 5, 'Commercial': 6
+    };
+    const categoryMap: Record<string, number> = {
+      'Residential': 0, 'Commercial': 1, 'Industrial': 2, 'Agricultural': 3
+    };
+    const listingTypeMap: Record<string, number> = {
+      'Rent': 0, 'Sale': 1, 'ShortTermRent': 2
+    };
+    const currencyMap: Record<string, number> = {
+      'UZS': 0, 'USD': 1
+    };
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formData: Record<string, any> = {
       title: this.basicInfoForm.value.title!,
-      type: this.basicInfoForm.value.type!,
-      category: this.basicInfoForm.value.category!,
-      listingType: this.basicInfoForm.value.listingType!,
-      salePrice: this.basicInfoForm.value.salePrice ?? null,
+      description: this.descriptionForm.value.description!,
+      type: propertyTypeMap[this.basicInfoForm.value.type!] ?? 0,
+      category: categoryMap[this.basicInfoForm.value.category!] ?? 0,
+      listingType: listingTypeMap[this.basicInfoForm.value.listingType!] ?? 0,
+      status: 0, // Active
       monthlyRent: this.basicInfoForm.value.monthlyRent ?? null,
+      salePrice: this.basicInfoForm.value.salePrice ?? null,
       pricePerNight: this.basicInfoForm.value.pricePerNight ?? null,
       area: this.basicInfoForm.value.area ?? 0,
       numberOfBedrooms: this.basicInfoForm.value.numberOfBedrooms ?? 0,
       numberOfBathrooms: this.basicInfoForm.value.numberOfBathrooms ?? 0,
-      region: selectedRegion ? (regionMap[selectedRegion] ?? selectedRegion) : 0,
-      city: this.locationForm.value.city!,
-      district: this.locationForm.value.district!,
-      mahalla: this.locationForm.value.mahalla || undefined,
-      address: this.locationForm.value.address!,
-      description: this.descriptionForm.value.description!,
       maxGuests: this.descriptionForm.value.maxGuests ?? 0,
-      isInstantBook: this.descriptionForm.value.isInstantBook || false,
-      hasWifi: !!a.hasWifi,
-      hasParking: !!a.hasParking,
-      hasPool: !!a.hasPool,
-      hasAirConditioning: !!a.hasAirConditioning,
-      hasHeating: !!a.hasHeating,
-      hasKitchen: !!a.hasKitchen,
-      hasTV: !!a.hasTV,
-      hasWasher: !!a.hasWasher,
-      hasElevator: !!a.hasElevator,
-      hasSecurity: !!a.hasSecurity,
-      hasGenerator: !!a.hasGenerator,
-      hasGas: !!a.hasGas,
-      hasFurniture: !!a.hasFurniture,
-      isRenovated: !!a.isRenovated,
-      isSelfCheckIn: !!a.isSelfCheckIn,
-      petsAllowed: !!a.petsAllowed,
-      hasMetroNearby: !!a.hasMetroNearby,
-      hasBusStop: !!a.hasBusStop,
-      hasMarketNearby: !!a.hasMarketNearby,
-      hasSchoolNearby: !!a.hasSchoolNearby,
-      hasHospitalNearby: !!a.hasHospitalNearby,
+      region: selectedRegion ? (regionMap[selectedRegion] ?? 0) : 0,
+      city: this.locationForm.value.city!,
+      district: this.locationForm.value.district || '',
+      address: this.locationForm.value.address!,
+      mahalla: this.locationForm.value.mahalla || '',
+      latitude: Number(this.locationForm.value.latitude) || 41.2995,
+      longitude: Number(this.locationForm.value.longitude) || 69.2401,
+      currency: currencyMap[this.basicInfoForm.value.currency!] ?? 0,
+      exchangeRate: 1.0,
+      isInstantBook: !!this.descriptionForm.value.isInstantBook,
+      isVacant: true,
+      distanceToCityCenter: 0,
+      
+      // Amenities
+      hasWifi: !!amenities.hasWifi,
+      hasParking: !!amenities.hasParking,
+      hasPool: !!amenities.hasPool,
+      petsAllowed: !!amenities.petsAllowed,
+      hasAirConditioning: !!amenities.hasAirConditioning,
+      hasHeating: !!amenities.hasHeating,
+      hasWasher: !!amenities.hasWasher,
+      hasKitchen: !!amenities.hasKitchen,
+      hasTV: !!amenities.hasTV,
+      hasWorkspace: !!amenities.hasWorkspace,
+      isSelfCheckIn: !!amenities.isSelfCheckIn,
+      isChildFriendly: !!amenities.isChildFriendly,
+      isAccessible: !!amenities.isAccessible,
+
+      // Infrastructure
+      hasMetroNearby: !!amenities.hasMetroNearby,
+      hasBusStop: !!amenities.hasBusStop,
+      hasMarketNearby: !!amenities.hasMarketNearby,
+      hasSchoolNearby: !!amenities.hasSchoolNearby,
+      hasHospitalNearby: !!amenities.hasHospitalNearby,
+
+      // Comfort
+      hasElevator: !!amenities.hasElevator,
+      hasSecurity: !!amenities.hasSecurity,
+      hasGenerator: !!amenities.hasGenerator,
+      hasGas: !!amenities.hasGas,
+      hasFurniture: !!amenities.hasFurniture,
+      isRenovated: !!amenities.isRenovated,
     };
 
     if (this.isEditMode() && this.propertyId()) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.propertyService.updateProperty(this.propertyId()!, formData as any).subscribe({
         next: () => {
-          this.isSubmitting.set(false);
-          this.markFormsPristine();
-          this.snackBar.open('Mulk yangilandi', 'Yopish', { duration: 3000 });
-          this.router.navigate(['/host/properties']);
+          this.uploadImages(this.propertyId()!);
         },
-        error: () => {
+        error: (error: any) => {
           this.isSubmitting.set(false);
-          this.snackBar.open('Yangilashda xatolik', 'Yopish', { duration: 3000 });
+          const errorMsg = error?.error?.message || "Yangilashda noma'lum xatolik yuz berdi";
+          this.snackBar.open(`❌ ${errorMsg}`, 'Yopish', {
+            duration: 5000,
+            panelClass: ['error-snackbar'],
+          });
         },
       });
     } else {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.propertyService.createProperty(formData as any).subscribe({
-        next: () => {
-          this.isSubmitting.set(false);
-          this.markFormsPristine();
-          this.snackBar.open("Mulk e'lon qilindi", 'Yopish', { duration: 3000 });
-          // Refresh user data to get updated Host role from backend
-          this.authService.getCurrentUser().subscribe({
-            next: () => {
-              // Navigate to host properties after user data is refreshed
-              this.router.navigate(['/host/properties']);
-            },
-            error: () => {
-              // Even if refresh fails, navigate to host properties
-              this.router.navigate(['/host/properties']);
-            },
-          });
+        next: (property) => {
+          this.uploadImages(property.id);
         },
-        error: () => {
+        error: (error: any) => {
           this.isSubmitting.set(false);
-          this.snackBar.open("E'lon qilishda xatolik", 'Yopish', { duration: 3000 });
+          const errorMsg = error?.error?.message || "E'lon qilishda noma'lum xatolik yuz berdi";
+          this.snackBar.open(`❌ ${errorMsg}`, 'Yopish', {
+            duration: 5000,
+            panelClass: ['error-snackbar'],
+          });
         },
       });
     }
   }
 
   // Image handling
+  selectedFiles: File[] = [];
   selectedImages = signal<UploadedImage[]>([]);
 
-  onImagesChange(images: UploadedImage[]): void {
-    this.selectedImages.set(images);
-  }
-
   onImageUpload(image: UploadedImage): void {
-    void image;
+    // This is called from the step component when a new image is added
+    if (image.file) {
+      this.selectedFiles.push(image.file);
+    }
   }
 
-  uploadPhotos(): void {
-    // Image upload is handled by the dedicated component.
+  handleImagesChange(images: UploadedImage[]): void {
+    this.selectedImages.set(images);
+    this.selectedFiles = images.filter(i => i.file).map(i => i.file as File);
+  }
+
+  onFinalStep(): void {
+    this.submitForm();
+  }
+
+  onLocationChange(location: { lat: number; lng: number }): void {
+    this.locationForm.patchValue({
+      latitude: location.lat,
+      longitude: location.lng,
+    });
+  }
+
+  get existingImageUrls(): string[] {
+    return this.selectedImages().map((i: any) => i.previewUrl);
+  }
+
+  private uploadImages(propertyId: string): void {
+    if (this.selectedFiles.length === 0) {
+      this.finishSubmission();
+      return;
+    }
+
+    const uploadObservables = this.selectedFiles.map(file => 
+      this.propertyService.uploadPropertyImage(file, propertyId)
+    );
+
+    import('rxjs').then(({ forkJoin }) => {
+      forkJoin(uploadObservables).subscribe({
+        next: () => {
+          this.finishSubmission();
+        },
+        error: (error) => {
+          console.error('Image upload failed', error);
+          this.finishSubmission("Mulk yaratildi, lekin ba'zi rasmlarni yuklashda xatolik yuz berdi.");
+        }
+      });
+    });
+  }
+
+  private finishSubmission(message?: string): void {
+    this.isSubmitting.set(false);
+    this.markFormsPristine();
+    this.snackBar.open(message || '✅ Mulk muvaffaqiyatli yaratildi', 'Yopish', {
+      duration: 5000,
+      panelClass: ['success-snackbar'],
+    });
+
+    // Refresh user data to get updated Host role from backend
+    this.authService.getCurrentUser().subscribe({
+      next: () => this.router.navigate(['/host/properties']),
+      error: () => this.router.navigate(['/host/properties'])
+    });
+  }
+
+  onCancel(): void {
+    this.router.navigate(['/host/properties']);
   }
 
   hasUnsavedChanges(): boolean {

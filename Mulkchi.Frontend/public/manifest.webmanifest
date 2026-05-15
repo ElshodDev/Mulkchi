@@ -1,0 +1,27 @@
+{
+  "name": "Mulkchi - Ko'chmas Mulk",
+  "short_name": "Mulkchi",
+  "theme_color": "#1B3A6B",
+  "background_color": "#f8fafc",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "description": "O'zbekistondagi eng innovatsion ko'chmas mulk platformasi. AI yordamida mulk qidiring va tahlil qiling.",
+  "icons": [
+    {
+      "src": "assets/icons/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["real estate", "business", "lifestyle"],
+  "screenshots": [
+    {
+      "src": "assets/placeholder.svg",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "label": "Mulkchi Bosh sahifasi"
+    }
+  ]
+}

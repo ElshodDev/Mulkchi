@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
 import { LoadingService } from '../../../core/services/loading.service';
@@ -5,12 +6,11 @@ import { LoadingService } from '../../../core/services/loading.service';
 @Component({
   selector: 'app-top-loading-bar',
   standalone: true,
+  imports: [CommonModule],
   template: `
-    @if (loadingService.isLoading()) {
-      <div class="loading-bar-shell" aria-hidden="true">
-        <div class="loading-bar"></div>
-      </div>
-    }
+    <div *ngIf="loadingService.isLoading()" class="loading-bar-shell" aria-hidden="true">
+      <div class="loading-bar"></div>
+    </div>
   `,
   styles: [
     `
@@ -27,11 +27,7 @@ import { LoadingService } from '../../../core/services/loading.service';
         width: 40%;
         height: 100%;
         border-radius: 999px;
-        background: linear-gradient(
-          90deg,
-          var(--color-brand-500),
-          var(--color-accent-500)
-        );
+        background: linear-gradient(90deg, var(--color-brand-500), var(--color-accent-500));
         box-shadow: 0 0 24px rgba(14, 116, 144, 0.35);
         animation: loading-slide 1.1s ease-in-out infinite;
       }

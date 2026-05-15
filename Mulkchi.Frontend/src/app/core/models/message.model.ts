@@ -32,4 +32,6 @@ export interface Conversation {
   lastMessage: string;
   lastMessageDate: Date;
   unreadCount: number;
+  isTyping?: boolean;
+  propertyId?: string;
 }

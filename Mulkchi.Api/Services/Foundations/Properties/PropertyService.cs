@@ -66,6 +66,25 @@ public partial class PropertyService : IPropertyService
 
     public async ValueTask<PropertyResponse> AddPropertyAsync(PropertyCreateDto dto)
     {
+        var property = CreatePropertyFromDtoAsync(dto);
+        ValidatePropertyOnAdd(property);
+        Property addedProperty = await this.storageBroker.InsertPropertyAsync(property);
+        await InvalidatePropertyListCacheAsync();
+        return ToPropertyResponse(addedProperty);
+    }
+
+    public ValueTask<Property> AddPropertyAsync(Property property) =>
+        TryCatch(async () =>
+        {
+            ValidatePropertyOnAdd(property);
+            var now = this.dateTimeBroker.GetCurrentDateTimeOffset();
+            property.CreatedDate = now;
+            property.UpdatedDate = now;
+            return await this.storageBroker.InsertPropertyAsync(property);
+        });
+
+    private Property CreatePropertyFromDtoAsync(PropertyCreateDto dto)
+    {
         var currentUserId = this.currentUserService.GetCurrentUserId();
         if (!currentUserId.HasValue)
         {
@@ -74,7 +93,7 @@ public partial class PropertyService : IPropertyService
 
         var now = this.dateTimeBroker.GetCurrentDateTimeOffset();
 
-        var property = new Property
+        return new Property
         {
             Id = Guid.NewGuid(),
             HostId = currentUserId.Value,
@@ -138,25 +157,12 @@ public partial class PropertyService : IPropertyService
             CreatedDate = now,
             UpdatedDate = now
         };
-
-        ValidatePropertyOnAdd(property);
-        Property addedProperty = await this.storageBroker.InsertPropertyAsync(property);
-        await InvalidatePropertyListCacheAsync();
-
-        return ToPropertyResponse(addedProperty);
     }
 
-    public ValueTask<Property> AddPropertyAsync(Property property) =>
-        TryCatch(async () =>
-        {
-            ValidatePropertyOnAdd(property);
-            var now = this.dateTimeBroker.GetCurrentDateTimeOffset();
-            property.CreatedDate = now;
-            property.UpdatedDate = now;
-            return await this.storageBroker.InsertPropertyAsync(property);
-        });
+    public async ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> RetrieveAllPropertiesAsync(PropertyQueryParams queryParams) =>
+        await RetrieveAllPropertiesWithCachingAsync(queryParams);
 
-    public async ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> RetrieveAllPropertiesAsync(PropertyQueryParams queryParams)
+    private async ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> RetrieveAllPropertiesWithCachingAsync(PropertyQueryParams queryParams)
     {
         string cacheVersion = await GetPropertyCacheVersionAsync();
 
@@ -322,7 +328,10 @@ public partial class PropertyService : IPropertyService
         public List<PropertyResponse> Items { get; init; } = new();
     }
 
-    public async ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> SearchPropertiesAsync(PropertySearchParams searchParams)
+    public async ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> SearchPropertiesAsync(PropertySearchParams searchParams) =>
+        await SearchPropertiesWithFiltersAsync(searchParams);
+
+    private async ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> SearchPropertiesWithFiltersAsync(PropertySearchParams searchParams)
     {
         if (!string.IsNullOrWhiteSpace(searchParams.SearchQuery) &&
             await this.featureManager.IsEnabledAsync("UseMeiliSearch"))
@@ -351,7 +360,10 @@ public partial class PropertyService : IPropertyService
             .Where(p => p.DeletedDate == null);
 
         if (!string.IsNullOrWhiteSpace(searchParams.City))
-            query = query.Where(p => p.City == searchParams.City);
+        {
+            string normalizedCity = searchParams.City.Trim();
+            query = query.Where(p => p.City != null && EF.Functions.Like(p.City, $"%{normalizedCity}%"));
+        }
 
         if (searchParams.MinPrice.HasValue)
             query = query.Where(p => p.MonthlyRent >= searchParams.MinPrice || p.SalePrice >= searchParams.MinPrice || p.PricePerNight >= searchParams.MinPrice);
@@ -377,7 +389,7 @@ public partial class PropertyService : IPropertyService
 
         if (searchParams.Latitude.HasValue && searchParams.Longitude.HasValue)
         {
-            var radius = searchParams.RadiusKm ?? 10.0;
+            var radius = searchParams.RadiusKm ?? 5.0;
             query = query.WithinRadius(searchParams.Latitude.Value, searchParams.Longitude.Value, radius);
         }
 
@@ -423,15 +435,79 @@ public partial class PropertyService : IPropertyService
     public ValueTask<Property> ModifyPropertyAsync(Property property) =>
         TryCatch(async () =>
         {
-            ValidatePropertyOnModify(property);
+            ValidatePropertyId(property.Id);
+            
+            Property maybeProperty = await this.storageBroker.SelectPropertyByIdAsync(property.Id);
+            if (maybeProperty is null)
+                throw new NotFoundPropertyException(property.Id);
+
             var currentUserId = this.currentUserService.GetCurrentUserId();
-            if (!currentUserId.HasValue || (!this.currentUserService.IsInRole("Admin") && property.HostId != currentUserId.Value))
+            if (!currentUserId.HasValue || (!this.currentUserService.IsInRole("Admin") && maybeProperty.HostId != currentUserId.Value))
             {
                 throw new UnauthorizedAccessException("You can only modify your own properties.");
             }
-            property.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
-            Property updatedProperty = await this.storageBroker.UpdatePropertyAsync(property);
+
+            // Update only allowed fields from the input property
+            maybeProperty.Title = property.Title;
+            maybeProperty.Description = property.Description;
+            maybeProperty.Type = property.Type;
+            maybeProperty.Category = property.Category;
+            maybeProperty.ListingType = property.ListingType;
+            maybeProperty.MonthlyRent = property.MonthlyRent;
+            maybeProperty.SalePrice = property.SalePrice;
+            maybeProperty.PricePerNight = property.PricePerNight;
+            maybeProperty.Area = property.Area;
+            maybeProperty.NumberOfBedrooms = property.NumberOfBedrooms;
+            maybeProperty.NumberOfBathrooms = property.NumberOfBathrooms;
+            maybeProperty.MaxGuests = property.MaxGuests;
+            maybeProperty.Region = property.Region;
+            maybeProperty.City = property.City;
+            maybeProperty.District = property.District;
+            maybeProperty.Address = property.Address;
+            maybeProperty.Mahalla = property.Mahalla;
+            maybeProperty.Latitude = property.Latitude;
+            maybeProperty.Longitude = property.Longitude;
+            maybeProperty.Currency = property.Currency;
+            maybeProperty.ExchangeRate = property.ExchangeRate;
+            maybeProperty.IsInstantBook = property.IsInstantBook;
+            maybeProperty.IsVacant = property.IsVacant;
+            
+            // Amenities
+            maybeProperty.HasWifi = property.HasWifi;
+            maybeProperty.HasParking = property.HasParking;
+            maybeProperty.HasPool = property.HasPool;
+            maybeProperty.PetsAllowed = property.PetsAllowed;
+            maybeProperty.HasAirConditioning = property.HasAirConditioning;
+            maybeProperty.HasHeating = property.HasHeating;
+            maybeProperty.HasWasher = property.HasWasher;
+            maybeProperty.HasKitchen = property.HasKitchen;
+            maybeProperty.HasTV = property.HasTV;
+            maybeProperty.HasWorkspace = property.HasWorkspace;
+            maybeProperty.IsSelfCheckIn = property.IsSelfCheckIn;
+            maybeProperty.IsChildFriendly = property.IsChildFriendly;
+            maybeProperty.IsAccessible = property.IsAccessible;
+            
+            // Infrastructure
+            maybeProperty.HasMetroNearby = property.HasMetroNearby;
+            maybeProperty.HasBusStop = property.HasBusStop;
+            maybeProperty.HasMarketNearby = property.HasMarketNearby;
+            maybeProperty.HasSchoolNearby = property.HasSchoolNearby;
+            maybeProperty.HasHospitalNearby = property.HasHospitalNearby;
+            
+            // Comfort
+            maybeProperty.HasElevator = property.HasElevator;
+            maybeProperty.HasSecurity = property.HasSecurity;
+            maybeProperty.HasGenerator = property.HasGenerator;
+            maybeProperty.HasGas = property.HasGas;
+            maybeProperty.HasFurniture = property.HasFurniture;
+            maybeProperty.IsRenovated = property.IsRenovated;
+
+            ValidatePropertyOnModify(maybeProperty);
+            maybeProperty.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
+            
+            Property updatedProperty = await this.storageBroker.UpdatePropertyAsync(maybeProperty);
             await InvalidatePropertyListCacheAsync();
+            
             return updatedProperty;
         });
 
@@ -636,12 +712,13 @@ public partial class PropertyService : IPropertyService
         return featured.Select(ToPropertyResponse);
     }
 
-    public async ValueTask<Property?> RetrievePropertyEntityByIdAsync(Guid propertyId)
-    {
-        return await this.storageBroker.SelectPropertyByIdAsync(propertyId);
-    }
+    public async ValueTask<Property?> RetrievePropertyEntityByIdAsync(Guid propertyId) =>
+        await this.storageBroker.SelectPropertyByIdAsync(propertyId);
 
-    public async ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> RetrieveMyPropertiesAsync(PropertyQueryParams queryParams)
+    public async ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> RetrieveMyPropertiesAsync(PropertyQueryParams queryParams) =>
+        await RetrieveMyPropertiesWithFiltersAsync(queryParams);
+
+    private async ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> RetrieveMyPropertiesWithFiltersAsync(PropertyQueryParams queryParams)
     {
         var currentUserId = this.currentUserService.GetCurrentUserId();
         if (!currentUserId.HasValue)

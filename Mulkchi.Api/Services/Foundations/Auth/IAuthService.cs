@@ -15,8 +15,10 @@ public interface IAuthService
     ValueTask<User> ModifyUserProfileAsync(Guid userId, UpdateProfileRequest request);
     ValueTask RemoveUserByIdAsync(Guid userId);
 
-    // Email verification
+    // Email verification & Passwordless Auth
     ValueTask VerifyEmailAsync(string token);
+    ValueTask<string> SendEmailCodeAsync(string email);
+    ValueTask<AuthResponse> VerifyEmailCodeAsync(string sessionId, string code);
 
     // Phone OTP
     ValueTask SendPhoneOtpAsync(Guid userId, string phone);

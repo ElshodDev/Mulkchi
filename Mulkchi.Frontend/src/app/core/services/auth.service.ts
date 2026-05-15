@@ -66,6 +66,23 @@ export class AuthService {
       );
   }
 
+  // Passwordless Email OTP
+  sendEmailCode(email: string): Observable<{ sessionId: string }> {
+    return this.http.post<{ sessionId: string }>(`${this.apiUrl}/email/send-code`, { email });
+  }
+
+  verifyEmailCode(email: string, sessionId: string, code: string): Observable<AuthResponse> {
+    return this.http
+      .post<ApiAuthResponse>(`${this.apiUrl}/email/verify-code`, { email, sessionId, code })
+      .pipe(
+        map((apiResponse) => this.mapApiAuthResponse(apiResponse)),
+        tap((response) => {
+          this.handleAuthResponse(response);
+          this.sessionService.emitLogin();
+        }),
+      );
+  }
+
   register(credentials: RegisterRequest): Observable<AuthResponse> {
     const apiRequest: ApiRegisterRequest = {
       FirstName: credentials.firstName,

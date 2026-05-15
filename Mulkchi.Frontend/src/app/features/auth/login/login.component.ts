@@ -2,12 +2,11 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
@@ -22,9 +21,7 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    RouterLink,
     MatButtonModule,
-    MatCheckboxModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -59,92 +56,103 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
 
         <div class="auth-card surface-card">
           <div class="auth-card__header">
-            <span class="eyebrow eyebrow--secondary">Kirish</span>
+            <span class="eyebrow eyebrow--secondary">Kirish yoki Ro'yxatdan o'tish</span>
             <h2>Xush kelibsiz</h2>
             <p>Hisobingizga kiring va davom eting.</p>
           </div>
 
-          <form [formGroup]="loginForm" class="auth-form" (ngSubmit)="onSubmit()">
-            <mat-form-field appearance="outline">
-              <mat-label>Email</mat-label>
-              <input
-                matInput
-                type="email"
-                formControlName="email"
-                autocomplete="email"
-                placeholder="email@example.com"
-              />
-              <mat-icon matPrefix>mail</mat-icon>
-              @if (shouldShowError('email')) {
-                <mat-error>{{ emailErrorMessage() }}</mat-error>
-              }
-            </mat-form-field>
+          <!-- STEP 1: EMAIL INPUT -->
+          @if (step() === 1) {
+            <form [formGroup]="emailForm" class="auth-form" (ngSubmit)="onEmailSubmit()">
+              <mat-form-field appearance="outline">
+                <mat-label>Email</mat-label>
+                <input
+                  matInput
+                  type="email"
+                  formControlName="email"
+                  autocomplete="email"
+                  placeholder="email@example.com"
+                />
+                <mat-icon matPrefix>mail</mat-icon>
+                @if (shouldShowEmailError()) {
+                  <mat-error>Email formati to'g'ri emas.</mat-error>
+                }
+              </mat-form-field>
 
-            <mat-form-field appearance="outline">
-              <mat-label>Parol</mat-label>
-              <input
-                matInput
-                [type]="hidePassword() ? 'password' : 'text'"
-                formControlName="password"
-                autocomplete="current-password"
-                placeholder="Parolingiz"
-              />
-              <mat-icon matPrefix>lock</mat-icon>
+              @if (errorMessage()) {
+                <div class="form-alert form-alert--error">
+                  <mat-icon>error</mat-icon>
+                  <span>{{ errorMessage() }}</span>
+                </div>
+              }
+
               <button
-                mat-icon-button
-                matSuffix
-                type="button"
-                [attr.aria-label]="hidePassword() ? 'Parolni ko‘rsatish' : 'Parolni yashirish'"
-                (click)="togglePasswordVisibility()"
+                mat-flat-button
+                type="submit"
+                class="submit-button"
+                [disabled]="isLoading()"
               >
-                <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                @if (isLoading()) {
+                  <mat-progress-spinner diameter="18" mode="indeterminate"></mat-progress-spinner>
+                  <span>Kutib turing...</span>
+                } @else {
+                  <span>Davom etish</span>
+                }
               </button>
-              @if (shouldShowError('password')) {
-                <mat-error>Iltimos, parolingizni kiriting.</mat-error>
+
+              @if (googleClientId) {
+                <div class="separator"><span>yoki</span></div>
+                <app-google-login />
               }
-            </mat-form-field>
 
-            <div class="auth-form__row">
-              <mat-checkbox formControlName="rememberMe">Eslab qolish</mat-checkbox>
-              <a routerLink="/auth/forgot-password">Parolni unutdingizmi?</a>
-            </div>
-
-            @if (errorMessage()) {
-              <div class="form-alert form-alert--error">
-                <mat-icon>error</mat-icon>
-                <span>{{ errorMessage() }}</span>
-              </div>
-            }
-
-            <button
-              mat-flat-button
-              type="submit"
-              class="submit-button"
-              [disabled]="submitDisabled()"
-            >
-              @if (isLoading()) {
-                <mat-progress-spinner diameter="18" mode="indeterminate"></mat-progress-spinner>
-                <span>Kiryapmiz...</span>
-              } @else {
-                <span>Kirish</span>
-              }
-            </button>
-
-            @if (googleClientId) {
               <div class="separator"><span>yoki</span></div>
-              <app-google-login />
-            }
+              <app-telegram-login actionText="Telegram orqali" />
+            </form>
+          }
 
-            <div class="separator"><span>yoki</span></div>
+          <!-- STEP 2: OTP INPUT -->
+          @if (step() === 2) {
+            <form [formGroup]="otpForm" class="auth-form" (ngSubmit)="onOtpSubmit()">
+              <div class="otp-header">
+                <p><strong>{{ emailForm.get('email')?.value }}</strong> pochtasiga 6 xonali tasdiqlash kodi yubordik.</p>
+                <button type="button" mat-button color="primary" (click)="step.set(1)">Emailni o'zgartirish</button>
+              </div>
 
-            <!-- Telegram orqali kirish -->
-            <app-telegram-login />
-          </form>
+              <mat-form-field appearance="outline">
+                <mat-label>Tasdiqlash kodi</mat-label>
+                <input
+                  matInput
+                  type="text"
+                  formControlName="code"
+                  autocomplete="one-time-code"
+                  placeholder="123456"
+                  maxlength="6"
+                />
+                <mat-icon matPrefix>password</mat-icon>
+              </mat-form-field>
 
-          <p class="auth-card__footer">
-            Hisobingiz yo'qmi?
-            <a routerLink="/auth/register">Ro'yxatdan o'tish</a>
-          </p>
+              @if (errorMessage()) {
+                <div class="form-alert form-alert--error">
+                  <mat-icon>error</mat-icon>
+                  <span>{{ errorMessage() }}</span>
+                </div>
+              }
+
+              <button
+                mat-flat-button
+                type="submit"
+                class="submit-button"
+                [disabled]="isLoading() || otpForm.invalid"
+              >
+                @if (isLoading()) {
+                  <mat-progress-spinner diameter="18" mode="indeterminate"></mat-progress-spinner>
+                  <span>Tekshirilmoqda...</span>
+                } @else {
+                  <span>Tasdiqlash</span>
+                }
+              </button>
+            </form>
+          }
         </div>
       </div>
     </section>
@@ -260,26 +268,16 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
         gap: var(--space-4);
       }
 
-      .auth-form__row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--space-3);
-        color: var(--color-text-secondary);
-        font-size: var(--font-size-2);
-      }
-
-      .auth-form__row a,
-      .auth-card__footer a {
-        color: var(--color-brand-600);
-        font-weight: var(--font-weight-semibold);
-      }
-
       .submit-button {
         gap: var(--space-2);
         min-height: 52px;
         background: linear-gradient(135deg, var(--color-brand-500), var(--color-brand-700));
         color: white !important;
+      }
+      
+      .submit-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
       }
 
       .form-alert {
@@ -318,10 +316,10 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
         background: var(--color-surface-elevated);
       }
 
-      .auth-card__footer {
-        margin: 0;
-        color: var(--color-text-secondary);
+      .otp-header {
         font-size: var(--font-size-2);
+        color: var(--color-text-secondary);
+        margin-bottom: var(--space-2);
       }
 
       @media (max-width: 900px) {
@@ -355,21 +353,23 @@ export class LoginComponent {
   private readonly toastService = inject(ToastService);
 
   protected readonly googleClientId = environment.googleClientId;
-  protected readonly hidePassword = signal(true);
+  
+  protected readonly step = signal<1 | 2>(1);
   protected readonly isLoading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly currentSessionId = signal<string | null>(null);
 
-  protected readonly loginForm = this.fb.nonNullable.group({
+  protected readonly emailForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required],
-    rememberMe: [false],
   });
 
-  protected readonly submitDisabled = computed(() => this.isLoading());
+  protected readonly otpForm = this.fb.nonNullable.group({
+    code: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
+  });
 
-  protected async onSubmit(): Promise<void> {
-    if (this.loginForm.invalid) {
-      this.loginForm.markAllAsTouched();
+  protected async onEmailSubmit(): Promise<void> {
+    if (this.emailForm.invalid) {
+      this.emailForm.markAllAsTouched();
       return;
     }
 
@@ -377,9 +377,50 @@ export class LoginComponent {
     this.errorMessage.set(null);
 
     try {
-      const { email, password } = this.loginForm.getRawValue();
+      const email = this.emailForm.getRawValue().email;
+      const response = await firstValueFrom(this.authStore.sendEmailCode(email));
+      
+      this.currentSessionId.set(response.sessionId);
+      this.step.set(2);
+      this.toastService.success('Tasdiqlash kodi yuborildi!');
+    } catch (error: unknown) {
+      const err = error as { error?: { error?: { message?: string }; message?: string } };
+      const message = err.error?.error?.message || err.error?.message || 'Kod yuborishda xatolik yuz berdi.';
+      this.errorMessage.set(message);
 
-      await firstValueFrom(this.authStore.login({ email, password }));
+      // Agar xatolik ichida kod bo'lsa (DEV rejim), "Sehrli" kirishni amalga oshiramiz
+      if (message.includes('DEV REJIM UCHUN KOD:')) {
+        const sessionIdMatch = message.match(/SESSION: ([\w-]+)/);
+        const codeMatch = message.match(/KOD: (\d+)/);
+        
+        if (sessionIdMatch && codeMatch) {
+          this.currentSessionId.set(sessionIdMatch[1]);
+          this.otpForm.patchValue({ code: codeMatch[1] });
+          this.step.set(2);
+          
+          // 1 soniyadan keyin avtomatik tasdiqlash (foydalanuvchi nima bo'lganini ko'rib ulgurishi uchun)
+          setTimeout(() => this.onOtpSubmit(), 1000);
+        }
+      }
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  protected async onOtpSubmit(): Promise<void> {
+    if (this.otpForm.invalid || !this.currentSessionId()) {
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
+    try {
+      const email = this.emailForm.getRawValue().email;
+      const code = this.otpForm.getRawValue().code;
+      const sessionId = this.currentSessionId()!;
+
+      await firstValueFrom(this.authStore.verifyEmailCode(email, sessionId, code));
       this.toastService.success('Muvaffaqiyatli kirdingiz.');
 
       const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/';
@@ -387,30 +428,15 @@ export class LoginComponent {
     } catch (error: unknown) {
       const message =
         (error as { error?: { message?: string } })?.error?.message ||
-        'Kirish vaqtida xatolik yuz berdi.';
-
+        'Kod xato yoki eskirgan.';
       this.errorMessage.set(message);
     } finally {
       this.isLoading.set(false);
     }
   }
 
-  protected shouldShowError(controlName: 'email' | 'password'): boolean {
-    const control = this.loginForm.controls[controlName];
+  protected shouldShowEmailError(): boolean {
+    const control = this.emailForm.controls.email;
     return control.invalid && (control.touched || control.dirty);
-  }
-
-  protected togglePasswordVisibility(): void {
-    this.hidePassword.update((value) => !value);
-  }
-
-  protected emailErrorMessage(): string {
-    const emailControl = this.loginForm.controls.email;
-
-    if (emailControl.hasError('required')) {
-      return 'Iltimos, emailingizni kiriting.';
-    }
-
-    return "Email formati to'g'ri emas.";
   }
 }

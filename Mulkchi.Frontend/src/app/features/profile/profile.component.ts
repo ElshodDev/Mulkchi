@@ -108,29 +108,21 @@ import { UIStore } from '../../core/stores/ui.store';
                       <span class="value">{{ currentUser()?.totalListings || 0 }}</span>
                       <span
                         class="label"
-                        >{{ text().infoTab === 'Personal data' ? 'E'lonlar' : text().infoTab === 'Личные данные' ? 'Объявления' : 'Listings' }}</span
+                        >{{ lang() === 'en' ? 'Listings' : lang() === 'ru' ? 'Объявления' : "E'lonlar" }}</span
                       >
                     </div>
                   }
                   <div class="stat">
                     <span class="value">{{ currentUser()?.totalBookings || 0 }}</span>
                     <span class="label">{{
-                      text().infoTab === 'Personal data'
-                        ? 'Bronlar'
-                        : text().infoTab === 'Личные данные'
-                          ? 'Бронирования'
-                          : 'Bookings'
+                      lang() === 'en' ? 'Bookings' : lang() === 'ru' ? 'Бронирования' : 'Bronlar'
                     }}</span>
                   </div>
                   @if (currentUser()?.rating) {
                     <div class="stat">
                       <span class="value">{{ currentUser()?.rating }}</span>
                       <span class="label">{{
-                        text().infoTab === 'Personal data'
-                          ? 'Reyting'
-                          : text().infoTab === 'Личные данные'
-                            ? 'Рейтинг'
-                            : 'Rating'
+                        lang() === 'en' ? 'Rating' : lang() === 'ru' ? 'Рейтинг' : 'Reyting'
                       }}</span>
                     </div>
                   }
@@ -140,11 +132,11 @@ import { UIStore } from '../../core/stores/ui.store';
                   <div class="verified-badge">
                     <mat-icon color="primary">verified</mat-icon>
                     <span>{{
-                      text().infoTab === 'Personal data'
-                        ? 'Tasdiqlangan foydalanuvchi'
-                        : text().infoTab === 'Личные данные'
+                      lang() === 'en'
+                        ? 'Verified user'
+                        : lang() === 'ru'
                           ? 'Подтверждённый пользователь'
-                          : 'Verified user'
+                          : 'Tasdiqlangan foydalanuvchi'
                     }}</span>
                   </div>
                 }
@@ -176,20 +168,16 @@ import { UIStore } from '../../core/stores/ui.store';
                             <ng-container>
                               <mat-icon>save</mat-icon>
                               <span>{{
-                                text().infoTab === 'Personal data'
-                                  ? 'Save'
-                                  : text().infoTab === 'Личные данные'
-                                    ? 'Сохранить'
-                                    : 'Saqlash'
+                                lang() === 'en' ? 'Save' : lang() === 'ru' ? 'Сохранить' : 'Saqlash'
                               }}</span>
                             </ng-container>
                           } @else {
                             <ng-container>
                               <mat-icon>edit</mat-icon>
                               <span>{{
-                                text().infoTab === 'Personal data'
+                                lang() === 'en'
                                   ? 'Edit'
-                                  : text().infoTab === 'Личные данные'
+                                  : lang() === 'ru'
                                     ? 'Редактировать'
                                     : 'Tahrirlash'
                               }}</span>
@@ -202,20 +190,16 @@ import { UIStore } from '../../core/stores/ui.store';
                         <div class="form-row">
                           <mat-form-field appearance="outline">
                             <mat-label>{{
-                              text().infoTab === 'Personal data'
-                                ? 'First name'
-                                : text().infoTab === 'Личные данные'
-                                  ? 'Имя'
-                                  : 'Ism'
+                              lang() === 'en' ? 'First name' : lang() === 'ru' ? 'Имя' : 'Ism'
                             }}</mat-label>
                             <input matInput formControlName="firstName" [readonly]="!isEditing()" />
                           </mat-form-field>
 
                           <mat-form-field appearance="outline">
                             <mat-label>{{
-                              text().infoTab === 'Personal data'
+                              lang() === 'en'
                                 ? 'Last name'
-                                : text().infoTab === 'Личные данные'
+                                : lang() === 'ru'
                                   ? 'Фамилия'
                                   : 'Familiya'
                             }}</mat-label>
@@ -226,11 +210,7 @@ import { UIStore } from '../../core/stores/ui.store';
                         <div class="form-row">
                           <mat-form-field appearance="outline">
                             <mat-label>{{
-                              text().infoTab === 'Personal data'
-                                ? 'Email'
-                                : text().infoTab === 'Личные данные'
-                                  ? 'Email'
-                                  : 'Email'
+                              lang() === 'en' ? 'Email' : lang() === 'ru' ? 'Email' : 'Email'
                             }}</mat-label>
                             <input matInput type="email" formControlName="email" readonly />
                             <mat-icon matSuffix>lock</mat-icon>
@@ -238,11 +218,7 @@ import { UIStore } from '../../core/stores/ui.store';
 
                           <mat-form-field appearance="outline">
                             <mat-label>{{
-                              text().infoTab === 'Personal data'
-                                ? 'Phone'
-                                : text().infoTab === 'Личные данные'
-                                  ? 'Телефон'
-                                  : 'Telefon'
+                              lang() === 'en' ? 'Phone' : lang() === 'ru' ? 'Телефон' : 'Telefon'
                             }}</mat-label>
                             <input matInput formControlName="phone" [readonly]="!isEditing()" />
                           </mat-form-field>
@@ -267,11 +243,7 @@ import { UIStore } from '../../core/stores/ui.store';
 
                           <mat-form-field appearance="outline">
                             <mat-label>{{
-                              text().infoTab === 'Personal data'
-                                ? 'Gender'
-                                : text().infoTab === 'Личные данные'
-                                  ? 'Пол'
-                                  : 'Jins'
+                              lang() === 'en' ? 'Gender' : lang() === 'ru' ? 'Пол' : 'Jins'
                             }}</mat-label>
                             <mat-select
                               formControlName="gender"
@@ -286,11 +258,7 @@ import { UIStore } from '../../core/stores/ui.store';
 
                         <mat-form-field appearance="outline" class="full-width">
                           <mat-label>{{
-                            text().infoTab === 'Personal data'
-                              ? 'Address'
-                              : text().infoTab === 'Личные данные'
-                                ? 'Адрес'
-                                : 'Manzil'
+                            lang() === 'en' ? 'Address' : lang() === 'ru' ? 'Адрес' : 'Manzil'
                           }}</mat-label>
                           <textarea
                             matInput
@@ -302,11 +270,7 @@ import { UIStore } from '../../core/stores/ui.store';
 
                         <mat-form-field appearance="outline" class="full-width">
                           <mat-label>{{
-                            text().infoTab === 'Personal data'
-                              ? 'Bio'
-                              : text().infoTab === 'Личные данные'
-                                ? 'О себе'
-                                : 'Bio'
+                            lang() === 'en' ? 'Bio' : lang() === 'ru' ? 'О себе' : 'Bio'
                           }}</mat-label>
                           <textarea
                             matInput
@@ -321,9 +285,9 @@ import { UIStore } from '../../core/stores/ui.store';
                           <div class="form-actions">
                             <button mat-button type="button" (click)="toggleEdit()">
                               {{
-                                text().infoTab === 'Personal data'
+                                lang() === 'en'
                                   ? 'Cancel'
-                                  : text().infoTab === 'Личные данные'
+                                  : lang() === 'ru'
                                     ? 'Отмена'
                                     : 'Bekor qilish'
                               }}
@@ -346,9 +310,9 @@ import { UIStore } from '../../core/stores/ui.store';
                       >
                         <mat-form-field appearance="outline" class="full-width">
                           <mat-label>{{
-                            text().infoTab === 'Personal data'
+                            lang() === 'en'
                               ? 'Current password'
-                              : text().infoTab === 'Личные данные'
+                              : lang() === 'ru'
                                 ? 'Текущий пароль'
                                 : 'Joriy parol'
                           }}</mat-label>
@@ -357,9 +321,9 @@ import { UIStore } from '../../core/stores/ui.store';
 
                         <mat-form-field appearance="outline" class="full-width">
                           <mat-label>{{
-                            text().infoTab === 'Personal data'
+                            lang() === 'en'
                               ? 'New password'
-                              : text().infoTab === 'Личные данные'
+                              : lang() === 'ru'
                                 ? 'Новый пароль'
                                 : 'Yangi parol'
                           }}</mat-label>
@@ -368,18 +332,18 @@ import { UIStore } from '../../core/stores/ui.store';
 
                         <mat-form-field appearance="outline" class="full-width">
                           <mat-label>{{
-                            text().infoTab === 'Personal data'
+                            lang() === 'en'
                               ? 'Confirm new password'
-                              : text().infoTab === 'Личные данные'
+                              : lang() === 'ru'
                                 ? 'Подтвердите пароль'
                                 : 'Yangi parolni tasdiqlash'
                           }}</mat-label>
                           <input matInput type="password" formControlName="confirmPassword" />
                           @if (passwordForm.hasError('mismatch')) {
                             <mat-error>{{
-                              text().infoTab === 'Personal data'
+                              lang() === 'en'
                                 ? 'Passwords do not match'
-                                : text().infoTab === 'Личные данные'
+                                : lang() === 'ru'
                                   ? 'Пароли не совпадают'
                                   : 'Parollar mos kelmadi'
                             }}</mat-error>
@@ -499,8 +463,10 @@ import { UIStore } from '../../core/stores/ui.store';
                                   ></mat-progress-spinner>
                                   <span>{{ text().switching }}</span>
                                 } @else {
-                                  <mat-icon>person</mat-icon>
-                                  <span>{{ text().switchToGuest }}</span>
+                                  <ng-container>
+                                    <mat-icon>person</mat-icon>
+                                    <span>{{ text().switchToGuest }}</span>
+                                  </ng-container>
                                 }
                               </button>
                             } @else {
@@ -524,8 +490,10 @@ import { UIStore } from '../../core/stores/ui.store';
                                   ></mat-progress-spinner>
                                   <span>{{ text().switching }}</span>
                                 } @else {
-                                  <mat-icon>business</mat-icon>
-                                  <span>{{ text().switchToHost }}</span>
+                                  <ng-container>
+                                    <mat-icon>business</mat-icon>
+                                    <span>{{ text().switchToHost }}</span>
+                                  </ng-container>
                                 }
                               </button>
                             }
@@ -1215,6 +1183,7 @@ export class ProfileComponent implements OnInit {
   isChangingPassword = signal(false);
   isSwitchingMode = signal(false);
   selectedLanguage = signal(this.uiStore.language());
+  readonly lang = computed(() => this.uiStore.language());
 
   readonly text = computed(() => {
     const language = this.uiStore.language();
@@ -1327,9 +1296,9 @@ export class ProfileComponent implements OnInit {
   });
 
   readonly dobLabel = computed(() =>
-    this.text().infoTab === 'Personal data'
+    this.lang() === 'en'
       ? 'Date of birth'
-      : this.text().infoTab === 'Личные данные'
+      : this.lang() === 'ru'
         ? 'Дата рождения'
         : "Tug'ilgan sana",
   );

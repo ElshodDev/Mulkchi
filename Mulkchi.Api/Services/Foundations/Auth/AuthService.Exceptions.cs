@@ -9,7 +9,52 @@ namespace Mulkchi.Api.Services.Foundations.Auth;
 public partial class AuthService
 {
     private delegate ValueTask<AuthResponse> ReturningAuthResponseFunction();
+    private delegate ValueTask<string> ReturningStringFunction();
     private delegate ValueTask ReturningNothingFunction();
+
+    private async ValueTask<string> TryCatch(ReturningStringFunction returningStringFunction)
+    {
+        try
+        {
+            return await returningStringFunction();
+        }
+        catch (InvalidAuthException invalidAuthException)
+        {
+            throw CreateAndLogValidationException(invalidAuthException);
+        }
+        catch (InvalidLoginRequestException invalidLoginRequestException)
+        {
+            throw CreateAndLogValidationException(invalidLoginRequestException);
+        }
+        catch (InvalidRegisterRequestException invalidRegisterRequestException)
+        {
+            throw CreateAndLogValidationException(invalidRegisterRequestException);
+        }
+        catch (DbException dbException)
+        {
+            var failedStorage = new FailedAuthStorageException(
+                message: "Failed auth storage error occurred, contact support.",
+                innerException: dbException);
+
+            throw CreateAndLogDependencyException(failedStorage);
+        }
+        catch (DbUpdateException dbUpdateException)
+        {
+            var failedStorage = new FailedAuthStorageException(
+                message: "Failed auth storage error occurred, contact support.",
+                innerException: dbUpdateException);
+
+            throw CreateAndLogDependencyException(failedStorage);
+        }
+        catch (Exception exception)
+        {
+            var failedService = new FailedAuthServiceException(
+                message: "Failed auth service error occurred, contact support.",
+                innerException: exception);
+
+            throw CreateAndLogServiceException(failedService);
+        }
+    }
 
     private async ValueTask<AuthResponse> TryCatch(ReturningAuthResponseFunction returningAuthResponseFunction)
     {
@@ -32,6 +77,10 @@ public partial class AuthService
         catch (InvalidRegisterRequestException invalidRegisterRequestException)
         {
             throw CreateAndLogValidationException(invalidRegisterRequestException);
+        }
+        catch (InvalidAuthException invalidAuthException)
+        {
+            throw CreateAndLogValidationException(invalidAuthException);
         }
         catch (InvalidRefreshTokenException invalidRefreshTokenException)
         {

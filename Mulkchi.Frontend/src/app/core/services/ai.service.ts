@@ -46,10 +46,21 @@ export interface HybridRecommendationResponse {
 export interface AIPriceRequest {
   region: string;
   propertyType: string;
+  listingType: 'Sale' | 'Rent' | 'ShortTermRent';
   area: number;
   rooms: number;
   floor: number;
-  listingType: 'Sale' | 'Rent';
+  totalFloors?: number;
+  buildingAge?: number;
+  hasFurniture?: boolean;
+  hasParking?: boolean;
+  hasElevator?: boolean;
+  hasAirConditioning?: boolean;
+  hasWifi?: boolean;
+  hasSecurity?: boolean;
+  isRenovated?: boolean;
+  hasMetroNearby?: boolean;
+  hasPool?: boolean;
 }
 
 export interface AIPriceResponse {
@@ -69,6 +80,21 @@ export interface AIPriceResponse {
     region: string;
     averagePrice: number;
   }[];
+}
+
+export interface AIDescriptionRequest {
+  region: string;
+  propertyType: string;
+  area: number;
+  rooms: number;
+  floor: number;
+  totalFloors: number;
+  amenities: string[];
+}
+
+export interface AIDescriptionResponse {
+  description: string;
+  confidence: number;
 }
 
 @Injectable({
@@ -101,17 +127,7 @@ export class AIService {
     this._loading.set(true);
     this._error.set(null);
 
-    // Map frontend model to backend model
-    const backendRequest = {
-      region: request.region,
-      propertyType: request.propertyType,
-      area: request.area,
-      rooms: request.rooms,
-      floor: request.floor,
-      listingType: request.listingType
-    };
-
-    return this.http.post<AIPriceResponse>(`${this.apiUrl}/predict-price`, backendRequest).pipe(
+    return this.http.post<AIPriceResponse>(`${this.apiUrl}/predict-price`, request).pipe(
       tap(result => {
         this._priceResult.set(result);
         this._loading.set(false);
@@ -257,5 +273,9 @@ export class AIService {
     this._recommendations.set([]);
     this._similarProperties.set([]);
     this._error.set(null);
+  }
+
+  generateDescription(request: AIDescriptionRequest): Observable<AIDescriptionResponse> {
+    return this.http.post<AIDescriptionResponse>(`${this.apiUrl}/generate-description`, request);
   }
 }

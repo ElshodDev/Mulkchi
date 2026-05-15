@@ -94,8 +94,15 @@ public class GlobalExceptionMiddleware
             return "So'rov bajarilmadi.";
         }
 
-        // Return safe, generic message for client errors
-        return GetSafeErrorMessage(GetStatusCode(exception));
+        // If it's a validation error or specific auth error, return the actual message
+        var innermostException = GetInnermostException(exception);
+        if (exception.GetType().Name.EndsWith("ValidationException") || 
+            innermostException.GetType().Name.StartsWith("Invalid"))
+        {
+            return innermostException.Message;
+        }
+
+        return GetSafeErrorMessage(statusCode);
     }
 
     private static string GetSafeErrorMessage(int statusCode) => statusCode switch

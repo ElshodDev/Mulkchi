@@ -1,14 +1,23 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { MatBadgeModule } from '@angular/material/badge';
 import { MatIconModule } from '@angular/material/icon';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
-import { NavbarComponent } from '../navbar/navbar.component';
+import { ComparisonService } from '../../services/comparison.service';
 import { AuthStore } from '../../stores/auth.store';
+import { NavbarComponent } from '../navbar/navbar.component';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatIconModule, NavbarComponent],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    MatIconModule,
+    MatBadgeModule,
+    NavbarComponent,
+  ],
   template: `
     <div class="layout-shell">
       <app-navbar />
@@ -18,11 +27,7 @@ import { AuthStore } from '../../stores/auth.store';
       </main>
 
       <nav class="mobile-dock" aria-label="Mobil navigatsiya">
-        <a
-          routerLink="/"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: true }"
-        >
+        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
           <mat-icon>home</mat-icon>
           <span>Bosh sahifa</span>
         </a>
@@ -30,15 +35,23 @@ import { AuthStore } from '../../stores/auth.store';
           <mat-icon>search</mat-icon>
           <span>Mulklar</span>
         </a>
-        <a routerLink="/favorites" routerLinkActive="active">
-          <mat-icon>favorite</mat-icon>
-          <span>Sevimli</span>
+        <a routerLink="/ai-tools" routerLinkActive="active">
+          <mat-icon>psychology</mat-icon>
+          <span>AI</span>
+        </a>
+        <a routerLink="/compare" routerLinkActive="active">
+          <mat-icon
+            [matBadge]="comparisonService.count() || null"
+            [matBadgeHidden]="comparisonService.isEmpty()"
+            matBadgeColor="accent"
+            matBadgeSize="small"
+            aria-hidden="false"
+          >
+            compare_arrows
+          </mat-icon>
+          <span>Taqqosla</span>
         </a>
         @if (authStore.isLoggedIn()) {
-          <a routerLink="/messages" routerLinkActive="active">
-            <mat-icon>chat</mat-icon>
-            <span>Xabarlar</span>
-          </a>
           <a routerLink="/profile" routerLinkActive="active">
             <mat-icon>person</mat-icon>
             <span>Profil</span>
@@ -123,4 +136,5 @@ import { AuthStore } from '../../stores/auth.store';
 })
 export class LayoutComponent {
   protected readonly authStore = inject(AuthStore);
+  protected readonly comparisonService = inject(ComparisonService);
 }

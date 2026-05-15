@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 import { PropertyResponse } from '../../../core/models';
+import { ComparisonService } from '../../../core/services/comparison.service';
 import { PropertyService } from '../../../core/services/property.service';
 
 @Component({
@@ -985,6 +986,7 @@ import { PropertyService } from '../../../core/services/property.service';
 export class PropertyCompareComponent implements OnInit {
   private propertyService = inject(PropertyService);
   private snackBar = inject(MatSnackBar);
+  private comparisonService = inject(ComparisonService);
 
   // State signals
   private _properties = signal<PropertyResponse[]>([]);
@@ -1054,11 +1056,11 @@ export class PropertyCompareComponent implements OnInit {
     const index = currentIds.indexOf(property.id);
 
     if (index > -1) {
-      // Deselect
       this._selectedIds.set(currentIds.filter((id) => id !== property.id));
+      this.comparisonService.removeFromCompare(property.id);
     } else if (currentIds.length < 2) {
-      // Select (max 2)
       this._selectedIds.set([...currentIds, property.id]);
+      this.comparisonService.addToCompare(property);
 
       if (this._selectedIds().length === 2) {
         this.snackBar.open('Ikkala mulk tanlandi! Solishtirishni boshlash mumkin', 'OK', {
@@ -1066,13 +1068,13 @@ export class PropertyCompareComponent implements OnInit {
         });
       }
     } else {
-      // Already 2 selected
       this.snackBar.open('Faqat 2 ta mulkni solishtirish mumkin', 'OK', { duration: 2000 });
     }
   }
 
   clearSelection(): void {
     this._selectedIds.set([]);
+    this.comparisonService.clear();
   }
 
   changeSelection(): void {

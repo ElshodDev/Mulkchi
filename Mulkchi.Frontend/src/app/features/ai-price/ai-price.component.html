@@ -1,0 +1,250 @@
+<div class="ai-price-container">
+	<div class="container">
+		<div class="ai-hero">
+			<div class="hero-icon">
+				<mat-icon>psychology</mat-icon>
+			</div>
+			<h1>AI Narx Bashorati</h1>
+			<p>Sun'iy intellekt yordamida mulkingizning bozor qiymatini aniqlang</p>
+		</div>
+
+		<div class="ai-content">
+			<div class="form-card">
+				<div class="card-header">
+					<mat-icon>apartment</mat-icon>
+					<span>Mulk ma'lumotlari</span>
+				</div>
+
+				<div class="card-body">
+					<form [formGroup]="priceForm" (ngSubmit)="predict()">
+						<div class="form-grid">
+							<mat-form-field appearance="outline">
+								<mat-label>Viloyat</mat-label>
+								<mat-select formControlName="region" required>
+									@for (region of regions; track region) {
+									<mat-option [value]="region">{{ region }}</mat-option>
+									}
+								</mat-select>
+							</mat-form-field>
+
+							<mat-form-field appearance="outline">
+								<mat-label>Mulk turi</mat-label>
+								<mat-select formControlName="propertyType" required>
+									@for (type of propertyTypes; track type.value) {
+									<mat-option [value]="type.value">{{ type.label }}</mat-option>
+									}
+								</mat-select>
+							</mat-form-field>
+
+							<mat-form-field appearance="outline">
+								<mat-label>Maydon (m²)</mat-label>
+								<input matInput type="number" formControlName="area" min="1" required />
+								<span matSuffix>m²</span>
+							</mat-form-field>
+
+							<mat-form-field appearance="outline">
+								<mat-label>Xonalar soni</mat-label>
+								<mat-select formControlName="rooms" required>
+									@for (num of roomOptions; track num) {
+									<mat-option [value]="num">{{ num }} xona</mat-option>
+									}
+								</mat-select>
+							</mat-form-field>
+
+							<mat-form-field appearance="outline">
+								<mat-label>Qavat</mat-label>
+								<input matInput type="number" formControlName="floor" min="1" required />
+							</mat-form-field>
+
+							<mat-form-field appearance="outline">
+								<mat-label>Umumiy qavatlar</mat-label>
+								<input matInput type="number" formControlName="totalFloors" min="1" required />
+							</mat-form-field>
+
+							<mat-form-field appearance="outline">
+								<mat-label>Bino yoshi (yil)</mat-label>
+								<input matInput type="number" formControlName="buildingAge" min="0" required />
+							</mat-form-field>
+
+							<div class="listing-type-group">
+								<label class="group-label">E'lon turi</label>
+								<mat-radio-group formControlName="listingType" class="radio-group">
+									<mat-radio-button value="Sale">Sotish</mat-radio-button>
+									<mat-radio-button value="Rent">Ijara</mat-radio-button>
+									<mat-radio-button value="ShortTermRent">Kunlik</mat-radio-button>
+								</mat-radio-group>
+							</div>
+						</div>
+
+						<div class="amenities-section">
+							<h4 class="section-subtitle">Qulayliklar</h4>
+							<div class="amenities-grid">
+								<mat-checkbox formControlName="isRenovated">Ta'mirlangan</mat-checkbox>
+								<mat-checkbox formControlName="hasFurniture">Mebel</mat-checkbox>
+								<mat-checkbox formControlName="hasParking">Avtoturargoh</mat-checkbox>
+								<mat-checkbox formControlName="hasElevator">Lift</mat-checkbox>
+								<mat-checkbox formControlName="hasAirConditioning">Konditsioner</mat-checkbox>
+								<mat-checkbox formControlName="hasWifi">WiFi</mat-checkbox>
+								<mat-checkbox formControlName="hasSecurity">Qo'riqlash</mat-checkbox>
+								<mat-checkbox formControlName="hasMetroNearby">Metro yaqin</mat-checkbox>
+								<mat-checkbox formControlName="hasPool">Hovuz</mat-checkbox>
+							</div>
+						</div>
+
+						<button mat-raised-button color="primary" class="predict-btn" type="submit"
+							[disabled]="priceForm.invalid || isLoading">
+							<mat-icon>auto_awesome</mat-icon>
+							{{ isLoading ? 'Hisoblanmoqda...' : 'Narxni bashorat qilish' }}
+						</button>
+					</form>
+				</div>
+			</div>
+
+			<div class="result-card">
+				@if (isLoading) {
+				<div class="loading-card">
+					<div class="skeleton-header"></div>
+					<div class="skeleton-gauge"></div>
+					<div class="skeleton-price"></div>
+					<div class="skeleton-details">
+						<div class="skeleton-row"></div>
+						<div class="skeleton-row"></div>
+						<div class="skeleton-row"></div>
+					</div>
+				</div>
+				} @else if (aiService.error()) {
+				<div class="error-card">
+					<mat-icon color="warn">error</mat-icon>
+					<p>{{ aiService.error() }}</p>
+					<button mat-raised-button color="primary" (click)="aiService.clearResult()">
+						Qayta urinib ko'rish
+					</button>
+				</div>
+				} @else if (!prediction) {
+				<div class="empty-state">
+					<mat-icon>bar_chart</mat-icon>
+					<p>Ma'lumotlarni to'ldiring va bashorat qilish tugmasini bosing</p>
+				</div>
+				} @else {
+				<div class="prediction-results" @slideUp>
+					<div class="confidence-section">
+					<div class="gauge-container">
+						<svg viewBox="0 0 140 75">
+							<path d="M10 70 A60 60 0 0 1 130 70" stroke="#E2E8F0" stroke-width="10" fill="none"
+								stroke-linecap="round" />
+							<path d="M10 70 A60 60 0 0 1 130 70" stroke="url(#gaugeGrad)" stroke-width="10" fill="none"
+								stroke-linecap="round" stroke-dasharray="188.5"
+								[attr.stroke-dashoffset]="188.5 - (188.5 * confidencePercent / 100)" />
+							<defs>
+								<linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+									<stop offset="0%" stop-color="#60A5FA" />
+									<stop offset="50%" stop-color="#1B3A6B" />
+									<stop offset="100%" stop-color="#C9A84C" />
+								</linearGradient>
+							</defs>
+						</svg>
+						<span class="conf-val">{{ confidencePercent | number: '1.0-0' }}%</span>
+					</div>
+					<p class="conf-label">AI bashorat ishonchi</p>
+				</div>
+
+				<div class="price-section">
+					<div class="price-label">
+						<span class="dot"></span>Tavsiya etilgan narx
+					</div>
+					<div class="price-main">
+						{{ prediction.recommendedPrice | number: '1.0-0' }}
+						<span class="currency">{{ prediction.currency }}</span>
+					</div>
+					<div class="range-bar">
+						<div class="range-fill"></div>
+						<div class="range-marker"></div>
+					</div>
+					<div class="price-range">
+						<span>Min: <b>{{ prediction.minPrice | number: '1.0-0' }}</b></span>
+						<span class="mid-price">● {{ prediction.recommendedPrice | number: '1.0-0' }}</span>
+						<span>Max: <b>{{ prediction.maxPrice | number: '1.0-0' }}</b></span>
+					</div>
+				</div>
+
+				<div class="stats-row" *ngIf="prediction.pricePerSqm || prediction.estimatedRent || prediction.roi">
+					<div class="stat-box" *ngIf="prediction.pricePerSqm">
+						<div class="stat-val">{{ prediction.pricePerSqm | number: '1.0-0' }}</div>
+						<div class="stat-lbl">{{ prediction.currency }}/m²</div>
+					</div>
+					<div class="stat-box" *ngIf="prediction.estimatedRent">
+						<div class="stat-val">{{ prediction.estimatedRent | number: '1.0-0' }}</div>
+						<div class="stat-lbl">{{ prediction.currency }}/oy ijara</div>
+					</div>
+					<div class="stat-box" *ngIf="prediction.roi">
+						<div class="stat-val">{{ prediction.roi }}%</div>
+						<div class="stat-lbl">Yillik ROI</div>
+					</div>
+				</div>
+
+				<div class="market-section">
+					<div class="market-header">
+						<span>Bozor taqqoslash</span>
+						<span class="badge" [ngClass]="getMarketBadgeClass()">
+							{{ getMarketLabel() }}
+						</span>
+					</div>
+					<div class="market-bar">
+						<div class="market-fill" [style.width.%]="prediction.marketScore || 0"></div>
+					</div>
+					<p class="market-hint">{{ getMarketHint() }}</p>
+				</div>
+
+				@if (prediction.factorBreakdown && getFactorKeys().length > 0) {
+				<div class="factors-section">
+					<h4>
+						<mat-icon>analytics</mat-icon>
+						Narxga ta'sir etuvchi omillar
+					</h4>
+					<div class="factor-chips">
+						@for (factor of getFactorEntries(); track factor.key) {
+						<mat-chip class="factor-chip">
+							<mat-icon>add_circle</mat-icon>
+							{{ factor.key }}: +{{ factor.value }}%
+						</mat-chip>
+						}
+					</div>
+				</div>
+				}
+
+				<div class="tips-section">
+					<h4>
+						<mat-icon>lightbulb</mat-icon>
+						Maslahatlar
+					</h4>
+					<ul>
+						@if ((prediction.comparisonPercentage || 0) < -5) { <li>Narxingiz bozordan past. Siz tezroq sotishingiz
+							mumkin.</li>
+							}
+							@if ((prediction.comparisonPercentage || 0) > 5) {
+							<li>Narxingiz bozordan yuqori. Buni asoslash uchun qo'shimcha qulayliklar qo'shing.</li>
+							}
+							@if ((prediction.confidence || 0) < 0.7) { <li>Ishonch darajasi past. Ko'proq ma'lumot kiritish narx
+								aniqligini oshiradi.</li>
+								}
+					</ul>
+				</div>
+
+				@if (prediction.regionalData && prediction.regionalData.length > 0) {
+				<mat-card class="chart-card">
+					<mat-card-header>
+						<mat-card-title>Viloyat bo'yicha o'rtacha narxlar</mat-card-title>
+					</mat-card-header>
+					<mat-card-content>
+						<div class="chart-container">
+							<canvas #chartCanvas></canvas>
+						</div>
+					</mat-card-content>
+				</mat-card>
+				}
+				</div>
+				}
+			</div>
+		</div>
+	</div>
+</div>

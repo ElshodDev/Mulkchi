@@ -53,16 +53,18 @@ export const routes: Routes = [
       {
         path: 'market',
         loadComponent: () =>
-          import('./features/market/market.component').then(
-            (module) => module.MarketComponent,
-          ),
+          import('./features/market/market.component').then((module) => module.MarketComponent),
         title: 'Bozor',
         data: { preload: true, preloadPriority: 1 },
       },
       // Legacy routes - redirect to new ones
       {
         path: 'ai-recommendations',
-        redirectTo: 'ai-tools',
+        loadComponent: () =>
+          import('./features/properties/ai-recommendations/ai-recommendations.component').then(
+            (module) => module.AiRecommendationsComponent,
+          ),
+        title: 'Shaxsiy Tavsiyalar',
       },
       {
         path: 'market-analytics',
@@ -100,22 +102,51 @@ export const routes: Routes = [
         path: 'favorites',
         canActivate: [authGuard],
         loadComponent: () =>
-          import('./features/favorites/favorites.component').then((module) => module.FavoritesComponent),
+          import('./features/favorites/favorites.component').then(
+            (module) => module.FavoritesComponent,
+          ),
         title: 'Sevimlilar',
       },
       {
         path: 'messages',
         canActivate: [authGuard],
         loadComponent: () =>
-          import('./features/messages/messages.component').then((module) => module.MessagesComponent),
+          import('./features/messages/messages.component').then(
+            (module) => module.MessagesComponent,
+          ),
         title: 'Xabarlar',
       },
       {
         path: 'ai-price',
         canActivate: [authGuard],
         loadComponent: () =>
-          import('./features/ai-price/ai-price.component').then((module) => module.AiPriceComponent),
+          import('./features/ai-price/ai-price.component').then(
+            (module) => module.AiPriceComponent,
+          ),
         title: 'Narx bashorati',
+      },
+      {
+        path: 'elon-berish',
+        canActivate: [authGuard],
+        children: [
+          {
+            path: 'tur',
+            loadComponent: () =>
+              import('./features/properties/listing-type-select/listing-type-select.component').then(
+                (module) => module.ListingTypeSelectComponent,
+              ),
+            title: "E'lon turi tanlash",
+          },
+          {
+            path: ':type',
+            canDeactivate: [unsavedChangesGuard],
+            loadComponent: () =>
+              import('./features/properties/property-form/property-form.component').then(
+                (module) => module.PropertyFormComponent,
+              ),
+            title: "Yangi e'lon",
+          },
+        ],
       },
       {
         path: 'listings/create',
@@ -130,7 +161,8 @@ export const routes: Routes = [
       {
         path: 'host',
         canActivate: [authGuard, hostGuard],
-        loadChildren: () => import('./features/host/host.routes').then((module) => module.HOST_ROUTES),
+        loadChildren: () =>
+          import('./features/host/host.routes').then((module) => module.HOST_ROUTES),
         title: 'Mezbon paneli',
       },
       {

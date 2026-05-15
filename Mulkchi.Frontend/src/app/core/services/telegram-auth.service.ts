@@ -58,7 +58,7 @@ export class TelegramAuthService {
 
     // Maksimal 10 daqiqa polling
     let attempts = 0;
-    const maxAttempts = 300; // 300 * 2 soniya = 10 daqiqa
+    const maxAttempts = 150; // 150 * 4 soniya = 10 daqiqa
 
     this.pollingInterval = setInterval(async () => {
       attempts++;
@@ -84,7 +84,7 @@ export class TelegramAuthService {
       } catch (error) {
         console.error('Telegram polling xatosi', error);
       }
-    }, 2000);
+    }, 4000);
   }
 
   private stopPolling(): void {

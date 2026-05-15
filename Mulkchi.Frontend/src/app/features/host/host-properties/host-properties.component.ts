@@ -13,6 +13,7 @@ import { PropertyService } from '../../../core/services/property.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { Property, PropertyStatus } from '../../../core/models';
+import { OptimizedImageComponent } from '../../../shared/components/optimized-image/optimized-image.component';
 
 @Component({
   selector: 'app-host-properties',
@@ -26,7 +27,8 @@ import { Property, PropertyStatus } from '../../../core/models';
     MatChipsModule,
     MatTableModule,
     MatPaginatorModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    OptimizedImageComponent
   ],
   template: `
     <div class="host-properties-container">
@@ -99,7 +101,13 @@ import { Property, PropertyStatus } from '../../../core/models';
                 <td mat-cell *matCellDef="let property">
                   <div class="table-image">
                     @if (property.images && property.images.length > 0) {
-                      <img [src]="property.images[0].imageUrl" [alt]="property.title">
+                      <app-optimized-image
+                        [src]="property.images[0].url"
+                        [alt]="property.title"
+                        [width]="80"
+                        [height]="60"
+                        [lazy]="true">
+                      </app-optimized-image>
                     } @else {
                       <div class="no-image">
                         <mat-icon>image_not_supported</mat-icon>
@@ -189,7 +197,7 @@ import { Property, PropertyStatus } from '../../../core/models';
             </table>
 
             <mat-paginator
-              [length]="properties().length"
+              [length]="totalCount()"
               [pageSize]="pageSize()"
               [pageSizeOptions]="[5, 10, 20]"
               (page)="onPageChange($event)">
@@ -593,6 +601,8 @@ export class HostPropertiesComponent implements OnInit {
   properties = signal<Property[]>([]);
   loading = signal(true);
   pageSize = signal(10);
+  currentPage = signal(1);
+  totalCount = signal(0);
   displayedColumns = ['image', 'title', 'type', 'price', 'status', 'stats', 'actions'];
 
   // Stats signals
@@ -607,10 +617,11 @@ export class HostPropertiesComponent implements OnInit {
   loadProperties(): void {
     this.loading.set(true);
     
-    this.propertyService.getHostProperties().subscribe({
-      next: (properties) => {
-        this.properties.set(properties);
-        this.calculateStats(properties);
+    this.propertyService.getHostProperties(this.currentPage(), this.pageSize()).subscribe({
+      next: (result) => {
+        this.properties.set(result.items);
+        this.totalCount.set(result.totalCount);
+        this.calculateStats(result.items);
         this.loading.set(false);
       },
       error: () => {
@@ -654,7 +665,9 @@ export class HostPropertiesComponent implements OnInit {
   }
 
   onPageChange(event: PageEvent): void {
+    this.currentPage.set(event.pageIndex + 1);
     this.pageSize.set(event.pageSize);
+    this.loadProperties();
   }
 
   deleteProperty(id: string): void {

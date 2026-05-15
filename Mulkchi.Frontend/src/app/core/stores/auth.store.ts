@@ -24,6 +24,14 @@ export class AuthStore {
     return this.authService.login(request);
   }
 
+  sendEmailCode(email: string): Observable<{ sessionId: string }> {
+    return this.authService.sendEmailCode(email);
+  }
+
+  verifyEmailCode(email: string, sessionId: string, code: string): Observable<AuthResponse> {
+    return this.authService.verifyEmailCode(email, sessionId, code);
+  }
+
   register(request: RegisterRequest): Observable<AuthResponse> {
     return this.authService.register(request);
   }

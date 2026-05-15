@@ -1,8 +1,10 @@
 #nullable disable
 
+using Xeptions;
+
 namespace Mulkchi.Api.Models.Foundations.Auth.Exceptions;
 
-public class InvalidAuthException : Exception
+public class InvalidAuthException : Xeption
 {
     public InvalidAuthException()
         : base("Invalid authentication data.")
