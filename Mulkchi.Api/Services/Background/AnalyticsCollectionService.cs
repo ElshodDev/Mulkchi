@@ -145,20 +145,20 @@ public class AnalyticsCollectionService : BackgroundService
                 .Where(p => p.Region == location.Region && p.District == district)
                 .Where(p => p.Type == location.Type);
 
-            var avgSale = await properties
+            var avgSale = Math.Round(await properties
                 .Where(p => p.SalePrice.HasValue && p.SalePrice > 0)
-                .AverageAsync(p => (decimal?)p.SalePrice) ?? 0;
+                .AverageAsync(p => (decimal?)p.SalePrice) ?? 0, 2);
 
-            var avgRent = await properties
+            var avgRent = Math.Round(await properties
                 .Where(p => p.MonthlyRent.HasValue && p.MonthlyRent > 0)
-                .AverageAsync(p => (decimal?)p.MonthlyRent) ?? 0;
+                .AverageAsync(p => (decimal?)p.MonthlyRent) ?? 0, 2);
 
             var listingsCount = await properties.CountAsync(ct);
 
-            var pricePerSqm = await properties
+            var pricePerSqm = Math.Round(await properties
                 .Where(p => p.SalePrice.HasValue && p.SalePrice > 0 && p.Area > 0)
                 .Select(p => p.SalePrice.GetValueOrDefault() / (decimal)p.Area)
-                .AverageAsync(p => (decimal?)p) ?? 0;
+                .AverageAsync(p => (decimal?)p) ?? 0, 2);
 
             // Calculate price change from previous month
             var prevMonth = DateTimeOffset.UtcNow.AddMonths(-1).ToString("yyyy-MM");
@@ -168,9 +168,9 @@ public class AnalyticsCollectionService : BackgroundService
                 .Where(mt => mt.YearMonth == prevMonth)
                 .FirstOrDefaultAsync(ct);
 
-            var priceChange = prevTrend != null && prevTrend.AverageSalePrice > 0
+            var priceChange = Math.Round(prevTrend != null && prevTrend.AverageSalePrice > 0
                 ? (double)((avgSale - prevTrend.AverageSalePrice) / prevTrend.AverageSalePrice * 100)
-                : 0;
+                : 0, 2);
 
             // Determine market sentiment
             var sentiment = priceChange switch
@@ -267,20 +267,24 @@ public class AnalyticsCollectionService : BackgroundService
                 .OrderBy(p => p)
                 .ToList();
 
-            var avgPrice = salePrices.Any() ? salePrices.Average() : 0;
-            var minPrice = salePrices.Any() ? salePrices.Min() : 0;
-            var maxPrice = salePrices.Any() ? salePrices.Max() : 0;
-            var medianPrice = salePrices.Any() ? salePrices[salePrices.Count / 2] : 0;
+            var avgPrice = Math.Round(salePrices.Any() ? salePrices.Average() : 0, 2);
+            var minPrice = Math.Round(salePrices.Any() ? salePrices.Min() : 0, 2);
+            var maxPrice = Math.Round(salePrices.Any() ? salePrices.Max() : 0, 2);
+            var medianPrice = Math.Round(salePrices.Any() ? salePrices[salePrices.Count / 2] : 0, 2);
 
-            var q25 = salePrices.Any() ? salePrices[salePrices.Count / 4] : 0;
-            var q75 = salePrices.Any() ? salePrices[(salePrices.Count * 3) / 4] : 0;
+            var q25 = Math.Round(salePrices.Any() ? salePrices[salePrices.Count / 4] : 0, 2);
+            var q75 = Math.Round(salePrices.Any() ? salePrices[(salePrices.Count * 3) / 4] : 0, 2);
 
             var rentPrices = properties.Where(p => p.MonthlyRent.HasValue && p.MonthlyRent > 0)
                 .Select(p => p.MonthlyRent.GetValueOrDefault())
                 .ToList();
 
-            var avgRent = rentPrices.Any() ? rentPrices.Average() : 0;
-            var rentalYield = avgPrice > 0 ? (avgRent * 12 / avgPrice * 100) : 0;
+            var avgRent = Math.Round(rentPrices.Any() ? rentPrices.Average() : 0, 2);
+            var rentalYield = Math.Round(avgPrice > 0 ? (avgRent * 12 / avgPrice * 100) : 0, 2);
+
+            var pricePerSqm = Math.Round(salePrices.Any() && properties.Any(p => p.Area > 0)
+                ? salePrices.Sum() / properties.Where(p => p.Area > 0).Sum(p => (decimal)p.Area)
+                : 0, 2);
 
             // Count by type
             var apartmentCount = properties.Count(p => p.Type == PropertyType.Apartment);
@@ -289,25 +293,25 @@ public class AnalyticsCollectionService : BackgroundService
             var landCount = properties.Count(p => p.Type == PropertyType.Land);
 
             // Amenities coverage
-            var wifiPct = (double)properties.Count(p => p.HasWifi) / properties.Count * 100;
-            var parkingPct = (double)properties.Count(p => p.HasParking) / properties.Count * 100;
-            var metroPct = (double)properties.Count(p => p.HasMetroNearby) / properties.Count * 100;
-            var schoolPct = (double)properties.Count(p => p.HasSchoolNearby) / properties.Count * 100;
-            var marketPct = (double)properties.Count(p => p.HasMarketNearby) / properties.Count * 100;
-            var hospitalPct = (double)properties.Count(p => p.HasHospitalNearby) / properties.Count * 100;
+            var wifiPct = Math.Round((double)properties.Count(p => p.HasWifi) / properties.Count * 100, 2);
+            var parkingPct = Math.Round((double)properties.Count(p => p.HasParking) / properties.Count * 100, 2);
+            var metroPct = Math.Round((double)properties.Count(p => p.HasMetroNearby) / properties.Count * 100, 2);
+            var schoolPct = Math.Round((double)properties.Count(p => p.HasSchoolNearby) / properties.Count * 100, 2);
+            var marketPct = Math.Round((double)properties.Count(p => p.HasMarketNearby) / properties.Count * 100, 2);
+            var hospitalPct = Math.Round((double)properties.Count(p => p.HasHospitalNearby) / properties.Count * 100, 2);
 
             // Calculate scores
             var avgRating = properties.Average(p => p.AverageRating);
-            var affordabilityScore = (decimal)Math.Max(0, 100 - (double)(avgPrice / 10000000m)); // 100M = 0 score
-            var infrastructureScore = (decimal)((wifiPct + parkingPct) / 2);
-            var connectivityScore = (decimal)((metroPct * 1.5 + (double)properties.Count(p => p.HasBusStop) / properties.Count * 100) / 2.5);
-            var amenitiesScore = (decimal)((marketPct + schoolPct + hospitalPct) / 3);
-            var safetyScore = (decimal)((double)avgRating * 20);
-            var growthScore = (decimal)Math.Min(100, properties.Average(p => p.ViewsCount) / 5);
-            var investmentPotential = (growthScore + rentalYield * 5) / 2;
+            var affordabilityScore = Math.Round(Math.Clamp((decimal)(100 - (double)(avgPrice / 10000000m)), 0m, 100m), 2);
+            var infrastructureScore = Math.Round(Math.Clamp((decimal)((wifiPct + parkingPct) / 2), 0m, 100m), 2);
+            var connectivityScore = Math.Round(Math.Clamp((decimal)((metroPct * 1.5 + (double)properties.Count(p => p.HasBusStop) / properties.Count * 100) / 2.5), 0m, 100m), 2);
+            var amenitiesScore = Math.Round(Math.Clamp((decimal)((marketPct + schoolPct + hospitalPct) / 3), 0m, 100m), 2);
+            var safetyScore = Math.Round(Math.Clamp((decimal)((double)avgRating * 20), 0m, 100m), 2);
+            var growthScore = Math.Round(Math.Clamp((decimal)(properties.Average(p => p.ViewsCount) / 5), 0m, 100m), 2);
+            var investmentPotential = Math.Round(Math.Clamp((growthScore + rentalYield * 5) / 2, 0m, 100m), 2);
 
-            var overallScore = (affordabilityScore + infrastructureScore + connectivityScore +
-                               amenitiesScore + safetyScore + growthScore) / 6;
+            var overallScore = Math.Round(Math.Clamp((affordabilityScore + infrastructureScore + connectivityScore +
+                               amenitiesScore + safetyScore + growthScore) / 6, 0m, 100m), 2);
 
             // Upsert district stat
             var existing = await broker.DistrictStats
@@ -322,9 +326,7 @@ public class AnalyticsCollectionService : BackgroundService
                 existing.MaxSalePrice = maxPrice;
                 existing.PriceQuartile25 = q25;
                 existing.PriceQuartile75 = q75;
-                existing.PricePerSqm = salePrices.Any() && properties.Any(p => p.Area > 0)
-                    ? salePrices.Sum() / properties.Where(p => p.Area > 0).Sum(p => (decimal)p.Area)
-                    : 0;
+                existing.PricePerSqm = pricePerSqm;
                 existing.AverageRentPrice = avgRent;
                 existing.RentalYieldPercent = rentalYield;
                 existing.TotalListings = properties.Count;
@@ -361,9 +363,7 @@ public class AnalyticsCollectionService : BackgroundService
                     MaxSalePrice = maxPrice,
                     PriceQuartile25 = q25,
                     PriceQuartile75 = q75,
-                    PricePerSqm = salePrices.Any() && properties.Any(p => p.Area > 0)
-                        ? salePrices.Sum() / properties.Where(p => p.Area > 0).Sum(p => (decimal)p.Area)
-                        : 0,
+                    PricePerSqm = pricePerSqm,
                     AverageRentPrice = avgRent,
                     RentalYieldPercent = rentalYield,
                     TotalListings = properties.Count,
