@@ -89,7 +89,7 @@ describe('PropertyService', () => {
       expect(service.loading()).toBe(false);
     });
 
-    const req = httpMock.expectOne(`${apiUrl}?page=1&pageSize=20`);
+    const req = httpMock.expectOne(`${apiUrl}/search?page=1&pageSize=20`);
     expect(req.request.method).toBe('GET');
     req.flush(mockPagedResult);
   });
@@ -101,7 +101,7 @@ describe('PropertyService', () => {
       },
     });
 
-    const req = httpMock.expectOne(`${apiUrl}?page=1&pageSize=20`);
+    const req = httpMock.expectOne(`${apiUrl}/search?page=1&pageSize=20`);
     req.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
   });
 
