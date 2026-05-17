@@ -8,6 +8,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterLink } from '@angular/router';
 import { FavoritesService } from '../../core/services/favorites.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-favorites',
@@ -57,7 +58,7 @@ import { FavoritesService } from '../../core/services/favorites.service';
                 <div class="property-image">
                   @if (favoriteItem.property.images && favoriteItem.property.images.length > 0) {
                     <img
-                      [src]="getImageUrl(favoriteItem.property)"
+                      [src]="getFullImageUrl(favoriteItem.property)"
                       [alt]="favoriteItem.property.title"
                       (error)="onImgError($event)"
                     />
@@ -359,38 +360,38 @@ export class FavoritesComponent implements OnInit {
     }
   }
 
-  // Get image URL from property (handles multiple image formats)
-  // Uses thumbnail for faster loading
-  getImageUrl(property: unknown): string {
+  // Get image URL from property and resolve to backend URL
+  getFullImageUrl(property: unknown): string {
     const prop = property as {
       images?: { isPrimary?: boolean; thumbnailUrl?: string; url?: string; imageUrl?: string }[];
       thumbnailUrl?: string;
       imageUrl?: string;
     };
-    // Check for images array first (new format)
+    
+    let path = '';
+
     if (prop.images && Array.isArray(prop.images) && prop.images.length > 0) {
-      // Find primary image or use first one
       const primaryImage = prop.images.find((img) => img.isPrimary) || prop.images[0];
-
-      // Use thumbnail for faster loading, fallback to other formats
-      return primaryImage.thumbnailUrl || primaryImage.url || primaryImage.imageUrl || '';
+      path = primaryImage.thumbnailUrl || primaryImage.url || primaryImage.imageUrl || '';
+    } else if (prop.thumbnailUrl) {
+      path = prop.thumbnailUrl;
+    } else if (prop.imageUrl) {
+      path = prop.imageUrl;
     }
 
-    // Fallback to legacy properties
-    if (prop.thumbnailUrl) {
-      return prop.thumbnailUrl;
-    }
-    if (prop.imageUrl) {
-      return prop.imageUrl;
-    }
-
-    return '/assets/placeholder.svg';
+    if (!path) return 'https://placehold.co/600x400/0f172a/c9a84c?text=Mulkchi';
+    
+    path = path.replace(/\\/g, '/');
+    if (path.startsWith('/')) path = path.substring(1);
+    
+    if (path.startsWith('http')) return path;
+    return environment.apiUrl.replace('/api', '') + '/' + path;
   }
 
   // Handle image load error
   onImgError(event: Event): void {
     const img = event.target as HTMLImageElement;
-    img.src = '/assets/placeholder.svg';
+    img.src = 'https://placehold.co/600x400/0f172a/c9a84c?text=Mulkchi';
   }
 
   navigateToProperty(id: string): void {

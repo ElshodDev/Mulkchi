@@ -1,645 +1,515 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTableModule } from '@angular/material/table';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatDividerModule } from '@angular/material/divider';
 import { PropertyService } from '../../../core/services/property.service';
-import { AuthService } from '../../../core/services/auth.service';
 import { ConfirmationService } from '../../../core/services/confirmation.service';
+import { ImageOptimizationService } from '../../../core/services/image-optimization.service';
 import { Property, PropertyStatus } from '../../../core/models';
-import { OptimizedImageComponent } from '../../../shared/components/optimized-image/optimized-image.component';
 
 @Component({
   selector: 'app-host-properties',
   standalone: true,
   imports: [
-    CommonModule,
-    RouterLink,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatChipsModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    OptimizedImageComponent
+    CommonModule, RouterLink,
+    MatButtonModule, MatIconModule,
+    MatProgressSpinnerModule, MatTooltipModule,
+    MatMenuModule, MatDividerModule
   ],
   template: `
-    <div class="host-properties-container">
-      <div class="container">
-        <div class="page-header">
-          <div class="header-content">
-            <h1>Mening mulklarim</h1>
-            <p>Barcha e'lonlaringizni boshqaring</p>
+    <div class="dashboard-shell">
+      <!-- Hero Header -->
+      <div class="dash-hero">
+        <div class="container">
+          <div class="dash-hero__inner">
+            <div>
+              <h1>Mening e'lonlarim</h1>
+              <p>Barcha mulklaringizni boshqaring va daromad oling</p>
+            </div>
+            <a mat-flat-button class="btn-new" routerLink="/elon-berish/tur">
+              <mat-icon>add_home</mat-icon>
+              Yangi e'lon joylash
+            </a>
           </div>
-          <a mat-raised-button color="primary" routerLink="/host/properties/create">
-            <mat-icon>add</mat-icon>
-            Yangi mulk qo'shish
-          </a>
+
+          <!-- KPI Cards -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-icon" style="background:#e0f2fe"><mat-icon style="color:#0284c7">home_work</mat-icon></div>
+              <div>
+                <div class="kpi-value">{{ properties().length }}</div>
+                <div class="kpi-label">Jami e'lonlar</div>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-icon" style="background:#dcfce7"><mat-icon style="color:#16a34a">check_circle</mat-icon></div>
+              <div>
+                <div class="kpi-value">{{ activeCount() }}</div>
+                <div class="kpi-label">Faol e'lonlar</div>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-icon" style="background:#fef9c3"><mat-icon style="color:#d97706">visibility</mat-icon></div>
+              <div>
+                <div class="kpi-value">{{ totalViews() }}</div>
+                <div class="kpi-label">Jami ko'rishlar</div>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-icon" style="background:#fce7f3"><mat-icon style="color:#db2777">favorite</mat-icon></div>
+              <div>
+                <div class="kpi-value">{{ totalFavorites() }}</div>
+                <div class="kpi-label">Sevimlilar</div>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <div class="container content-area">
 
         @if (loading()) {
-          <div class="loading-container">
-            <mat-progress-spinner diameter="50"></mat-progress-spinner>
-            <p>Yuklanmoqda...</p>
+          <div class="skeleton-grid">
+            @for (i of [1,2,3]; track i) {
+              <div class="skeleton-card">
+                <div class="sk sk-image"></div>
+                <div class="sk-body">
+                  <div class="sk sk-title"></div>
+                  <div class="sk sk-sub"></div>
+                  <div class="sk sk-sub short"></div>
+                </div>
+              </div>
+            }
           </div>
         } @else if (properties().length === 0) {
-          <div class="empty-container">
-            <mat-icon>home_work</mat-icon>
-            <h3>Hali mulk e'lonlari yo'q</h3>
-            <p>O'z mulkingizni e'lon qilish uchun yangi mulk qo'shing</p>
-            <a mat-raised-button color="primary" routerLink="/host/properties/create">
-              <mat-icon>add</mat-icon>
-              Mulk qo'shish
+          <div class="empty-state">
+            <div class="empty-icon"><mat-icon>add_business</mat-icon></div>
+            <h2>Hali birorta e'lon yo'q</h2>
+            <p>Mulkingizni e'lon qiling va potensial ijara yoki xaridorlarni toping</p>
+            <a mat-flat-button class="btn-new" routerLink="/elon-berish/tur">
+              <mat-icon>add</mat-icon> Birinchi e'loningizni joylashtiring
             </a>
           </div>
         } @else {
-          <!-- Stats Cards -->
-          <div class="stats-cards">
-            <mat-card class="stat-card">
-              <mat-icon>home</mat-icon>
-              <div class="stat-info">
-                <span class="value">{{ properties().length }}</span>
-                <span class="label">Jami mulklar</span>
-              </div>
-            </mat-card>
-            <mat-card class="stat-card">
-              <mat-icon>visibility</mat-icon>
-              <div class="stat-info">
-                <span class="value">{{ totalViews() }}</span>
-                <span class="label">Ko'rishlar</span>
-              </div>
-            </mat-card>
-            <mat-card class="stat-card">
-              <mat-icon>favorite</mat-icon>
-              <div class="stat-info">
-                <span class="value">{{ totalFavorites() }}</span>
-                <span class="label">Sevimlilar</span>
-              </div>
-            </mat-card>
-            <mat-card class="stat-card">
-              <mat-icon>event_note</mat-icon>
-              <div class="stat-info">
-                <span class="value">{{ activeBookings() }}</span>
-                <span class="label">Faol bronlar</span>
-              </div>
-            </mat-card>
-          </div>
+          <!-- Expiring Soon Alert -->
+          @if (expiringSoon().length > 0) {
+            <div class="alert-banner">
+              <mat-icon>schedule</mat-icon>
+              <span><strong>{{ expiringSoon().length }} ta e'lon</strong> tez orada muddati tugaydi. Ularni yangilang!</span>
+              <button mat-button class="alert-btn" (click)="scrollToExpiring()">Ko'rish</button>
+            </div>
+          }
 
-          <!-- Properties Table -->
-          <mat-card class="table-card">
-            <table mat-table [dataSource]="properties()">
-              <!-- Image Column -->
-              <ng-container matColumnDef="image">
-                <th mat-header-cell *matHeaderCellDef>Rasm</th>
-                <td mat-cell *matCellDef="let property">
-                  <div class="table-image">
-                    @if (property.images && property.images.length > 0) {
-                      <app-optimized-image
-                        [src]="property.images[0].url"
-                        [alt]="property.title"
-                        [width]="80"
-                        [height]="60"
-                        [lazy]="true">
-                      </app-optimized-image>
+          <!-- Properties Grid -->
+          <div class="listings-grid">
+            @for (property of properties(); track property.id) {
+              <div class="listing-card" [class.expiring]="isExpiringSoon(property)" [class.vip]="property.isFeatured" id="prop-{{ property.id }}">
+                
+                <!-- VIP Badge -->
+                @if (property.isFeatured) {
+                  <div class="vip-ribbon"><mat-icon>diamond</mat-icon> VIP</div>
+                }
+
+                <!-- Image -->
+                <div class="card-image">
+                  @if (property.images?.length) {
+                    <img [src]="imageService.getOptimizedImage(property.images![0].url)" [alt]="property.title" />
+                  } @else {
+                    <div class="no-img">
+                      <mat-icon>home</mat-icon>
+                      <span>Rasm yo'q</span>
+                    </div>
+                  }
+                  <div class="card-image__overlay">
+                    <span class="status-pill" [class]="getStatusClass(property.status)">
+                      <span class="dot"></span>
+                      {{ getStatusLabel(property.status) }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Body -->
+                <div class="card-body">
+                  <h3 class="card-title">{{ property.title }}</h3>
+                  <div class="card-location">
+                    <mat-icon>place</mat-icon>
+                    {{ property.city }}{{ property.district ? ', ' + property.district : '' }}
+                  </div>
+
+                  <div class="card-price">
+                    <span class="price-amount">{{ getPrice(property) | number:'1.0-0' }}</span>
+                    <span class="price-currency">{{ property.currency || 'UZS' }}</span>
+                    <span class="price-period">{{ getPricePeriod(property) }}</span>
+                  </div>
+
+                  <!-- Expiry Countdown -->
+                  @if (getDaysLeft(property) !== null) {
+                    <div class="expiry-bar" [class.danger]="getDaysLeft(property)! <= 2">
+                      <mat-icon>{{ getDaysLeft(property)! <= 2 ? 'warning' : 'schedule' }}</mat-icon>
+                      @if (getDaysLeft(property)! <= 0) {
+                        <span>Muddati tugadi!</span>
+                      } @else {
+                        <span>{{ getDaysLeft(property) }} kun qoldi</span>
+                      }
+                    </div>
+                  }
+
+                  <!-- Stats -->
+                  <div class="card-stats">
+                    <span><mat-icon>visibility</mat-icon>{{ property.viewsCount || 0 }}</span>
+                    <span><mat-icon>favorite_border</mat-icon>{{ property.favoritesCount || 0 }}</span>
+                    <span><mat-icon>calendar_today</mat-icon>{{ getCreatedDate(property) }}</span>
+                  </div>
+                </div>
+
+                <!-- Actions Footer -->
+                <div class="card-footer">
+                  <!-- BUMP button - Core Monetization Feature -->
+                  <button class="btn-bump" (click)="bumpProperty(property)" [disabled]="bumpingId() === property.id" matTooltip="E'lonni tepaga ko'tarish">
+                    @if (bumpingId() === property.id) {
+                      <mat-icon class="spinning">refresh</mat-icon>
                     } @else {
-                      <div class="no-image">
-                        <mat-icon>image_not_supported</mat-icon>
-                      </div>
+                      <mat-icon>rocket_launch</mat-icon>
                     }
-                  </div>
-                </td>
-              </ng-container>
+                    TOPga ko'tarish
+                  </button>
 
-              <!-- Title Column -->
-              <ng-container matColumnDef="title">
-                <th mat-header-cell *matHeaderCellDef>Sarlavha</th>
-                <td mat-cell *matCellDef="let property">
-                  <div class="title-cell">
-                    <span class="title">{{ property.title }}</span>
-                    <span class="location">{{ property.city }}, {{ property.district }}</span>
-                  </div>
-                </td>
-              </ng-container>
-
-              <!-- Type Column -->
-              <ng-container matColumnDef="type">
-                <th mat-header-cell *matHeaderCellDef>Turi</th>
-                <td mat-cell *matCellDef="let property">
-                  <span class="type-badge">{{ property.type }}</span>
-                </td>
-              </ng-container>
-
-              <!-- Price Column -->
-              <ng-container matColumnDef="price">
-                <th mat-header-cell *matHeaderCellDef>Narx</th>
-                <td mat-cell *matCellDef="let property">
-                  <div class="price-cell">
-                    <span class="price">{{ getPrice(property) | number }} {{ property.currency }}</span>
-                    <span class="period">{{ getPricePeriod(property) }}</span>
-                  </div>
-                </td>
-              </ng-container>
-
-              <!-- Status Column -->
-              <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef>Status</th>
-                <td mat-cell *matCellDef="let property">
-                  <span class="status-badge" [class]="property.status.toLowerCase()">
-                    {{ getStatusLabel(property.status) }}
-                  </span>
-                </td>
-              </ng-container>
-
-              <!-- Stats Column -->
-              <ng-container matColumnDef="stats">
-                <th mat-header-cell *matHeaderCellDef>Statistika</th>
-                <td mat-cell *matCellDef="let property">
-                  <div class="stats-cell">
-                    <span matTooltip="Ko'rishlar">
-                      <mat-icon>visibility</mat-icon>
-                      {{ property.viewsCount }}
-                    </span>
-                    <span matTooltip="Sevimlilar">
-                      <mat-icon>favorite</mat-icon>
-                      {{ property.favoritesCount }}
-                    </span>
-                  </div>
-                </td>
-              </ng-container>
-
-              <!-- Actions Column -->
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>Amallar</th>
-                <td mat-cell *matCellDef="let property">
-                  <div class="actions-cell">
+                  <div class="action-btns">
                     <a mat-icon-button [routerLink]="['/properties', property.id]" matTooltip="Ko'rish">
-                      <mat-icon>visibility</mat-icon>
+                      <mat-icon>open_in_new</mat-icon>
                     </a>
                     <a mat-icon-button [routerLink]="['/host/properties/edit', property.id]" matTooltip="Tahrirlash">
                       <mat-icon>edit</mat-icon>
                     </a>
-                    <button mat-icon-button color="warn" (click)="deleteProperty(property.id)" matTooltip="O'chirish">
-                      <mat-icon>delete</mat-icon>
+                    <button mat-icon-button class="btn-delete" (click)="deleteProperty(property.id)" matTooltip="O'chirish">
+                      <mat-icon>delete_outline</mat-icon>
                     </button>
                   </div>
-                </td>
-              </ng-container>
+                </div>
+              </div>
+            }
+          </div>
 
-              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-            </table>
-
-            <mat-paginator
-              [length]="totalCount()"
-              [pageSize]="pageSize()"
-              [pageSizeOptions]="[5, 10, 20]"
-              (page)="onPageChange($event)">
-            </mat-paginator>
-          </mat-card>
+          <!-- Pagination -->
+          @if (totalCount() > pageSize()) {
+            <div class="pagination">
+              <button mat-stroked-button [disabled]="currentPage() === 1" (click)="prevPage()">
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+              <span>{{ currentPage() }} / {{ totalPages() }}</span>
+              <button mat-stroked-button [disabled]="currentPage() >= totalPages()" (click)="nextPage()">
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+            </div>
+          }
         }
       </div>
     </div>
   `,
   styles: [`
-    /* ===== CSS Variables ===== */
     :host {
-      --color-navy: #1B3A6B;
-      --color-navy-light: #2a4a7c;
-      --color-navy-dark: #122a4d;
-      --color-gold: #C9A84C;
-      --color-gold-light: #d4b86a;
-      --color-white: #ffffff;
-      --color-gray-50: #f8fafc;
-      --color-gray-100: #f1f5f9;
-      --color-gray-200: #e2e8f0;
-      --color-gray-300: #cbd5e1;
-      --color-gray-400: #94a3b8;
-      --color-gray-500: #64748b;
-      --color-gray-600: #475569;
-      --color-gray-700: #334155;
-      --color-gray-800: #1e293b;
-      --color-gray-900: #0f172a;
-      --radius: 8px;
-      --radius-lg: 12px;
-      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+      --navy: #0f172a;
+      --gold: #c9a84c;
+      --green: #16a34a;
+      --red: #dc2626;
+      --gray-50: #f8fafc;
+      --gray-100: #f1f5f9;
+      --gray-200: #e2e8f0;
+      --gray-500: #64748b;
+      --white: #ffffff;
+      --radius: 20px;
+      display: block;
     }
 
-    .host-properties-container {
-      min-height: calc(100vh - 64px);
-      background: var(--color-gray-50);
-      padding: 40px 0;
-    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 24px;
+    /* Hero */
+    .dash-hero {
+      background: linear-gradient(135deg, var(--navy) 0%, #1e3a5f 100%);
+      color: var(--white);
+      padding: 48px 0 100px;
     }
+    .dash-hero__inner { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px; margin-bottom: 40px; }
+    .dash-hero h1 { font-size: 2.2rem; font-weight: 900; margin: 0; }
+    .dash-hero p { opacity: 0.75; margin: 8px 0 0; }
 
-    /* ===== Page Header ===== */
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 40px;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-
-    .header-content h1 {
-      font-size: 2.25rem;
-      font-weight: 700;
-      color: var(--color-navy);
-      margin: 0 0 8px 0;
-    }
-
-    .header-content p {
-      color: var(--color-gray-500);
-      font-size: 1rem;
-      margin: 0;
-    }
-
-    ::ng-deep .page-header .mat-mdc-raised-button {
-      background: var(--color-navy) !important;
-      color: var(--color-white) !important;
-      height: 48px;
-      padding: 0 24px;
-      font-weight: 500;
-      border-radius: var(--radius) !important;
-      transition: all 0.3s ease;
-    }
-
-    ::ng-deep .page-header .mat-mdc-raised-button:hover {
-      background: var(--color-navy-light) !important;
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-lg);
-    }
-
-    /* ===== Loading & Empty States ===== */
-    .loading-container,
-    .empty-container {
-      text-align: center;
-      padding: 80px 20px;
-      background: var(--color-white);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-    }
-
-    .loading-container mat-icon,
-    .empty-container mat-icon {
-      font-size: 72px;
-      width: 72px;
-      height: 72px;
-      color: var(--color-navy);
-      margin-bottom: 24px;
-    }
-
-    .empty-container h3 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--color-gray-800);
-      margin: 0 0 12px 0;
-    }
-
-    .empty-container p {
-      color: var(--color-gray-500);
-      margin: 0 0 24px 0;
-    }
-
-    /* ===== Stats Cards ===== */
-    .stats-cards {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 24px;
-      margin-bottom: 40px;
-    }
-
-    .stat-card {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      padding: 24px;
-      background: var(--color-white);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-      transition: all 0.3s ease;
-    }
-
-    .stat-card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-lg);
-    }
-
-    .stat-card mat-icon {
-      font-size: 40px;
-      width: 48px;
-      height: 48px;
-      color: var(--color-navy);
-      background: rgba(27, 58, 107, 0.1);
-      border-radius: var(--radius);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .stat-info {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .stat-info .value {
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--color-gray-900);
-      line-height: 1.2;
-    }
-
-    .stat-info .label {
-      font-size: 0.9rem;
-      color: var(--color-gray-500);
-    }
-
-    /* ===== Table Card ===== */
-    .table-card {
-      background: var(--color-white);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
-    table {
-      width: 100%;
-    }
-
-    ::ng-deep .mat-mdc-header-cell {
-      color: var(--color-gray-700) !important;
-      font-weight: 600 !important;
-      font-size: 0.875rem !important;
-      background: var(--color-gray-50) !important;
-      border-bottom: 2px solid var(--color-gray-200) !important;
-    }
-
-    ::ng-deep .mat-mdc-row:hover {
-      background: var(--color-gray-50) !important;
-    }
-
-    ::ng-deep .mat-mdc-cell {
-      color: var(--color-gray-700) !important;
-      font-size: 0.9rem !important;
-    }
-
-    /* ===== Table Image ===== */
-    .table-image {
-      width: 80px;
-      height: 60px;
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-
-    .table-image img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .no-image {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--color-gray-200);
-    }
-
-    .no-image mat-icon {
-      font-size: 24px;
-      color: var(--color-gray-400);
-    }
-
-    /* ===== Title Cell ===== */
-    .title-cell {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .title-cell .title {
-      font-weight: 600;
-      color: var(--color-gray-900);
-    }
-
-    .title-cell .location {
-      font-size: 0.85rem;
-      color: var(--color-gray-500);
-    }
-
-    /* ===== Type Badge ===== */
-    .type-badge {
-      padding: 6px 14px;
-      background: rgba(27, 58, 107, 0.1);
-      color: var(--color-navy);
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-
-    /* ===== Price Cell ===== */
-    .price-cell {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .price-cell .price {
-      font-weight: 700;
-      color: var(--color-navy);
-      font-size: 1rem;
-    }
-
-    .price-cell .period {
-      font-size: 0.8rem;
-      color: var(--color-gray-500);
-    }
-
-    /* ===== Status Badge ===== */
-    .status-badge {
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-
-    .status-badge.active {
-      background: rgba(34, 197, 94, 0.1);
-      color: #16a34a;
-    }
-
-    .status-badge.draft {
-      background: rgba(245, 158, 11, 0.1);
-      color: #f59e0b;
-    }
-
-    .status-badge.sold,
-    .status-badge.rented {
-      background: rgba(220, 38, 38, 0.1);
-      color: #dc2626;
-    }
-
-    .status-badge.archived {
-      background: var(--color-gray-100);
-      color: var(--color-gray-500);
-    }
-
-    /* ===== Stats Cell ===== */
-    .stats-cell {
-      display: flex;
-      gap: 20px;
-    }
-
-    .stats-cell span {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--color-gray-500);
-      font-size: 0.9rem;
-    }
-
-    .stats-cell mat-icon {
-      font-size: 18px;
-      color: var(--color-gray-400);
-    }
-
-    /* ===== Actions Cell ===== */
-    .actions-cell {
-      display: flex;
+    .btn-new {
+      background: var(--gold) !important;
+      color: var(--navy) !important;
+      font-weight: 800 !important;
+      border-radius: 14px !important;
+      height: 48px !important;
+      padding: 0 24px !important;
       gap: 8px;
     }
 
-    ::ng-deep .actions-cell .mat-mdc-icon-button {
-      color: var(--color-gray-500) !important;
-      transition: all 0.3s ease;
+    /* KPI */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .kpi-card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: transform 0.2s;
     }
+    .kpi-card:hover { transform: translateY(-3px); }
+    .kpi-icon { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; }
+    .kpi-value { font-size: 1.8rem; font-weight: 900; color: var(--white); }
+    .kpi-label { font-size: 0.8rem; color: rgba(255,255,255,0.65); margin-top: 2px; }
 
-    ::ng-deep .actions-cell .mat-mdc-icon-button:hover {
-      background: rgba(27, 58, 107, 0.1) !important;
-      color: var(--color-navy) !important;
+    /* Content */
+    .content-area { margin-top: -60px; padding-bottom: 80px; }
+
+    /* Alert Banner */
+    .alert-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 14px;
+      padding: 14px 20px;
+      margin-bottom: 24px;
+      color: #9a3412;
     }
+    .alert-banner mat-icon { color: #ea580c; }
+    .alert-btn { margin-left: auto; color: #ea580c !important; font-weight: 700 !important; }
 
-    ::ng-deep .actions-cell .mat-mdc-icon-button.mat-warn:hover {
-      background: rgba(220, 38, 38, 0.1) !important;
-      color: #dc2626 !important;
+    /* Skeleton */
+    .skeleton-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; }
+    .skeleton-card { background: var(--white); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--gray-200); }
+    .sk { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 400% 100%; animation: shimmer 1.4s infinite; border-radius: 8px; }
+    .sk-image { height: 200px; border-radius: 0; }
+    .sk-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .sk-title { height: 20px; }
+    .sk-sub { height: 14px; }
+    .sk-sub.short { width: 60%; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* Empty State */
+    .empty-state { background: var(--white); border-radius: var(--radius); padding: 80px 40px; text-align: center; border: 1px solid var(--gray-200); }
+    .empty-icon mat-icon { font-size: 72px; width: 72px; height: 72px; color: var(--gray-200); margin-bottom: 24px; }
+    .empty-state h2 { font-size: 1.5rem; font-weight: 800; color: var(--navy); margin: 0 0 12px; }
+    .empty-state p { color: var(--gray-500); margin: 0 0 32px; }
+
+    /* Listings Grid */
+    .listings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; }
+
+    /* Listing Card */
+    .listing-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      transition: all 0.3s;
+      position: relative;
+      display: flex;
+      flex-direction: column;
     }
+    .listing-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+    .listing-card.expiring { border-color: #fed7aa; }
+    .listing-card.vip { border-color: var(--gold); box-shadow: 0 4px 20px rgba(201,168,76,0.15); }
 
-    /* ===== Paginator ===== */
-    ::ng-deep .mat-mdc-paginator {
-      background: var(--color-gray-50) !important;
-      border-top: 1px solid var(--color-gray-200);
+    /* VIP Ribbon */
+    .vip-ribbon {
+      position: absolute;
+      top: 16px;
+      right: -28px;
+      background: linear-gradient(135deg, var(--gold), #e8c97a);
+      color: var(--navy);
+      padding: 6px 36px;
+      font-size: 0.75rem;
+      font-weight: 900;
+      transform: rotate(45deg);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
+    .vip-ribbon mat-icon { font-size: 14px; width: 14px; height: 14px; }
 
-    /* ===== Responsive Design ===== */
-    @media (max-width: 1024px) {
-      .stats-cards {
-        grid-template-columns: repeat(2, 1fr);
-      }
+    /* Card Image */
+    .card-image { position: relative; height: 200px; overflow: hidden; }
+    .card-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+    .listing-card:hover .card-image img { transform: scale(1.05); }
+    .no-img { width: 100%; height: 100%; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #94a3b8; }
+    .no-img mat-icon { font-size: 40px; width: 40px; height: 40px; }
+    .no-img span { font-size: 0.8rem; font-weight: 600; }
+    .card-image__overlay { position: absolute; bottom: 12px; left: 12px; }
+
+    /* Status Pill */
+    .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 99px; font-size: 0.75rem; font-weight: 700; backdrop-filter: blur(8px); }
+    .status-pill.active { background: rgba(22,163,74,0.9); color: white; }
+    .status-pill.draft { background: rgba(217,119,6,0.9); color: white; }
+    .status-pill.expired, .status-pill.archived { background: rgba(100,116,139,0.9); color: white; }
+    .status-pill.sold, .status-pill.rented { background: rgba(220,38,38,0.9); color: white; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.8; }
+
+    /* Card Body */
+    .card-body { padding: 20px; flex: 1; }
+    .card-title { font-size: 1rem; font-weight: 800; color: var(--navy); margin: 0 0 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-location { display: flex; align-items: center; gap: 4px; font-size: 0.85rem; color: var(--gray-500); margin-bottom: 12px; }
+    .card-location mat-icon { font-size: 16px; width: 16px; height: 16px; }
+    .card-price { display: flex; align-items: baseline; gap: 4px; margin-bottom: 12px; }
+    .price-amount { font-size: 1.4rem; font-weight: 900; color: var(--navy); }
+    .price-currency { font-size: 0.85rem; font-weight: 700; color: var(--gray-500); }
+    .price-period { font-size: 0.8rem; color: var(--gray-500); }
+
+    /* Expiry Bar */
+    .expiry-bar { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 700; color: #d97706; background: #fff7ed; padding: 6px 10px; border-radius: 8px; margin-bottom: 12px; }
+    .expiry-bar.danger { color: var(--red); background: #fef2f2; }
+    .expiry-bar mat-icon { font-size: 16px; width: 16px; height: 16px; }
+
+    /* Card Stats */
+    .card-stats { display: flex; gap: 16px; }
+    .card-stats span { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--gray-500); }
+    .card-stats mat-icon { font-size: 15px; width: 15px; height: 15px; }
+
+    /* Card Footer */
+    .card-footer { padding: 16px 20px; border-top: 1px solid var(--gray-100); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+    /* Bump Button */
+    .btn-bump {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.3s;
+      flex: 1;
+      justify-content: center;
     }
+    .btn-bump:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(124,58,237,0.35); }
+    .btn-bump:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-bump mat-icon { font-size: 18px; width: 18px; height: 18px; }
+    .spinning { animation: spin 1s linear infinite; }
+    @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
 
+    /* Action Buttons */
+    .action-btns { display: flex; gap: 4px; }
+    .action-btns a, .action-btns button { color: var(--gray-500) !important; }
+    .action-btns a:hover, .action-btns button:hover { color: var(--navy) !important; }
+    .btn-delete:hover { color: var(--red) !important; }
+
+    /* Pagination */
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 48px; }
+    .pagination span { font-weight: 700; color: var(--navy); }
+
+    /* Responsive */
+    @media (max-width: 1024px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 768px) {
-      .page-header {
-        flex-direction: column;
-        gap: 16px;
-        align-items: stretch;
-      }
-
-      .header-content h1 {
-        font-size: 1.75rem;
-      }
-
-      .stats-cards {
-        grid-template-columns: 1fr;
-      }
-
-      .table-card {
-        overflow-x: auto;
-      }
-
-      .stat-card {
-        padding: 20px;
-      }
-
-      .stat-info .value {
-        font-size: 1.5rem;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .container {
-        padding: 0 16px;
-      }
-
-      .host-properties-container {
-        padding: 24px 0;
-      }
-
-      .header-content h1 {
-        font-size: 1.5rem;
-      }
+      .dash-hero { padding: 32px 0 80px; }
+      .dash-hero h1 { font-size: 1.6rem; }
+      .dash-hero__inner { flex-direction: column; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .listings-grid { grid-template-columns: 1fr; }
     }
   `]
 })
 export class HostPropertiesComponent implements OnInit {
   private propertyService = inject(PropertyService);
-  private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
   private confirmationService = inject(ConfirmationService);
+  public imageService = inject(ImageOptimizationService);
 
   properties = signal<Property[]>([]);
   loading = signal(true);
-  pageSize = signal(10);
   currentPage = signal(1);
+  pageSize = signal(9);
   totalCount = signal(0);
-  displayedColumns = ['image', 'title', 'type', 'price', 'status', 'stats', 'actions'];
+  bumpingId = signal<string | null>(null);
 
-  // Stats signals
-  totalViews = signal(0);
-  totalFavorites = signal(0);
-  activeBookings = signal(0);
+  // Computed stats
+  totalViews = computed(() => this.properties().reduce((s, p) => s + (p.viewsCount || 0), 0));
+  totalFavorites = computed(() => this.properties().reduce((s, p) => s + (p.favoritesCount || 0), 0));
+  activeCount = computed(() => this.properties().filter(p => p.status === 'Active').length);
+  expiringSoon = computed(() => this.properties().filter(p => {
+    const days = this.getDaysLeft(p);
+    return days !== null && days <= 2 && days >= 0;
+  }));
+  totalPages = computed(() => Math.ceil(this.totalCount() / this.pageSize()));
 
-  ngOnInit(): void {
-    this.loadProperties();
-  }
+  // Listing lifetime: 30 days from creation
+  private readonly LISTING_DAYS = 30;
+
+  ngOnInit(): void { this.loadProperties(); }
 
   loadProperties(): void {
     this.loading.set(true);
-    
     this.propertyService.getHostProperties(this.currentPage(), this.pageSize()).subscribe({
       next: (result) => {
         this.properties.set(result.items);
         this.totalCount.set(result.totalCount);
-        this.calculateStats(result.items);
         this.loading.set(false);
       },
       error: () => {
         this.loading.set(false);
-        this.snackBar.open('Mulklarni yuklashda xatolik', 'Yopish', { duration: 3000 });
+        this.snackBar.open("E'lonlarni yuklashda xatolik", 'OK', { duration: 3000 });
       }
     });
   }
 
-  calculateStats(properties: Property[] | any): void {
-    // Ensure properties is an array
-    const propsArray = Array.isArray(properties) ? properties : [];
-    const views = propsArray.reduce((sum, p) => sum + (p.viewsCount || 0), 0);
-    const favorites = propsArray.reduce((sum, p) => sum + (p.favoritesCount || 0), 0);
-    
-    this.totalViews.set(views);
-    this.totalFavorites.set(favorites);
-    this.activeBookings.set(0); // Would be fetched from bookings API
+  getDaysLeft(property: Property): number | null {
+    if (!property.createdDate) return null;
+    const created = new Date(property.createdDate);
+    const expiry = new Date(created.getTime() + this.LISTING_DAYS * 24 * 60 * 60 * 1000);
+    const days = Math.ceil((expiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    return Math.max(days, 0);
+  }
+
+  isExpiringSoon(property: Property): boolean {
+    const days = this.getDaysLeft(property);
+    return days !== null && days <= 2;
+  }
+
+  getCreatedDate(property: Property): string {
+    if (!property.createdDate) return '';
+    return new Date(property.createdDate).toLocaleDateString('uz-UZ');
+  }
+
+  bumpProperty(property: Property): void {
+    this.bumpingId.set(property.id);
+    this.propertyService.bumpProperty(property.id).subscribe({
+      next: () => {
+        this.bumpingId.set(null);
+        this.snackBar.open(`"${property.title}" tepaga ko'tarildi! ✅`, 'OK', { duration: 4000 });
+        this.loadProperties();
+      },
+      error: () => {
+        this.bumpingId.set(null);
+        this.snackBar.open("Ko'tarishda xatolik yuz berdi", 'OK', { duration: 3000 });
+      }
+    });
+  }
+
+  getStatusLabel(status: PropertyStatus | string): string {
+    const map: Record<string, string> = {
+      'Active': 'Faol', 'Draft': 'Qoralama',
+      'Sold': 'Sotildi', 'Rented': 'Ijarada',
+      'Archived': 'Arxivda', 'Expired': 'Muddati tugadi'
+    };
+    return map[status] || status;
+  }
+
+  getStatusClass(status: PropertyStatus | string): string {
+    return status.toLowerCase();
   }
 
   getPrice(property: Property): number {
@@ -653,46 +523,32 @@ export class HostPropertiesComponent implements OnInit {
     return '';
   }
 
-  getStatusLabel(status: PropertyStatus): string {
-    switch (status) {
-      case 'Active': return 'Faol';
-      case 'Draft': return 'Qoralama';
-      case 'Sold': return 'Sotildi';
-      case 'Rented': return 'Ijaraga berildi';
-      case 'Archived': return 'Arxivlangan';
-      default: return status;
+  scrollToExpiring(): void {
+    const first = this.expiringSoon()[0];
+    if (first) {
+      document.getElementById(`prop-${first.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }
 
-  onPageChange(event: PageEvent): void {
-    this.currentPage.set(event.pageIndex + 1);
-    this.pageSize.set(event.pageSize);
-    this.loadProperties();
-  }
+  prevPage(): void { this.currentPage.update(p => p - 1); this.loadProperties(); }
+  nextPage(): void { this.currentPage.update(p => p + 1); this.loadProperties(); }
 
   deleteProperty(id: string): void {
-    this.confirmationService
-      .confirm({
-        title: "Mulkni o'chirish",
-        message: "Bu e'lonni rostdan ham o'chirmoqchimisiz?",
-        confirmLabel: "O'chirish",
-        cancelLabel: 'Bekor qilish',
-        tone: 'danger',
-      })
-      .subscribe((confirmed) => {
-        if (!confirmed) {
-          return;
-        }
-
-        this.propertyService.deleteProperty(id).subscribe({
-          next: () => {
-            this.snackBar.open('Mulk o\'chirildi', 'Yopish', { duration: 3000 });
-            this.loadProperties();
-          },
-          error: () => {
-            this.snackBar.open('O\'chirishda xatolik', 'Yopish', { duration: 3000 });
-          }
-        });
+    this.confirmationService.confirm({
+      title: "E'lonni o'chirish",
+      message: "Bu e'lonni rostdan ham o'chirmoqchimisiz? Bu amalni qaytarib bo'lmaydi.",
+      confirmLabel: "O'chirish",
+      cancelLabel: 'Bekor qilish',
+      tone: 'danger',
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.propertyService.deleteProperty(id).subscribe({
+        next: () => {
+          this.snackBar.open("E'lon o'chirildi", 'OK', { duration: 3000 });
+          this.loadProperties();
+        },
+        error: () => this.snackBar.open("O'chirishda xatolik", 'OK', { duration: 3000 })
       });
+    });
   }
 }

@@ -5,6 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 
 import { AIService } from '../../core/services/ai.service';
@@ -20,268 +21,336 @@ import { AIService } from '../../core/services/ai.service';
     MatIconModule,
     MatTabsModule,
     MatProgressSpinnerModule,
+    MatSnackBarModule
   ],
   template: `
-    <div class="ai-tools-container">
-      <div class="container">
-        <!-- Header -->
-        <div class="page-header">
-          <div class="header-content">
-            <h1>
-              <mat-icon>psychology</mat-icon>
-              AI Yordamchi
-            </h1>
-            <p>Sun'iy intellekt yordamida mulk tanlash va tahlil qilish</p>
+    <div class="ai-universe-bg">
+      <div class="glow-orb orb-1"></div>
+      <div class="glow-orb orb-2"></div>
+      <div class="glow-orb orb-3"></div>
+
+      <div class="container ai-content-wrapper">
+        <!-- HEADER -->
+        <header class="ai-header animate-slide-up">
+          <div class="ai-badge">
+            <mat-icon>psychology</mat-icon>
+            <span>Powered by Mulkchi AI</span>
+          </div>
+          <h1>AI Yordamchi</h1>
+          <p>Mulk bozorini tahlil qilish va eng yaxshi qarorlarni qabul qilishda sun'iy intellektga ishoning</p>
+        </header>
+
+        <!-- GRID CARDS -->
+        <div class="ai-feature-grid">
+          <!-- Personal Recommendations -->
+          <div class="ai-glass-card animate-fade-in-delay-1" routerLink="/ai-recommendations">
+            <div class="card-glow"></div>
+            <div class="card-icon-box">
+              <mat-icon>auto_awesome</mat-icon>
+            </div>
+            <h3>Shaxsiy Tavsiyalar</h3>
+            <p>Sizning qiziqishlaringiz va o'tmishdagi qidiruvlaringiz asosida eng mos mulklarni AI topib beradi.</p>
+            <div class="card-footer">
+              <span>Batafsil</span>
+              <mat-icon>east</mat-icon>
+            </div>
+          </div>
+
+          <!-- Price Prediction -->
+          <div class="ai-glass-card animate-fade-in-delay-2" routerLink="/ai-price">
+            <div class="card-glow"></div>
+            <div class="card-icon-box gold">
+              <mat-icon>insights</mat-icon>
+            </div>
+            <h3>Narx Bashorati</h3>
+            <p>Mulkning real bozor qiymatini va kelgusi 6 oylik narx o'zgarishini AI algoritmlari orqali aniqlang.</p>
+            <div class="card-footer">
+              <span>Batafsil</span>
+              <mat-icon>east</mat-icon>
+            </div>
+          </div>
+
+          <!-- Comparison -->
+          <div class="ai-glass-card animate-fade-in-delay-3" routerLink="/compare">
+            <div class="card-glow"></div>
+            <div class="card-icon-box green">
+              <mat-icon>compare_arrows</mat-icon>
+            </div>
+            <h3>Mulk Taqqoslash</h3>
+            <p>Bir nechta tanlangan mulklarning barcha xususiyatlarini o'zaro solishtiring va eng yaxshisini tanlang.</p>
+            <div class="card-footer">
+              <span>Solishtirish</span>
+              <mat-icon>east</mat-icon>
+            </div>
           </div>
         </div>
 
-        <!-- Quick Access Cards -->
-        <div class="quick-access-grid">
-          <mat-card class="feature-card" routerLink="/ai-recommendations">
-            <mat-card-header>
-              <mat-icon mat-card-avatar>recommend</mat-icon>
-              <mat-card-title>Shaxsiy Tavsiyalar</mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <p>Sizga mos keladigan mulklarni AI topib beradi</p>
-            </mat-card-content>
-            <mat-card-actions>
-              <button mat-button color="primary">
-                Batafsil
-                <mat-icon>arrow_forward</mat-icon>
-              </button>
-            </mat-card-actions>
-          </mat-card>
-
-          <mat-card class="feature-card" routerLink="/ai-price">
-            <mat-card-header>
-              <mat-icon mat-card-avatar>trending_up</mat-icon>
-              <mat-card-title>Narx Bashorati</mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <p>Mulkning bozor qiymatini aniqlang</p>
-            </mat-card-content>
-            <mat-card-actions>
-              <button mat-button color="primary">
-                Batafsil
-                <mat-icon>arrow_forward</mat-icon>
-              </button>
-            </mat-card-actions>
-          </mat-card>
-
-          <mat-card class="feature-card" routerLink="/smart-analytics">
-            <mat-card-header>
-              <mat-icon mat-card-avatar>insights</mat-icon>
-              <mat-card-title>Aqlli Tahlil</mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <p>Investitsiya imkoniyatlarini o'rganing</p>
-            </mat-card-content>
-            <mat-card-actions>
-              <button mat-button color="primary">
-                Batafsil
-                <mat-icon>arrow_forward</mat-icon>
-              </button>
-            </mat-card-actions>
-          </mat-card>
-
-          <mat-card class="feature-card" routerLink="/compare">
-            <mat-card-header>
-              <mat-icon mat-card-avatar>compare_arrows</mat-icon>
-              <mat-card-title>Mulk Taqqoslash</mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <p>Mulk xususiyatlarini o'zaro solishtiring</p>
-            </mat-card-content>
-            <mat-card-actions>
-              <button mat-button color="primary">
-                Solishtirish
-                <mat-icon>arrow_forward</mat-icon>
-              </button>
-            </mat-card-actions>
-          </mat-card>
-        </div>
-
-        <!-- AI Assistant Chat -->
-        <mat-card class="chat-assistant">
-          <mat-card-header>
-            <mat-icon mat-card-avatar>smart_toy</mat-icon>
-            <mat-card-title>AI Yordamchi Chat</mat-card-title>
-            <mat-card-subtitle>24/7 maslahat beruvchi</mat-card-subtitle>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="chat-preview">
-              <div class="message bot">
-                <mat-icon>smart_toy</mat-icon>
-                <p>
-                  Qaysi tumanda mulk izlayapsiz? Men sizga eng yaxshi variantlarni topishga yordam
-                  beraman.
-                </p>
+        <!-- AI CHAT SECTION -->
+        <div class="ai-chat-section animate-slide-up-long">
+          <div class="chat-glass-container">
+            <div class="chat-sidebar">
+              <div class="ai-status">
+                <div class="pulse-dot"></div>
+                <span>AI Online</span>
               </div>
-              <div class="message user">
-                <p>Chilonzor 3 xonali kvartira</p>
+              <h4>AI Yordamchi</h4>
+              <p>24/7 sizga maslahat berishga tayyor</p>
+              
+              <div class="suggested-prompts">
+                <button (click)="onPromptClick('Chilonzordan arzon uylar top')">Chilonzor uylari</button>
+                <button (click)="onPromptClick('Narxlar qachon tushadi?')">Narx tahlili</button>
               </div>
             </div>
-          </mat-card-content>
-          <mat-card-actions>
-            <button mat-raised-button color="primary" class="full-width">
-              <mat-icon>chat</mat-icon>
-              AI Yordamchini Boshlash
-            </button>
-          </mat-card-actions>
-        </mat-card>
+
+            <div class="chat-main">
+              <div class="chat-messages">
+                <div class="msg bot">
+                  <div class="avatar"><mat-icon>smart_toy</mat-icon></div>
+                  <div class="bubble">Assalomu alaykum! Men Mulkchi AI yordamchisiman. Sizga qanday mulk kerak yoki bozor bo'yicha qanday savolingiz bor?</div>
+                </div>
+                <div class="msg user">
+                  <div class="bubble">Chilonzor tumanidan 3 xonali, yaxshi ta'mirlangan kvartira izlayapman.</div>
+                </div>
+              </div>
+
+              <div class="chat-input-box">
+                <input type="text" placeholder="AI'dan so'rang... (masalan: Toshkentda uy narxlari o'zgarishi)">
+                <button class="btn-send" (click)="startChat()">
+                  <mat-icon>send</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   `,
-  styles: [
-    `
-      .ai-tools-container {
-        padding: var(--space-6) 0;
-        min-height: 100vh;
-        background: linear-gradient(
-          135deg,
-          var(--color-surface) 0%,
-          var(--color-surface-elevated) 100%
-        );
-      }
+  styles: [`
+    :host {
+      --indigo: #4f46e5;
+      --indigo-dark: #312e81;
+      --violet: #8b5cf6;
+      --gold: #c9a84c;
+      --white: #ffffff;
+      --glass-bg: rgba(255, 255, 255, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.4);
+      display: block;
+      overflow-x: hidden;
+    }
 
-      .page-header {
-        text-align: center;
-        margin-bottom: var(--space-8);
-      }
+    .ai-universe-bg {
+      min-height: 100vh;
+      background: #f8fafc;
+      position: relative;
+      padding: 60px 0;
+      overflow: hidden;
+    }
 
-      .page-header h1 {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: var(--space-2);
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: var(--space-3);
-        color: var(--color-text-primary);
-      }
+    /* --- ORBS --- */
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      z-index: 1;
+      opacity: 0.4;
+      animation: orbit 20s infinite alternate ease-in-out;
+    }
+    .orb-1 { width: 400px; height: 400px; background: var(--indigo); top: -100px; right: -100px; }
+    .orb-2 { width: 350px; height: 350px; background: var(--violet); bottom: -100px; left: -100px; animation-delay: -5s; }
+    .orb-3 { width: 300px; height: 300px; background: var(--gold); top: 50%; left: 30%; animation-delay: -10s; opacity: 0.2; }
 
-      .page-header h1 mat-icon {
-        font-size: 2.5rem;
-        width: 2.5rem;
-        height: 2.5rem;
-        color: var(--color-brand-600);
-      }
+    @keyframes orbit {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(100px, 50px) scale(1.2); }
+    }
 
-      .page-header p {
-        font-size: 1.125rem;
-        color: var(--color-text-secondary);
-        max-width: 600px;
-        margin: 0 auto;
-      }
+    .ai-content-wrapper { position: relative; z-index: 10; max-width: 1200px; }
 
-      .quick-access-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-        gap: var(--space-6);
-        margin-bottom: var(--space-8);
-      }
+    /* --- HEADER --- */
+    .ai-header { text-align: center; margin-bottom: 60px; }
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: rgba(79, 70, 229, 0.1);
+      color: var(--indigo);
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-bottom: 24px;
+      border: 1px solid rgba(79, 70, 229, 0.2);
+    }
+    .ai-header h1 { font-size: 3.5rem; font-weight: 900; color: #0f172a; margin-bottom: 16px; letter-spacing: -1px; }
+    .ai-header p { font-size: 1.25rem; color: #475569; max-width: 700px; margin: 0 auto; line-height: 1.6; }
 
-      .feature-card {
-        transition: all 0.3s ease;
-        cursor: pointer;
-        border: 2px solid transparent;
-      }
+    /* --- GRID --- */
+    .ai-feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 32px;
+      margin-bottom: 80px;
+    }
 
-      .feature-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-lg);
-        border-color: var(--color-brand-200);
-      }
+    .ai-glass-card {
+      position: relative;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 32px;
+      padding: 40px;
+      cursor: pointer;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+    }
 
-      .feature-card mat-card-avatar {
-        background: var(--color-brand-100);
-        color: var(--color-brand-600);
-      }
+    .ai-glass-card:hover {
+      transform: translateY(-15px);
+      background: var(--white);
+      box-shadow: 0 40px 80px rgba(79, 70, 229, 0.1);
+      border-color: var(--indigo);
+    }
 
-      .feature-card mat-card-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-      }
+    .card-icon-box {
+      width: 64px;
+      height: 64px;
+      background: var(--indigo);
+      color: white;
+      border-radius: 20px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+    }
+    .card-icon-box.gold { background: var(--gold); box-shadow: 0 10px 20px rgba(201, 168, 76, 0.3); }
+    .card-icon-box.green { background: #10b981; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); }
+    .card-icon-box mat-icon { font-size: 32px; width: 32px; height: 32px; }
 
-      .feature-card p {
-        color: var(--color-text-secondary);
-        line-height: 1.6;
-      }
+    .ai-glass-card h3 { font-size: 1.5rem; font-weight: 800; color: #0f172a; margin-bottom: 16px; }
+    .ai-glass-card p { color: #64748b; line-height: 1.7; font-size: 1rem; margin-bottom: 32px; }
 
-      .chat-assistant {
-        max-width: 800px;
-        margin: 0 auto;
-      }
+    .card-footer { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--indigo); transition: gap 0.3s; }
+    .ai-glass-card:hover .card-footer { gap: 16px; }
 
-      .chat-preview {
-        background: var(--color-surface-elevated);
-        border-radius: var(--radius-3);
-        padding: var(--space-4);
-        min-height: 200px;
-      }
+    /* --- CHAT SECTION --- */
+    .chat-glass-container {
+      display: flex;
+      background: var(--glass-bg);
+      backdrop-filter: blur(30px);
+      border: 1px solid var(--glass-border);
+      border-radius: 40px;
+      overflow: hidden;
+      min-height: 500px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.05);
+    }
 
-      .message {
-        display: flex;
-        gap: var(--space-2);
-        margin-bottom: var(--space-3);
-        align-items: flex-start;
-      }
+    .chat-sidebar {
+      width: 300px;
+      background: rgba(79, 70, 229, 0.05);
+      padding: 40px;
+      border-right: 1px solid var(--glass-border);
+    }
+    .ai-status { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; font-size: 0.85rem; font-weight: 700; color: #10b981; }
+    .pulse-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse-green 2s infinite; }
+    @keyframes pulse-green { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
 
-      .message.bot {
-        flex-direction: row;
-      }
+    .chat-sidebar h4 { font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 8px; }
+    .chat-sidebar p { font-size: 0.9rem; color: #64748b; margin-bottom: 32px; }
 
-      .message.user {
-        flex-direction: row-reverse;
-        text-align: right;
-      }
+    .suggested-prompts { display: flex; flex-direction: column; gap: 12px; }
+    .suggested-prompts button {
+      text-align: left;
+      padding: 12px 16px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--indigo);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .suggested-prompts button:hover { background: var(--indigo); color: white; transform: translateX(5px); }
 
-      .message.bot mat-icon {
-        color: var(--color-brand-600);
-        background: var(--color-brand-100);
-        padding: var(--space-1);
-        border-radius: 50%;
-      }
+    .chat-main { flex: 1; display: flex; flex-direction: column; padding: 40px; }
+    .chat-messages { flex: 1; display: flex; flex-direction: column; gap: 24px; margin-bottom: 32px; }
 
-      .message p {
-        background: var(--color-surface);
-        padding: var(--space-2) var(--space-3);
-        border-radius: var(--radius-2);
-        margin: 0;
-        max-width: 70%;
-      }
+    .msg { display: flex; gap: 16px; max-width: 80%; }
+    .msg.bot { align-self: flex-start; }
+    .msg.user { align-self: flex-end; flex-direction: row-reverse; }
 
-      .message.user p {
-        background: var(--color-brand-600);
-        color: white;
-      }
+    .avatar { width: 40px; height: 40px; background: var(--indigo); color: white; border-radius: 50%; display: grid; place-items: center; }
+    .bubble {
+      padding: 16px 20px;
+      border-radius: 20px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .msg.bot .bubble { background: var(--white); color: #1e293b; border-bottom-left-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+    .msg.user .bubble { background: var(--indigo); color: white; border-bottom-right-radius: 4px; }
 
-      .full-width {
-        width: 100%;
-      }
+    .chat-input-box {
+      display: flex;
+      gap: 12px;
+      background: var(--white);
+      padding: 8px 8px 8px 24px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+    .chat-input-box input { flex: 1; border: none; outline: none; font-size: 0.95rem; color: #1e293b; }
+    .btn-send {
+      width: 48px;
+      height: 48px;
+      background: var(--indigo);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-send:hover { transform: rotate(-10deg) scale(1.1); background: var(--indigo-dark); }
 
-      @media (max-width: 768px) {
-        .page-header h1 {
-          font-size: 2rem;
-        }
+    /* --- ANIMATIONS --- */
+    .animate-slide-up { animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+    .animate-slide-up-long { animation: slideUp 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
+    .animate-fade-in-delay-1 { animation: fadeIn 0.8s ease-out 0.2s both; }
+    .animate-fade-in-delay-2 { animation: fadeIn 0.8s ease-out 0.4s both; }
+    .animate-fade-in-delay-3 { animation: fadeIn 0.8s ease-out 0.6s both; }
 
-        .quick-access-grid {
-          grid-template-columns: 1fr;
-          gap: var(--space-4);
-        }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .message p {
-          max-width: 85%;
-        }
-      }
-    `,
-  ],
+    @media (max-width: 900px) {
+      .chat-glass-container { flex-direction: column; }
+      .chat-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--glass-border); }
+      .ai-header h1 { font-size: 2.5rem; }
+    }
+  `]
 })
 export class AiToolsComponent implements OnInit {
   protected readonly aiService = inject(AIService);
+  private readonly snackBar = inject(MatSnackBar);
 
   ngOnInit(): void {
-    // Preload AI data if needed
+  }
+
+  onPromptClick(prompt: string): void {
+    this.startChat();
+  }
+
+  startChat(): void {
+    this.snackBar.open(
+      'Ushbu funksiya hozirda test rejimida. Tez kunda to\'liq ishga tushadi!',
+      'Yopish',
+      {
+        duration: 4000,
+        horizontalPosition: 'center',
+        verticalPosition: 'bottom',
+        panelClass: ['info-snackbar']
+      }
+    );
   }
 }

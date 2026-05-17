@@ -19,329 +19,191 @@ export interface QuickFilter {
   standalone: true,
   imports: [CommonModule, MatButtonModule, MatIconModule, MatChipsModule, MatTooltipModule],
   template: `
-    <div class="quick-filters">
-      <div class="filters-header">
-        <h3>
-          <mat-icon>flash_on</mat-icon>
-          Tez filtrlar
-        </h3>
+    <div class="quick-filters-modern">
+      <div class="header-row">
+        <div class="title-group">
+          <mat-icon>explore</mat-icon>
+          <span>Tezkor qidiruv</span>
+        </div>
       </div>
 
-      <div class="filters-grid">
-        <!-- Popular Locations -->
-        <button
-          *ngFor="let filter of popularLocations"
-          mat-stroked-button
-          class="quick-filter-btn location"
-          (click)="onFilterClick(filter)"
-          [matTooltip]="filter.label"
-        >
-          <mat-icon>{{ filter.icon }}</mat-icon>
-          <span>{{ filter.emoji }} {{ filter.label }}</span>
-        </button>
-      </div>
+      <div class="filter-sections">
+        <!-- Horizontal Scrollable Filters -->
+        <div class="scroll-container">
+          <div class="filter-group">
+            <span class="group-label">Shahar:</span>
+            <div class="chip-list">
+              @for (filter of popularLocations; track filter.id) {
+                <button class="modern-chip" (click)="onFilterClick(filter)">
+                  <span class="chip-icon">{{ filter.emoji }}</span>
+                  <span class="chip-text">{{ filter.label }}</span>
+                </button>
+              }
+            </div>
+          </div>
 
-      <div class="filters-grid">
-        <!-- Price Ranges -->
-        <button
-          *ngFor="let filter of priceRanges"
-          mat-stroked-button
-          class="quick-filter-btn price"
-          (click)="onFilterClick(filter)"
-          [matTooltip]="filter.label"
-        >
-          <mat-icon>{{ filter.icon }}</mat-icon>
-          <span>{{ filter.emoji }} {{ filter.label }}</span>
-        </button>
-      </div>
+          <div class="filter-group">
+            <span class="group-label">Narx:</span>
+            <div class="chip-list">
+              @for (filter of priceRanges; track filter.id) {
+                <button class="modern-chip price" (click)="onFilterClick(filter)">
+                  <mat-icon>{{ filter.icon }}</mat-icon>
+                  <span class="chip-text">{{ filter.label }}</span>
+                </button>
+              }
+            </div>
+          </div>
 
-      <div class="filters-grid">
-        <!-- Property Types -->
-        <button
-          *ngFor="let filter of propertyTypes"
-          mat-stroked-button
-          class="quick-filter-btn type"
-          (click)="onFilterClick(filter)"
-          [matTooltip]="filter.label"
-        >
-          <mat-icon>{{ filter.icon }}</mat-icon>
-          <span>{{ filter.emoji }} {{ filter.label }}</span>
-        </button>
-      </div>
-
-      <div class="filters-grid">
-        <!-- Amenities -->
-        <button
-          *ngFor="let filter of amenities"
-          mat-stroked-button
-          class="quick-filter-btn amenity"
-          (click)="onFilterClick(filter)"
-          [matTooltip]="filter.label"
-        >
-          <mat-icon>{{ filter.icon }}</mat-icon>
-          <span>{{ filter.emoji }} {{ filter.label }}</span>
-        </button>
+          <div class="filter-group">
+            <span class="group-label">Tur:</span>
+            <div class="chip-list">
+              @for (filter of propertyTypes; track filter.id) {
+                <button class="modern-chip type" (click)="onFilterClick(filter)">
+                  <mat-icon>{{ filter.icon }}</mat-icon>
+                  <span class="chip-text">{{ filter.label }}</span>
+                </button>
+              }
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   `,
-  styles: [
-    `
-      .quick-filters {
-        padding: 16px 0;
-        border-bottom: 1px solid #e2e8f0;
-      }
+  styles: [`
+    .quick-filters-modern {
+      padding: 24px;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+      border: 1px solid #f1f5f9;
+      margin-bottom: 24px;
+    }
 
-      .filters-header {
-        margin-bottom: 12px;
-      }
+    .header-row {
+      margin-bottom: 20px;
+    }
 
-      .filters-header h3 {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: #1e293b;
-        margin: 0 0 12px 0;
-        padding-left: 12px;
-      }
+    .title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      color: #0f172a;
+      font-size: 1.1rem;
+    }
 
-      .filters-header mat-icon {
-        color: #c9a84c;
-        font-size: 18px;
-      }
+    .title-group mat-icon {
+      color: #c9a84c;
+    }
 
-      .filters-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-        gap: 8px;
-        margin-bottom: 12px;
-        padding: 0 12px;
-      }
+    .scroll-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
 
-      .quick-filter-btn {
-        display: flex;
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .group-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 4px 0;
+    }
+
+    .chip-list::-webkit-scrollbar {
+      display: none; /* Chrome/Safari */
+    }
+
+    .modern-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      color: #334155;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .modern-chip:hover {
+      background: #ffffff;
+      border-color: #c9a84c;
+      color: #0f172a;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+
+    .modern-chip.active {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+
+    .modern-chip mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #64748b;
+    }
+
+    .modern-chip:hover mat-icon {
+      color: #c9a84c;
+    }
+
+    .chip-icon {
+      font-size: 1.1rem;
+    }
+
+    @media (max-width: 768px) {
+      .quick-filters-modern {
+        padding: 16px;
+      }
+      .filter-group {
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        padding: 8px 12px;
-        height: auto;
-        min-height: 60px;
-        font-size: 0.8rem;
-        border-radius: 8px;
-        border: 1px solid #cbd5e1;
-        transition: all 0.2s ease;
+        align-items: flex-start;
+        gap: 8px;
       }
-
-      .quick-filter-btn:hover {
-        background: #f8fafc;
-        border-color: #c9a84c;
-        color: #1b3a6b;
-        transform: translateY(-2px);
-        box-shadow: 0 2px 8px rgba(27, 58, 107, 0.1);
-      }
-
-      .quick-filter-btn.location {
-        border-color: #10b981;
-        color: #059669;
-      }
-
-      .quick-filter-btn.location:hover {
-        background: rgba(16, 185, 129, 0.05);
-        border-color: #10b981;
-      }
-
-      .quick-filter-btn.price {
-        border-color: #f59e0b;
-        color: #d97706;
-      }
-
-      .quick-filter-btn.price:hover {
-        background: rgba(245, 158, 11, 0.05);
-        border-color: #f59e0b;
-      }
-
-      .quick-filter-btn.type {
-        border-color: #3b82f6;
-        color: #2563eb;
-      }
-
-      .quick-filter-btn.type:hover {
-        background: rgba(59, 130, 246, 0.05);
-        border-color: #3b82f6;
-      }
-
-      .quick-filter-btn.amenity {
-        border-color: #ec4899;
-        color: #be185d;
-      }
-
-      .quick-filter-btn.amenity:hover {
-        background: rgba(236, 72, 153, 0.05);
-        border-color: #ec4899;
-      }
-
-      .quick-filter-btn mat-icon {
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
-      }
-
-      .quick-filter-btn span {
-        text-align: center;
-        line-height: 1.3;
-        font-weight: 500;
-      }
-
-      @media (max-width: 768px) {
-        .filters-grid {
-          grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-          gap: 6px;
-          padding: 0 8px;
-        }
-
-        .quick-filter-btn {
-          min-height: 50px;
-          font-size: 0.75rem;
-          padding: 6px 8px;
-          gap: 4px;
-        }
-
-        .quick-filter-btn mat-icon {
-          font-size: 16px;
-          width: 16px;
-          height: 16px;
-        }
-      }
-    `,
-  ],
+    }
+  `]
 })
 export class QuickFiltersComponent {
   @Output() filterSelected = new EventEmitter<QuickFilter>();
 
   popularLocations: QuickFilter[] = [
-    {
-      id: 'tashkent',
-      label: 'Toshkent',
-      icon: 'location_city',
-      color: '#10b981',
-      emoji: '🏙️',
-      query: { location: 'Toshkent' },
-    },
-    {
-      id: 'samarkand',
-      label: 'Samarqand',
-      icon: 'language',
-      color: '#10b981',
-      emoji: '🕌',
-      query: { location: 'Samarqand' },
-    },
-    {
-      id: 'bukhara',
-      label: 'Buxoro',
-      icon: 'terrain',
-      color: '#10b981',
-      emoji: '🌏',
-      query: { location: 'Buxoro' },
-    },
-    {
-      id: 'fergana',
-      label: 'Fargona',
-      icon: 'map',
-      color: '#10b981',
-      emoji: '🗺️',
-      query: { location: 'Fargona' },
-    },
+    { id: 'tashkent', label: 'Toshkent', icon: 'location_city', color: '#10b981', emoji: '🏙️', query: { location: 'Toshkent' } },
+    { id: 'samarkand', label: 'Samarqand', icon: 'language', color: '#10b981', emoji: '🕌', query: { location: 'Samarqand' } },
+    { id: 'bukhara', label: 'Buxoro', icon: 'terrain', color: '#10b981', emoji: '🌏', query: { location: 'Buxoro' } },
+    { id: 'fergana', label: 'Fargona', icon: 'map', color: '#10b981', emoji: '🗺️', query: { location: 'Fargona' } },
   ];
 
   priceRanges: QuickFilter[] = [
-    {
-      id: 'cheap',
-      label: 'Arzon',
-      icon: 'trending_down',
-      color: '#f59e0b',
-      emoji: '💰',
-      query: { maxPrice: 10000000 },
-    },
-    {
-      id: 'medium',
-      label: "O'rtacha",
-      icon: 'show_chart',
-      color: '#f59e0b',
-      emoji: '💵',
-      query: { minPrice: 10000000, maxPrice: 50000000 },
-    },
-    {
-      id: 'expensive',
-      label: 'Qimmat',
-      icon: 'trending_up',
-      color: '#f59e0b',
-      emoji: '💎',
-      query: { minPrice: 50000000 },
-    },
+    { id: 'cheap', label: 'Arzon', icon: 'trending_down', color: '#f59e0b', emoji: '💰', query: { maxPrice: 10000000, sortBy: 'price_asc' } },
+    { id: 'medium', label: "O'rtacha", icon: 'show_chart', color: '#f59e0b', emoji: '💵', query: { minPrice: 10000000, maxPrice: 50000000 } },
+    { id: 'expensive', label: 'Qimmat', icon: 'trending_up', color: '#f59e0b', emoji: '💎', query: { minPrice: 50000000, sortBy: 'price_desc' } },
   ];
 
   propertyTypes: QuickFilter[] = [
-    {
-      id: 'apartment',
-      label: 'Xona',
-      icon: 'apartment',
-      color: '#3b82f6',
-      emoji: '🏢',
-      query: { propertyType: 'Apartment' },
-    },
-    {
-      id: 'house',
-      label: 'Uy',
-      icon: 'house',
-      color: '#3b82f6',
-      emoji: '🏠',
-      query: { propertyType: 'House' },
-    },
-    {
-      id: 'villa',
-      label: 'Villa',
-      icon: 'villa',
-      color: '#3b82f6',
-      emoji: '🏰',
-      query: { propertyType: 'Villa' },
-    },
-  ];
-
-  amenities: QuickFilter[] = [
-    {
-      id: 'wifi',
-      label: 'WiFi',
-      icon: 'wifi',
-      color: '#ec4899',
-      emoji: '📶',
-      query: { amenities: ['hasWifi'] },
-    },
-    {
-      id: 'parking',
-      label: 'Parkovka',
-      icon: 'local_parking',
-      color: '#ec4899',
-      emoji: '🚗',
-      query: { amenities: ['hasParking'] },
-    },
-    {
-      id: 'pool',
-      label: 'Basseyn',
-      icon: 'pool',
-      color: '#ec4899',
-      emoji: '🏊',
-      query: { amenities: ['hasPool'] },
-    },
-    {
-      id: 'pets',
-      label: 'Hayvonlar',
-      icon: 'pets',
-      color: '#ec4899',
-      emoji: '🐾',
-      query: { amenities: ['petsAllowed'] },
-    },
+    { id: 'apartment', label: 'Xona', icon: 'apartment', color: '#3b82f6', emoji: '🏢', query: { propertyType: 'Apartment' } },
+    { id: 'house', label: 'Uy', icon: 'house', color: '#3b82f6', emoji: '🏠', query: { propertyType: 'House' } },
+    { id: 'villa', label: 'Villa', icon: 'villa', color: '#3b82f6', emoji: '🏰', query: { propertyType: 'Villa' } },
   ];
 
   onFilterClick(filter: QuickFilter): void {

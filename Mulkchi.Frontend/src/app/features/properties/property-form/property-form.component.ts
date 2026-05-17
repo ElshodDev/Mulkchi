@@ -638,7 +638,7 @@ export class PropertyFormComponent implements OnInit {
       'UZS': 0, 'USD': 1
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const formData: Record<string, any> = {
       title: this.basicInfoForm.value.title!,
       description: this.descriptionForm.value.description!,
@@ -698,7 +698,7 @@ export class PropertyFormComponent implements OnInit {
     };
 
     if (this.isEditMode() && this.propertyId()) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       this.propertyService.updateProperty(this.propertyId()!, formData as any).subscribe({
         next: () => {
           this.uploadImages(this.propertyId()!);
@@ -713,7 +713,7 @@ export class PropertyFormComponent implements OnInit {
         },
       });
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       this.propertyService.createProperty(formData as any).subscribe({
         next: (property) => {
           this.uploadImages(property.id);

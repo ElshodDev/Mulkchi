@@ -14,131 +14,232 @@ import { MatSelectModule } from '@angular/material/select';
     MatSelectModule
   ],
   template: `
-    <div class="results-header">
-      <div class="results-info">
-        <h2 class="results-title">
-          {{ totalCount }} ta mulk topildi
-        </h2>
-        <p class="results-count">
-          <strong>{{ totalCount }}</strong> ta mulk
-        </p>
+    <div class="premium-header-wrapper">
+      <div class="stats-section">
+        <div class="count-badge">
+          <span class="count-number">{{ totalCount }}</span>
+          <span class="count-label">ta mulk topildi</span>
+        </div>
+        <div class="active-filters-info" *ngIf="totalCount > 0">
+          <mat-icon>verified</mat-icon>
+          <span>Tasdiqlangan e'lonlar</span>
+        </div>
       </div>
-      <div class="view-toggle">
-        <button 
-          class="view-btn" 
-          [class.active]="currentView === 'grid'"
-          (click)="viewChange.emit('grid')"
-          matTooltip="Grid ko'rinish">
-          <mat-icon>grid_view</mat-icon>
-        </button>
-        <button 
-          class="view-btn" 
-          [class.active]="currentView === 'list'"
-          (click)="viewChange.emit('list')"
-          matTooltip="List ko'rinish">
-          <mat-icon>list</mat-icon>
-        </button>
-        <button 
-          class="view-btn" 
-          [class.active]="currentView === 'map'"
-          (click)="viewChange.emit('map')"
-          matTooltip="Xarita ko'rinish">
-          <mat-icon>map</mat-icon>
-        </button>
-      </div>
-      <div class="sort-dropdown">
-        <mat-select 
-          [value]="currentSort" 
-          (selectionChange)="sortChange.emit($event.value)"
-          placeholder="Saralash">
-          <mat-option value="featured">Tavsiya etilgan</mat-option>
-          <mat-option value="newest">Eng yangi</mat-option>
-          <mat-option value="price_asc">Narxi: Arzondan qimmatga</mat-option>
-          <mat-option value="price_desc">Narxi: Qimmatdan arzonga</mat-option>
-          <mat-option value="rating">Reyting</mat-option>
-        </mat-select>
+
+      <div class="controls-section">
+        <!-- Segmented View Toggle -->
+        <div class="segmented-control">
+          <button 
+            class="segment-btn" 
+            [class.active]="currentView === 'grid'"
+            (click)="viewChange.emit('grid')"
+            matTooltip="Grid ko'rinishi">
+            <mat-icon>grid_view</mat-icon>
+          </button>
+          <button 
+            class="segment-btn" 
+            [class.active]="currentView === 'list'"
+            (click)="viewChange.emit('list')"
+            matTooltip="Ro'yxat ko'rinishi">
+            <mat-icon>view_list</mat-icon>
+          </button>
+          <button 
+            class="segment-btn" 
+            [class.active]="currentView === 'map'"
+            (click)="viewChange.emit('map')"
+            matTooltip="Xaritada ko'rish">
+            <mat-icon>map</mat-icon>
+          </button>
+          <div class="active-indicator" [class]="currentView"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Premium Sort Select -->
+        <div class="sort-wrapper">
+          <mat-icon class="sort-icon">sort</mat-icon>
+          <mat-select 
+            [value]="currentSort" 
+            (selectionChange)="sortChange.emit($event.value)"
+            class="premium-select">
+            <mat-option value="newest">Yangi e'lonlar</mat-option>
+            <mat-option value="price_asc">Arzonroq narxlar</mat-option>
+            <mat-option value="price_desc">Yuqori narxlar</mat-option>
+            <mat-option value="rating">Yuqori reyting</mat-option>
+          </mat-select>
+        </div>
       </div>
     </div>
   `,
   styles: [`
-    .results-header {
+    :host {
+      display: block;
+      margin-bottom: 32px;
+      --navy: #0f172a;
+      --gold: #c9a84c;
+      --white: #ffffff;
+      --gray-50: #f8fafc;
+      --gray-200: #e2e8f0;
+      --gray-500: #64748b;
+    }
+
+    .premium-header-wrapper {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding: 32px 0 24px; /* Increased top padding for better breathing room */
+      border-bottom: 1px solid var(--gray-200);
       margin-bottom: 24px;
-      flex-wrap: wrap;
-      gap: 16px;
     }
 
-    .results-info {
+    /* Stats Section */
+    .stats-section {
       display: flex;
       flex-direction: column;
       gap: 4px;
     }
 
-    .results-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--color-gray-900);
-      margin: 0;
-    }
-
-    .results-count {
-      margin: 0;
-      color: var(--color-gray-500);
-      font-size: 0.9rem;
-    }
-
-    .results-count strong {
-      color: var(--color-navy);
-      font-weight: 600;
-    }
-
-    .view-toggle {
+    .count-badge {
       display: flex;
+      align-items: baseline;
       gap: 8px;
     }
 
-    .view-btn {
+    .count-number {
+      font-size: 1.75rem;
+      font-weight: 900;
+      color: var(--navy);
+      line-height: 1;
+    }
+
+    .count-label {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: lowercase;
+    }
+
+    .active-filters-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #10b981;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .active-filters-info mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Controls Section */
+    .controls-section {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* Segmented Control */
+    .segmented-control {
+      position: relative;
+      display: flex;
+      background: var(--gray-50);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--gray-200);
+    }
+
+    .segment-btn {
+      position: relative;
+      z-index: 2;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 40px;
-      height: 40px;
-      background: var(--color-gray-100);
+      width: 44px;
+      height: 36px;
+      background: transparent;
       border: none;
-      border-radius: var(--radius);
-      color: var(--color-gray-500);
+      color: var(--gray-500);
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: color 0.3s;
     }
 
-    .view-btn:hover {
-      background: var(--color-gray-200);
-      color: var(--color-gray-700);
+    .segment-btn mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
     }
 
-    .view-btn.active {
-      background: var(--color-navy);
-      color: var(--color-white);
+    .segment-btn.active {
+      color: var(--navy);
     }
 
-    .sort-dropdown {
-      min-width: 200px;
+    .active-indicator {
+      position: absolute;
+      top: 4px;
+      height: 36px;
+      width: 44px;
+      background: var(--white);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1;
+    }
+
+    .active-indicator.grid { transform: translateX(0); }
+    .active-indicator.list { transform: translateX(44px); }
+    .active-indicator.map { transform: translateX(88px); }
+
+    .divider {
+      width: 1px;
+      height: 24px;
+      background: var(--gray-200);
+    }
+
+    /* Sort Wrapper */
+    .sort-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--white);
+      padding: 0 12px;
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      height: 44px;
+      transition: border-color 0.3s;
+    }
+
+    .sort-wrapper:hover {
+      border-color: var(--gold);
+    }
+
+    .sort-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: var(--gold);
+    }
+
+    .premium-select {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--navy);
+      width: 150px;
     }
 
     @media (max-width: 768px) {
-      .results-header {
+      .premium-header-wrapper {
         flex-direction: column;
         align-items: flex-start;
+        gap: 20px;
       }
-
-      .view-toggle {
+      .controls-section {
         width: 100%;
-      }
-
-      .sort-dropdown {
-        width: 100%;
+        justify-content: space-between;
       }
     }
   `]

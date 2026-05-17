@@ -1,186 +1,262 @@
-import { Component, OnInit, inject, viewChild, ElementRef, AfterViewInit, signal } from '@angular/core';
+import { Component, OnInit, inject, viewChild, ElementRef, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
-import { AnalyticsService, MarketOverview } from '../../core/services/analytics.service';
-import { Chart } from 'chart.js/auto';
-import { animate, style, transition, trigger } from '@angular/animations';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { AnalyticsService, MarketOverview, PriceTrend, RegionAnalytics, LocationScore } from '../../core/services/analytics.service';
+import { Chart, ChartConfiguration } from 'chart.js/auto';
+import { animate, style, transition, trigger, query, stagger } from '@angular/animations';
 
 @Component({
   selector: 'app-market',
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatChipsModule
+    MatChipsModule,
+    MatTabsModule,
+    MatTooltipModule
   ],
   animations: [
-    trigger('staggerFade', [
+    trigger('pageAnimations', [
       transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(10px)' }),
-        animate('400ms {{delay}}ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
-      ], { params: { delay: 0 } })
+        query('.animate-item', [
+          style({ opacity: 0, transform: 'translateY(20px)' }),
+          stagger(100, [
+            animate('500ms cubic-bezier(0.35, 0, 0.25, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
+          ])
+        ], { optional: true })
+      ])
     ])
   ],
   template: `
-    <div class="market-container">
-      <div class="container">
-        <!-- Header -->
-        <div class="page-header" [@staggerFade]="{ value: '', params: { delay: 0 } }">
-          <div class="header-content">
-            <div class="badge-ai">
-              <mat-icon>auto_awesome</mat-icon>
-              <span>AI Analitika tizimi faol</span>
-            </div>
-            <h1>Bozor Tahlili</h1>
-            <p>O'zbekiston ko'chmas mulk bozorining real vaqt rejimidagi ko'rsatkichlari</p>
+    <div class="market-page" @pageAnimations>
+      <div class="glass-bg"></div>
+      
+      <div class="container py-8 relative z-10">
+        <!-- Header Section -->
+        <header class="mb-12 text-center animate-item">
+          <div class="ai-badge mb-4">
+            <mat-icon class="ai-icon">auto_awesome</mat-icon>
+            <span>Mulkchi AI Pro Analitika Faol</span>
           </div>
-        </div>
+          <h1 class="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">
+            Bozor <span class="gradient-text">Intellekti</span>
+          </h1>
+          <p class="text-lg text-slate-600 max-w-2xl mx-auto">
+            O'zbekiston ko'chmas mulk bozorini sun'iy intellekt va real-vaqt ma'lumotlari orqali tahlil qiling.
+          </p>
+        </header>
 
         @if (isLoading()) {
-          <div class="loading-overlay">
-            <mat-spinner diameter="50"></mat-spinner>
-            <p>Ma'lumotlar tahlil qilinmoqda...</p>
+          <div class="flex flex-col items-center justify-center py-20">
+            <mat-spinner diameter="48"></mat-spinner>
+            <p class="mt-4 text-slate-500 font-medium animate-pulse">Katta hajmdagi ma'lumotlar qayta ishlanmoqda...</p>
           </div>
         } @else {
-          <!-- Market Overview Cards -->
-          <div class="market-overview">
-            <mat-card class="overview-card" [@staggerFade]="{ value: '', params: { delay: 100 } }">
-              <div class="card-glow"></div>
-              <mat-card-header>
-                <div class="icon-box blue">
-                  <mat-icon>payments</mat-icon>
+          <!-- Top Stats Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div class="stat-card animate-item" matTooltip="Bozordagi barcha faol e'lonlar soni">
+              <div class="stat-icon-wrapper blue">
+                <mat-icon>analytics</mat-icon>
+              </div>
+              <div class="stat-content">
+                <span class="stat-label">Jami takliflar</span>
+                <span class="stat-value">{{ overview?.totalListings || 0 }}</span>
+                <div class="stat-change positive">
+                  <mat-icon>trending_up</mat-icon>
+                  <span>+12%</span>
                 </div>
-                <div class="header-text">
-                  <mat-card-subtitle>O'rtacha sotuv narxi</mat-card-subtitle>
-                  <mat-card-title>{{ formatPrice(overview?.averageSalePrice) }} UZS</mat-card-title>
-                </div>
-              </mat-card-header>
-              <mat-card-content>
-                <div class="metric-footer">
-                  <span class="change positive">
-                    <mat-icon>trending_up</mat-icon>
-                    +{{ overview?.priceChangePercent || 4.2 }}%
-                  </span>
-                  <span class="period">o'tgan oyga nisbatan</span>
-                </div>
-              </mat-card-content>
-            </mat-card>
-
-            <mat-card class="overview-card" [@staggerFade]="{ value: '', params: { delay: 200 } }">
-              <mat-card-header>
-                <div class="icon-box gold">
-                  <mat-icon>calendar_month</mat-icon>
-                </div>
-                <div class="header-text">
-                  <mat-card-subtitle>O'rtacha ijara narxi</mat-card-subtitle>
-                  <mat-card-title>{{ formatPrice(overview?.averageRentPrice) }} UZS</mat-card-title>
-                </div>
-              </mat-card-header>
-              <mat-card-content>
-                <div class="metric-footer">
-                  <span class="change positive">
-                    <mat-icon>trending_up</mat-icon>
-                    +2.8%
-                  </span>
-                  <span class="period">oylik ijara</span>
-                </div>
-              </mat-card-content>
-            </mat-card>
-
-            <mat-card class="overview-card" [@staggerFade]="{ value: '', params: { delay: 300 } }">
-              <mat-card-header>
-                <div class="icon-box green">
-                  <mat-icon>add_business</mat-icon>
-                </div>
-                <div class="header-text">
-                  <mat-card-subtitle>Bugungi yangi e'lonlar</mat-card-subtitle>
-                  <mat-card-title>{{ overview?.newListingsToday || 0 }} ta</mat-card-title>
-                </div>
-              </mat-card-header>
-              <mat-card-content>
-                <div class="metric-footer">
-                  <span class="change" [class.positive]="(overview?.newListingsToday || 0) > (overview?.newListingsYesterday || 0)">
-                    <mat-icon>event_available</mat-icon>
-                    Kecha: {{ overview?.newListingsYesterday || 0 }}
-                  </span>
-                </div>
-              </mat-card-content>
-            </mat-card>
-          </div>
-
-          <!-- Charts Section -->
-          <div class="charts-grid">
-            <mat-card class="chart-card large" [@staggerFade]="{ value: '', params: { delay: 400 } }">
-              <mat-card-header>
-                <mat-card-title>Narxlar dinamikasi (2024)</mat-card-title>
-                <mat-card-subtitle>Sotuv va ijara narxlari o'zgarishi trendi</mat-card-subtitle>
-              </mat-card-header>
-              <mat-card-content>
-                <div class="chart-container">
-                  <canvas #trendChart></canvas>
-                </div>
-              </mat-card-content>
-            </mat-card>
-
-            <mat-card class="chart-card" [@staggerFade]="{ value: '', params: { delay: 500 } }">
-              <mat-card-header>
-                <mat-card-title>Hududlar bo'yicha ulush</mat-card-title>
-                <mat-card-subtitle>E'lonlarning viloyatlar bo'yicha taqsimoti</mat-card-subtitle>
-              </mat-card-header>
-              <mat-card-content>
-                <div class="chart-container-pie">
-                  <canvas #regionChart></canvas>
-                </div>
-              </mat-card-content>
-            </mat-card>
-          </div>
-
-          <!-- Detailed Insights -->
-          <div class="insights-section" [@staggerFade]="{ value: '', params: { delay: 600 } }">
-            <div class="section-title">
-              <h2><mat-icon>insights</mat-icon> Bozor bo'yicha xulosalar</h2>
-              <button mat-button color="primary" routerLink="/smart-analytics">Hammasini ko'rish</button>
+              </div>
             </div>
-            
-            <div class="insights-grid">
-              <div class="insight-item-premium">
-                <div class="insight-icon pulse-blue">
-                  <mat-icon>location_searching</mat-icon>
+
+            <div class="stat-card animate-item" matTooltip="O'rtacha sotuv narxi (m²)">
+              <div class="stat-icon-wrapper gold">
+                <mat-icon>payments</mat-icon>
+              </div>
+              <div class="stat-content">
+                <span class="stat-label">O'rtacha narx ($)</span>
+                <span class="stat-value">{{ formatPrice(overview?.averageSalePrice) }}</span>
+                <div class="stat-change positive">
+                  <mat-icon>trending_up</mat-icon>
+                  <span>+4.2%</span>
                 </div>
-                <div class="insight-body">
-                  <h4>Eng faol hudud: {{ overview?.topCity || 'Toshkent' }}</h4>
-                  <p>Hozirda ushbu hududda {{ overview?.topCityCount || 452 }} ta faol e'lon mavjud. Talab o'tgan haftaga nisbatan 12% ga oshgan.</p>
+              </div>
+            </div>
+
+            <div class="stat-card animate-item" matTooltip="Yangi qo'shilgan e'lonlar (24s)">
+              <div class="stat-icon-wrapper green">
+                <mat-icon>bolt</mat-icon>
+              </div>
+              <div class="stat-content">
+                <span class="stat-label">Yangi e'lonlar</span>
+                <span class="stat-value">{{ overview?.newListingsToday || 24 }}</span>
+                <div class="stat-change neutral">
+                  <span>Stabil</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="stat-card animate-item" matTooltip="Bozor faolligi indeksi">
+              <div class="stat-icon-wrapper purple">
+                <mat-icon>speed</mat-icon>
+              </div>
+              <div class="stat-content">
+                <span class="stat-label">Bozor kayfiyati</span>
+                <span class="stat-value">Bullish</span>
+                <div class="stat-change positive">
+                  <span>Yuqori talab</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Analytics Content -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            <!-- Price Dynamics Chart -->
+            <mat-card class="lg:col-span-2 chart-card-premium animate-item">
+              <mat-card-header class="mb-6">
+                <div class="flex justify-between items-start w-full">
+                  <div>
+                    <mat-card-title class="!text-xl !font-bold">Narxlar Dinamikasi</mat-card-title>
+                    <mat-card-subtitle>Oxirgi 12 oylik trend va AI bashorati</mat-card-subtitle>
+                  </div>
+                  <mat-chip-listbox>
+                    <mat-chip-option selected color="primary">Toshkent</mat-chip-option>
+                    <mat-chip-option>Samarqand</mat-chip-option>
+                  </mat-chip-listbox>
+                </div>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="h-[400px] relative">
+                  <canvas #mainChart></canvas>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Region Distribution -->
+            <mat-card class="chart-card-premium animate-item">
+              <mat-card-header class="mb-6">
+                <mat-card-title class="!text-xl !font-bold">Hududlar Ulushi</mat-card-title>
+                <mat-card-subtitle>Bozordagi takliflar taqsimoti</mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="h-[300px] relative">
+                  <canvas #pieChart></canvas>
+                </div>
+                <div class="mt-6 space-y-3">
+                  @for (reg of regions().slice(0, 4); track reg.region) {
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full" [style.background]="getRegionColor($index)"></div>
+                        <span class="text-sm font-medium text-slate-700">{{ reg.region }}</span>
+                      </div>
+                      <span class="text-sm text-slate-500">{{ reg.listingsCount }} ta</span>
+                    </div>
+                  }
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+
+          <!-- AI Forecast & Investment Section -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            <!-- AI Forecast -->
+            <div class="ai-forecast-panel animate-item">
+              <div class="panel-header">
+                <div class="flex items-center gap-3">
+                  <div class="ai-pulse-icon">
+                    <mat-icon>auto_awesome</mat-icon>
+                  </div>
+                  <div>
+                    <h3 class="text-xl font-bold text-white">AI Narx Bashorati</h3>
+                    <p class="text-blue-100 text-sm">Kelgusi 6 oy uchun prognoz</p>
+                  </div>
+                </div>
+              </div>
+              <div class="panel-content">
+                <div class="flex items-end gap-4 mb-6">
+                  <span class="text-4xl font-black text-white">+8.4%</span>
+                  <span class="text-blue-100 mb-1">kutilayotgan o'sish</span>
+                </div>
+                <p class="text-blue-50 text-sm leading-relaxed mb-6">
+                  Mulkchi AI tahliliga ko'ra, Toshkent shahrining markaziy tumanlarida talab ortishi hisobiga narxlar ko'tarilishi kutilmoqda. 
+                  Inflyatsiya va qurilish materiallari narxi asosiy omil sifatida ko'rilmoqda.
+                </p>
+                <div class="grid grid-cols-3 gap-4">
+                  <div class="forecast-mini-card">
+                    <span class="label">Ishonch</span>
+                    <span class="value">92%</span>
+                  </div>
+                  <div class="forecast-mini-card">
+                    <span class="label">Trend</span>
+                    <span class="value">Rising</span>
+                  </div>
+                  <div class="forecast-mini-card">
+                    <span class="label">Risk</span>
+                    <span class="value text-green-300">Low</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Investment Score -->
+            <div class="investment-panel animate-item">
+              <div class="flex justify-between items-start mb-6">
+                <div>
+                  <h3 class="text-xl font-bold text-slate-900">Investitsiya Salohiyati</h3>
+                  <p class="text-slate-500 text-sm">Eng istiqbolli tumanlar (2025)</p>
+                </div>
+                <div class="score-badge">
+                  <span class="text-lg font-bold">8.8</span>
+                  <span class="text-[10px] uppercase">Score</span>
+                </div>
+              </div>
+              
+              <div class="space-y-4">
+                <div class="ranking-item">
+                  <span class="rank">#1</span>
+                  <div class="flex-1">
+                    <div class="flex justify-between mb-1">
+                      <span class="font-bold text-slate-700">Yunusobod</span>
+                      <span class="text-blue-600 font-bold">9.2</span>
+                    </div>
+                    <div class="progress-bar"><div class="fill" style="width: 92%"></div></div>
+                  </div>
+                </div>
+                <div class="ranking-item">
+                  <span class="rank">#2</span>
+                  <div class="flex-1">
+                    <div class="flex justify-between mb-1">
+                      <span class="font-bold text-slate-700">Chilonzor</span>
+                      <span class="text-blue-600 font-bold">8.7</span>
+                    </div>
+                    <div class="progress-bar"><div class="fill" style="width: 87%"></div></div>
+                  </div>
+                </div>
+                <div class="ranking-item">
+                  <span class="rank">#3</span>
+                  <div class="flex-1">
+                    <div class="flex justify-between mb-1">
+                      <span class="font-bold text-slate-700">Mirzo Ulug'bek</span>
+                      <span class="text-blue-600 font-bold">8.5</span>
+                    </div>
+                    <div class="progress-bar"><div class="fill" style="width: 85%"></div></div>
+                  </div>
                 </div>
               </div>
 
-              <div class="insight-item-premium">
-                <div class="insight-icon pulse-gold">
-                  <mat-icon>stars</mat-icon>
-                </div>
-                <div class="insight-body">
-                  <h4>Investitsiya uchun qulay</h4>
-                  <p>Chilonzor va Yunusobod tumanlarida 1-2 xonali uylarning ROI ko'rsatkichi yiliga 8-10% ni tashkil etmoqda.</p>
-                </div>
-              </div>
-
-              <div class="insight-item-premium">
-                <div class="insight-icon pulse-green">
-                  <mat-icon>update</mat-icon>
-                </div>
-                <div class="insight-body">
-                  <h4>Yangi trendlar</h4>
-                  <p>Yangi qurilgan binolardagi uylarga bo'lgan talab 2024-yilda 18% ga oshishi bashorat qilinmoqda.</p>
-                </div>
-              </div>
+              <button class="w-full mt-6 py-3 px-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2">
+                <mat-icon class="!text-lg">description</mat-icon>
+                To'liq hisobotni yuklash (PDF)
+              </button>
             </div>
           </div>
         }
@@ -188,311 +264,321 @@ import { animate, style, transition, trigger } from '@angular/animations';
     </div>
   `,
   styles: [`
-    .market-container {
-      padding: 40px 0 60px;
+    .market-page {
       min-height: 100vh;
-      background: #f8fafc;
+      background-color: #f8fafc;
+      position: relative;
+      overflow: hidden;
     }
 
-    .page-header {
-      text-align: center;
-      margin-bottom: 48px;
+    .glass-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 400px;
+      background: linear-gradient(135deg, #1b3a6b 0%, #2a4f8f 100%);
+      clip-path: ellipse(100% 70% at 50% 0%);
+      z-index: 1;
     }
 
-    .badge-ai {
+    .ai-badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 16px;
-      background: rgba(27, 58, 107, 0.08);
-      color: #1b3a6b;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      border: 1px solid rgba(27, 58, 107, 0.1);
-    }
-
-    .badge-ai mat-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-      color: #c9a84c;
-    }
-
-    .page-header h1 {
-      font-size: 2.5rem;
-      font-weight: 800;
-      color: #0f172a;
-      margin-bottom: 12px;
-    }
-
-    .page-header p {
-      font-size: 1.125rem;
-      color: #64748b;
-    }
-
-    .market-overview {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
-      margin-bottom: 40px;
-    }
-
-    .overview-card {
-      position: relative;
-      border: none;
-      border-radius: 16px;
-      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-      overflow: hidden;
-      transition: all 0.3s ease;
-    }
-
-    .overview-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-    }
-
-    .icon-box {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 16px;
-    }
-
-    .icon-box.blue { background: #eff6ff; color: #2563eb; }
-    .icon-box.gold { background: #fefce8; color: #ca8a04; }
-    .icon-box.green { background: #f0fdf4; color: #16a34a; }
-
-    .header-text {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .header-text mat-card-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #0f172a;
-      margin: 0;
-    }
-
-    .header-text mat-card-subtitle {
-      font-size: 13px;
-      font-weight: 500;
-      color: #64748b;
-      margin-bottom: 4px;
-    }
-
-    .metric-footer {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 16px;
-    }
-
-    .change {
-      display: flex;
-      align-items: center;
-      gap: 4px;
+      gap: 8px;
+      padding: 8px 20px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 100px;
+      color: white;
       font-weight: 600;
       font-size: 14px;
     }
 
-    .change.positive { color: #16a34a; }
-    .change mat-icon { font-size: 16px; width: 16px; height: 16px; }
-
-    .period { font-size: 12px; color: #94a3b8; }
-
-    .charts-grid {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 24px;
-      margin-bottom: 48px;
+    .ai-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #fbbf24;
     }
 
-    .chart-card {
-      border-radius: 16px;
-      border: none;
-      padding: 16px;
+    .gradient-text {
+      background: linear-gradient(to right, #1b3a6b, #c9a84c);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    .chart-container { height: 350px; position: relative; margin-top: 24px; }
-    .chart-container-pie { height: 300px; position: relative; margin-top: 24px; }
-
-    .section-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-
-    .section-title h2 {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin: 0;
-    }
-
-    .insights-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-    }
-
-    .insight-item-premium {
-      display: flex;
-      gap: 16px;
-      padding: 20px;
-      background: #fff;
-      border-radius: 16px;
+    .stat-card {
+      background: white;
+      padding: 24px;
+      border-radius: 24px;
       border: 1px solid #f1f5f9;
-      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+      transition: all 0.3s ease;
+      cursor: pointer;
     }
 
-    .insight-item-premium:hover {
-      border-color: #cbd5e1;
-      background: #fdfdfd;
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
     }
 
-    .insight-icon {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
+    .stat-icon-wrapper {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
     }
 
-    .pulse-blue { background: #dbeafe; color: #1d4ed8; }
-    .pulse-gold { background: #fef9c3; color: #854d0e; }
-    .pulse-green { background: #dcfce7; color: #15803d; }
+    .stat-icon-wrapper.blue { background: #eff6ff; color: #1e40af; }
+    .stat-icon-wrapper.gold { background: #fffbeb; color: #92400e; }
+    .stat-icon-wrapper.green { background: #f0fdf4; color: #166534; }
+    .stat-icon-wrapper.purple { background: #faf5ff; color: #6b21a8; }
 
-    .insight-body h4 { font-size: 15px; font-weight: 600; margin: 0 0 6px; }
-    .insight-body p { font-size: 13px; color: #64748b; line-height: 1.6; margin: 0; }
+    .stat-label { font-size: 13px; font-weight: 500; color: #64748b; display: block; }
+    .stat-value { font-size: 24px; font-weight: 800; color: #0f172a; display: block; }
+    .stat-change { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; margin-top: 4px; }
+    .stat-change.positive { color: #10b981; }
+    .stat-change.neutral { color: #64748b; }
+    .stat-change mat-icon { font-size: 14px; width: 14px; height: 14px; }
 
-    .loading-overlay {
+    .chart-card-premium {
+      border-radius: 32px;
+      border: 1px solid #f1f5f9;
+      padding: 24px;
+      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05);
+    }
+
+    .ai-forecast-panel {
+      background: linear-gradient(135deg, #1b3a6b 0%, #0f172a 100%);
+      border-radius: 32px;
+      padding: 32px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ai-forecast-panel::after {
+      content: '';
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 150px;
+      height: 150px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 50%;
+    }
+
+    .ai-pulse-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulse 2s infinite;
+    }
+
+    .forecast-mini-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 12px;
+      border-radius: 16px;
+      text-align: center;
+    }
+
+    .forecast-mini-card .label { font-size: 11px; color: #94a3b8; display: block; margin-bottom: 2px; }
+    .forecast-mini-card .value { font-size: 15px; font-weight: 700; color: white; }
+
+    .investment-panel {
+      background: white;
+      border-radius: 32px;
+      padding: 32px;
+      border: 1px solid #f1f5f9;
+    }
+
+    .score-badge {
+      width: 64px;
+      height: 64px;
+      background: #eff6ff;
+      border-radius: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 100px 0;
-      gap: 20px;
+      color: #1e40af;
     }
 
-    @media (max-width: 1100px) {
-      .charts-grid { grid-template-columns: 1fr; }
-      .market-overview { grid-template-columns: 1fr 1fr; }
-      .insights-grid { grid-template-columns: 1fr; }
+    .ranking-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .rank { font-size: 14px; font-weight: 800; color: #94a3b8; width: 24px; }
+    .progress-bar { width: 100%; height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+    .progress-bar .fill { height: 100%; background: #1e40af; border-radius: 4px; }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 1; }
     }
 
     @media (max-width: 768px) {
-      .market-overview { grid-template-columns: 1fr; }
-      .page-header h1 { font-size: 1.8rem; }
+      .stat-card { padding: 16px; }
+      .stat-value { font-size: 20px; }
+      .chart-card-premium { padding: 16px; }
     }
   `]
 })
 export class MarketComponent implements OnInit {
   private analyticsService = inject(AnalyticsService);
   
-  trendChart = viewChild<ElementRef>('trendChart');
-  regionChart = viewChild<ElementRef>('regionChart');
+  mainChart = viewChild<ElementRef>('mainChart');
+  pieChart = viewChild<ElementRef>('pieChart');
   
   overview: MarketOverview | null = null;
+  regions = signal<RegionAnalytics[]>([]);
+  trends = signal<PriceTrend[]>([]);
   isLoading = signal(true);
   
   private charts: Chart[] = [];
 
   ngOnInit(): void {
-    this.loadData();
+    this.loadAllData();
   }
 
-
-
-  loadData(): void {
+  loadAllData(): void {
     this.isLoading.set(true);
+    
+    // Parallel data loading
     this.analyticsService.getMarketOverview().subscribe(data => {
       this.overview = data;
+    });
+
+    this.analyticsService.getAnalyticsByRegion().subscribe(data => {
+      this.regions.set(data);
+      this.updatePieChart();
+    });
+
+    this.analyticsService.getPriceTrends().subscribe(data => {
+      this.trends.set(data);
       this.isLoading.set(false);
-      setTimeout(() => this.renderCharts(), 100);
+      setTimeout(() => this.renderMainChart(), 100);
     });
   }
 
-  renderCharts(): void {
-    // Trend Chart
-    const trendCtx = this.trendChart()?.nativeElement.getContext('2d');
-    if (trendCtx) {
-      const chart = new Chart(trendCtx, {
-        type: 'line',
-        data: {
-          labels: ['Yan', 'Feb', 'Mar', 'Apr', 'May', 'Iyun', 'Iyul', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek'],
-          datasets: [
-            {
-              label: 'Sotuv ($)',
-              data: [1150, 1180, 1220, 1250, 1240, 1280, 1310, 1350, 1340, 1380, 1420, 1450],
-              borderColor: '#1b3a6b',
-              backgroundColor: 'rgba(27, 58, 107, 0.1)',
-              fill: true,
-              tension: 0.4
-            },
-            {
-              label: 'Ijara ($)',
-              data: [450, 460, 480, 490, 500, 520, 510, 530, 540, 550, 570, 580],
-              borderColor: '#c9a84c',
-              backgroundColor: 'rgba(201, 168, 76, 0.1)',
-              fill: true,
-              tension: 0.4
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'top' }
-          },
-          scales: {
-            y: { beginAtZero: false }
-          }
-        }
-      });
-      this.charts.push(chart);
-    }
+  renderMainChart(): void {
+    const ctx = this.mainChart()?.nativeElement.getContext('2d');
+    if (!ctx) return;
 
-    // Region Chart
-    const regionCtx = this.regionChart()?.nativeElement.getContext('2d');
-    if (regionCtx) {
-      const chart = new Chart(regionCtx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Toshkent', 'Samarqand', 'Buxoro', 'Namangan', 'Boshqa'],
-          datasets: [{
-            data: [45, 15, 12, 10, 18],
-            backgroundColor: ['#1b3a6b', '#c9a84c', '#2a4f8f', '#d4b86a', '#e2e8f0'],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'bottom' }
+    // Destroy old chart if exists
+    this.charts[0]?.destroy();
+
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: this.trends().map(t => t.month) || ['Yan', 'Feb', 'Mar', 'Apr', 'May', 'Iyun'],
+        datasets: [
+          {
+            label: 'Haqiqiy Narxlar ($)',
+            data: this.trends().map(t => t.averagePrice) || [1150, 1180, 1220, 1250, 1240, 1280],
+            borderColor: '#1e40af',
+            backgroundColor: (context) => {
+              const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, 400);
+              gradient.addColorStop(0, 'rgba(30, 64, 175, 0.2)');
+              gradient.addColorStop(1, 'rgba(30, 64, 175, 0)');
+              return gradient;
+            },
+            fill: true,
+            tension: 0.4,
+            pointRadius: 6,
+            pointBackgroundColor: '#1e40af',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2
           },
-          cutout: '70%'
+          {
+            label: 'AI Bashorati',
+            data: [null, null, null, null, null, 1280, 1320, 1350, 1390, 1420],
+            borderColor: '#c9a84c',
+            borderDash: [5, 5],
+            tension: 0.4,
+            pointRadius: 0
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { 
+            position: 'top',
+            labels: { usePointStyle: true, font: { family: 'Inter', weight: 600 } }
+          },
+          tooltip: {
+            backgroundColor: '#0f172a',
+            padding: 12,
+            titleFont: { size: 14, weight: 'bold' },
+            bodyFont: { size: 13 },
+            displayColors: false
+          }
+        },
+        scales: {
+          y: { 
+            grid: { color: '#f1f5f9' },
+            ticks: { font: { family: 'Inter' }, callback: (value) => '$' + value }
+          },
+          x: { grid: { display: false }, ticks: { font: { family: 'Inter' } } }
         }
-      });
-      this.charts.push(chart);
-    }
+      }
+    });
+    this.charts[0] = chart;
+  }
+
+  updatePieChart(): void {
+    const ctx = this.pieChart()?.nativeElement.getContext('2d');
+    if (!ctx) return;
+
+    this.charts[1]?.destroy();
+
+    const chart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: this.regions().map(r => r.region).slice(0, 5),
+        datasets: [{
+          data: this.regions().map(r => r.listingsCount).slice(0, 5),
+          backgroundColor: ['#1e40af', '#c9a84c', '#6366f1', '#10b981', '#f43f5e'],
+          hoverOffset: 20,
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '75%',
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+    this.charts[1] = chart;
+  }
+
+  getRegionColor(index: number): string {
+    const colors = ['#1e40af', '#c9a84c', '#6366f1', '#10b981', '#f43f5e'];
+    return colors[index % colors.length];
   }
 
   formatPrice(price: number | undefined): string {
     if (!price) return '0';
-    return price.toLocaleString('uz-UZ');
+    return price.toLocaleString('en-US'); // Use $ style formatting for analytics
   }
 }
-

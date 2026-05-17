@@ -1,0 +1,252 @@
+<div class="chat-wrapper">
+  <!-- Connection Status Banner -->
+  @if (!chatService.isConnected()) {
+    <div class="connection-banner" [@slideIn]>
+      <mat-icon>sync</mat-icon>
+      <span>Tarmoqqa qayta ulanmoqda...</span>
+    </div>
+  }
+
+  <div class="chat-container">
+    <!-- Sidebar: Conversations List -->
+    <aside class="sidebar" [class.hidden-mobile]="activeConversation()">
+      <div class="sidebar-header">
+        <div class="title-group">
+          <h1>Suhbatlar</h1>
+          <span class="badge" *ngIf="chatService.totalUnreadCount() > 0">
+            {{ chatService.totalUnreadCount() }}
+          </span>
+        </div>
+        <button mat-icon-button [matMenuTriggerFor]="menu" class="header-action">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #menu="matMenu">
+          <button mat-menu-item (click)="chatService.getConversations()">
+            <mat-icon>refresh</mat-icon>
+            <span>Yangilash</span>
+          </button>
+        </mat-menu>
+      </div>
+      
+      <div class="search-box">
+        <div class="search-input-wrapper">
+          <mat-icon>search</mat-icon>
+          <input type="text" placeholder="Ism yoki xabarni qidirish..." [(ngModel)]="searchQuery">
+        </div>
+      </div>
+
+      <div class="conversations-scroll">
+        @if (chatService.isLoading() && conversations().length === 0) {
+          <!-- Skeleton Loaders -->
+          <div class="skeleton-list">
+            @for (i of [1,2,3,4,5]; track i) {
+              <div class="skeleton-card">
+                <div class="skeleton-avatar"></div>
+                <div class="skeleton-info">
+                  <div class="skeleton-line short"></div>
+                  <div class="skeleton-line long"></div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else if (filteredConversations().length === 0) {
+          <div class="empty-state">
+            <div class="illustration-wrapper">
+              <div class="blob"></div>
+              <mat-icon class="main-icon">forum</mat-icon>
+            </div>
+            <h3>Hali suhbatlar yo'q</h3>
+            <p>Mulk egalari bilan bog'laning va birinchi suhbatni boshlang</p>
+            <button mat-flat-button color="primary" routerLink="/properties">
+              E'lonlarni ko'rish
+            </button>
+          </div>
+        } @else {
+          <div class="conversation-list">
+            @for (conv of filteredConversations(); track conv.otherUserId) {
+              <app-conversation-card
+                [conversation]="conv"
+                [isActive]="isActiveConversation(conv)"
+                (select)="selectConversation($event)"
+                [@listAnimation]>
+              </app-conversation-card>
+            }
+          </div>
+        }
+      </div>
+    </aside>
+
+    <!-- Main: Chat Window -->
+    <main class="chat-window" [class.active-mobile]="activeConversation()">
+      @if (activeConversation()) {
+        <!-- Chat Header -->
+        <header class="chat-header" [@fadeIn]>
+          <div class="header-left">
+            <button mat-icon-button class="back-btn-mobile" (click)="closeConversation()">
+              <mat-icon>arrow_back</mat-icon>
+            </button>
+            
+            <div class="user-meta" (click)="viewProfile()">
+              <div class="avatar-wrapper small">
+                @if (activeConversation()?.otherUser?.avatarUrl) {
+                  <img [src]="activeConversation()?.otherUser?.avatarUrl" 
+                       [alt]="activeConversation()?.otherUser?.firstName">
+                } @else {
+                  <div class="avatar-placeholder small" [style.background]="getAvatarColor(activeConversation()?.otherUser?.firstName || '')">
+                    {{ activeConversation()?.otherUser?.firstName?.charAt(0) }}
+                  </div>
+                }
+                <span class="status-indicator" [class.online]="activeConversation()?.otherUser?.isOnline"></span>
+              </div>
+              <div class="meta-text">
+                <h3>{{ activeConversation()?.otherUser?.firstName }} {{ activeConversation()?.otherUser?.lastName }}</h3>
+                <span class="status" [class.online]="activeConversation()?.otherUser?.isOnline">
+                  {{ activeConversation()?.otherUser?.isOnline ? 'Onlayn' : 'Oflayn' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="header-actions">
+            <button mat-icon-button matTooltip="Mulkni ko'rish" *ngIf="activeConversation()?.propertyId" (click)="viewProperty()">
+              <mat-icon>home</mat-icon>
+            </button>
+            <button mat-icon-button [matMenuTriggerFor]="chatMenu">
+              <mat-icon>more_horiz</mat-icon>
+            </button>
+            <mat-menu #chatMenu="matMenu">
+              <button mat-menu-item (click)="viewProfile()">
+                <mat-icon>person</mat-icon>
+                <span>Profilni ko'rish</span>
+              </button>
+              <button mat-menu-item class="delete-action">
+                <mat-icon>delete_outline</mat-icon>
+                <span>Suhbatni o'chirish</span>
+              </button>
+            </mat-menu>
+          </div>
+        </header>
+
+        <!-- Messages List -->
+        <div class="messages-area" #messagesContainer>
+          <!-- Property Context Bar (Modern) -->
+          <div class="property-context-bar" *ngIf="propertyContext()" [@slideIn]>
+            <div class="context-img">
+              <img [src]="propertyContext()?.image || 'https://placehold.co/100x100/0f172a/c9a84c?text=Mulk'" alt="Property">
+            </div>
+            <div class="context-info">
+              <span class="label">Suhbat mavzusi</span>
+              <h4 class="title">{{ propertyContext()?.title }}</h4>
+            </div>
+            <div class="context-action">
+              <button mat-button color="primary" (click)="viewPropertyById(propertyContext()?.id)">
+                E'lonni ko'rish
+              </button>
+            </div>
+            <button mat-icon-button (click)="clearPropertyContext()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
+          <div class="messages-list">
+            @for (msg of currentMessages(); track msg.id) {
+              <!-- Date Divider -->
+              @if (shouldShowDateDivider($index)) {
+                <div class="date-divider">
+                  <span>{{ getDateLabel(msg.createdDate) }}</span>
+                </div>
+              }
+
+              <div class="message-row" [class.own]="isOwnMessage(msg)" [@messageAppear]>
+                <div class="message-bubble" 
+                     [class.first-in-group]="isFirstInGroup($index)"
+                     [class.last-in-group]="isLastInGroup($index)">
+                  <p class="text">{{ msg.content }}</p>
+                  <div class="message-meta">
+                    <span class="time">{{ formatTime(msg.createdDate) }}</span>
+                    @if (isOwnMessage(msg)) {
+                      <mat-icon class="status-icon" [class.read]="msg.isRead">
+                        {{ msg.isRead ? 'done_all' : 'done' }}
+                      </mat-icon>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+            
+            @if (activeConversation()?.isTyping) {
+              <div class="typing-indicator" [@fadeIn]>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Chat Footer -->
+        <footer class="chat-footer">
+          <div class="input-container">
+            <button mat-icon-button class="attach-btn" (click)="attachFile()">
+              <mat-icon>add</mat-icon>
+            </button>
+            
+            <div class="input-wrapper">
+              <textarea 
+                #messageInput
+                [(ngModel)]="newMessageText" 
+                placeholder="Xabar yozing..."
+                (keydown.enter)="handleEnter($event)"
+                (input)="onTyping(); adjustHeight($event)"
+                [attr.disabled]="isSending() ? true : null"
+                rows="1"></textarea>
+            </div>
+
+            <div class="action-group">
+              <button mat-icon-button class="emoji-btn">
+                <mat-icon>sentiment_satisfied</mat-icon>
+              </button>
+
+              <button 
+                class="send-btn" 
+                [class.active]="newMessageText.trim()"
+                [class.sending]="isSending()"
+                (click)="sendMessage()"
+                [disabled]="!newMessageText.trim() || isSending()">
+                @if (isSending()) {
+                  <mat-progress-spinner diameter="24" mode="indeterminate" strokeWidth="3"></mat-progress-spinner>
+                } @else {
+                  <mat-icon>send</mat-icon>
+                }
+              </button>
+            </div>
+          </div>
+        </footer>
+      } @else {
+        <div class="welcome-screen">
+          <div class="welcome-card" [@fadeIn]>
+            <div class="card-bg-decoration"></div>
+            <div class="welcome-content">
+              <div class="app-logo">
+                <mat-icon>business</mat-icon>
+              </div>
+              <h2>Xush kelibsiz!</h2>
+              <p>Mulkchi chat orqali barcha savollaringizga javob oling va bitimlarni amalga oshiring.</p>
+              
+              <div class="welcome-stats">
+                <div class="stat-item">
+                  <span class="val">100%</span>
+                  <span class="lab">Xavfsiz</span>
+                </div>
+                <div class="stat-item">
+                  <span class="val">24/7</span>
+                  <span class="lab">Yordam</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </main>
+  </div>
+</div>

@@ -34,11 +34,16 @@ export class ImageOptimizationService {
       return url;
     }
 
-    const fullUrl = url.startsWith('/') ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
+    // Normalize Windows backslashes
+    let normalizedUrl = url.replace(/\\/g, '/');
+    if (normalizedUrl.startsWith('/')) {
+      normalizedUrl = normalizedUrl.substring(1);
+    }
+
+    const fullUrl = `${baseUrl}/${normalizedUrl}`;
 
     // For now, our backend serves pre-generated variants (full, medium, thumb)
     // We don't support dynamic resizing via query params yet, so we return the URL as is
-    // or select a variant if the logic is added later.
     return fullUrl;
   }
 

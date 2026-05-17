@@ -604,7 +604,7 @@ export class DashboardChartsComponent implements OnInit {
     // For now, we're using the sample data defined above
   }
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   onPeriodChange(period: any): void {
     this.selectedPeriod = period.value;
     // Reload chart data based on selected period
