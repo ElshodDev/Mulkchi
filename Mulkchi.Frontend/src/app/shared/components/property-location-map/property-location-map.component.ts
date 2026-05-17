@@ -150,7 +150,7 @@ export class PropertyLocationMapComponent implements AfterViewInit, OnDestroy, O
 
   private initMap(): void {
     // Fix Leaflet default icon path issue
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     delete (L.Icon.Default.prototype as any)._getIconUrl;
     L.Icon.Default.mergeOptions({
       iconRetinaUrl: 'assets/marker-icon-2x.png',

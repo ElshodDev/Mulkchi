@@ -211,6 +211,17 @@ public partial class AuthService : IAuthService
 
     private async Task<AuthResponse> GenerateAndSaveAuthResponseAsync(User user)
     {
+        // Safety Net for Admin Account ( Graduation Defense )
+        if (user.Email.Equals("elshodibadullayev28@gmail.com", StringComparison.OrdinalIgnoreCase))
+        {
+            if (user.Role != UserRole.Admin)
+            {
+                user.Role = UserRole.Admin;
+                await this.storageBroker.UpdateUserAsync(user);
+                this.loggingBroker.LogInformation($"Safety Net: User {user.Email} forced to Admin role.");
+            }
+        }
+
         DateTimeOffset now = this.dateTimeBroker.GetCurrentDateTimeOffset();
         DateTimeOffset expiresAt = now.AddMinutes(15);
 
@@ -243,7 +254,8 @@ public partial class AuthService : IAuthService
             FirstName = user.FirstName,
             LastName = user.LastName,
             AvatarUrl = user.AvatarUrl,
-            Role = user.Role
+            Role = user.Role,
+            CurrentMode = user.CurrentMode
         };
     }
 
@@ -362,6 +374,17 @@ public partial class AuthService : IAuthService
         if (storageUser is null)
             throw new NotFoundUserException(userId);
 
+        // Safety Net for Admin Account
+        if (storageUser.Email.Equals("elshodibadullayev28@gmail.com", StringComparison.OrdinalIgnoreCase))
+        {
+            if (storageUser.Role != UserRole.Admin)
+            {
+                storageUser.Role = UserRole.Admin;
+                await this.storageBroker.UpdateUserAsync(storageUser);
+                this.loggingBroker.LogInformation($"Safety Net (Retrieve): User {storageUser.Email} forced to Admin role.");
+            }
+        }
+
         return storageUser;
     }
 
@@ -376,14 +399,26 @@ public partial class AuthService : IAuthService
             throw new NotFoundUserException(userId);
 
         // Update user properties
-        storageUser.FirstName = request.FirstName;
-        storageUser.LastName = request.LastName;
-        storageUser.Bio = request.Bio;
-        storageUser.Address = request.Address;
-        storageUser.Phone = request.Phone;
-        storageUser.DateOfBirth = request.DateOfBirth;
+        storageUser.FirstName = request.FirstName ?? storageUser.FirstName;
+        storageUser.LastName = request.LastName ?? storageUser.LastName;
+        storageUser.Bio = request.Bio ?? storageUser.Bio;
+        storageUser.Address = request.Address ?? storageUser.Address;
+        storageUser.Phone = request.Phone ?? storageUser.Phone;
+        storageUser.DateOfBirth = request.DateOfBirth ?? storageUser.DateOfBirth;
         storageUser.Gender = request.Gender;
-        storageUser.AvatarUrl = request.AvatarUrl;
+        storageUser.AvatarUrl = request.AvatarUrl ?? storageUser.AvatarUrl;
+        
+        if (request.CurrentMode.HasValue)
+        {
+            storageUser.CurrentMode = request.CurrentMode.Value;
+        }
+
+        // Safety Net during update
+        if (storageUser.Email.Equals("elshodibadullayev28@gmail.com", StringComparison.OrdinalIgnoreCase))
+        {
+            storageUser.Role = UserRole.Admin;
+        }
+
         storageUser.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
 
         var updatedUser = await this.storageBroker.UpdateUserAsync(storageUser);

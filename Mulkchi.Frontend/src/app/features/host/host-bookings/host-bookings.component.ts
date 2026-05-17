@@ -208,266 +208,172 @@ import { Booking, BookingStatus } from '../../../core/models';
   `,
   styles: [`
     .host-bookings-container {
-      min-height: calc(100vh - 64px);
-      background: #f5f5f5;
-      padding: 40px 0;
+      min-height: calc(100vh - 80px);
+      background: #f8fafc;
+      padding: 60px 0;
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1240px;
       margin: 0 auto;
-      padding: 0 20px;
+      padding: 0 24px;
     }
 
     .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 32px;
+      margin-bottom: 48px;
     }
 
     .header-content h1 {
-      font-size: 2rem;
-      font-weight: 600;
-      margin-bottom: 8px;
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: #0f172a;
+      margin-bottom: 12px;
+      letter-spacing: -1px;
     }
 
     .header-content p {
-      color: #666;
+      color: #64748b;
+      font-size: 1.1rem;
     }
 
     .stats-cards {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 24px;
-      margin-bottom: 32px;
+      margin-bottom: 48px;
     }
 
     .stat-card {
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      padding: 24px;
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 24px;
+      gap: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+      transition: transform 0.3s ease;
     }
 
+    .stat-card:hover { transform: translateY(-5px); }
+
     .stat-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      border-radius: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.05);
     }
 
-    .pending .stat-icon {
-      background: #fff3e0;
-      color: #f57c00;
-    }
+    .pending .stat-icon { background: #fff7ed; color: #ea580c; }
+    .confirmed .stat-icon { background: #f0fdf4; color: #16a34a; }
+    .completed .stat-icon { background: #f0f9ff; color: #0284c7; }
+    .revenue .stat-icon { background: #fdf2f8; color: #db2777; }
 
-    .confirmed .stat-icon {
-      background: #e8f5e9;
-      color: #388e3c;
-    }
+    .stat-icon mat-icon { font-size: 28px; width: 28px; height: 28px; }
 
-    .completed .stat-icon {
-      background: #e3f2fd;
-      color: #1976d2;
-    }
-
-    .revenue .stat-icon {
-      background: #f3e5f5;
-      color: #7b1fa2;
-    }
-
-    .stat-icon mat-icon {
-      font-size: 24px;
-    }
-
-    .stat-info {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .stat-info .value {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #333;
-    }
-
-    .stat-info .label {
-      font-size: 0.85rem;
-      color: #666;
-    }
+    .stat-info { display: flex; flex-direction: column; gap: 2px; }
+    .stat-info .value { font-size: 1.75rem; font-weight: 900; color: #0f172a; }
+    .stat-info .label { font-size: 0.9rem; font-weight: 600; color: #64748b; }
 
     .loading-container,
     .empty-container {
       text-align: center;
-      padding: 60px;
+      padding: 100px 40px;
+      background: white;
+      border-radius: 32px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.03);
     }
 
     .empty-container mat-icon {
-      font-size: 64px;
-      width: 64px;
-      height: 64px;
-      color: #ccc;
-      margin-bottom: 16px;
+      font-size: 80px;
+      width: 80px;
+      height: 80px;
+      color: #cbd5e1;
+      margin-bottom: 24px;
     }
+
+    .empty-container h3 { font-size: 1.5rem; font-weight: 800; color: #1e293b; margin-bottom: 12px; }
 
     .table-card {
-      overflow: auto;
+      border-radius: 32px;
+      padding: 32px;
+      border: 1px solid #f1f5f9;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.04);
+      background: white;
     }
 
-    table {
-      width: 100%;
+    table { width: 100%; }
+    
+    th.mat-mdc-header-cell {
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      padding-bottom: 20px !important;
     }
 
-    .guest-cell {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    td.mat-mdc-cell { padding: 24px 0 !important; }
+
+    .guest-cell { display: flex; align-items: center; gap: 16px; }
 
     .guest-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: #e0e0e0;
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      background: #f1f5f9;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
+      border: 2px solid white;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
 
-    .guest-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+    .guest-info .name { font-size: 1rem; font-weight: 700; color: #1e293b; display: block; }
+    .guest-info .phone { font-size: 0.85rem; color: #64748b; }
 
-    .guest-avatar mat-icon {
-      font-size: 24px;
-      color: #999;
-    }
+    .property-cell .title { font-weight: 700; color: #1e293b; display: block; margin-bottom: 4px; }
+    .property-cell .location { font-size: 0.85rem; color: #94a3b8; }
 
-    .guest-info {
-      display: flex;
-      flex-direction: column;
-    }
+    .dates-cell { display: flex; flex-direction: column; gap: 6px; }
+    .dates-cell span { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; font-weight: 600; }
+    .check-in { color: #16a34a; }
+    .check-out { color: #dc2626; }
+    .dates-cell mat-icon { font-size: 16px; width: 16px; height: 16px; }
 
-    .guest-info .name {
-      font-weight: 500;
-      color: #333;
-    }
-
-    .guest-info .phone {
-      font-size: 0.85rem;
-      color: #666;
-    }
-
-    .property-cell {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .property-cell .title {
-      font-weight: 500;
-      color: #333;
-    }
-
-    .property-cell .location {
-      font-size: 0.85rem;
-      color: #666;
-    }
-
-    .dates-cell {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .dates-cell span {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 0.9rem;
-    }
-
-    .dates-cell mat-icon {
-      font-size: 16px;
-    }
-
-    .check-in mat-icon {
-      color: #4caf50;
-    }
-
-    .check-out mat-icon {
-      color: #f44336;
-    }
-
-    .guests-count {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      color: #666;
-    }
-
-    .price {
-      font-weight: 600;
-      color: #667eea;
-    }
+    .price { font-size: 1.1rem; font-weight: 900; color: #4f46e5; }
 
     .status-badge {
-      padding: 4px 12px;
-      border-radius: 16px;
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 99px;
       font-size: 0.75rem;
-      font-weight: 500;
+      font-weight: 800;
+      text-transform: uppercase;
     }
 
-    .status-badge.pending {
-      background: #fff3e0;
-      color: #f57c00;
+    .status-badge.pending { background: #fff7ed; color: #ea580c; }
+    .status-badge.confirmed { background: #f0fdf4; color: #16a34a; }
+    .status-badge.completed { background: #f0f9ff; color: #0284c7; }
+    .status-badge.cancelled { background: #fef2f2; color: #dc2626; }
+
+    .actions-cell { display: flex; gap: 8px; }
+
+    ::ng-deep .mat-mdc-paginator {
+      background: transparent !important;
+      margin-top: 24px;
     }
 
-    .status-badge.confirmed {
-      background: #e8f5e9;
-      color: #388e3c;
-    }
-
-    .status-badge.completed {
-      background: #e3f2fd;
-      color: #1976d2;
-    }
-
-    .status-badge.cancelled {
-      background: #ffebee;
-      color: #c62828;
-    }
-
-    .actions-cell {
-      display: flex;
-      gap: 8px;
-    }
-
-    @media (max-width: 1024px) {
-      .stats-cards {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
+    @media (max-width: 1024px) { .stats-cards { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 768px) {
-      .page-header {
-        flex-direction: column;
-        gap: 16px;
-        align-items: stretch;
-      }
-
-      .stats-cards {
-        grid-template-columns: 1fr;
-      }
-
-      .table-card {
-        overflow-x: auto;
-      }
+      .header-content h1 { font-size: 2rem; }
+      .stats-cards { grid-template-columns: 1fr; }
+      .table-card { padding: 16px; }
     }
   `]
 })

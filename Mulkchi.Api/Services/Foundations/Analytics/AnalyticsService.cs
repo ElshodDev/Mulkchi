@@ -518,7 +518,13 @@ public class AnalyticsService : IAnalyticsService
                 featureAdjustment += districtAvgPrice * 0.05m;
         }
 
-        var estimatedMarketPrice = districtAvgPrice + featureAdjustment;
+        // Calculate market volatility (simulated for BMI demonstration)
+        var volatilityFactor = 0.05; // 5% base volatility
+        var marketSentiment = 1.02; // 2% growth trend
+        
+        // Incorporate volatility into the final price estimation
+        var priceMultiplier = marketSentiment + (volatilityFactor * 0.5); // Add half-volatility as a buffer
+        var estimatedMarketPrice = (districtAvgPrice + featureAdjustment) * (decimal)priceMultiplier;
         var priceDifference = currentPrice - estimatedMarketPrice;
         var priceDifferencePercent = estimatedMarketPrice > 0 
             ? (double)(priceDifference / estimatedMarketPrice) * 100 
@@ -599,22 +605,30 @@ public class AnalyticsService : IAnalyticsService
 
     private double CalculateInvestmentPotential(dynamic property, List<decimal> districtPrices, int comparableCount)
     {
-        var score = 50.0;
+        var score = 40.0; // Base score
 
-        // Location popularity
-        if (property.ViewsCount > 50) score += 10;
-        if (property.ViewsCount > 100) score += 10;
+        // Location popularity & Engagement Velocity
+        var daysListed = Math.Max(1, (DateTimeOffset.UtcNow - property.CreatedDate).TotalDays);
+        var viewsPerDay = property.ViewsCount / daysListed;
+        
+        if (viewsPerDay > 5) score += 15;
+        if (viewsPerDay > 10) score += 10;
 
-        // Features
-        if (property.HasWifi) score += 5;
-        if (property.HasParking) score += 5;
-        if (property.HasAirConditioning) score += 5;
+        // Features Premium
+        if (property.HasWifi) score += 3;
+        if (property.HasParking) score += 4;
+        if (property.HasAirConditioning) score += 3;
+        if (property.HasFurniture) score += 5;
 
-        // Rating
-        score += (double)(property.AverageRating - 3.0m) * 10;
+        // Quality index
+        score += (double)(property.AverageRating - 2.5m) * 12;
 
-        // Data quality
-        if (comparableCount >= 10) score += 10;
+        // Market Scarcity
+        if (comparableCount < 10) score += 10;
+        if (comparableCount < 5) score += 5;
+
+        // Sentiment adjustment
+        if (property.ViewsCount > 200) score += 5;
 
         return Math.Max(0, Math.Min(100, score));
     }

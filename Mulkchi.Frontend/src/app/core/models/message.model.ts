@@ -2,26 +2,20 @@ export interface Message {
   id: string;
   senderId: string;
   receiverId: string;
+  propertyId?: string;
   content: string;
   createdDate: Date;
   isRead: boolean;
   readDate?: Date;
-  sender?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    avatarUrl?: string;
-  };
-  receiver?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    avatarUrl?: string;
-  };
+  senderName?: string;
+  senderAvatar?: string;
 }
 
 export interface Conversation {
   otherUserId: string;
+  propertyId?: string;
+  propertyTitle?: string;
+  propertyImage?: string;
   otherUser: {
     id: string;
     firstName: string;
@@ -33,5 +27,4 @@ export interface Conversation {
   lastMessageDate: Date;
   unreadCount: number;
   isTyping?: boolean;
-  propertyId?: string;
 }

@@ -27,12 +27,12 @@ export class PropertyService {
   private readonly _totalCount = signal<number>(0);
   private readonly _loading = signal<boolean>(false);
 
-  // Public readonly signals
-  readonly properties = () => this._properties();
-  readonly featuredProperties = () => this._featuredProperties();
-  readonly currentProperty = () => this._currentProperty();
-  readonly totalCount = () => this._totalCount();
-  readonly loading = () => this._loading();
+  // Public readonly signals for consumer access
+  readonly properties = this._properties.asReadonly();
+  readonly featuredProperties = this._featuredProperties.asReadonly();
+  readonly currentProperty = this._currentProperty.asReadonly();
+  readonly totalCount = this._totalCount.asReadonly();
+  readonly loading = this._loading.asReadonly();
 
 
   // Get all properties with pagination
@@ -41,59 +41,18 @@ export class PropertyService {
     pageSize = 20,
     params?: Partial<PropertySearchParams>,
   ): Observable<PagedResult<Property>> {
-    this._loading.set(true);
-
-    let httpParams = new HttpParams()
-      .set('page', page.toString())
-      .set('pageSize', pageSize.toString());
-
-    if (params?.location) httpParams = httpParams.set('location', params.location);
-    if (params?.minPrice) httpParams = httpParams.set('minPrice', params.minPrice.toString());
-    if (params?.maxPrice) httpParams = httpParams.set('maxPrice', params.maxPrice.toString());
-    if (params?.bedrooms) httpParams = httpParams.set('bedrooms', params.bedrooms.toString());
-    if (params?.bathrooms) httpParams = httpParams.set('bathrooms', params.bathrooms.toString());
-    if (params?.propertyType) httpParams = httpParams.set('propertyType', params.propertyType);
-    if (params?.listingType) httpParams = httpParams.set('listingType', params.listingType);
-
-    return this.http.get<PagedResult<Property>>(this.apiUrl, { params: httpParams }).pipe(
-      tap((result) => {
-        this._properties.set(result.items);
-        this._totalCount.set(result.totalCount);
-        this._loading.set(false);
-      }),
-      catchError((error) => {
-        this._loading.set(false);
-        return throwError(() => error);
-      }),
-    );
+    const searchParams: PropertySearchParams = {
+      ...params,
+      page,
+      pageSize,
+    };
+    return this.searchProperties(searchParams);
   }
 
   // Search properties
   searchProperties(searchParams: PropertySearchParams): Observable<PagedResult<Property>> {
     this._loading.set(true);
-
-    let params = new HttpParams();
-
-    if (searchParams.location) {
-      params = params
-        .set('location', searchParams.location)
-        .set('city', searchParams.location)
-        .set('searchQuery', searchParams.location);
-    }
-    if (searchParams.minPrice) params = params.set('minPrice', searchParams.minPrice.toString());
-    if (searchParams.maxPrice) params = params.set('maxPrice', searchParams.maxPrice.toString());
-    if (searchParams.bedrooms) params = params.set('bedrooms', searchParams.bedrooms.toString());
-    if (searchParams.bathrooms) params = params.set('bathrooms', searchParams.bathrooms.toString());
-    if (searchParams.propertyType) params = params.set('propertyType', searchParams.propertyType);
-    if (searchParams.listingType) params = params.set('listingType', searchParams.listingType);
-    if (searchParams.amenities?.length)
-      params = params.set('amenities', searchParams.amenities.join(','));
-    if (searchParams.latitude !== undefined && searchParams.latitude !== null)
-      params = params.set('latitude', searchParams.latitude.toString());
-    if (searchParams.longitude !== undefined && searchParams.longitude !== null)
-      params = params.set('longitude', searchParams.longitude.toString());
-    if (searchParams.radiusKm !== undefined && searchParams.radiusKm !== null)
-      params = params.set('radiusKm', searchParams.radiusKm.toString());
+    const params = this.buildHttpParams(searchParams);
 
     return this.http.get<PagedResult<Property>>(`${this.apiUrl}/search`, { params }).pipe(
       tap((result) => {
@@ -103,9 +62,52 @@ export class PropertyService {
       }),
       catchError((error) => {
         this._loading.set(false);
-        return throwError(() => error);
+        return throwError(() => this.handleError(error));
       }),
     );
+  }
+
+  /**
+   * Helper to build HttpParams from search params object
+   */
+  private buildHttpParams(searchParams: PropertySearchParams): HttpParams {
+    let params = new HttpParams();
+
+    const paramMappings: Record<string, string | number | undefined | null> = {
+      location: searchParams.location,
+      city: searchParams.location,
+      searchQuery: searchParams.location,
+      minPrice: searchParams.minPrice,
+      maxPrice: searchParams.maxPrice,
+      bedrooms: searchParams.bedrooms,
+      bathrooms: searchParams.bathrooms,
+      propertyType: searchParams.propertyType,
+      listingType: searchParams.listingType,
+      region: searchParams.region,
+      sortBy: searchParams.sortBy,
+      page: searchParams.page,
+      pageSize: searchParams.pageSize,
+      latitude: searchParams.latitude,
+      longitude: searchParams.longitude,
+      radiusKm: searchParams.radiusKm,
+    };
+
+    Object.entries(paramMappings).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, value.toString());
+      }
+    });
+
+    if (searchParams.amenities?.length) {
+      params = params.set('amenities', searchParams.amenities.join(','));
+    }
+
+    return params;
+  }
+
+  private handleError(error: any): string {
+    console.error('PropertyService Error:', error);
+    return error.error?.message || "Mulk ma'lumotlarini olishda xatolik yuz berdi";
   }
 
   // Get property by ID
@@ -205,6 +207,13 @@ export class PropertyService {
 
     return this.http
       .get<PagedResult<Property>>(`${this.apiUrl}/my/listings`, { params })
+      .pipe(catchError((error) => throwError(() => error)));
+  }
+
+  // Bump property to top (Monetization feature)
+  bumpProperty(id: string): Observable<void> {
+    return this.http
+      .post<void>(`${this.apiUrl}/${id}/bump`, {})
       .pipe(catchError((error) => throwError(() => error)));
   }
 }

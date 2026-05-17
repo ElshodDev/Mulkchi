@@ -232,6 +232,11 @@ export interface PropertySearchParams {
   latitude?: number;
   longitude?: number;
   radiusKm?: number;
+  sortBy?: string;
+  region?: UzbekistanRegion;
+  isFeatured?: boolean;
+  isVerified?: boolean;
+  search?: string;
 }
 
 import { ApiAuthResponse } from './api.models';

@@ -57,6 +57,14 @@ export const routes: Routes = [
         title: 'Bozor',
         data: { preload: true, preloadPriority: 1 },
       },
+      {
+        path: 'subscriptions',
+        loadComponent: () =>
+          import('./features/subscriptions/subscriptions.component').then(
+            (module) => module.SubscriptionsComponent,
+          ),
+        title: 'Obunalar',
+      },
       // Legacy routes - redirect to new ones
       {
         path: 'ai-recommendations',
@@ -66,19 +74,12 @@ export const routes: Routes = [
           ),
         title: 'Shaxsiy Tavsiyalar',
       },
-      {
-        path: 'market-analytics',
-        redirectTo: 'market',
-      },
-      {
-        path: 'smart-analytics',
-        redirectTo: 'market',
-      },
+
       {
         path: 'compare',
         loadComponent: () =>
-          import('./features/properties/property-compare/property-compare.component').then(
-            (module) => module.PropertyCompareComponent,
+          import('./features/properties/comparison/comparison.component').then(
+            (module) => module.ComparisonComponent,
           ),
         title: 'Taqqoslash',
       },

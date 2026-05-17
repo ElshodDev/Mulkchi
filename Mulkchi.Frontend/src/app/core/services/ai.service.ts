@@ -170,7 +170,7 @@ export class AIService {
   }
 
   private mapHybridToProperty(hybrid: HybridRecommendationProperty): Property {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
+     
     return {
       id: hybrid.id,
       title: hybrid.title || 'Mulk',
@@ -241,7 +241,7 @@ export class AIService {
       isChildFriendly: false,
       isAccessible: false
     } as Property;
-    /* eslint-enable @typescript-eslint/no-explicit-any */
+     
   }
 
   getSimilarProperties(propertyId: string, count = 5): Observable<Property[]> {

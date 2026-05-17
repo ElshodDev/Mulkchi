@@ -168,51 +168,74 @@ export class ChatService {
   private handleIncomingMessage(message: Message): void {
     // If we're in the active conversation, add the message
     const activeConv = this._activeConversation();
-    if (
-      activeConv &&
-      (message.senderId === activeConv.otherUserId || message.receiverId === activeConv.otherUserId)
-    ) {
+    const isCurrentThread = activeConv &&
+      (message.senderId === activeConv.otherUserId || message.receiverId === activeConv.otherUserId) &&
+      message.propertyId === activeConv.propertyId;
+
+    if (isCurrentThread) {
       this._currentMessages.update((msgs) => [...msgs, message]);
     }
 
     // Update conversations list
     this.updateConversationWithMessage(message);
 
-    // Show notification if not from current user
-    if (message.senderId !== this.getCurrentUserId()) {
+    // Show notification only if not from current user AND not in the current active thread
+    if (message.senderId !== this.getCurrentUserId() && !isCurrentThread) {
       this._unreadCount.update((count) => count + 1);
       this.showNotification(message);
     }
   }
 
   private updateConversationWithMessage(message: Message): void {
-    this._conversations.update((convs) => {
-      const senderId = message.senderId;
-      const receiverId = message.receiverId;
-      const otherUserId = senderId === this.getCurrentUserId() ? receiverId : senderId;
+    const senderId = message.senderId;
+    const receiverId = message.receiverId;
+    const otherUserId = senderId === this.getCurrentUserId() ? receiverId : senderId;
+    const propertyId = message.propertyId;
 
-      const existingIndex = convs.findIndex((c) => c.otherUserId === otherUserId);
+    const existingIndex = this._conversations().findIndex(
+      (c) => c.otherUserId === otherUserId && c.propertyId === propertyId
+    );
 
-      if (existingIndex >= 0) {
-        // Update existing conversation
+    if (existingIndex >= 0) {
+      this._conversations.update((convs) => {
         const updated = [...convs];
+        const isMine = senderId === this.getCurrentUserId();
+        
         updated[existingIndex] = {
           ...updated[existingIndex],
           lastMessage: message.content,
           lastMessageDate: message.createdDate,
-          unreadCount:
-            senderId === this.getCurrentUserId()
+          unreadCount: isMine
               ? updated[existingIndex].unreadCount
               : (updated[existingIndex].unreadCount || 0) + 1,
         };
         // Move to top
         const [conv] = updated.splice(existingIndex, 1);
         return [conv, ...updated];
-      } else {
-        // Create new conversation (will be properly loaded on next getConversations call)
-        return convs;
-      }
-    });
+      });
+    } else {
+      // New conversation - create a placeholder and also refresh from server
+      const isMine = senderId === this.getCurrentUserId();
+      const newConv: Conversation = {
+        otherUserId: otherUserId,
+        propertyId: propertyId,
+        otherUser: {
+          id: otherUserId,
+          firstName: message.senderName?.split(' ')[0] || 'Foydalanuvchi',
+          lastName: message.senderName?.split(' ').slice(1).join(' ') || '',
+          avatarUrl: message.senderAvatar,
+          isOnline: true
+        },
+        lastMessage: message.content,
+        lastMessageDate: message.createdDate,
+        unreadCount: isMine ? 0 : 1
+      };
+      
+      this._conversations.update(convs => [newConv, ...convs]);
+      
+      // Still fetch to get full details (like property title/image)
+      this.getConversations();
+    }
   }
 
   private showNotification(message: Message): void {
@@ -239,7 +262,7 @@ export class ChatService {
   }
 
   // Send message via SignalR
-  async sendMessage(receiverId: string, content: string): Promise<void> {
+  async sendMessage(receiverId: string, content: string, propertyId?: string): Promise<void> {
     if (!this.hubConnection || !this._isConnected()) {
       await this.tryConnect();
     }
@@ -249,8 +272,10 @@ export class ChatService {
     }
 
     try {
-      await this.hubConnection.invoke('SendMessage', receiverId, content);
-    } catch {
+      // Backend now expects 3 parameters: receiverId, content, propertyId
+      await this.hubConnection.invoke('SendMessage', receiverId, content, propertyId || null);
+    } catch (err) {
+      console.error('[Chat] Error sending message:', err);
       throw new Error('Failed to send message');
     }
   }
@@ -261,13 +286,37 @@ export class ChatService {
 
     this.http.get<Conversation[]>(this.apiUrl).subscribe({
       next: (response) => {
-        // Handle both array and object responses
-        const conversations = Array.isArray(response) ? response : [];
-        this._conversations.set(conversations);
+        const serverConvs = Array.isArray(response) ? response : [];
+        
+        // Merge server data with local data
+        this._conversations.update(localConvs => {
+          const merged = [...localConvs];
+          
+          serverConvs.forEach(serverConv => {
+            const index = merged.findIndex(c => 
+              c.otherUserId === serverConv.otherUserId && c.propertyId === serverConv.propertyId
+            );
+            
+            if (index >= 0) {
+              // Preserve unread count if it's higher locally (real-time message arrived)
+              merged[index] = {
+                ...serverConv,
+                unreadCount: Math.max(merged[index].unreadCount, serverConv.unreadCount)
+              };
+            } else {
+              merged.push(serverConv);
+            }
+          });
+
+          return merged.sort((a, b) => 
+            new Date(b.lastMessageDate).getTime() - new Date(a.lastMessageDate).getTime()
+          );
+        });
+
         this._isLoading.set(false);
 
-        // Calculate total unread
-        const total = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+        // Calculate total unread from the merged list
+        const total = this._conversations().reduce((sum, c) => sum + (c.unreadCount || 0), 0);
         this._unreadCount.set(total);
       },
       error: () => {
@@ -276,17 +325,21 @@ export class ChatService {
     });
   }
 
-  // Get messages with specific user
-  getMessages(otherUserId: string): void {
+  // Get messages with specific user and property
+  getMessages(otherUserId: string, propertyId?: string): void {
     this._isLoading.set(true);
 
-    this.http.get<Message[]>(`${this.apiUrl}/conversation/${otherUserId}`).subscribe({
+    const url = propertyId 
+      ? `${this.apiUrl}/conversation/${otherUserId}?propertyId=${propertyId}`
+      : `${this.apiUrl}/conversation/${otherUserId}`;
+
+    this.http.get<Message[]>(url).subscribe({
       next: (messages) => {
         this._currentMessages.set(messages);
         this._isLoading.set(false);
 
         // Mark conversation as read
-        this.markAsRead(otherUserId);
+        this.markAsRead(otherUserId, propertyId);
       },
       error: () => {
         this._isLoading.set(false);
@@ -294,13 +347,17 @@ export class ChatService {
     });
   }
 
-  // Mark messages as read
-  markAsRead(otherUserId: string): void {
-    this.http.put(`${this.apiUrl}/conversations/${otherUserId}/read-all`, {}).subscribe({
+  // Mark messages as read for specific thread
+  markAsRead(otherUserId: string, propertyId?: string): void {
+    const url = propertyId
+      ? `${this.apiUrl}/conversations/${otherUserId}/read-all?propertyId=${propertyId}`
+      : `${this.apiUrl}/conversations/${otherUserId}/read-all`;
+
+    this.http.put(url, {}).subscribe({
       next: () => {
-        // Update unread count in conversations
+        // Update unread count in specific conversation
         this._conversations.update((convs) =>
-          convs.map((c) => (c.otherUserId === otherUserId ? { ...c, unreadCount: 0 } : c)),
+          convs.map((c) => (c.otherUserId === otherUserId && c.propertyId === propertyId ? { ...c, unreadCount: 0 } : c)),
         );
 
         // Recalculate total unread
@@ -314,9 +371,20 @@ export class ChatService {
   }
 
   // Set active conversation
-  setActiveConversation(conversation: Conversation): void {
+  setActiveConversation(conversation: Conversation | null): void {
     this._activeConversation.set(conversation);
-    this.getMessages(conversation.otherUserId);
+    if (conversation) {
+      // Ensure it's in the list (unique by user + property)
+      const exists = this._conversations().some(
+        c => c.otherUserId === conversation.otherUserId && c.propertyId === conversation.propertyId
+      );
+      
+      if (!exists) {
+        this._conversations.update(convs => [conversation, ...convs]);
+      }
+      
+      this.getMessages(conversation.otherUserId, conversation.propertyId);
+    }
   }
 
   // Reconnect - called after login

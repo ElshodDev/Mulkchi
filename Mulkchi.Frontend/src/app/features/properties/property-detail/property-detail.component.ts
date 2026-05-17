@@ -82,352 +82,215 @@ import { ImageOptimizationService } from '../../../core/services/image-optimizat
             <span>{{ property()?.title }}</span>
           </div>
 
-          <!-- Property Header (Mobile: Top, Desktop: Sidebar) -->
+          <!-- Property Header (Mobile) -->
           <div class="property-header-mobile">
             <div class="badges">
-              <span *ngIf="property()?.isFeatured" class="badge featured"
-                ><mat-icon>star</mat-icon> Featured</span
-              >
-              <span *ngIf="property()?.isVerified" class="badge verified"
-                ><mat-icon>verified</mat-icon> Tasdiqlangan</span
-              >
-              <span *ngIf="property()?.isInstantBook" class="badge instant"
-                ><mat-icon>bolt</mat-icon> Tez bron</span
-              >
+              <span *ngIf="property()?.isFeatured" class="badge featured"><mat-icon>star</mat-icon> Featured</span>
+              <span *ngIf="property()?.isVerified" class="badge verified"><mat-icon>verified</mat-icon> Tasdiqlangan</span>
+              <span *ngIf="property()?.isInstantBook" class="badge instant"><mat-icon>bolt</mat-icon> Tez bron</span>
             </div>
             <h1 class="property-title">{{ property()?.title }}</h1>
             <div class="location-row">
               <div class="location">
                 <mat-icon>location_on</mat-icon>
-                <span
-                  >{{ property()?.address }}, {{ property()?.district }}, {{ property()?.city }}</span
-                >
-              </div>
-              <button mat-stroked-button class="btn-pdf" (click)="exportToPDF()">
-                <mat-icon>picture_as_pdf</mat-icon>
-                <span>PDF Hisobot</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Image Gallery -->
-          <div class="gallery-section">
-            <div class="main-image">
-              <ng-container *ngIf="currentImage(); else noImage">
-                <img [src]="currentImage()" [alt]="property()?.title" />
-              </ng-container>
-              <ng-template #noImage>
-                <div class="no-image">
-                  <mat-icon>image_not_supported</mat-icon>
-                  <p>Rasm mavjud emas</p>
-                </div>
-              </ng-template>
-
-              <ng-container *ngIf="property()?.images && property()!.images!.length > 1">
-                <button class="nav-btn prev" (click)="prevImage()">
-                  <mat-icon>chevron_left</mat-icon>
-                </button>
-                <button class="nav-btn next" (click)="nextImage()">
-                  <mat-icon>chevron_right</mat-icon>
-                </button>
-                <div class="image-counter">
-                  {{ currentImageIndex() + 1 }} / {{ property()!.images!.length }}
-                </div>
-              </ng-container>
-            </div>
-
-            <div
-              *ngIf="property()?.images && property()!.images!.length > 1"
-              class="thumbnail-list"
-            >
-              <div
-                *ngFor="let image of property()!.images; let i = index"
-                class="thumbnail"
-                [class.active]="i === currentImageIndex()"
-                (click)="selectImage(i)"
-              >
-                <img [src]="getThumbnailUrl(image)" [alt]="image.caption || ''" />
+                <span>{{ property()?.address }}, {{ property()?.district }}, {{ property()?.city }}</span>
               </div>
             </div>
           </div>
 
-          <!-- Property Info -->
-          <div class="info-section">
-            <!-- Desktop Header -->
-            <div class="property-header-desktop">
-              <div class="badges">
-                <span *ngIf="property()?.isFeatured" class="badge featured"
-                  ><mat-icon>star</mat-icon> Featured</span
-                >
-                <span *ngIf="property()?.isVerified" class="badge verified"
-                  ><mat-icon>verified</mat-icon> Tasdiqlangan</span
-                >
-                <span *ngIf="property()?.isInstantBook" class="badge instant"
-                  ><mat-icon>bolt</mat-icon> Tez bron</span
-                >
-              </div>
+          <!-- Main Grid -->
+          <div class="main-details-grid">
+            <!-- Left Column -->
+            <div class="left-column">
+              <!-- Image Gallery -->
+              <div class="gallery-section-modern">
+                <div class="main-stage">
+                  <ng-container *ngIf="currentImage(); else noImage">
+                    <img [src]="currentImage()" [alt]="property()?.title" class="stage-img" />
+                    <div class="img-overlay"></div>
+                  </ng-container>
+                  <ng-template #noImage>
+                    <div class="no-image-placeholder">
+                      <mat-icon>landscape</mat-icon>
+                      <p>Suratlar mavjud emas</p>
+                    </div>
+                  </ng-template>
 
-              <h1 class="property-title">{{ property()?.title }}</h1>
-
-              <div class="location-row">
-                <div class="location">
-                  <mat-icon>location_on</mat-icon>
-                  <span
-                    >{{ property()?.address }}, {{ property()?.district }},
-                    {{ property()?.city }}</span
-                  >
-                </div>
-                <button mat-stroked-button class="btn-pdf" (click)="exportToPDF()">
-                  <mat-icon>picture_as_pdf</mat-icon>
-                  <span>PDF Hisobot</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Price Card -->
-            <div class="price-card">
-              <div class="price-display">
-                <span
-                  *ngIf="property()?.listingType === ListingType.Sale && property()?.salePrice"
-                  class="price-amount"
-                  >{{ property()?.salePrice | number }} {{ property()?.currency }}</span
-                >
-                <span
-                  *ngIf="property()?.listingType === ListingType.Sale && property()?.salePrice"
-                  class="price-type sale"
-                  >Sotuv</span
-                >
-
-                <span
-                  *ngIf="property()?.listingType === ListingType.Rent && property()?.monthlyRent"
-                  class="price-amount"
-                  >{{ property()?.monthlyRent | number }} {{ property()?.currency }}</span
-                >
-                <span
-                  *ngIf="property()?.listingType === ListingType.Rent && property()?.monthlyRent"
-                  class="price-period"
-                  >/oy</span
-                >
-
-                <span
-                  *ngIf="
-                    property()?.listingType === ListingType.ShortTermRent &&
-                    property()?.pricePerNight
-                  "
-                  class="price-amount"
-                  >{{ property()?.pricePerNight | number }} {{ property()?.currency }}</span
-                >
-                <span
-                  *ngIf="
-                    property()?.listingType === ListingType.ShortTermRent &&
-                    property()?.pricePerNight
-                  "
-                  class="price-period"
-                  >/tun</span
-                >
-              </div>
-              <div *ngIf="property()?.averageRating" class="rating-display">
-                <mat-icon>star</mat-icon>
-                <span class="rating-value">{{ property()?.averageRating | number: '1.1-1' }}</span>
-                <span class="rating-count">({{ property()?.viewsCount }} ko'rish)</span>
-              </div>
-            </div>
-
-            <mat-divider></mat-divider>
-
-            <!-- Quick Stats -->
-            <div class="quick-stats">
-              <div class="stat-item">
-                <div class="stat-icon">
-                  <mat-icon>bed</mat-icon>
-                </div>
-                <div class="stat-info">
-                  <span class="stat-value">{{ property()?.numberOfBedrooms }}</span>
-                  <span class="stat-label">Xona</span>
-                </div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-icon">
-                  <mat-icon>bathtub</mat-icon>
-                </div>
-                <div class="stat-info">
-                  <span class="stat-value">{{ property()?.numberOfBathrooms }}</span>
-                  <span class="stat-label">Hammom</span>
-                </div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-icon">
-                  <mat-icon>square_foot</mat-icon>
-                </div>
-                <div class="stat-info">
-                  <span class="stat-value">{{ property()?.area }}</span>
-                  <span class="stat-label">m²</span>
-                </div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-icon">
-                  <mat-icon>people</mat-icon>
-                </div>
-                <div class="stat-info">
-                  <span class="stat-value">{{ property()?.maxGuests }}</span>
-                  <span class="stat-label">Mehmon</span>
-                </div>
-              </div>
-            </div>
-
-            <mat-divider></mat-divider>
-
-            <!-- Description -->
-            <div class="description-section">
-              <h2 class="section-title">
-                <mat-icon>description</mat-icon>
-                Tavsif
-              </h2>
-              <p class="description-text">{{ property()?.description || 'Tavsif mavjud emas' }}</p>
-            </div>
-
-            <!-- Amenities -->
-            <div class="amenities-section">
-              <h2 class="section-title">
-                <mat-icon>checklist</mat-icon>
-                Qulayliklar
-              </h2>
-              <div class="amenities-grid">
-                <div
-                  *ngFor="let amenity of amenitiesList()"
-                  class="amenity-item"
-                  [class.available]="amenity.available"
-                >
-                  <div class="amenity-icon">
-                    <mat-icon>{{ amenity.available ? 'check_circle' : 'cancel' }}</mat-icon>
-                  </div>
-                  <span class="amenity-label">{{ amenity.label }}</span>
-                </div>
-              </div>
-            </div>
-
-            <mat-divider></mat-divider>
-
-            <!-- Location Info -->
-            <div class="location-section">
-              <h2 class="section-title">
-                <mat-icon>place</mat-icon>
-                Joylashuv
-              </h2>
-              <div class="location-grid">
-                <div class="location-item">
-                  <span class="location-label">Viloyat</span>
-                  <span class="location-value">{{ property()?.region }}</span>
-                </div>
-                <div class="location-item">
-                  <span class="location-label">Shahar</span>
-                  <span class="location-value">{{ property()?.city }}</span>
-                </div>
-                <div class="location-item">
-                  <span class="location-label">Tuman</span>
-                  <span class="location-value">{{ property()?.district }}</span>
-                </div>
-                <div class="location-item">
-                  <span class="location-label">Mahalla</span>
-                  <span class="location-value">{{ property()?.mahalla }}</span>
-                </div>
-                <div class="location-item full-width">
-                  <span class="location-label">Manzil</span>
-                  <span class="location-value">{{ property()?.address }}</span>
-                </div>
-                <div *ngIf="property()?.distanceToCityCenter" class="location-item">
-                  <span class="location-label">Shahar markazigacha</span>
-                  <span class="location-value">{{ property()?.distanceToCityCenter }} km</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Host Info -->
-            <div class="host-card">
-              <div class="host-header">
-                <mat-icon>account_circle</mat-icon>
-                <h3>Uy egasi haqida</h3>
-              </div>
-              <div class="host-content">
-                <div class="host-avatar">
-                  <img *ngIf="property()?.hostAvatarUrl" [src]="property()?.hostAvatarUrl" [alt]="property()?.hostName">
-                  <div *ngIf="!property()?.hostAvatarUrl" class="avatar-placeholder">
-                    <mat-icon>person</mat-icon>
+                  <div class="gallery-controls" *ngIf="property()?.images && property()!.images!.length > 1">
+                    <button class="nav-arrow prev" (click)="prevImage()"><mat-icon>west</mat-icon></button>
+                    <button class="nav-arrow next" (click)="nextImage()"><mat-icon>east</mat-icon></button>
+                    <div class="count-pill">{{ currentImageIndex() + 1 }} / {{ property()!.images!.length }}</div>
                   </div>
                 </div>
-                <div class="host-details">
-                  <h4 class="host-name">{{ property()?.hostName || 'Uy egasi' }}</h4>
-                  <div class="host-badge">
-                    <mat-icon>verified</mat-icon>
-                    <span>Tasdiqlangan uy egasi</span>
+
+                <div class="thumbnail-strip" *ngIf="property()?.images && property()!.images!.length > 1">
+                  @for (image of property()!.images; track $index) {
+                    <div 
+                      class="thumb-item" 
+                      [class.active]="$index === currentImageIndex()"
+                      (click)="selectImage($index)">
+                      <img [src]="getThumbnailUrl(image)" [alt]="image.caption || ''" />
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Description -->
+              <div class="description-section">
+                <h2 class="section-title">
+                  <mat-icon>description</mat-icon>
+                  Tavsif
+                </h2>
+                <p class="description-text">{{ property()?.description || 'Tavsif mavjud emas' }}</p>
+              </div>
+
+              <mat-divider></mat-divider>
+
+              <!-- Amenities -->
+              <div class="amenities-section">
+                <h2 class="section-title">
+                  <mat-icon>checklist</mat-icon>
+                  Qulayliklar
+                </h2>
+                <div class="amenities-chips-modern">
+                  <div
+                    *ngFor="let amenity of amenitiesList()"
+                    class="amenity-chip-premium"
+                    [class.available]="amenity.available"
+                  >
+                    <mat-icon>{{ getAmenityIcon(amenity.name) }}</mat-icon>
+                    <span>{{ amenity.label }}</span>
                   </div>
                 </div>
-                <div class="host-actions" style="margin-left: auto;">
-                  <button mat-icon-button color="primary" (click)="contactHost()" matTooltip="Xabar yuborish">
-                    <mat-icon>chat</mat-icon>
-                  </button>
+              </div>
+
+              <mat-divider></mat-divider>
+
+              <!-- Location Info -->
+              <div class="location-section">
+                <h2 class="section-title">
+                  <mat-icon>place</mat-icon>
+                  Joylashuv
+                </h2>
+                <div class="location-grid">
+                  <div class="location-item"><span class="location-label">Viloyat</span><span class="location-value">{{ property()?.region }}</span></div>
+                  <div class="location-item"><span class="location-label">Shahar</span><span class="location-value">{{ property()?.city }}</span></div>
+                  <div class="location-item"><span class="location-label">Tuman</span><span class="location-value">{{ property()?.district }}</span></div>
+                  <div class="location-item"><span class="location-label">Mahalla</span><span class="location-value">{{ property()?.mahalla }}</span></div>
+                  <div class="location-item full-width"><span class="location-label">Manzil</span><span class="location-value">{{ property()?.address }}</span></div>
                 </div>
               </div>
             </div>
 
-            <!-- Actions -->
-            <div class="actions-section">
-              <ng-container *ngIf="isAuthenticated() && !isOwner()">
-                <div class="action-buttons">
-                  <button mat-raised-button class="action-btn primary" (click)="bookNow()">
-                    <mat-icon>calendar_today</mat-icon>
-                    Bron qilish
-                  </button>
-                  <button mat-stroked-button class="action-btn secondary" (click)="contactHost()">
-                    <mat-icon>message</mat-icon>
-                    Uy egasi bilan bog'lanish
-                  </button>
-                  <button
-                    class="favorite-btn"
-                    [class.active]="isFavorite()"
-                    (click)="toggleFavorite()"
-                    [matTooltip]="getFavoriteTooltip()"
-                  >
-                    <mat-icon>{{ isFavorite() ? 'favorite' : 'favorite_border' }}</mat-icon>
-                  </button>
+            <!-- Right Column (Sidebar) -->
+            <div class="info-section">
+              <div class="property-header-desktop">
+                <div class="badges">
+                  <span *ngIf="property()?.isFeatured" class="badge featured"><mat-icon>star</mat-icon> Featured</span>
+                  <span *ngIf="property()?.isVerified" class="badge verified"><mat-icon>verified</mat-icon> Tasdiqlangan</span>
+                  <span *ngIf="property()?.isInstantBook" class="badge instant"><mat-icon>bolt</mat-icon> Tez bron</span>
                 </div>
-              </ng-container>
-              <ng-container *ngIf="isAuthenticated() && isOwner()">
-                <div class="owner-actions">
-                  <button
-                    mat-raised-button
-                    class="edit-btn"
-                    [routerLink]="['/host/properties/edit', property()?.id]"
-                  >
-                    <mat-icon>edit</mat-icon>
-                    Tahrirlash
-                  </button>
-                  <button mat-stroked-button class="delete-btn" (click)="deleteProperty()">
-                    <mat-icon>delete</mat-icon>
-                    O'chirish
-                  </button>
+                <h1 class="property-title">{{ property()?.title }}</h1>
+                <div class="location-row">
+                  <div class="location">
+                    <mat-icon>location_on</mat-icon>
+                    <span>{{ property()?.address }}, {{ property()?.district }}, {{ property()?.city }}</span>
+                  </div>
                 </div>
-              </ng-container>
-              <ng-container *ngIf="!isAuthenticated()">
-                <div class="auth-prompt">
-                  <mat-icon>login</mat-icon>
-                  <p>Bron qilish yoki aloqa uchun tizimga kiring</p>
-                  <button mat-raised-button routerLink="/auth/login" class="login-btn">
-                    Kirish
-                  </button>
-                </div>
-              </ng-container>
-            </div>
+              </div>
 
-            <!-- Booking Panel -->
-            <app-booking-panel
-              *ngIf="
-                isAuthenticated() &&
-                !isOwner() &&
-                property()?.listingType === ListingType.ShortTermRent
-              "
-              [property]="property()!"
-            ></app-booking-panel>
+              <!-- Price Card -->
+              <div class="price-card">
+                <div class="price-display">
+                  <span *ngIf="property()?.listingType === ListingType.Sale && property()?.salePrice" class="price-amount">{{ property()?.salePrice | number }} {{ property()?.currency }}</span>
+                  <span *ngIf="property()?.listingType === ListingType.Sale && property()?.salePrice" class="price-type sale">Sotuv</span>
+                  <span *ngIf="property()?.listingType === ListingType.Rent && property()?.monthlyRent" class="price-amount">{{ property()?.monthlyRent | number }} {{ property()?.currency }}</span>
+                  <span *ngIf="property()?.listingType === ListingType.Rent && property()?.monthlyRent" class="price-period">/oy</span>
+                  <span *ngIf="property()?.listingType === ListingType.ShortTermRent && property()?.pricePerNight" class="price-amount">{{ property()?.pricePerNight | number }} {{ property()?.currency }}</span>
+                  <span *ngIf="property()?.listingType === ListingType.ShortTermRent && property()?.pricePerNight" class="price-period">/tun</span>
+                </div>
+                <div *ngIf="property()?.averageRating" class="rating-display">
+                  <mat-icon>star</mat-icon>
+                  <span class="rating-value">{{ property()?.averageRating | number: '1.1-1' }}</span>
+                  <span class="rating-count">({{ property()?.viewsCount }} ko'rish)</span>
+                </div>
+              </div>
+
+              <mat-divider></mat-divider>
+
+              <!-- Quick Stats -->
+              <div class="quick-stats">
+                <div class="stat-item"><div class="stat-icon"><mat-icon>bed</mat-icon></div><div class="stat-info"><span class="stat-value">{{ property()?.numberOfBedrooms }}</span><span class="stat-label">Xona</span></div></div>
+                <div class="stat-item"><div class="stat-icon"><mat-icon>bathtub</mat-icon></div><div class="stat-info"><span class="stat-value">{{ property()?.numberOfBathrooms }}</span><span class="stat-label">Hammom</span></div></div>
+                <div class="stat-item"><div class="stat-icon"><mat-icon>square_foot</mat-icon></div><div class="stat-info"><span class="stat-value">{{ property()?.area }}</span><span class="stat-label">m²</span></div></div>
+                <div class="stat-item"><div class="stat-icon"><mat-icon>people</mat-icon></div><div class="stat-info"><span class="stat-value">{{ property()?.maxGuests }}</span><span class="stat-label">Mehmon</span></div></div>
+              </div>
+
+              <mat-divider></mat-divider>
+
+              <!-- Host Card -->
+              <div class="host-card">
+                <div class="host-header"><mat-icon>account_circle</mat-icon><h3>Uy egasi haqida</h3></div>
+                <div class="host-content">
+                  <div class="host-avatar">
+                    <img *ngIf="property()?.hostAvatarUrl" [src]="property()?.hostAvatarUrl" [alt]="property()?.hostName">
+                    <div *ngIf="!property()?.hostAvatarUrl" class="avatar-placeholder"><mat-icon>person</mat-icon></div>
+                  </div>
+                  <div class="host-details">
+                    <h4 class="host-name">{{ property()?.hostName || 'Foydalanuvchi' }}</h4>
+                    <div class="host-badge"><mat-icon>verified</mat-icon><span>Tasdiqlangan</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="actions-section">
+                <ng-container *ngIf="isAuthenticated() && !isOwner()">
+                  <div class="action-buttons">
+                    <button mat-raised-button class="action-btn primary" (click)="bookNow()"><mat-icon>calendar_today</mat-icon> Bron qilish</button>
+                    <button mat-stroked-button class="action-btn secondary" (click)="contactHost()"><mat-icon>message</mat-icon> Bog'lanish</button>
+                    <button class="favorite-btn" [class.active]="isFavorite()" (click)="toggleFavorite()"><mat-icon>{{ isFavorite() ? 'favorite' : 'favorite_border' }}</mat-icon></button>
+                  </div>
+                </ng-container>
+                <ng-container *ngIf="isAuthenticated() && isOwner()">
+                  <div class="owner-actions">
+                    <button mat-raised-button class="edit-btn" [routerLink]="['/host/properties/edit', property()?.id]"><mat-icon>edit</mat-icon> Tahrirlash</button>
+                    <button mat-stroked-button class="delete-btn" (click)="deleteProperty()"><mat-icon>delete</mat-icon> O'chirish</button>
+                  </div>
+                </ng-container>
+              </div>
+
+              <!-- Booking Panel -->
+              <app-booking-panel
+                *ngIf="isAuthenticated() && !isOwner() && property()?.listingType === ListingType.ShortTermRent"
+                [property]="property()!"
+              ></app-booking-panel>
+            </div>
+          </div>
+
+          <!-- AI Recommendations Section -->
+          <div class="recommendations-section" *ngIf="similarProperties().length > 0">
+            <h2 class="section-title"><mat-icon>auto_awesome</mat-icon> Sun'iy intellekt tavsiya qiladi</h2>
+            <p class="section-subtitle">Ushbu mulkka o'xshash eng yaxshi takliflar</p>
+            <div class="recommendations-grid">
+              @for (rel of similarProperties(); track rel.id) {
+                <div class="rel-card-premium" [routerLink]="['/properties', rel.id]">
+                  <div class="rel-image-box">
+                    <img [src]="getSimilarPropertyImage(rel)" alt="Similar">
+                    <div class="rel-price-overlay">
+                      {{ rel.salePrice || rel.monthlyRent | number }} UZS
+                    </div>
+                  </div>
+                  <div class="rel-body">
+                    <h4>{{ rel.title }}</h4>
+                    <div class="rel-meta">
+                      <mat-icon>place</mat-icon>
+                      <span>{{ rel.city }}</span>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
           </div>
         </div>
       </ng-template>
@@ -435,7 +298,6 @@ import { ImageOptimizationService } from '../../../core/services/image-optimizat
   `,
   styles: [
     `
-      /* ===== CSS Variables ===== */
       :host {
         --color-navy: #1b3a6b;
         --color-navy-light: #2a4a7c;
@@ -455,866 +317,73 @@ import { ImageOptimizationService } from '../../../core/services/image-optimizat
         --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
       }
 
-      /* ===== Layout ===== */
-      .property-detail-container {
-        min-height: 100vh;
-        background: var(--color-gray-50);
-      }
+      .property-detail-container { min-height: 100vh; background: var(--color-gray-50); }
+      .property-content { max-width: 1280px; margin: 0 auto; padding: 24px; }
+      
+      .breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: var(--color-gray-500); margin-bottom: 24px; }
+      .breadcrumb a { color: var(--color-navy); text-decoration: none; }
+      .breadcrumb a:hover { color: var(--color-gold); }
 
-      .loading-container,
-      .error-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 60vh;
-        gap: 16px;
-      }
+      .main-details-grid { display: grid; grid-template-columns: 1fr 380px; gap: 48px; align-items: start; }
 
-      .error-container mat-icon {
-        font-size: 64px;
-        width: 64px;
-        height: 64px;
-        color: var(--color-navy);
-      }
+      /* --- GALLERY MODERN --- */
+      .gallery-section-modern { margin-bottom: 40px; }
+      .main-stage { position: relative; height: 560px; border-radius: 32px; overflow: hidden; background: #0f172a; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+      .stage-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+      .img-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.4), transparent 40%); }
+      .nav-arrow { width: 56px; height: 56px; background: rgba(255,255,255,0.9); border: none; border-radius: 18px; color: var(--color-navy); cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); transition: all 0.3s; }
+      .nav-arrow:hover { background: white; transform: scale(1.1); color: var(--color-gold); }
+      .gallery-controls { position: absolute; bottom: 24px; left: 24px; right: 24px; display: flex; justify-content: space-between; align-items: center; z-index: 5; }
+      .count-pill { background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); color: white; padding: 8px 16px; border-radius: 12px; font-weight: 700; font-size: 0.85rem; }
 
-      .back-btn {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 12px 24px;
-        background: var(--color-navy);
-        color: var(--color-white);
-        border: none;
-        border-radius: var(--radius);
-        font-size: 1rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
+      .thumbnail-strip { display: flex; gap: 16px; margin-top: 20px; padding: 4px; overflow-x: auto; }
+      .thumb-item { flex-shrink: 0; width: 110px; height: 80px; border-radius: 16px; overflow: hidden; cursor: pointer; border: 3px solid transparent; transition: all 0.3s; }
+      .thumb-item.active { border-color: var(--color-gold); transform: translateY(-4px); box-shadow: 0 8px 16px rgba(201,168,76,0.3); }
+      .thumb-item img { width: 100%; height: 100%; object-fit: cover; }
 
-      .back-btn:hover {
-        background: var(--color-navy-light);
-      }
-
-      /* ===== Property Content ===== */
-      .property-content {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 24px;
-        display: grid;
-        grid-template-columns: 1.5fr 1fr;
-        gap: 32px;
-      }
-
-      /* ===== Breadcrumb ===== */
-      .breadcrumb {
-        grid-column: 1 / -1;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.875rem;
-        color: var(--color-gray-500);
-      }
-
-      .breadcrumb a {
-        color: var(--color-navy);
-        text-decoration: none;
-        transition: color 0.3s ease;
-      }
-
-      .breadcrumb a:hover {
-        color: var(--color-gold);
-      }
-
-      .breadcrumb mat-icon {
-        font-size: 18px;
-        color: var(--color-gray-400);
-      }
-
-      /* ===== Mobile Header ===== */
-      .property-header-mobile {
-        grid-column: 1 / -1;
-        display: none;
-      }
-
-      .property-header-mobile .property-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--color-gray-900);
-        margin: 0;
-      }
-
-      /* ===== Gallery Section ===== */
-      .gallery-section {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-      }
-
-      .main-image {
+      .section-title { font-size: 1.75rem; font-weight: 900; color: var(--color-gray-900); letter-spacing: -0.5px; }
+      
+      /* --- PRICE CARD PREMIUM --- */
+      .price-card { 
+        background: white; 
+        padding: 32px; 
+        border-radius: 32px; 
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08); 
+        border: 1px solid rgba(255,255,255,0.8);
         position: relative;
-        height: 450px;
-        border-radius: var(--radius-xl);
         overflow: hidden;
-        background: var(--color-gray-200);
       }
+      .price-card::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: var(--color-gold); }
 
-      .main-image img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+      .recommendations-section { 
+        background: white; 
+        margin: 80px -24px -24px; 
+        padding: 80px 40px; 
+        border-top: 1px solid #e2e8f0; 
       }
-
-      .no-image {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-      }
-
-      .no-image mat-icon {
-        font-size: 64px;
-        color: var(--color-gray-400);
-      }
-
-      .no-image p {
-        color: var(--color-gray-500);
-      }
-
-      .nav-btn {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 48px;
-        height: 48px;
-        background: rgba(255, 255, 255, 0.95);
-        border: none;
-        border-radius: 50%;
-        color: var(--color-navy);
+      .rel-card-premium { 
+        background: #f8fafc; 
+        border-radius: 28px; 
+        overflow: hidden; 
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: var(--shadow);
-      }
-
-      .nav-btn:hover {
-        background: var(--color-white);
-        transform: translateY(-50%) scale(1.1);
-      }
-
-      .nav-btn.prev {
-        left: 16px;
-      }
-      .nav-btn.next {
-        right: 16px;
-      }
-
-      .image-counter {
-        position: absolute;
-        bottom: 16px;
-        right: 16px;
-        background: rgba(27, 58, 107, 0.9);
-        color: var(--color-white);
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        font-weight: 500;
-      }
-
-      .thumbnail-list {
-        display: flex;
-        gap: 12px;
-        overflow-x: auto;
-        padding-bottom: 8px;
-      }
-
-      .thumbnail {
-        flex-shrink: 0;
-        width: 100px;
-        height: 75px;
-        border-radius: var(--radius);
-        overflow: hidden;
-        cursor: pointer;
-        opacity: 0.6;
-        transition: all 0.3s ease;
-        border: 2px solid transparent;
-      }
-
-      .thumbnail.active {
-        opacity: 1;
-        border-color: var(--color-gold);
-      }
-
-      .thumbnail:hover {
-        opacity: 1;
-      }
-
-      .thumbnail img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-
-      /* ===== Info Section ===== */
-      .info-section {
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-      }
-
-      .property-header-desktop {
-        display: block;
-      }
-
-      .info-header {
-        margin-bottom: 24px;
-      }
-
-      .badges {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 16px;
-        flex-wrap: wrap;
-      }
-
-      .badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 500;
-      }
-
-      .badge.featured {
-        background: var(--color-gold);
-        color: var(--color-navy);
-      }
-
-      .badge.verified {
-        background: rgba(34, 197, 94, 0.1);
-        color: #16a34a;
-      }
-
-      .badge.instant {
-        background: rgba(27, 58, 107, 0.1);
-        color: var(--color-navy);
-      }
-
-      .badge mat-icon {
-        font-size: 16px;
-      }
-
-      .badge mat-icon {
-        font-size: 16px;
-        width: 16px;
-        height: 16px;
-      }
-
-      .property-title {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: var(--color-gray-900);
-        margin: 0 0 12px 0;
-        line-height: 1.3;
-      }
-
-      .location-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 16px;
-        margin-top: 12px;
-      }
-
-      .btn-pdf {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: #ef4444 !important;
-        border-color: rgba(239, 68, 68, 0.2) !important;
-        background: rgba(239, 68, 68, 0.05) !important;
-        font-weight: 500;
-        transition: all 0.3s ease;
-      }
-
-      .btn-pdf:hover {
-        background: rgba(239, 68, 68, 0.1) !important;
-        border-color: #ef4444 !important;
-      }
-
-      .location {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: var(--color-gray-500);
-        font-size: 0.95rem;
-      }
-
-      .location mat-icon {
-        font-size: 20px;
-        color: var(--color-navy);
-      }
-
-      .location mat-icon {
-        color: #667eea;
-      }
-
-      /* ===== Price Card ===== */
-      .price-card {
-        background: var(--color-white);
-        border-radius: var(--radius-lg);
-        padding: 24px;
-        box-shadow: var(--shadow);
-      }
-
-      .price-display {
-        display: flex;
-        align-items: baseline;
-        gap: 8px;
-        margin-bottom: 12px;
-      }
-
-      .price-amount {
-        font-size: 2rem;
-        font-weight: 700;
-        color: var(--color-navy);
-      }
-
-      .price-period {
-        font-size: 1.125rem;
-        color: var(--color-gray-500);
-      }
-
-      .price-type {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.875rem;
-        font-weight: 500;
-        background: rgba(27, 58, 107, 0.1);
-        color: var(--color-navy);
-      }
-
-      .rating-display {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding-top: 12px;
-        border-top: 1px solid var(--color-gray-200);
-      }
-
-      .rating-display mat-icon {
-        font-size: 20px;
-        color: #f59e0b;
-      }
-
-      .rating-value {
-        font-weight: 600;
-        color: var(--color-gray-800);
-      }
-
-      .rating-count {
-        color: var(--color-gray-500);
-        font-size: 0.875rem;
-      }
-
-      mat-divider {
-        margin: 24px 0;
-      }
-
-      /* ===== Quick Stats ===== */
-      .quick-stats {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
-        padding: 4px 0;
-      }
-
-      .stat-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 16px;
-        background: var(--color-gray-100);
-        border-radius: var(--radius);
-      }
-
-      .stat-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        background: var(--color-navy);
-        border-radius: var(--radius);
-      }
-
-      .stat-icon mat-icon {
-        font-size: 20px;
-        color: var(--color-gold);
-      }
-
-      .stat-info {
-        display: flex;
-        flex-direction: column;
-      }
-
-      .stat-value {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: var(--color-gray-900);
-      }
-
-      .stat-label {
-        font-size: 0.8rem;
-        color: var(--color-gray-500);
-      }
-
-      /* ===== Section Title ===== */
-      .section-title {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: var(--color-gray-900);
-        margin: 0 0 16px 0;
-      }
-
-      .section-title mat-icon {
-        font-size: 24px;
-        color: var(--color-navy);
-      }
-
-      /* ===== Description ===== */
-      .description-text {
-        color: var(--color-gray-600);
-        line-height: 1.8;
-        white-space: pre-line;
-      }
-
-      /* ===== Amenities ===== */
-      .amenities-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-      }
-
-      .amenity-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px;
-        border-radius: var(--radius);
-        background: var(--color-gray-100);
-        color: var(--color-gray-400);
-      }
-
-      .amenity-item.available {
-        background: rgba(27, 58, 107, 0.05);
-        color: var(--color-gray-800);
-      }
-
-      .amenity-icon mat-icon {
-        font-size: 20px;
-      }
-
-      .amenity-item.available .amenity-icon mat-icon {
-        color: var(--color-navy);
-      }
-
-      /* ===== Location Grid ===== */
-      .location-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
-      }
-
-      .location-item {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      .location-item.full-width {
-        grid-column: 1 / -1;
-      }
-
-      .location-label {
-        font-size: 0.8rem;
-        color: var(--color-gray-500);
-      }
-
-      .location-value {
-        font-size: 1rem;
-        font-weight: 500;
-        color: var(--color-gray-800);
-      }
-
-      /* ===== Host Card ===== */
-      .host-card {
-        background: var(--color-white);
-        border-radius: var(--radius-lg);
-        padding: 24px;
-        box-shadow: var(--shadow);
-      }
-
-      .host-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 16px;
-      }
-
-      .host-header mat-icon {
-        font-size: 24px;
-        color: var(--color-navy);
-      }
-
-      .host-header h3 {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: var(--color-gray-900);
-        margin: 0;
-      }
-
-      .host-content {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
-
-      .host-avatar {
-        flex-shrink: 0;
-      }
-
-      .host-avatar img {
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        object-fit: cover;
-      }
-
-      .avatar-placeholder {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 56px;
-        height: 56px;
-        background: var(--color-navy);
-        border-radius: 50%;
-      }
-
-      .avatar-placeholder mat-icon {
-        font-size: 28px;
-        color: var(--color-gold);
-      }
-
-      .host-name {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: var(--color-gray-900);
-        margin: 0 0 8px 0;
-      }
-
-      .host-badge {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 0.875rem;
-        color: #16a34a;
-      }
-
-      .host-badge mat-icon {
-        font-size: 16px;
-      }
-
-      /* ===== Actions ===== */
-      .actions-section {
-        padding: 4px 0;
-      }
-
-      .action-buttons {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-      }
-
-      .action-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 14px 24px;
-        border-radius: var(--radius);
-        font-size: 1rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: none;
-      }
-
-      .action-btn.primary {
-        flex: 1;
-        min-width: 160px;
-        background: var(--color-navy);
-        color: var(--color-white);
-      }
-
-      .action-btn.primary:hover {
-        background: var(--color-navy-light);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-lg);
-      }
-
-      .action-btn.secondary {
-        flex: 1;
-        min-width: 160px;
-        background: var(--color-white);
-        color: var(--color-navy);
-        border: 2px solid var(--color-navy);
-      }
-
-      .action-btn.secondary:hover {
-        background: rgba(27, 58, 107, 0.05);
-      }
-
-      .favorite-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 52px;
-        height: 52px;
-        background: var(--color-white);
-        border: 2px solid var(--color-gray-200);
-        border-radius: var(--radius);
-        color: var(--color-gray-400);
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-
-      .favorite-btn:hover {
-        border-color: #ef4444;
-        color: #ef4444;
-      }
-
-      .favorite-btn.active {
-        background: #fef2f2;
-        border-color: #ef4444;
-        color: #ef4444;
-      }
-
-      .owner-actions {
-        display: flex;
-        gap: 12px;
-      }
-
-      .edit-btn {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 14px 24px;
-        background: var(--color-navy);
-        color: var(--color-white);
-        border: none;
-        border-radius: var(--radius);
-        font-size: 1rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-
-      .edit-btn:hover {
-        background: var(--color-navy-light);
-      }
-
-      .delete-btn {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 14px 24px;
-        background: var(--color-white);
-        color: #dc2626;
-        border: 2px solid #dc2626;
-        border-radius: var(--radius);
-        font-size: 1rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-
-      .delete-btn:hover {
-        background: #fef2f2;
-      }
-
-      .auth-prompt {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 16px;
-        padding: 32px;
-        background: var(--color-gray-100);
-        border-radius: var(--radius-lg);
-        text-align: center;
-      }
-
-      .auth-prompt mat-icon {
-        font-size: 48px;
-        color: var(--color-navy);
-      }
-
-      .auth-prompt p {
-        color: var(--color-gray-600);
-        margin: 0;
-      }
-
-      .login-btn {
-        padding: 12px 32px;
-        background: var(--color-navy);
-        color: var(--color-white);
-        border: none;
-        border-radius: var(--radius);
-        font-size: 1rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-
-      .login-btn:hover {
-        background: var(--color-navy-light);
-      }
-
-      mat-divider {
-        margin: 8px 0;
-        border-top-color: var(--color-gray-200);
-      }
+        border: 1px solid #f1f5f9;
+      }
+      .rel-card-premium:hover { transform: translateY(-12px); box-shadow: 0 30px 60px -12px rgba(0,0,0,0.1); border-color: var(--color-gold); }
+      .rel-image-box { position: relative; height: 220px; }
+      .rel-image-box img { width: 100%; height: 100%; object-fit: cover; }
+      .rel-price-overlay { position: absolute; bottom: 16px; right: 16px; background: var(--color-navy); color: white; padding: 8px 16px; border-radius: 12px; font-weight: 800; font-size: 0.9rem; }
+      .rel-body { padding: 24px; }
+      .rel-body h4 { font-size: 1.1rem; font-weight: 800; margin-bottom: 12px; color: var(--color-navy); }
+      .rel-meta { display: flex; align-items: center; gap: 6px; color: #64748b; font-size: 0.85rem; }
+      .rel-meta mat-icon { font-size: 16px; width: 16px; height: 16px; }
 
-      /* ===== Responsive Design ===== */
       @media (max-width: 1024px) {
-        .property-content {
-          grid-template-columns: 1fr;
-        }
-
-        .main-image {
-          height: 350px;
-        }
-
-        .quick-stats {
-          grid-template-columns: repeat(2, 1fr);
-        }
-
-        .property-header-desktop {
-          display: none;
-        }
-
-        .property-header-mobile {
-          display: block;
-        }
-      }
-
-      @media (max-width: 768px) {
-        .property-content {
-          padding: 16px;
-        }
-
-        .main-image {
-          height: 300px;
-        }
-
-        .nav-btn {
-          width: 40px;
-          height: 40px;
-        }
-
-        .price-amount {
-          font-size: 1.5rem;
-        }
-
-        .property-title {
-          font-size: 1.5rem;
-        }
-
-        .quick-stats {
-          grid-template-columns: repeat(2, 1fr);
-          gap: 12px;
-        }
-
-        .stat-item {
-          padding: 12px;
-        }
-
-        .action-buttons {
-          flex-direction: column;
-        }
-
-        .action-btn {
-          width: 100%;
-        }
-
-        .owner-actions {
-          flex-direction: column;
-        }
-
-        .edit-btn,
-        .delete-btn {
-          width: 100%;
-          justify-content: center;
-        }
-
-        .amenities-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .property-content {
-          padding: 12px;
-        }
-
-        .main-image {
-          height: 250px;
-          border-radius: var(--radius-lg);
-        }
-
-        .thumbnail {
-          width: 80px;
-          height: 60px;
-        }
-
-        .quick-stats {
-          grid-template-columns: repeat(2, 1fr);
-          gap: 8px;
-        }
-
-        .stat-icon {
-          width: 32px;
-          height: 32px;
-        }
-
-        .stat-icon mat-icon {
-          font-size: 16px;
-        }
-
-        .stat-value {
-          font-size: 1rem;
-        }
-
-        .location-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .price-card {
-          padding: 20px;
-        }
+        .main-details-grid { grid-template-columns: 1fr; }
+        .recommendations-section { margin-left: -24px; margin-right: -24px; padding: 60px 24px; }
       }
     `,
+
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -1333,66 +402,35 @@ export class PropertyDetailComponent {
   error = signal<string | null>(null);
   currentImageIndex = signal(0);
   isFavorite = signal(false);
+  similarProperties = signal<any[]>([]);
   private readonly propertyId = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('id'))),
     { initialValue: this.route.snapshot.paramMap.get('id') },
   );
 
-  exportToPDF() {
-    const prop = this.property();
-    if (!prop) return;
-
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const html = `
-      <html>
-        <head>
-          <title>${prop.title} - Mulkchi Hisoboti</title>
-          <style>
-            body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; }
-            .header { border-bottom: 2px solid #1b3a6b; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-            .logo { font-size: 24px; font-weight: bold; color: #1b3a6b; }
-            .title { font-size: 28px; margin: 20px 0; color: #0f172a; }
-            .price { font-size: 24px; color: #1b3a6b; font-weight: bold; margin-bottom: 10px; }
-            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 30px 0; }
-            .info-item { padding: 15px; background: #f8fafc; border-radius: 8px; }
-            .label { font-size: 12px; color: #64748b; text-transform: uppercase; margin-bottom: 5px; }
-            .value { font-size: 16px; font-weight: 600; }
-            .description { line-height: 1.6; color: #475569; margin: 30px 0; }
-            .footer { margin-top: 50px; font-size: 12px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div class="logo">Mulkchi</div>
-            <div>${new Date().toLocaleDateString()}</div>
-          </div>
-          <h1 class="title">${prop.title}</h1>
-          <div class="price">${prop.salePrice || prop.monthlyRent || prop.pricePerNight} UZS</div>
-          <p><b>Manzil:</b> ${prop.address}, ${prop.district}, ${prop.city}</p>
-          
-          <div class="info-grid">
-            <div class="info-item"><div class="label">Xonalar</div><div class="value">${prop.numberOfBedrooms}</div></div>
-            <div class="info-item"><div class="label">Maydoni</div><div class="value">${prop.area} m²</div></div>
-            <div class="info-item"><div class="label">Mulk turi</div><div class="value">${prop.type}</div></div>
-            <div class="info-item"><div class="label">Viloyat</div><div class="value">${prop.region}</div></div>
-          </div>
-          
-          <h3>Mulk tavsifi</h3>
-          <div class="description">${prop.description}</div>
-          
-          <div class="footer">
-            Ushbu hisobot Mulkchi platformasi orqali avtomatik shakllantirildi. <br>
-            © 2026 Mulkchi. Barcha huquqlar himoyalangan.
-          </div>
-          <script>window.onload = function() { window.print(); }</script>
-        </body>
-      </html>
-    `;
-
-    printWindow.document.write(html);
-    printWindow.document.close();
+  getAmenityIcon(name: string): string {
+    const icons: any = {
+      wifi: 'wifi',
+      parking: 'local_parking',
+      pool: 'pool',
+      ac: 'ac_unit',
+      heating: 'hot_tub',
+      kitchen: 'restaurant',
+      tv: 'tv',
+      washer: 'local_laundry_service',
+      workspace: 'laptop_mac',
+      elevator: 'elevator',
+      security: 'security',
+      generator: 'bolt',
+      furniture: 'chair',
+      renovated: 'auto_fix_high',
+      pets: 'pets',
+      metro: 'directions_subway',
+      market: 'storefront',
+      school: 'school',
+      hospital: 'local_hospital'
+    };
+    return icons[name] || 'check_circle';
   }
 
   currentImage = computed(() => {
@@ -1454,6 +492,7 @@ export class PropertyDetailComponent {
 
       if (id) {
         this.loadProperty(id);
+        this.loadSimilarProperties(id);
       } else {
         this.error.set('Mulk ID topilmadi');
       }
@@ -1495,6 +534,14 @@ export class PropertyDetailComponent {
     });
   }
 
+  loadSimilarProperties(id: string): void {
+    this.propertyService.searchProperties({ pageSize: 4 }).subscribe({
+      next: (res: any) => {
+        this.similarProperties.set(res.items.filter((p: any) => p.id !== id));
+      }
+    });
+  }
+
   selectImage(index: number): void {
     this.currentImageIndex.set(index);
   }
@@ -1523,7 +570,6 @@ export class PropertyDetailComponent {
       return;
     }
 
-    // Scroll to booking panel
     const bookingPanel = document.querySelector('app-booking-panel');
     if (bookingPanel) {
       bookingPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1543,8 +589,11 @@ export class PropertyDetailComponent {
       void this.router.navigate(['/messages'], {
         queryParams: { 
           userId: prop.hostId,
-          userName: prop.hostName || 'Host',
-          userAvatar: prop.hostAvatarUrl || ''
+          userName: prop.hostName || 'Foydalanuvchi',
+          userAvatar: prop.hostAvatarUrl || '',
+          propertyId: prop.id,
+          propertyTitle: prop.title,
+          propertyImage: prop.images?.[0]?.url || ''
         }
       });
     } else {
@@ -1598,26 +647,25 @@ export class PropertyDetailComponent {
     };
 
     this.dialog
-      .open(ConfirmationDialogComponent, {
-        data: dialogData,
-        autoFocus: false,
-        restoreFocus: true,
-      })
+      .open(ConfirmationDialogComponent, { data: dialogData })
       .afterClosed()
-      .subscribe((confirmed) => {
-        if (!confirmed) {
-          return;
+      .subscribe((result) => {
+        if (result) {
+          this.propertyService.deleteProperty(prop.id).subscribe({
+            next: () => {
+              this.toastService.success("E'lon muvaffaqiyatli o'chirildi.");
+              this.router.navigate(['/properties']);
+            },
+            error: () => {
+              this.toastService.error("E'lonni o'chirishda xatolik yuz berdi.");
+            },
+          });
         }
-
-        this.propertyService.deleteProperty(prop.id).subscribe({
-          next: () => {
-            this.toastService.success("Mulk o'chirildi.");
-            void this.router.navigate(['/properties']);
-          },
-          error: () => {
-            this.toastService.error("O'chirishda xatolik yuz berdi.");
-          },
-        });
       });
+  }
+
+  getSimilarPropertyImage(rel: any): string {
+    const url = rel.images?.[0]?.url || rel.images?.[0]?.thumbnailUrl || '';
+    return this.imageOptimizationService.getOptimizedImage(url, 400, 300);
   }
 }

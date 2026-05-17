@@ -10,6 +10,7 @@ import { fromEvent, map, startWith } from 'rxjs';
 
 import { ChatService } from '../../services/chat.service';
 import { ComparisonService } from '../../services/comparison.service';
+import { AuthService } from '../../services/auth.service';
 import { AuthStore } from '../../stores/auth.store';
 import { UIStore } from '../../stores/ui.store';
 
@@ -47,14 +48,6 @@ import { UIStore } from '../../stores/ui.store';
             >
               {{ item.label }}
             </a>
-          }
-          @if (authStore.isHost()) {
-            <a routerLink="/host/properties" routerLinkActive="active">{{
-              text().navHostProperties
-            }}</a>
-          }
-          @if (authStore.isAdmin()) {
-            <a routerLink="/admin" routerLinkActive="active">{{ text().navAdmin }}</a>
           }
         </nav>
 
@@ -98,15 +91,25 @@ import { UIStore } from '../../stores/ui.store';
             </a>
 
             <div class="quick-actions desktop-utilities">
-              <a mat-icon-button routerLink="/favorites" aria-label="Sevimlilar">
+              <a mat-icon-button routerLink="/compare" matTooltip="Solishtirish">
+                <mat-icon
+                  [matBadge]="comparisonService.count() || null"
+                  [matBadgeHidden]="comparisonService.count() === 0"
+                  matBadgeColor="accent"
+                >
+                  compare
+                </mat-icon>
+              </a>
+              <a mat-icon-button routerLink="/favorites">
                 <mat-icon>favorite</mat-icon>
               </a>
-              <a mat-icon-button routerLink="/messages" aria-label="Xabarlar">
+              <a mat-icon-button routerLink="/messages">
                 <mat-icon
+                  aria-hidden="false"
+                  aria-label="Xabarlar"
                   [matBadge]="chatService.totalUnreadCount() || null"
                   [matBadgeHidden]="chatService.totalUnreadCount() === 0"
                   matBadgeColor="warn"
-                  aria-hidden="false"
                 >
                   chat
                 </mat-icon>
@@ -116,16 +119,16 @@ import { UIStore } from '../../stores/ui.store';
             <button type="button" class="profile-chip" [matMenuTriggerFor]="userMenu">
               <span class="avatar">
                 @if (authStore.currentUser()?.avatarUrl) {
-                  <img [src]="authStore.currentUser()?.avatarUrl" alt="Profil rasmi" />
+                  <img [src]="authStore.currentUser()?.avatarUrl" alt="Profil" />
                 } @else {
                   <mat-icon>person</mat-icon>
                 }
               </span>
-              <span class="profile-copy desktop-utilities">
+              <span class="profile-copy">
                 <strong>{{ authStore.currentUser()?.firstName }}</strong>
                 <small>{{ text().profile }}</small>
               </span>
-              <mat-icon class="desktop-utilities">expand_more</mat-icon>
+              <mat-icon class="expand-icon">expand_more</mat-icon>
             </button>
 
             <mat-menu #userMenu="matMenu">
@@ -133,21 +136,36 @@ import { UIStore } from '../../stores/ui.store';
                 <div class="user-name">
                   {{ authStore.currentUser()?.firstName }} {{ authStore.currentUser()?.lastName }}
                 </div>
-                <div class="user-role">{{ text().profile }}</div>
+                <div class="user-email">{{ authStore.currentUser()?.email }}</div>
               </div>
               <mat-divider></mat-divider>
               <a mat-menu-item routerLink="/profile">
-                <mat-icon>person</mat-icon>
+                <mat-icon>person_outline</mat-icon>
                 <span>{{ text().profile }}</span>
               </a>
+              <a mat-menu-item routerLink="/host/properties">
+                <mat-icon>business</mat-icon>
+                <span>{{ text().myProperties }}</span>
+              </a>
               <a mat-menu-item routerLink="/bookings">
-                <mat-icon>calendar_month</mat-icon>
+                <mat-icon>calendar_today</mat-icon>
                 <span>{{ text().bookings }}</span>
               </a>
               <a mat-menu-item routerLink="/favorites">
-                <mat-icon>favorite</mat-icon>
+                <mat-icon>favorite_border</mat-icon>
                 <span>{{ text().favorites }}</span>
               </a>
+              <a mat-menu-item routerLink="/subscriptions">
+                <mat-icon>card_membership</mat-icon>
+                <span>{{ text().subscriptions }}</span>
+              </a>
+              @if (authStore.isAdmin()) {
+                <mat-divider></mat-divider>
+                <a mat-menu-item routerLink="/admin">
+                  <mat-icon>admin_panel_settings</mat-icon>
+                  <span>{{ text().navAdmin }}</span>
+                </a>
+              }
               <mat-divider></mat-divider>
               <button mat-menu-item type="button" (click)="authStore.logout()">
                 <mat-icon>logout</mat-icon>
@@ -166,8 +184,6 @@ import { UIStore } from '../../stores/ui.store';
           <button
             type="button"
             class="menu-toggle"
-            [attr.aria-expanded]="uiStore.sidebarOpen()"
-            [attr.aria-label]="text().ariaMenu"
             (click)="uiStore.toggleSidebar()"
           >
             <mat-icon>{{ uiStore.sidebarOpen() ? 'close' : 'menu' }}</mat-icon>
@@ -197,21 +213,6 @@ import { UIStore } from '../../stores/ui.store';
                 <mat-icon>{{ uiStore.isDarkTheme() ? 'light_mode' : 'dark_mode' }}</mat-icon>
                 <span>{{ uiStore.isDarkTheme() ? text().themeLight : text().themeDark }}</span>
               </button>
-              <button type="button" class="utility-button" [matMenuTriggerFor]="mobileLanguageMenu">
-                <mat-icon>translate</mat-icon>
-                <span>{{ text().languagePrefix }}{{ currentLanguageLabel() }}</span>
-              </button>
-              <mat-menu #mobileLanguageMenu="matMenu">
-                @for (language of languages; track language.code) {
-                  <button
-                    mat-menu-item
-                    type="button"
-                    (click)="uiStore.setLanguage(language.code); uiStore.closeSidebar()"
-                  >
-                    {{ language.label }}
-                  </button>
-                }
-              </mat-menu>
             </div>
           </div>
         </div>
@@ -225,15 +226,12 @@ import { UIStore } from '../../stores/ui.store';
         inset: 0 0 auto;
         z-index: var(--z-navbar);
         padding: var(--space-3) 0;
-        transition:
-          background-color var(--transition-normal),
-          box-shadow var(--transition-normal),
-          border-color var(--transition-normal);
+        transition: all var(--transition-normal);
       }
 
       .navbar-shell.scrolled {
         backdrop-filter: blur(22px);
-        background: color-mix(in srgb, var(--color-surface-elevated) 78%, transparent);
+        background: color-mix(in srgb, var(--color-surface-elevated) 85%, transparent);
         border-bottom: 1px solid var(--color-border-soft);
         box-shadow: var(--shadow-sm);
       }
@@ -241,19 +239,19 @@ import { UIStore } from '../../stores/ui.store';
       .navbar {
         display: flex;
         align-items: center;
-        justify-content: space-between;
         gap: var(--space-4);
         min-height: 4.5rem;
-        padding: 0 var(--space-4);
-        border: 1px solid transparent;
+        padding: 0 var(--space-6);
         border-radius: var(--radius-round);
+        width: 100%;
       }
 
       .brand {
-        display: inline-flex;
+        display: flex;
         align-items: center;
         gap: var(--space-3);
-        min-width: 0;
+        text-decoration: none;
+        flex-shrink: 0;
       }
 
       .brand-mark {
@@ -265,90 +263,135 @@ import { UIStore } from '../../stores/ui.store';
         background: linear-gradient(135deg, var(--color-brand-500), var(--color-brand-700));
         color: white;
         box-shadow: var(--shadow-sm);
+        flex-shrink: 0;
       }
 
       .brand-copy {
-        display: grid;
-        gap: 2px;
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
       }
 
       .brand-copy strong {
-        font-size: var(--font-size-4);
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--color-text-primary);
+        letter-spacing: -0.02em;
       }
 
       .brand-copy small {
         color: var(--color-text-secondary);
-      }
-
-      .desktop-nav,
-      .navbar-actions,
-      .desktop-utilities,
-      .quick-actions {
-        display: flex;
-        align-items: center;
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: nowrap;
       }
 
       .desktop-nav {
-        gap: var(--space-2);
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-1);
         padding: var(--space-1);
         border-radius: var(--radius-round);
-        background: color-mix(in srgb, var(--color-surface-elevated) 72%, transparent);
+        background: color-mix(in srgb, var(--color-surface-elevated) 75%, transparent);
+        backdrop-filter: blur(8px);
+        border: 1px solid var(--color-border-soft);
+        max-width: fit-content;
+        margin: 0 auto;
       }
 
       .desktop-nav a {
-        padding: 0.8rem 1rem;
+        padding: 0.6rem 1rem;
         border-radius: var(--radius-round);
-        color: var(--color-text-secondary);
-        font-size: var(--font-size-2);
-        font-weight: var(--font-weight-medium);
-        transition:
-          color var(--transition-fast),
-          background-color var(--transition-fast),
-          transform var(--transition-fast);
+        color: var(--color-text-primary);
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.25s ease;
+        white-space: nowrap;
+        text-decoration: none;
+        opacity: 0.85;
       }
 
-      .desktop-nav a.active,
       .desktop-nav a:hover {
-        background: rgba(15, 118, 110, 0.1);
         color: var(--color-brand-600);
-        transform: translateY(-1px);
+        background: rgba(15, 118, 110, 0.08);
+        opacity: 1;
+      }
+
+      .desktop-nav a.active {
+        background: var(--color-brand-600);
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+        opacity: 1;
       }
 
       .navbar-actions {
-        gap: var(--space-2);
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: var(--space-3);
+        flex-shrink: 0;
       }
 
-      .post-button,
-      .register-button {
+      .desktop-utilities {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        flex-shrink: 0;
+      }
+
+      .guest-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        flex-shrink: 0;
+      }
+
+      .post-button {
         background: linear-gradient(135deg, var(--color-brand-500), var(--color-brand-700));
         color: white !important;
+        border-radius: 24px !important;
+        padding: 0 16px !important;
+        font-weight: 600 !important;
+        height: 40px !important;
+        flex-shrink: 0;
       }
 
-      .guest-actions,
-      .quick-actions {
-        gap: var(--space-1);
+      .register-button {
+        background: var(--color-brand-600) !important;
+        color: white !important;
+        border-radius: 24px !important;
+        flex-shrink: 0;
       }
 
       .profile-chip {
         display: inline-flex;
         align-items: center;
         gap: var(--space-2);
-        min-height: 44px;
-        padding: 0 var(--space-2) 0 6px;
-        border: 1px solid var(--color-border-soft);
+        padding: 4px 12px 4px 4px;
+        border: 1px solid var(--color-border-strong);
         border-radius: var(--radius-round);
-        background: color-mix(in srgb, var(--color-surface-elevated) 90%, transparent);
-        color: var(--color-text-primary);
+        background: var(--color-surface-elevated);
+        cursor: pointer;
+        transition: all 0.2s;
+        flex-shrink: 0;
+        min-width: 120px;
+      }
+
+      .profile-chip:hover {
+        background: var(--color-surface-subtle);
+        border-color: var(--color-brand-400);
       }
 
       .avatar {
-        display: grid;
-        place-items: center;
-        inline-size: 2rem;
+        inline-size: 32px;
         aspect-ratio: 1;
         border-radius: var(--radius-round);
         overflow: hidden;
         background: var(--color-surface-subtle);
+        flex-shrink: 0;
+        border: 1px solid var(--color-border-soft);
       }
 
       .avatar img {
@@ -358,126 +401,99 @@ import { UIStore } from '../../stores/ui.store';
       }
 
       .profile-copy {
+        display: flex;
         flex-direction: column;
         align-items: flex-start;
-        gap: 2px;
-        min-width: 0;
+        line-height: 1.1;
+      }
+
+      .profile-copy strong {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--color-text-primary);
+        white-space: nowrap;
       }
 
       .profile-copy small {
-        color: var(--color-text-muted);
-      }
-
-      .profile-copy small.role-host {
-        color: var(--color-brand-600);
-        font-weight: var(--font-weight-semibold);
-      }
-
-      .user-menu-header {
-        padding: var(--space-3) var(--space-4);
-        text-align: left;
-      }
-
-      .user-name {
-        font-weight: var(--font-weight-semibold);
-        font-size: var(--font-size-3);
-        color: var(--color-text-primary);
-      }
-
-      .user-role {
-        font-size: var(--font-size-2);
+        font-size: 0.7rem;
         color: var(--color-text-secondary);
-        margin-top: 2px;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      .expand-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: var(--color-text-secondary);
+      }
+
+      .navbar-actions mat-icon {
+        color: var(--color-text-primary);
       }
 
       .menu-toggle {
         display: none;
-        align-items: center;
-        justify-content: center;
         inline-size: 44px;
         block-size: 44px;
         border: 1px solid var(--color-border-soft);
         border-radius: var(--radius-round);
-        background: color-mix(in srgb, var(--color-surface-elevated) 90%, transparent);
-        color: var(--color-text-primary);
-      }
-
-      .mobile-panel {
-        position: fixed;
-        inset: 5.5rem 0 0;
-        z-index: var(--z-drawer);
-        display: grid;
-        background: rgba(15, 23, 42, 0.36);
-        backdrop-filter: blur(12px);
-      }
-
-      .mobile-panel__sheet {
-        align-self: start;
-        margin: 0 var(--space-4);
-        padding: var(--space-4);
-        border: 1px solid var(--color-border-soft);
-        border-radius: var(--radius-4);
         background: var(--color-surface-elevated);
-        box-shadow: var(--shadow-lg);
-      }
-
-      .mobile-nav,
-      .mobile-panel__footer {
-        display: grid;
-        gap: var(--space-2);
-      }
-
-      .mobile-nav a,
-      .utility-button {
-        display: flex;
-        align-items: center;
-        gap: var(--space-3);
-        min-height: 48px;
-        padding: 0.9rem 1rem;
-        border: 1px solid var(--color-border-soft);
-        border-radius: var(--radius-3);
-        background: transparent;
         color: var(--color-text-primary);
+        place-items: center;
       }
 
-      .mobile-nav a.active {
-        background: rgba(15, 118, 110, 0.08);
-        border-color: rgba(15, 118, 110, 0.18);
-        color: var(--color-brand-600);
+      /* Specific Dark Mode Enhancements */
+      :host-context(.theme-dark) {
+        .profile-chip {
+          background: #2d3748;
+          border-color: rgba(255, 255, 255, 0.15);
+        }
+        .profile-chip:hover {
+          background: #3a4a63;
+          border-color: var(--color-brand-500);
+        }
+        .profile-copy small, .expand-icon {
+          color: #cbd5e0;
+        }
+        .quick-actions mat-icon {
+          color: #e2e8f0;
+        }
       }
 
-      .mobile-panel__footer {
-        margin-top: var(--space-4);
+      @media (max-width: 1400px) {
+        .brand-copy small {
+          display: none;
+        }
       }
 
-      @media (max-width: 1200px) {
+      @media (max-width: 1250px) {
         .desktop-nav {
           display: none;
+        }
+        .menu-toggle {
+          display: grid;
         }
       }
 
       @media (max-width: 768px) {
         .navbar {
           min-height: 4rem;
-          padding-inline: var(--space-3);
+          padding: 0 var(--space-4);
         }
-
-        .brand-copy small,
-        .desktop-utilities {
+        .profile-copy, .desktop-utilities, .guest-actions {
           display: none;
         }
-
+        .post-button {
+          min-width: 40px;
+          padding: 0 !important;
+        }
         .post-button span {
           display: none;
         }
-
-        .post-button {
-          min-width: 44px;
-          padding-inline: 0.85rem;
-        }
-
-        .menu-toggle {
-          display: inline-flex;
+        .profile-chip {
+          min-width: auto;
+          padding: 4px;
         }
       }
     `,
@@ -492,89 +508,72 @@ export class NavbarComponent {
 
   protected readonly text = computed(() => {
     const language = this.uiStore.language();
-
     const labels = {
       uz: {
-        brandTagline: "Ijaraga yaqinroq yo'l",
+        brandTagline: "Ko'chmas mulk olamidagi hamrohingiz",
         navHome: 'Bosh sahifa',
         navProperties: 'Mulklar',
-        navAiRecommend: 'AI tavsiya',
-        navAnalytics: 'Aqilli tahlil',
-        navMarket: 'Bozor',
-        navHostProperties: 'Mening mulklarim',
-        navAdmin: 'Admin',
-        postListing: "E'lon berish",
-        profile: 'Profil',
+        navAdmin: 'Admin panel',
+        postListing: "E'lon joylash",
+        profile: 'Shaxsiy profil',
+        bookings: 'Mening bronlarim',
         favorites: 'Sevimlilar',
-        bookings: 'Bronlar',
-        logout: 'Chiqish',
+        logout: 'Tizimdan chiqish',
         login: 'Kirish',
         register: "Ro'yxatdan o'tish",
         themeLight: "Yorug' rejim",
-        themeDark: "Qorong'i rejim",
-        language: 'Til',
-        languagePrefix: 'Til: ',
-        roleSwitchToGuest: "Mehmon rejimiga o'tish",
-        roleSwitchToHost: "Uy egasi rejimiga o'tish",
-        ariaTheme: 'Mavzuni almashtirish',
-        ariaLanguage: 'Til tanlash',
-        ariaMenu: 'Menyuni ochish',
+        themeDark: "Tungi rejim",
+        ariaLanguage: 'Tilni tanlash',
+        subscriptions: 'Obunalar',
+        myProperties: 'Mening mulklarim',
+        aiAssistant: 'AI Yordamchi',
+        market: 'Bozor',
+        compare: 'Taqqoslash'
       },
       ru: {
-        brandTagline: 'Ближе к аренде',
+        brandTagline: 'Ваш спутник в мире недвижимости',
         navHome: 'Главная',
         navProperties: 'Недвижимость',
-        navAiRecommend: 'AI рекомендации',
-        navAnalytics: 'Аналитика',
-        navMarket: 'Рынок',
-        navHostProperties: 'Моя недвижимость',
-        navAdmin: 'Админ',
+        navAdmin: 'Админ панель',
         postListing: 'Разместить',
-        profile: 'Профиль',
+        profile: 'Личный профиль',
+        bookings: 'Мои бронирования',
         favorites: 'Избранное',
-        bookings: 'Бронирования',
         logout: 'Выйти',
         login: 'Войти',
         register: 'Регистрация',
         themeLight: 'Светлая тема',
         themeDark: 'Тёмная тема',
-        language: 'Язык',
-        languagePrefix: 'Язык: ',
-        roleSwitchToGuest: 'Переключиться на Guest',
-        roleSwitchToHost: 'Переключиться на Host',
-        ariaTheme: 'Переключить тему',
         ariaLanguage: 'Выбор языка',
-        ariaMenu: 'Открыть меню',
+        subscriptions: 'Подписки',
+        myProperties: 'Мои объекты',
+        aiAssistant: 'AI Помощник',
+        market: 'Рынок',
+        compare: 'Сравнение'
       },
       en: {
-        brandTagline: 'Closer to rent',
+        brandTagline: 'Your companion in real estate',
         navHome: 'Home',
         navProperties: 'Properties',
-        navAiRecommend: 'AI recommendations',
-        navAnalytics: 'Smart analytics',
-        navMarket: 'Market',
-        navHostProperties: 'My properties',
-        navAdmin: 'Admin',
+        navAdmin: 'Admin panel',
         postListing: 'Post listing',
-        profile: 'Profile',
+        profile: 'Personal profile',
+        bookings: 'My bookings',
         favorites: 'Favorites',
-        bookings: 'Bookings',
         logout: 'Log out',
         login: 'Sign in',
         register: 'Sign up',
         themeLight: 'Light mode',
         themeDark: 'Dark mode',
-        language: 'Language',
-        languagePrefix: 'Language: ',
-        roleSwitchToGuest: 'Switch to Guest mode',
-        roleSwitchToHost: 'Switch to Host mode',
-        ariaTheme: 'Toggle theme',
         ariaLanguage: 'Select language',
-        ariaMenu: 'Open menu',
+        subscriptions: 'Subscriptions',
+        myProperties: 'My properties',
+        aiAssistant: 'AI Assistant',
+        market: 'Market',
+        compare: 'Compare'
       },
     } as const;
-
-    return labels[language];
+    return labels[language as keyof typeof labels] || labels.uz;
   });
 
   protected readonly navItems = computed<{ label: string; link: string; exact?: boolean }[]>(
@@ -583,8 +582,8 @@ export class NavbarComponent {
       return [
         { label: t.navHome, link: '/', exact: true },
         { label: t.navProperties, link: '/properties' },
-        { label: 'AI Yordamchi', link: '/ai-tools' }, // Combined AI features
-        { label: 'Bozor', link: '/market' }, // Combined analytics
+        { label: t.aiAssistant, link: '/ai-tools' },
+        { label: t.market, link: '/market' },
       ];
     },
   );
@@ -610,31 +609,11 @@ export class NavbarComponent {
     const baseItems = [
       { label: t.navHome, link: '/', icon: 'home', exact: true },
       { label: t.navProperties, link: '/properties', icon: 'search' },
-      { label: 'AI Yordamchi', link: '/ai-tools', icon: 'psychology' },
-      { label: 'Bozor', link: '/market', icon: 'trending_up' },
+      { label: t.aiAssistant, link: '/ai-tools', icon: 'psychology' },
+      { label: t.market, link: '/market', icon: 'trending_up' },
+      { label: t.compare, link: '/compare', icon: 'compare' },
     ];
-
-    if (!this.authStore.isLoggedIn()) {
-      return [...baseItems, { label: t.login, link: '/auth/login', icon: 'login' }];
-    }
-
-    const authItems = [
-      { label: t.profile, link: '/profile', icon: 'person' },
-      { label: 'Xabarlar', link: '/messages', icon: 'chat' },
-      { label: t.postListing, link: '/elon-berish/tur', icon: 'add_home' },
-    ];
-
-    if (this.authStore.isHost()) {
-      authItems.push({ label: 'Uy egasi paneli', link: '/host/properties', icon: 'business' });
-    }
-
-    return [...baseItems, ...authItems];
-  });
-
-  protected readonly currentLanguageLabel = computed(() => {
-    return (
-      this.languages.find((language) => language.code === this.uiStore.language())?.label ??
-      "O'zbekcha"
-    );
+    if (!this.authStore.isLoggedIn()) return [...baseItems, { label: t.login, link: '/auth/login', icon: 'login' }];
+    return [...baseItems, { label: t.profile, link: '/profile', icon: 'person' }];
   });
 }

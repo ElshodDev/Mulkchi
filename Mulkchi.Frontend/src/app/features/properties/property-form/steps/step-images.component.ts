@@ -302,7 +302,12 @@ export class StepImagesComponent {
       hasElevator: 'Lift',
       hasSecurity: 'Qo\'riqlash',
       hasFurniture: 'Mebel',
-      isRenovated: 'Ta\'mirlangan'
+      isRenovated: 'Ta\'mirlangan',
+      hasMetroNearby: 'Metro yaqin',
+      hasBusStop: 'Bekat yaqin',
+      hasMarketNearby: 'Bozor yaqin',
+      hasSchoolNearby: 'Maktab yaqin',
+      hasHospitalNearby: 'Kasalxona yaqin'
     };
     return labels[key] || key;
   }

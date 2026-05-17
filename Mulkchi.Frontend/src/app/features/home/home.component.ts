@@ -11,6 +11,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ListingType } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
@@ -22,6 +24,7 @@ import { AnnouncementsWidgetComponent } from './announcements-widget.component';
 import { LocationPickerMapComponent } from './location-picker-map.component';
 import { VoiceSearchService } from '../../core/services/voice-search.service';
 import { UIStore } from '../../core/stores/ui.store';
+import { ImageOptimizationService } from '../../core/services/image-optimization.service';
 
 @Component({
   selector: 'app-home',
@@ -40,1817 +43,520 @@ import { UIStore } from '../../core/stores/ui.store';
     MatDialogModule,
     MatChipsModule,
     MatDividerModule,
-    AnnouncementsWidgetComponent,
+    MatAutocompleteModule,
+    MatTooltipModule,
   ],
   template: `
-    <div class="home-container">
-      <!-- Hero Section -->
-      <section class="hero">
+    <div class="home-wrapper">
+      <!-- HERO SECTION -->
+      <section class="hero-section">
         <div class="hero-overlay"></div>
-        <div class="hero-content">
-          <div class="hero-badge">
-            <mat-icon>verified</mat-icon>
-            <span>O'zbekistondagi eng ishonchli platforma</span>
-          </div>
-
-          <h1 class="hero-title">
-            Ko'chmas mulkning
-            <span class="text-gold">yangi davri</span>
-          </h1>
-
-          <p class="hero-subtitle">
-            Sotish, sotib olish, ijara va kunlik boshqaruv — barchasi bir platformada
-          </p>
-
-          <!-- Listing Type Toggle -->
-          <div class="listing-type-toggle">
-            <button
-              [class.active]="listingType === 'Sale'"
-              (click)="listingType = 'Sale'"
-              class="toggle-btn"
-            >
-              <mat-icon>home</mat-icon>
-              Sotib olish
-            </button>
-            <button
-              [class.active]="listingType === 'Rent'"
-              (click)="listingType = 'Rent'"
-              class="toggle-btn"
-            >
-              <mat-icon>calendar_month</mat-icon>
-              Ijaraga
-            </button>
-            <button
-              [class.active]="listingType === 'ShortTermRent'"
-              (click)="listingType = 'ShortTermRent'"
-              class="toggle-btn"
-            >
-              <mat-icon>hotel</mat-icon>
-              Kunlik
-            </button>
-          </div>
-
-          <!-- Search Bar -->
-          <div class="search-bar">
-            <div class="search-input-wrapper">
-              <mat-icon class="search-icon">location_on</mat-icon>
-              <input
-                type="text"
-                [(ngModel)]="searchQuery"
-                placeholder="Shahar, tuman yoki ko'cha nomi..."
-                (keyup.enter)="onSearch()"
-                class="search-input"
-              />
-              <button 
-                mat-icon-button 
-                class="voice-btn" 
-                [class.listening]="voiceService.isListening()"
-                (click)="toggleVoiceSearch()"
-                [title]="voiceService.isListening() ? 'Eshitilmoqda...' : 'Ovozli qidiruv'"
-              >
-                <mat-icon>{{ voiceService.isListening() ? 'mic' : 'mic_none' }}</mat-icon>
-              </button>
-            </div>
-            <button mat-raised-button class="search-btn" (click)="onSearch()">
-              <mat-icon>search</mat-icon>
-              Qidirish
-            </button>
-            <button
-              mat-raised-button
-              class="map-btn"
-              (click)="openMapPicker()"
-              title="Xarita orqali tanlang"
-            >
-              <mat-icon>map</mat-icon>
-            </button>
-          </div>
-
-          <!-- Quick Stats -->
-          <div class="hero-stats">
-            <div class="hero-stat">
-              <span class="stat-number">20K+</span>
-              <span class="stat-label">E'lonlar</span>
-            </div>
-            <mat-divider vertical class="stat-divider"></mat-divider>
-            <div class="hero-stat">
-              <span class="stat-number">14</span>
-              <span class="stat-label">Viloyat</span>
-            </div>
-            <mat-divider vertical class="stat-divider"></mat-divider>
-            <div class="hero-stat">
-              <span class="stat-number">50K+</span>
-              <span class="stat-label">Mijozlar</span>
-            </div>
-          </div>
+        <div class="hero-bg">
+          <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1920" alt="Premium House" />
         </div>
 
-        <!-- Scroll indicator -->
-        <div class="scroll-indicator">
-          <mat-icon>keyboard_arrow_down</mat-icon>
-        </div>
-      </section>
-
-      <!-- Announcements Widget -->
-      <app-announcements-widget></app-announcements-widget>
-
-      <!-- How It Works Section -->
-      <section class="how-it-works">
-        <div class="container">
-          <div class="section-header">
-            <span class="section-badge">Oddiy jarayon</span>
-            <h2 class="section-title">Qanday ishlaydi?</h2>
-            <p class="section-subtitle">3 oddiy qadamda orzuyingizdagi uyni toping</p>
-          </div>
-
-          <div class="steps-grid">
-            <!-- Step 1 -->
-            <div class="step-card">
-              <div class="step-number">01</div>
-              <div class="step-icon-wrapper">
-                <mat-icon class="step-icon">search</mat-icon>
-              </div>
-              <h3 class="step-title">Qidiring</h3>
-              <p class="step-description">
-                Hudud, narx va qulayliklar bo'yicha filtrlash orqali o'zingizga mos uyni toping
-              </p>
-              <div class="step-features">
-                <span class="feature-tag">Xarita</span>
-                <span class="feature-tag">Filtrlar</span>
-              </div>
+        <div class="container hero-container">
+          <div class="hero-content">
+            <div class="badge-premium animate-fade-in">
+              <mat-icon>verified</mat-icon>
+              <span>O'zbekistondagi №1 Premium Platforma</span>
             </div>
 
-            <!-- Step 2 -->
-            <div class="step-card">
-              <div class="step-number">02</div>
-              <div class="step-icon-wrapper">
-                <mat-icon class="step-icon">chat</mat-icon>
-              </div>
-              <h3 class="step-title">Aloqa</h3>
-              <p class="step-description">
-                E'lon egasi bilan to'g'ridan-to'g'ri chat orqali suhbatlashing
-              </p>
-              <div class="step-features">
-                <span class="feature-tag">Real-time</span>
-                <span class="feature-tag">Xavfsiz</span>
-              </div>
-            </div>
+            <h1 class="hero-title animate-slide-up">
+              Orzuyingizdagi uyni <br />
+              <span class="text-gradient">biz bilan toping</span>
+            </h1>
 
-            <!-- Step 3 -->
-            <div class="step-card">
-              <div class="step-number">03</div>
-              <div class="step-icon-wrapper">
-                <mat-icon class="step-icon">handshake</mat-icon>
-              </div>
-              <h3 class="step-title">Bitim</h3>
-              <p class="step-description">
-                Xavfsiz to'lov orqali shartnoma tuzing va yangi uyingizga ko'chib o'ting
-              </p>
-              <div class="step-features">
-                <span class="feature-tag">Payme</span>
-                <span class="feature-tag">Click</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+            <p class="hero-subtitle animate-slide-up-delay">
+              Mulkchi — ko'chmas mulk bozorida sun'iy intellekt va innovatsion yondashuv uyg'unligi.
+            </p>
 
-      <!-- Featured Properties Section -->
-      <section class="featured-section">
-        <div class="container">
-          <div class="section-header">
-            <span class="section-badge">Tanlangan</span>
-            <h2 class="section-title">Tavsiya etilgan mulklar</h2>
-            <p class="section-subtitle">Eng mashhur va sifatli e'lonlar</p>
-          </div>
+            <!-- Search Panel -->
+            <div class="search-panel-glass animate-slide-up-long">
+              <div class="search-tabs">
+                <button [class.active]="listingType === 'Sale'" (click)="listingType = 'Sale'">Sotib olish</button>
+                <button [class.active]="listingType === 'Rent'" (click)="listingType = 'Rent'">Ijaraga</button>
+                <button [class.active]="listingType === 'ShortTermRent'" (click)="listingType = 'ShortTermRent'">Kunlik</button>
+              </div>
 
-          @if (loading) {
-            <div class="skeleton-grid">
-              @for (item of [1, 2, 3]; track item) {
-                <div class="skeleton-card">
-                  <div class="skeleton-image"></div>
-                  <div class="skeleton-content">
-                    <div class="skeleton-title"></div>
-                    <div class="skeleton-line"></div>
-                    <div class="skeleton-line short"></div>
-                  </div>
-                </div>
-              }
-            </div>
-          } @else if (error()) {
-            <div class="error-message">
-              <mat-icon class="error-icon">error_outline</mat-icon>
-              <p>{{ error() }}</p>
-              <button mat-stroked-button (click)="loadFeaturedProperties()">
-                <mat-icon>refresh</mat-icon>
-                Qayta yuklash
-              </button>
-            </div>
-          } @else if (featuredProperties.length === 0) {
-            <div class="empty-state">
-              <mat-icon class="empty-icon">home_work</mat-icon>
-              <h3>Hozircha e'lonlar yo'q</h3>
-              <p>Birinchi bo'lib e'lon joylashtiring</p>
-              <button mat-raised-button color="primary" routerLink="/elon-berish/tur">
-                E'lon berish
-              </button>
-            </div>
-          } @else {
-            <div class="properties-grid">
-              @for (property of featuredProperties; track property.id) {
-                <mat-card class="property-card" (click)="navigateToProperty(property.id)">
-                  <div class="property-image-wrapper">
-                    @if (property.images && property.images.length > 0) {
-                      <img
-                        [src]="getImageUrl(property)"
-                        [attr.data-property-type]="property.type"
-                        [alt]="property.title"
-                        (error)="onImgError($event)"
-                        class="property-image"
-                      />
-                    } @else {
-                      <img
-                        [src]="getPlaceholderImage(property)"
-                        [alt]="property.title"
-                        class="property-image"
-                      />
+              <div class="search-main">
+                <div class="input-group">
+                  <mat-icon>location_on</mat-icon>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="searchQuery" 
+                    [matAutocomplete]="auto"
+                    (input)="onSearchInput($event)"
+                    placeholder="Qayerdan qidiramiz?" 
+                    (keyup.enter)="onSearch()"
+                  />
+                  <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSearch()">
+                    @for (loc of locationSuggestions(); track loc) {
+                      <mat-option [value]="loc">
+                        <mat-icon>place</mat-icon>
+                        {{ loc }}
+                      </mat-option>
                     }
-
-                    <!-- Badges -->
-                    <div class="property-badges">
-                      @if (property.isFeatured) {
-                        <span class="badge featured">
-                          <mat-icon>star</mat-icon>
-                          Featured
-                        </span>
-                      }
-                      @if (property.isInstantBook) {
-                        <span class="badge instant">
-                          <mat-icon>bolt</mat-icon>
-                          Tezkor
-                        </span>
-                      }
-                    </div>
-
-                    <!-- Listing Type Badge -->
-                    <div class="listing-badge" [class]="property.listingType.toLowerCase()">
-                      {{ getListingTypeLabel(property.listingType) }}
-                    </div>
-                  </div>
-
-                  <mat-card-content class="property-content">
-                    <div class="property-header">
-                      <h3 class="property-title">{{ property.title }}</h3>
-                      @if (property.averageRating && property.averageRating > 0) {
-                        <div class="property-rating">
-                          <mat-icon class="star-icon">star</mat-icon>
-                          <span>{{ property.averageRating | number: '1.1-1' }}</span>
-                        </div>
-                      }
-                    </div>
-
-                    <p class="property-location">
-                      <mat-icon>location_on</mat-icon>
-                      {{ property.city }}{{ property.district ? ', ' + property.district : '' }}
-                    </p>
-
-                    <div class="property-amenities">
-                      @if (property.numberOfBedrooms) {
-                        <span class="amenity">
-                          <mat-icon>bed</mat-icon>
-                          {{ property.numberOfBedrooms }}
-                        </span>
-                      }
-                      @if (property.numberOfBathrooms) {
-                        <span class="amenity">
-                          <mat-icon>bathtub</mat-icon>
-                          {{ property.numberOfBathrooms }}
-                        </span>
-                      }
-                      @if (property.area) {
-                        <span class="amenity">
-                          <mat-icon>square_foot</mat-icon>
-                          {{ property.area }} m²
-                        </span>
-                      }
-                    </div>
-
-                    <div class="property-footer">
-                      <div class="property-price">
-                        @if (property.listingType === listingTypeEnum.Sale && property.salePrice) {
-                          <span class="price"
-                            >{{ property.salePrice | number }} {{ property.currency }}</span
-                          >
-                        } @else if (
-                          property.listingType === listingTypeEnum.Rent && property.monthlyRent
-                        ) {
-                          <span class="price"
-                            >{{ property.monthlyRent | number }} {{ property.currency }}</span
-                          >
-                          <span class="period">/oy</span>
-                        } @else if (
-                          property.listingType === listingTypeEnum.ShortTermRent &&
-                          property.pricePerNight
-                        ) {
-                          <span class="price"
-                            >{{ property.pricePerNight | number }} {{ property.currency }}</span
-                          >
-                          <span class="period">/tun</span>
-                        }
-                      </div>
-                      <button mat-icon-button class="favorite-btn">
-                        <mat-icon>favorite_border</mat-icon>
-                      </button>
-                    </div>
-                  </mat-card-content>
-                </mat-card>
-              }
+                  </mat-autocomplete>
+                  <button mat-icon-button (click)="toggleVoiceSearch()" [class.mic-active]="voiceService.isListening()" [matTooltip]="voiceService.isListening() ? 'Eshitilmoqda...' : 'Ovozli qidiruv'">
+                    <mat-icon>{{ voiceService.isListening() ? 'mic' : 'mic_none' }}</mat-icon>
+                  </button>
+                </div>
+                
+                <div class="search-actions">
+                  <button mat-icon-button class="map-trigger" (click)="openMapPicker()" title="Xarita orqali">
+                    <mat-icon>map</mat-icon>
+                  </button>
+                  <button mat-flat-button class="btn-search" (click)="onSearch()">
+                    <mat-icon>search</mat-icon>
+                    <span>Qidirish</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div class="view-all-wrapper">
-              <button mat-raised-button class="view-all-btn" routerLink="/properties">
-                Barcha mulklarni ko'rish
-                <mat-icon>arrow_forward</mat-icon>
+            <div class="hero-stats animate-fade-in-long">
+              <div class="stat-item">
+                <span class="stat-val">{{ counts.listings }}+</span>
+                <span class="stat-lab">E'lonlar</span>
+              </div>
+              <div class="stat-divider"></div>
+              <div class="stat-item">
+                <span class="stat-val">{{ counts.regions }}</span>
+                <span class="stat-lab">Viloyat</span>
+              </div>
+              <div class="stat-divider"></div>
+              <div class="stat-item">
+                <span class="stat-val">{{ counts.users }}K+</span>
+                <span class="stat-lab">Mijozlar</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+
+      <!-- TOP REGIONS -->
+      <section class="regions-section">
+        <div class="container">
+          <div class="section-top">
+            <div>
+              <h2 class="section-title">Ommabop hududlar</h2>
+              <p class="section-desc">O'zbekistonning barcha hududlaridan eng sara mulklarni toping</p>
+            </div>
+          </div>
+          <div class="regions-grid">
+            @for (region of topRegions; track region.id) {
+              <div class="region-card animate-fade-in" [style.animation-delay]="region.delay" (click)="searchByRegion(region.name)">
+                <img [src]="region.img" [alt]="region.name" (error)="onRegionImgError($event)" />
+                <div class="region-overlay">
+                  <h3>{{ region.name }}</h3>
+                  <span>{{ region.count }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </section>
+
+      <!-- AI FEATURES -->
+      <section class="ai-section">
+        <div class="container">
+          <div class="ai-grid">
+            <div class="ai-text">
+              <span class="ai-badge">AI Yordamchi</span>
+              <h2 class="ai-title">Mulkni baholashda <br /><span>sun'iy intellekt</span> kuchi</h2>
+              <p class="ai-desc">
+                Mulkchi platformasi AI algoritmlari yordamida e'loningizni tahlil qiladi, 
+                bozor narxini bashorat qiladi va sizga eng maqbul narxni taklif etadi.
+              </p>
+              <ul class="ai-list">
+                <li><mat-icon>check_circle</mat-icon> Narxni 98% aniqlikda bashorat qilish</li>
+                <li><mat-icon>check_circle</mat-icon> Aqlli tavsiflar yaratish</li>
+                <li><mat-icon>check_circle</mat-icon> Rasm sifatini avtomatik yaxshilash</li>
+              </ul>
+              <button mat-flat-button class="btn-ai-action" routerLink="/ai-tools">
+                AI imkoniyatlarini sinash
               </button>
             </div>
-          }
+            <div class="ai-visual">
+              <div class="ai-card-float animate-float">
+                <div class="ai-card-header">
+                  <mat-icon>psychology</mat-icon>
+                  <span>AI Tahlil</span>
+                </div>
+                <div class="ai-chart-mock">
+                  <div class="bar" style="height: 40%"></div>
+                  <div class="bar" style="height: 70%"></div>
+                  <div class="bar" style="height: 100%"></div>
+                  <div class="bar" style="height: 60%"></div>
+                </div>
+                <div class="ai-result">
+                  <small>Bashorat qilingan narx:</small>
+                  <strong>1 245 000 000 UZS</strong>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <!-- Stats Section -->
-      <section class="stats-section">
+      <!-- CTA -->
+      <section class="cta-banner">
         <div class="container">
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-icon-wrapper navy">
-                <mat-icon>home_work</mat-icon>
-              </div>
-              <h3 class="stat-number">20,000+</h3>
-              <p class="stat-label">Faol e'lonlar</p>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon-wrapper gold">
-                <mat-icon>location_city</mat-icon>
-              </div>
-              <h3 class="stat-number">14</h3>
-              <p class="stat-label">Viloyat</p>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon-wrapper navy">
-                <mat-icon>people</mat-icon>
-              </div>
-              <h3 class="stat-number">50,000+</h3>
-              <p class="stat-label">Foydalanuvchilar</p>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon-wrapper gold">
-                <mat-icon>handshake</mat-icon>
-              </div>
-              <h3 class="stat-number">5,000+</h3>
-              <p class="stat-label">Muvaffaqiyatli bitimlar</p>
+          <div class="cta-box">
+            <h2>O'z uyingizni sotmoqchimisiz?</h2>
+            <p>Bepul e'lon joylashtiring va minglab mijozlarga yetib boring.</p>
+            <div class="cta-btns">
+              <button mat-flat-button class="btn-cta-primary" (click)="onFreeListingClick()">E'lon berish</button>
+              <button mat-stroked-button class="btn-cta-secondary" routerLink="/properties">Uy qidirish</button>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Why Choose Us Section -->
-      <section class="why-section">
-        <div class="container">
-          <div class="section-header light">
-            <span class="section-badge gold">Afzalliklar</span>
-            <h2 class="section-title">Nima uchun Mulkchi?</h2>
-            <p class="section-subtitle">Bizning platformamizning asosiy afzalliklari</p>
-          </div>
-
-          <div class="features-grid">
-            <div class="feature-card">
-              <div class="feature-icon-wrapper navy">
-                <mat-icon>psychology</mat-icon>
-              </div>
-              <h3 class="feature-title">AI Narx Bashorati</h3>
-              <p class="feature-description">
-                Sun'iy intellekt bozor holatini tahlil qilib, mulkingiz uchun eng aniq va adolatli narxni tavsiya etadi.
-              </p>
-            </div>
-
-            <div class="feature-card">
-              <div class="feature-icon-wrapper gold">
-                <mat-icon>auto_awesome</mat-icon>
-              </div>
-              <h3 class="feature-title">Aqlli Tavsiflar</h3>
-              <p class="feature-description">
-                AI yordamida e'lonlar uchun professional va jozibali matnlarni bir necha soniyada yarating.
-              </p>
-            </div>
-
-            <div class="feature-card">
-              <div class="feature-icon-wrapper navy">
-                <mat-icon>camera</mat-icon>
-              </div>
-              <h3 class="feature-title">Rasm Analitikasi</h3>
-              <p class="feature-description">
-                Yuklangan rasmlarni AI tahlil qilib, ularga avtomatik teglar va tavsiflar qo'shadi.
-              </p>
-            </div>
-
-            <div class="feature-card">
-              <div class="feature-icon-wrapper gold">
-                <mat-icon>trending_up</mat-icon>
-              </div>
-              <h3 class="feature-title">Bozor Tahlili</h3>
-              <p class="feature-description">
-                Real vaqt rejimidagi grafiklar va tahlillar orqali ko'chmas mulk bozoridagi o'zgarishlarni kuzating.
-              </p>
-            </div>
-
-            <div class="feature-card">
-              <div class="feature-icon-wrapper navy">
-                <mat-icon>verified_user</mat-icon>
-              </div>
-              <h3 class="feature-title">Tekshirilgan E'lonlar</h3>
-              <p class="feature-description">
-                Barcha e'lonlar moderatorlar va AI algoritmlari tomonidan sifat va ishonchlilik uchun tekshiriladi.
-              </p>
-            </div>
-
-            <div class="feature-card">
-              <div class="feature-icon-wrapper gold">
-                <mat-icon>smartphone</mat-icon>
-              </div>
-              <h3 class="feature-title">PWA Mobil Ilova</h3>
-              <p class="feature-description">
-                Saytni mobil qurilmangizga o'rnating va platformadan istalgan vaqtda qulay foydalaning.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- CTA Section -->
-      <section class="cta-section">
-        <div class="container">
-          <div class="cta-content">
-            <h2 class="cta-title">O'z uyingizni sotmoqchimisiz?</h2>
-            <p class="cta-subtitle">Bepul e'lon joylashtiring va minglab mijozlarga yetib boring</p>
-            <div class="cta-buttons">
-              <button mat-flat-button class="btn-primary" (click)="onFreeListingClick()">
-                <mat-icon>add_home</mat-icon>
-                Bepul e'lon berish
-              </button>
-              <button mat-stroked-button class="btn-secondary" routerLink="/properties">
-                <mat-icon>search</mat-icon>
-                Uy qidirish
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Footer -->
-      <footer class="footer">
+      <!-- FOOTER -->
+      <footer class="footer-premium">
         <div class="container">
           <div class="footer-grid">
-            <!-- Brand -->
-            <div class="footer-brand">
-              <div class="footer-logo">
-                <mat-icon>home_work</mat-icon>
+            <div class="footer-col brand-col">
+              <div class="logo">
+                <mat-icon>apartment</mat-icon>
                 <span>Mulkchi</span>
               </div>
-              <p class="footer-description">
-                O'zbekistondagi eng qulay va ishonchli ko'chmas mulk platformasi
-              </p>
-              <div class="footer-social">
-                <a href="#" class="social-link">
-                  <mat-icon>facebook</mat-icon>
-                </a>
-                <a href="#" class="social-link">
-                  <mat-icon>telegram</mat-icon>
-                </a>
-                <a href="#" class="social-link">
-                  <mat-icon>instagram</mat-icon>
-                </a>
+              <p>O'zbekistondagi eng innovatsion ko'chmas mulk portali.</p>
+              <div class="socials">
+                <a href="#"><mat-icon>facebook</mat-icon></a>
+                <a href="#"><mat-icon>telegram</mat-icon></a>
+                <a href="#"><mat-icon>camera_alt</mat-icon></a>
               </div>
             </div>
-
-            <!-- Links -->
-            <div class="footer-links">
-              <h4 class="footer-title">Platforma</h4>
-              <ul>
-                <li><a routerLink="/properties">Ko'chmas mulk</a></li>
-                <li><a routerLink="/host/dashboard">E'lon berish</a></li>
-                <li><a routerLink="/auth/login">Kirish</a></li>
-                <li><a routerLink="/auth/register">Ro'yxatdan o'tish</a></li>
-              </ul>
+            <div class="footer-col">
+              <h4>Platforma</h4>
+              <a routerLink="/properties">Mulklar</a>
+              <a routerLink="/ai-tools">AI Tools</a>
+              <a routerLink="/market">Bozor tahlili</a>
             </div>
-
-            <div class="footer-links">
-              <h4 class="footer-title">Kompaniya</h4>
-              <ul>
-                <li><a href="#">Biz haqimizda</a></li>
-                <li><a href="#">Aloqa</a></li>
-                <li><a href="#">Blog</a></li>
-                <li><a href="#">Karyera</a></li>
-              </ul>
-            </div>
-
-            <div class="footer-links">
-              <h4 class="footer-title">Yordam</h4>
-              <ul>
-                <li><a href="#">FAQ</a></li>
-                <li><a href="#">Xavfsizlik</a></li>
-                <li><a href="#">Shartlar</a></li>
-                <li><a href="#">Maxfiylik</a></li>
-              </ul>
+            <div class="footer-col">
+              <h4>Yordam</h4>
+              <a href="#">FAQ</a>
+              <a href="#">Aloqa</a>
+              <a href="#">Shartlar</a>
             </div>
           </div>
-
-          <mat-divider class="footer-divider"></mat-divider>
-
           <div class="footer-bottom">
-            <div class="footer-info">
-              <p class="copyright">© 2026 Mulkchi. Barcha huquqlar himoyalangan.</p>
-              <p class="bmi-info">BMI mavzusi: Ma'lumotlar bazasiga asoslangan uy-joy savdosi va ijarasi uchun veb-sayt ishlab chiqish</p>
-            </div>
-            <div class="footer-payments">
-              <span>To'lov tizimlari:</span>
-              <div class="payment-icons">
-                <span class="payment-badge">Payme</span>
-                <span class="payment-badge">Click</span>
-              </div>
-            </div>
+            <p>© 2026 Mulkchi. Barcha huquqlar himoyalangan.</p>
+            <p class="bmi-tag">Bitiruv malakaviy ishi — Elshod Ibadullayev</p>
           </div>
         </div>
       </footer>
     </div>
   `,
-  styles: [
-    `
-      /* ===== CSS Variables — global tokenlardan foydalanamiz ===== */
-      :host {
-        --color-white: #ffffff;
-        --color-gray-50: #f8fafc;
-        --color-gray-100: #f1f5f9;
-        --color-gray-200: #e2e8f0;
-        --color-gray-300: #cbd5e1;
-        --color-gray-400: #94a3b8;
-        --color-gray-500: #64748b;
-        --color-gray-600: #475569;
-        --color-gray-700: #334155;
-        --color-gray-800: #1e293b;
-        --color-gray-900: #0f172a;
-        --radius: 8px;
-        --radius-lg: 12px;
-        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-        --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
-      }
-
-      /* ===== Typography ===== */
-      .text-gold {
-        color: var(--color-gold);
-      }
-
-      .text-navy {
-        color: var(--color-navy);
-      }
-
-      /* ===== Layout ===== */
-      .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 24px;
-      }
-
-      /* ===== Section Header ===== */
-      .section-header {
-        text-align: center;
-        margin-bottom: 48px;
-      }
-
-      .section-header.light {
-        color: var(--color-white);
-      }
-
-      .section-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 16px;
-        background: rgba(27, 58, 107, 0.1);
-        color: var(--color-navy);
-        font-size: 0.875rem;
-        font-weight: 500;
-        border-radius: 20px;
-        margin-bottom: 16px;
-      }
-
-      .section-badge.gold {
-        background: rgba(201, 168, 76, 0.15);
-        color: var(--color-gold);
-      }
-
-      .section-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: var(--color-gray-900);
-        margin: 0 0 12px 0;
-      }
-
-      .section-header.light .section-title {
-        color: var(--color-white);
-      }
-
-      .section-subtitle {
-        font-size: 1.125rem;
-        color: var(--color-gray-500);
-        margin: 0;
-      }
-
-      .section-header.light .section-subtitle {
-        color: rgba(255, 255, 255, 0.7);
-      }
-
-      /* ===== Hero Section ===== */
-      .hero {
-        position: relative;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-dark) 100%);
-        overflow: hidden;
-      }
-
-      :host-context(.theme-dark) .hero {
-        background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
-      }
-
-      .hero::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-image: url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1920&q=80');
-        background-size: cover;
-        background-position: center;
-        opacity: 0.15;
-      }
-
-      .hero-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(135deg, rgba(27, 58, 107, 0.95) 0%, rgba(18, 42, 77, 0.9) 100%);
-      }
-
-      .hero-content {
-        position: relative;
-        z-index: 1;
-        text-align: center;
-        max-width: 800px;
-        padding: 0 24px;
-        color: var(--color-white);
-      }
-
-      .hero-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 20px;
-        background: rgba(201, 168, 76, 0.15);
-        border: 1px solid rgba(201, 168, 76, 0.3);
-        border-radius: 30px;
-        margin-bottom: 24px;
-      }
-
-      .hero-badge mat-icon {
-        color: var(--color-gold);
-        font-size: 18px;
-      }
-
-      .hero-badge span {
-        font-size: 0.9rem;
-        font-weight: 500;
-      }
-
-      .hero-title {
-        font-size: 3.5rem;
-        font-weight: 700;
-        line-height: 1.2;
-        margin: 0 0 20px 0;
-      }
-
-      .hero-subtitle {
-        font-size: 1.25rem;
-        opacity: 0.85;
-        margin: 0 0 40px 0;
-      }
-
-      /* Listing Type Toggle */
-      .listing-type-toggle {
-        display: flex;
-        justify-content: center;
-        gap: 12px;
-        margin-bottom: 32px;
-        flex-wrap: wrap;
-      }
-
-      .toggle-btn {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 12px 24px;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: var(--radius);
-        color: var(--color-white);
-        font-size: 0.95rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-
-      .toggle-btn:hover {
-        background: rgba(255, 255, 255, 0.15);
-        border-color: rgba(255, 255, 255, 0.3);
-      }
-
-      .toggle-btn.active {
-        background: var(--color-gold);
-        border-color: var(--color-gold);
-        color: var(--color-navy);
-      }
-
-      .toggle-btn mat-icon {
-        font-size: 20px;
-      }
-
-      /* Search Bar */
-      .search-bar {
-        display: flex;
-        gap: 12px;
-        max-width: 600px;
-        margin: 0 auto 40px;
-      }
-
-      .search-input-wrapper {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        background: var(--color-surface-elevated);
-        border-radius: var(--radius);
-        padding: 0 20px;
-      }
-
-      .search-icon {
-        color: var(--color-gray-400);
-        margin-right: 12px;
-      }
-
-      .search-input {
-        flex: 1;
-        border: none;
-        outline: none;
-        padding: 16px 0;
-        font-size: 1rem;
-        color: var(--color-gray-800);
-        background: transparent;
-      }
-
-      .voice-btn {
-        color: var(--color-gray-500);
-        transition: all 0.3s ease;
-      }
-
-      .voice-btn.listening {
-        color: #ef4444;
-        animation: pulse 1.5s infinite;
-      }
-
-      @keyframes pulse {
-        0% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.2); opacity: 0.7; }
-        100% { transform: scale(1); opacity: 1; }
-      }
-
-      .search-input::placeholder {
-        color: var(--color-gray-400);
-      }
-
-      .search-btn {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 16px 32px;
-        background: var(--color-gold);
-        color: var(--color-navy);
-        border: none;
-        border-radius: var(--radius);
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-
-      .search-btn:hover {
-        background: var(--color-gold-light);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-lg);
-      }
-
-      .map-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 56px;
-        height: 56px;
-        padding: 0;
-        background: var(--color-navy);
-        color: var(--color-gold);
-        border: 2px solid var(--color-gold);
-        border-radius: var(--radius);
-        font-size: 1rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-
-      .map-btn:hover {
-        background: var(--color-navy-light);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-lg);
-      }
-
-      @media (max-width: 768px) {
-        .search-bar {
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .search-btn,
-        .map-btn {
-          width: 100%;
-          height: auto;
-          padding: 12px 20px;
-        }
-
-        .map-btn {
-          width: 100%;
-        }
-      }
-
-      /* Hero Stats */
-      .hero-stats {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 32px;
-      }
-
-      .hero-stat {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .hero-stat .stat-number {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: var(--color-gold);
-      }
-
-      .hero-stat .stat-label {
-        font-size: 0.875rem;
-        opacity: 0.8;
-      }
-
-      .stat-divider {
-        background: rgba(255, 255, 255, 0.2);
-        height: 40px;
-      }
-
-      /* Scroll Indicator */
-      .scroll-indicator {
-        position: absolute;
-        bottom: 32px;
-        left: 50%;
-        transform: translateX(-50%);
-        animation: bounce 2s infinite;
-      }
-
-      .scroll-indicator mat-icon {
-        color: var(--color-white);
-        opacity: 0.6;
-        font-size: 32px;
-      }
-
-      @keyframes bounce {
-        0%,
-        20%,
-        50%,
-        80%,
-        100% {
-          transform: translateX(-50%) translateY(0);
-        }
-        40% {
-          transform: translateX(-50%) translateY(-10px);
-        }
-        60% {
-          transform: translateX(-50%) translateY(-5px);
-        }
-      }
-
-      /* ===== How It Works Section ===== */
-      .how-it-works {
-        padding: 100px 0;
-        background: var(--color-gray-50);
-      }
-
-      .steps-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 32px;
-      }
-
-      .step-card {
-        background: var(--color-white);
-        border-radius: var(--radius-lg);
-        padding: 40px 32px;
-        text-align: center;
-        box-shadow: var(--shadow);
-        position: relative;
-        transition: all 0.3s ease;
-      }
-
-      .step-card:hover {
-        transform: translateY(-8px);
-        box-shadow: var(--shadow-xl);
-      }
-
-      .step-number {
-        position: absolute;
-        top: -20px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 40px;
-        height: 40px;
-        background: var(--color-gold);
-        color: var(--color-navy);
-        font-size: 1.25rem;
-        font-weight: 700;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .step-icon-wrapper {
-        width: 80px;
-        height: 80px;
-        background: rgba(27, 58, 107, 0.1);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 24px;
-      }
-
-      .step-icon {
-        font-size: 36px;
-        color: var(--color-navy);
-      }
-
-      .step-title {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: var(--color-gray-900);
-        margin: 0 0 12px 0;
-      }
-
-      .step-description {
-        font-size: 1rem;
-        color: var(--color-gray-500);
-        line-height: 1.6;
-        margin: 0 0 20px 0;
-      }
-
-      .step-features {
-        display: flex;
-        justify-content: center;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-
-      .feature-tag {
-        padding: 4px 12px;
-        background: var(--color-gray-100);
-        color: var(--color-gray-600);
-        font-size: 0.8rem;
-        border-radius: 20px;
-      }
-
-      /* ===== Featured Properties Section ===== */
-      .featured-section {
-        padding: 100px 0;
-        background: var(--color-white);
-      }
-
-      /* Skeleton Loading */
-      .skeleton-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 24px;
-      }
-
-      .skeleton-card {
-        background: var(--color-gray-100);
-        border-radius: var(--radius-lg);
-        overflow: hidden;
-      }
-
-      .skeleton-image {
-        height: 220px;
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: shimmer 1.5s infinite;
-      }
-
-      .skeleton-content {
-        padding: 20px;
-      }
-
-      .skeleton-title {
-        height: 24px;
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: shimmer 1.5s infinite;
-        border-radius: 4px;
-        margin-bottom: 12px;
-      }
-
-      .skeleton-line {
-        height: 16px;
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: shimmer 1.5s infinite;
-        border-radius: 4px;
-        margin-bottom: 8px;
-      }
-
-      .skeleton-line.short {
-        width: 60%;
-      }
-
-      @keyframes shimmer {
-        0% {
-          background-position: -200% 0;
-        }
-        100% {
-          background-position: 200% 0;
-        }
-      }
-
-      /* Error & Empty States */
-      .error-message,
-      .empty-state {
-        text-align: center;
-        padding: 80px 20px;
-      }
-
-      .error-icon,
-      .empty-icon {
-        font-size: 64px;
-        width: 64px;
-        height: 64px;
-        color: var(--color-gray-300);
-        margin-bottom: 16px;
-      }
-
-      .error-message p {
-        color: var(--color-gray-500);
-        margin-bottom: 20px;
-      }
-
-      .empty-state h3 {
-        font-size: 1.5rem;
-        color: var(--color-gray-700);
-        margin: 0 0 8px 0;
-      }
-
-      .empty-state p {
-        color: var(--color-gray-500);
-        margin: 0 0 24px 0;
-      }
-
-      /* Properties Grid */
-      .properties-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 24px;
-        margin-bottom: 40px;
-      }
-
-      .property-card {
-        cursor: pointer;
-        border-radius: var(--radius-lg);
-        overflow: hidden;
-        box-shadow: var(--shadow);
-        transition: all 0.3s ease;
-        background: var(--color-white);
-      }
-
-      .property-card:hover {
-        transform: translateY(-8px);
-        box-shadow: var(--shadow-xl);
-      }
-
-      .property-image-wrapper {
-        position: relative;
-        height: 220px;
-        overflow: hidden;
-      }
-
-      .property-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.5s ease;
-      }
-
-      .property-card:hover .property-image {
-        transform: scale(1.05);
-      }
-
-      .property-badges {
-        position: absolute;
-        top: 12px;
-        left: 12px;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-
-      .badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 500;
-      }
-
-      .badge.featured {
-        background: var(--color-gold);
-        color: var(--color-navy);
-      }
-
-      .badge.instant {
-        background: var(--color-navy);
-        color: var(--color-white);
-      }
-
-      .badge mat-icon {
-        font-size: 14px;
-      }
-
-      .listing-badge {
-        position: absolute;
-        bottom: 12px;
-        right: 12px;
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 500;
-      }
-
-      .listing-badge.sale {
-        background: rgba(27, 58, 107, 0.9);
-        color: var(--color-white);
-      }
-
-      .listing-badge.rent {
-        background: rgba(16, 185, 129, 0.9);
-        color: var(--color-white);
-      }
-
-      .listing-badge.shorttermrent {
-        background: rgba(59, 130, 246, 0.9);
-        color: var(--color-white);
-      }
-
-      .property-content {
-        padding: 20px;
-      }
-
-      .property-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 8px;
-      }
-
-      .property-title {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: var(--color-gray-900);
-        margin: 0;
-        flex: 1;
-        line-height: 1.4;
-      }
-
-      .property-rating {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        color: #f59e0b;
-      }
-
-      .star-icon {
-        font-size: 18px;
-      }
-
-      .property-location {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        color: var(--color-gray-500);
-        font-size: 0.9rem;
-        margin-bottom: 12px;
-      }
-
-      .property-location mat-icon {
-        font-size: 18px;
-        color: var(--color-gray-400);
-      }
-
-      .property-amenities {
-        display: flex;
-        gap: 16px;
-        margin-bottom: 16px;
-      }
-
-      .amenity {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        color: var(--color-gray-600);
-        font-size: 0.875rem;
-      }
-
-      .amenity mat-icon {
-        font-size: 18px;
-        color: var(--color-gray-400);
-      }
-
-      .footer-bottom {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: var(--space-4) 0;
-        flex-wrap: wrap;
-        gap: var(--space-4);
-      }
-
-      .footer-info {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      .bmi-info {
-        font-size: 0.8rem;
-        color: var(--color-text-muted);
-        margin: 0;
-      }
-
-      .copyright {
-        margin: 0;
-        font-size: 0.9rem;
-        color: var(--color-text-secondary);
-      }
-
-      .property-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-top: 16px;
-        border-top: 1px solid var(--color-gray-200);
-      }
-
-      .property-price {
-        display: flex;
-        align-items: baseline;
-      }
-
-      .property-price .price {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: var(--color-navy);
-      }
-
-      .property-price .period {
-        font-size: 0.875rem;
-        color: var(--color-gray-500);
-        margin-left: 4px;
-      }
-
-      .favorite-btn {
-        color: var(--color-gray-400);
-      }
-
-      .view-all-wrapper {
-        text-align: center;
-      }
-
-      .view-all-btn {
-        padding: 14px 32px;
-        background: var(--color-navy);
-        color: var(--color-white);
-        font-size: 1rem;
-        font-weight: 500;
-        border-radius: var(--radius);
-      }
-
-      .view-all-btn:hover {
-        background: var(--color-navy-light);
-      }
-
-      /* ===== Stats Section ===== */
-      .stats-section {
-        padding: 80px 0;
-        background: var(--color-gray-100);
-      }
-
-      .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 24px;
-      }
-
-      .stat-card {
-        background: var(--color-white);
-        border-radius: var(--radius-lg);
-        padding: 32px 24px;
-        text-align: center;
-        box-shadow: var(--shadow);
-        transition: all 0.3s ease;
-      }
-
-      .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-lg);
-      }
-
-      .stat-icon-wrapper {
-        width: 64px;
-        height: 64px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 16px;
-      }
-
-      .stat-icon-wrapper.navy {
-        background: rgba(27, 58, 107, 0.1);
-        color: var(--color-navy);
-      }
-
-      .stat-icon-wrapper.gold {
-        background: rgba(201, 168, 76, 0.15);
-        color: var(--color-gold);
-      }
-
-      .stat-icon-wrapper mat-icon {
-        font-size: 32px;
-      }
-
-      .stat-card .stat-number {
-        font-size: 2rem;
-        font-weight: 700;
-        color: var(--color-gray-900);
-        margin: 0 0 4px 0;
-      }
-
-      .stat-card .stat-label {
-        font-size: 0.95rem;
-        color: var(--color-gray-500);
-        margin: 0;
-      }
-
-      /* ===== Why Choose Us Section ===== */
-      .why-section {
-        padding: 100px 0;
-        background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-dark) 100%);
-      }
-
-      .features-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 24px;
-      }
-
-      .feature-card {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: var(--radius-lg);
-        padding: 32px;
-        text-align: center;
-        transition: all 0.3s ease;
-      }
-
-      .feature-card:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.2);
-        transform: translateY(-4px);
-      }
-
-      .feature-icon-wrapper {
-        width: 64px;
-        height: 64px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 20px;
-      }
-
-      .feature-icon-wrapper.navy {
-        background: rgba(255, 255, 255, 0.1);
-        color: var(--color-white);
-      }
-
-      .feature-icon-wrapper.gold {
-        background: rgba(201, 168, 76, 0.2);
-        color: var(--color-gold);
-      }
-
-      .feature-icon-wrapper mat-icon {
-        font-size: 32px;
-      }
-
-      .feature-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: var(--color-white);
-        margin: 0 0 12px 0;
-      }
-
-      .feature-description {
-        font-size: 0.95rem;
-        color: rgba(255, 255, 255, 0.7);
-        line-height: 1.6;
-        margin: 0;
-      }
-
-      /* ===== CTA Section ===== */
-      .cta-section {
-        padding: 80px 0;
-        background: var(--color-gray-50);
-      }
-
-      .cta-content {
-        text-align: center;
-        max-width: 600px;
-        margin: 0 auto;
-      }
-
-      .cta-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: var(--color-gray-900);
-        margin: 0 0 16px 0;
-      }
-
-      .cta-subtitle {
-        font-size: 1.125rem;
-        color: var(--color-gray-500);
-        margin: 0 0 32px 0;
-      }
-
-      .cta-buttons {
-        display: flex;
-        justify-content: center;
-        gap: 16px;
-        flex-wrap: wrap;
-      }
-
-      .btn-primary {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 16px 32px;
-        background: var(--color-gold);
-        color: var(--color-navy);
-        font-size: 1rem;
-        font-weight: 600;
-        border-radius: var(--radius);
-        transition: all 0.3s ease;
-      }
-
-      .btn-primary:hover {
-        background: var(--color-gold-light);
-        transform: translateY(-2px);
-      }
-
-      .btn-secondary {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 16px 32px;
-        border: 2px solid var(--color-navy);
-        color: var(--color-navy);
-        font-size: 1rem;
-        font-weight: 600;
-        border-radius: var(--radius);
-        transition: all 0.3s ease;
-      }
-
-      .btn-secondary:hover {
-        background: var(--color-navy);
-        color: var(--color-white);
-      }
-
-      /* ===== Footer ===== */
-      .footer {
-        background: var(--color-gray-900);
-        color: var(--color-white);
-        padding: 64px 0 24px;
-      }
-
-      .footer-grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr 1fr 1fr;
-        gap: 48px;
-        margin-bottom: 48px;
-      }
-
-      .footer-logo {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 16px;
-      }
-
-      .footer-logo mat-icon {
-        font-size: 32px;
-        color: var(--color-gold);
-      }
-
-      .footer-logo span {
-        font-size: 1.5rem;
-        font-weight: 700;
-      }
-
-      .footer-description {
-        color: var(--color-gray-400);
-        line-height: 1.6;
-        margin: 0 0 24px 0;
-      }
-
-      .footer-social {
-        display: flex;
-        gap: 12px;
-      }
-
-      .social-link {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 50%;
-        color: var(--color-white);
-        transition: all 0.3s ease;
-      }
-
-      .social-link:hover {
-        background: var(--color-gold);
-        color: var(--color-navy);
-      }
-
-      .footer-title {
-        font-size: 1rem;
-        font-weight: 600;
-        margin: 0 0 16px 0;
-      }
-
-      .footer-links ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-
-      .footer-links li {
-        margin-bottom: 10px;
-      }
-
-      .footer-links a {
-        color: var(--color-gray-400);
-        text-decoration: none;
-        transition: color 0.3s ease;
-      }
-
-      .footer-links a:hover {
-        color: var(--color-gold);
-      }
-
-      .footer-divider {
-        background: rgba(255, 255, 255, 0.1);
-        margin-bottom: 24px;
-      }
-
-      .footer-bottom {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: var(--space-4) 0;
-        flex-wrap: wrap;
-        gap: var(--space-4);
-      }
-
-      .footer-info {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      .bmi-info {
-        font-size: 0.8rem;
-        color: var(--color-text-muted);
-        margin: 0;
-      }
-
-      .copyright {
-        margin: 0;
-        font-size: 0.9rem;
-        color: var(--color-text-secondary);
-      }
-
-      .footer-payments {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        color: var(--color-gray-500);
-      }
-
-      .payment-icons {
-        display: flex;
-        gap: 8px;
-      }
-
-      .payment-badge {
-        padding: 4px 12px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 4px;
-        font-size: 0.875rem;
-      }
-
-      /* ===== Responsive Design ===== */
-      @media (max-width: 1024px) {
-        .steps-grid,
-        .features-grid {
-          grid-template-columns: repeat(2, 1fr);
-        }
-
-        .stats-grid {
-          grid-template-columns: repeat(2, 1fr);
-        }
-
-        .properties-grid {
-          grid-template-columns: repeat(2, 1fr);
-        }
-
-        .footer-grid {
-          grid-template-columns: 1fr 1fr;
-        }
-      }
-
-      @media (max-width: 768px) {
-        .hero-title {
-          font-size: 2rem;
-        }
-
-        .section-title {
-          font-size: 1.75rem;
-        }
-
-        .listing-type-toggle {
-          flex-direction: column;
-          align-items: center;
-        }
-
-        .toggle-btn {
-          width: 100%;
-          max-width: 280px;
-          justify-content: center;
-        }
-
-        .search-bar {
-          flex-direction: column;
-        }
-
-        .search-btn {
-          width: 100%;
-          justify-content: center;
-        }
-
-        .hero-stats {
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .stat-divider {
-          display: none;
-        }
-
-        .steps-grid,
-        .features-grid,
-        .stats-grid,
-        .properties-grid,
-        .skeleton-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .footer-grid {
-          grid-template-columns: 1fr;
-          gap: 32px;
-        }
-
-        .footer-bottom {
-          flex-direction: column;
-          text-align: center;
-        }
-
-        .cta-title {
-          font-size: 1.75rem;
-        }
-
-        .cta-buttons {
-          flex-direction: column;
-          align-items: center;
-        }
-
-        .btn-primary,
-        .btn-secondary {
-          width: 100%;
-          max-width: 280px;
-          justify-content: center;
-        }
-      }
-    `,
-  ],
+  styles: [`
+    :host {
+      --primary: #0f172a;
+      --accent: #c9a84c;
+      --accent-light: #d4bc74;
+      --text-muted: #64748b;
+      --white: #ffffff;
+      --glass: rgba(255, 255, 255, 0.1);
+      --glass-dark: rgba(15, 23, 42, 0.8);
+      --radius: 16px;
+      --radius-lg: 24px;
+      --shadow: 0 20px 40px rgba(0,0,0,0.1);
+      display: block;
+    }
+
+    .home-wrapper { overflow-x: hidden; font-family: 'Inter', sans-serif; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+    /* --- HERO --- */
+    .hero-section {
+      position: relative;
+      height: 90vh;
+      min-height: 700px;
+      display: flex;
+      align-items: center;
+      color: var(--white);
+      overflow: hidden;
+      background: var(--primary);
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+    .hero-bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.6) contrast(1.1);
+    }
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(15,23,42,0.4) 0%, var(--primary) 100%);
+      z-index: 1;
+    }
+    .hero-container { position: relative; z-index: 2; }
+    .hero-content { max-width: 800px; margin: 0 auto; text-align: center; }
+
+    .badge-premium {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 40px;
+      margin-bottom: 24px;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    .badge-premium mat-icon { color: var(--accent); font-size: 18px; }
+
+    .hero-title {
+      font-size: clamp(3rem, 6vw, 5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      letter-spacing: -2px;
+    }
+    .text-gradient {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle {
+      font-size: 1.25rem;
+      opacity: 0.8;
+      max-width: 600px;
+      margin: 0 auto 48px;
+      line-height: 1.6;
+    }
+
+    /* --- SEARCH PANEL --- */
+    .search-panel-glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(25px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-lg);
+      padding: 10px;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.3);
+      max-width: 900px;
+      margin: 0 auto 60px;
+    }
+    .search-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-left: 10px;
+    }
+    .search-tabs button {
+      background: transparent;
+      border: none;
+      color: var(--white);
+      padding: 8px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      opacity: 0.6;
+      transition: all 0.3s;
+    }
+    .search-tabs button.active { background: var(--glass); opacity: 1; color: var(--accent); }
+
+    .search-main {
+      display: flex;
+      gap: 12px;
+      background: var(--white);
+      padding: 8px;
+      border-radius: 18px;
+      align-items: center;
+    }
+    .input-group {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      color: var(--primary);
+    }
+    .input-group input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 1.1rem;
+      padding: 12px 0;
+      color: var(--primary);
+      width: 100%;
+    }
+    .input-group mat-icon { color: var(--accent); }
+    
+    .mic-active { color: #ef4444 !important; animation: pulse 1.5s infinite; }
+
+    .search-actions { display: flex; gap: 8px; }
+    .map-trigger { background: #f1f5f9; border-radius: 14px; color: var(--primary); }
+    .btn-search {
+      background: var(--primary) !important;
+      color: var(--white) !important;
+      padding: 0 32px !important;
+      border-radius: 14px !important;
+      font-weight: 700 !important;
+      height: 54px !important;
+    }
+
+    /* --- STATS --- */
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 20px;
+    }
+    .stat-item { display: flex; flex-direction: column; }
+    .stat-val { font-size: 2rem; font-weight: 800; color: var(--accent); }
+    .stat-lab { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; }
+    .stat-divider { width: 1px; height: 40px; background: rgba(255,255,255,0.1); align-self: center; }
+
+
+
+    /* --- REGIONS --- */
+    .regions-section { padding: 100px 0; background: #fff; }
+    .regions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
+    .region-card { position: relative; height: 320px; border-radius: var(--radius-lg); overflow: hidden; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+    .region-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+    .region-card:hover img { transform: scale(1.1); }
+    .region-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(15,23,42,0.9) 0%, transparent 60%); display: flex; flex-direction: column; justify-content: flex-end; padding: 24px; color: var(--white); }
+    .region-overlay h3 { font-size: 1.5rem; font-weight: 800; margin: 0; }
+    .region-overlay span { font-size: 0.9rem; opacity: 0.7; }
+
+    /* --- AI SECTION --- */
+    .ai-section { padding: 120px 0; background: var(--primary); color: var(--white); }
+    .ai-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 80px; align-items: center; }
+    .ai-badge { color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; display: block; margin-bottom: 16px; }
+    .ai-title { font-size: 3.5rem; font-weight: 800; line-height: 1.1; margin-bottom: 24px; }
+    .ai-title span { color: var(--accent); }
+    .ai-desc { font-size: 1.2rem; opacity: 0.7; line-height: 1.6; margin-bottom: 32px; }
+    .ai-list { list-style: none; padding: 0; margin-bottom: 40px; }
+    .ai-list li { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 1.1rem; }
+    .ai-list mat-icon { color: var(--accent); }
+    .btn-ai-action { background: var(--accent) !important; color: var(--primary) !important; padding: 0 40px !important; border-radius: 14px !important; font-weight: 700 !important; height: 56px !important; }
+
+    .ai-visual { position: relative; }
+    .ai-card-float {
+      background: var(--white);
+      color: var(--primary);
+      padding: 30px;
+      border-radius: 24px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+      max-width: 300px;
+      margin-left: auto;
+    }
+    .ai-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; font-weight: 700; }
+    .ai-chart-mock { display: flex; align-items: flex-end; gap: 10px; height: 100px; margin-bottom: 24px; }
+    .ai-chart-mock .bar { flex: 1; background: #e2e8f0; border-radius: 4px; }
+    .ai-chart-mock .bar:nth-child(3) { background: var(--accent); }
+    .ai-result { text-align: center; padding-top: 20px; border-top: 1px solid #f1f5f9; }
+    .ai-result small { display: block; color: var(--text-muted); }
+    .ai-result strong { font-size: 1.8rem; color: var(--primary); }
+
+    /* --- CTA --- */
+    .cta-banner { padding: 80px 0; }
+    .cta-box {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+      padding: 80px;
+      border-radius: var(--radius-lg);
+      text-align: center;
+      color: var(--primary);
+    }
+    .cta-box h2 { font-size: 3rem; font-weight: 800; margin-bottom: 16px; }
+    .cta-box p { font-size: 1.25rem; opacity: 0.8; margin-bottom: 40px; }
+    .cta-btns { display: flex; justify-content: center; gap: 16px; }
+    .btn-cta-primary { background: var(--primary) !important; color: var(--white) !important; padding: 0 40px !important; border-radius: 14px !important; height: 56px !important; font-weight: 700 !important; }
+    .btn-cta-secondary { border-color: var(--primary) !important; color: var(--primary) !important; border-width: 2px !important; padding: 0 40px !important; border-radius: 14px !important; height: 56px !important; font-weight: 700 !important; }
+
+    /* --- FOOTER --- */
+    .footer-premium { background: #020617; padding: 100px 0 40px; color: var(--white); }
+    .footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1.5fr; gap: 60px; margin-bottom: 80px; }
+    .brand-col .logo { display: flex; align-items: center; gap: 10px; font-size: 1.8rem; font-weight: 800; margin-bottom: 24px; color: var(--white); }
+    .brand-col p { opacity: 0.6; line-height: 1.6; max-width: 280px; }
+    .socials { display: flex; gap: 16px; margin-top: 32px; }
+    .socials a { color: var(--white); opacity: 0.6; transition: 0.3s; }
+    .socials a:hover { opacity: 1; color: var(--accent); }
+    
+    .footer-col h4 { font-size: 1.1rem; font-weight: 700; margin-bottom: 24px; }
+    .footer-col a { display: block; color: var(--white); opacity: 0.6; margin-bottom: 12px; transition: 0.3s; }
+    .footer-col a:hover { opacity: 1; padding-left: 5px; color: var(--accent); }
+
+    .footer-bottom { border-top: 1px solid rgba(255,255,255,0.05); padding-top: 40px; display: flex; justify-content: space-between; opacity: 0.5; font-size: 0.9rem; }
+    .bmi-tag { font-weight: 600; color: var(--accent); }
+
+    /* --- ANIMATIONS --- */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-20px); } 100% { transform: translateY(0px); } }
+    
+    .animate-fade-in { animation: fadeIn 1s ease-out; }
+    .animate-slide-up { animation: slideUp 0.8s ease-out; }
+    .animate-slide-up-delay { animation: slideUp 0.8s ease-out 0.2s forwards; opacity: 0; }
+    .animate-slide-up-long { animation: slideUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards; opacity: 0; }
+    .animate-fade-in-long { animation: fadeIn 1.5s ease-out 0.8s forwards; opacity: 0; }
+    .animate-float { animation: float 4s ease-in-out infinite; }
+
+    @media (max-width: 1024px) {
+      .ai-grid { grid-template-columns: 1fr; gap: 40px; text-align: center; }
+      .ai-card-float { margin: 0 auto; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      .hero-title { font-size: 2.8rem; }
+      .search-main { flex-direction: column; padding: 12px; }
+      .btn-search { width: 100% !important; }
+      .grid-properties { grid-template-columns: 1fr; }
+      .cta-box { padding: 40px 24px; }
+      .cta-btns { flex-direction: column; }
+    }
+  `]
 })
 export class HomeComponent implements OnInit {
-  constructor(
-    private authService: AuthService,
-    private propertyService: PropertyService,
-    private reviewService: ReviewService,
-    private notificationService: NotificationsService,
-    private router: Router,
-    private geolocationService: GeolocationService,
-  ) {}
-
+  private authService = inject(AuthService);
+  private propertyService = inject(PropertyService);
+  private router = inject(Router);
   private dialog = inject(MatDialog);
   protected readonly voiceService = inject(VoiceSearchService);
   protected readonly uiStore = inject(UIStore);
-
-  onFreeListingClick(): void {
-    if (this.authService.isAuthenticated()) {
-      this.router.navigate(['/elon-berish/tur']);
-    } else {
-      this.router.navigate(['/auth/register']);
-    }
-  }
-
-  private route = inject(ActivatedRoute);
-
-  toggleVoiceSearch() {
-    if (this.voiceService.isListening()) {
-      this.voiceService.stop();
-    } else {
-      const langMap: Record<string, string> = {
-        uz: 'uz-UZ',
-        ru: 'ru-RU',
-        en: 'en-US'
-      };
-      this.voiceService.setLanguage(langMap[this.uiStore.language()] || 'uz-UZ');
-      this.voiceService.start();
-    }
-  }
   private snackBar = inject(MatSnackBar);
+  private geolocationService = inject(GeolocationService);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  locationSuggestions = signal<string[]>([]);
+  counts = { listings: 0, regions: 0, users: 0 };
   featuredProperties: any[] = [];
   loading = false;
-
-  error = signal<string | null>(null);
-  listingTypeEnum = ListingType;
-
   searchQuery = '';
   listingType: 'Sale' | 'Rent' | 'ShortTermRent' = 'Rent';
+  listingTypeEnum = ListingType;
+
+  topRegions = [
+    { id: 1, name: 'Toshkent', count: '1,200+ e\'lon', img: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=800&auto=format&fit=crop', delay: '0s' },
+    { id: 2, name: 'Samarqand', count: '450+ e\'lon', img: 'https://images.unsplash.com/photo-1528154291023-a6525fabe5b4?q=80&w=800&auto=format&fit=crop', delay: '0.1s' },
+    { id: 3, name: 'Buxoro', count: '280+ e\'lon', img: 'https://images.unsplash.com/photo-1580191947416-62d35a55e71d?q=80&w=800&auto=format&fit=crop', delay: '0.2s' },
+    { id: 4, name: 'Namangan', count: '150+ e\'lon', img: 'https://images.unsplash.com/photo-1493246507139-91e8bef99c02?q=80&w=800&auto=format&fit=crop', delay: '0.3s' },
+    { id: 5, name: 'Andijon', count: '210+ e\'lon', img: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800&auto=format&fit=crop', delay: '0.4s' },
+    { id: 6, name: 'Farg\'ona', count: '190+ e\'lon', img: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=800&auto=format&fit=crop', delay: '0.5s' },
+    { id: 7, name: 'Xorazm', count: '120+ e\'lon', img: 'https://images.unsplash.com/photo-1505761671935-60b3a7427bad?q=80&w=800&auto=format&fit=crop', delay: '0.6s' },
+    { id: 8, name: 'Navoiy', count: '90+ e\'lon', img: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=800&auto=format&fit=crop', delay: '0.7s' },
+    { id: 9, name: 'Qashqadaryo', count: '110+ e\'lon', img: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=800&auto=format&fit=crop', delay: '0.8s' },
+    { id: 10, name: 'Surxondaryo', count: '85+ e\'lon', img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop', delay: '0.9s' },
+    { id: 11, name: 'Jizzax', count: '70+ e\'lon', img: 'https://images.unsplash.com/photo-1500382017468-9049fee74a62?q=80&w=800&auto=format&fit=crop', delay: '1.0s' },
+    { id: 12, name: 'Sirdaryo', count: '60+ e\'lon', img: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=800&auto=format&fit=crop', delay: '1.1s' },
+    { id: 13, name: 'Qoraqalpog\'iston', count: '95+ e\'lon', img: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?q=80&w=800&auto=format&fit=crop', delay: '1.2s' },
+  ];
+
+  onRegionImgError(e: any) {
+    e.target.src = 'https://placehold.co/800x600/0f172a/c9a84c?text=Mulkchi+Hudud';
+  }
 
   ngOnInit(): void {
     this.voiceService.textResult$.subscribe(text => {
@@ -1858,146 +564,102 @@ export class HomeComponent implements OnInit {
       this.onSearch();
     });
     this.loadFeaturedProperties();
+    this.animateCounters();
   }
 
-  onSearch(): void {
-    if (this.searchQuery.trim()) {
-      this.router.navigate(['/properties'], {
-        queryParams: { search: this.searchQuery.trim(), listingType: this.listingType },
-      });
-    } else {
-      this.router.navigate(['/properties'], {
-        queryParams: { listingType: this.listingType },
-      });
+  onSearchInput(event: any) {
+    const query = event.target.value;
+    if (query.length < 2) {
+      this.locationSuggestions.set([]);
+      return;
     }
-  }
-
-  openMapPicker(): void {
-    this.dialog
-      .open(LocationPickerMapComponent, {
-        width: '90%',
-        maxWidth: '600px',
-        panelClass: 'location-picker-dialog',
-      })
-      .afterClosed()
-      .subscribe((result) => {
-        if (result) {
-          const { coordinates, name } = result;
-          // Set search query with location name if available
-          if (name?.city) {
-            this.searchQuery = `${name.city}${name.district ? ', ' + name.district : ''}`;
-          }
-          // Navigate to properties with coordinates
-          this.router.navigate(['/properties'], {
-            queryParams: {
-              lat: coordinates.latitude.toFixed(4),
-              lng: coordinates.longitude.toFixed(4),
-              listingType: this.listingType,
-              searchType: 'geolocation',
-            },
-          });
-        }
-      });
-  }
-
-  useGeolocation(): void {
-    this.geolocationService.getCurrentLocation().subscribe({
-      next: async (coordinates) => {
-        // Get location name
-        const locName = await this.geolocationService.getReverseGeocode(
-          coordinates.latitude,
-          coordinates.longitude,
-        );
-
-        // Set search query with location name
-        if (locName?.city) {
-          this.searchQuery = `${locName.city}${locName.district ? ', ' + locName.district : ''}`;
-        }
-
-        // Navigate to properties with coordinates
-        this.router.navigate(['/properties'], {
-          queryParams: {
-            lat: coordinates.latitude.toFixed(4),
-            lng: coordinates.longitude.toFixed(4),
-            listingType: this.listingType,
-            searchType: 'geolocation',
-          },
-        });
-      },
-      error: () => {
-        this.snackBar.open('❌ Joylashuvni aniqlash imkonsiz', 'OK', { duration: 3000 });
-      },
+    
+    this.propertyService.autocompleteLocations(query).subscribe(res => {
+      this.locationSuggestions.set(res);
     });
   }
 
-  loadFeaturedProperties(): void {
-    this.error.set(null);
+  private animateCounters() {
+    const targets = { listings: 200, regions: 14, users: 50 };
+    const duration = 2000;
+    const steps = 60;
+    let current = 0;
+    const timer = setInterval(() => {
+      current++;
+      this.counts.listings = Math.round((targets.listings / steps) * current);
+      this.counts.regions = Math.round((targets.regions / steps) * current);
+      this.counts.users = Math.round((targets.users / steps) * current);
+      if (current >= steps) clearInterval(timer);
+    }, duration / steps);
+  }
+
+  loadFeaturedProperties() {
     this.loading = true;
-
     this.propertyService.getFeaturedProperties(6).subscribe({
-      next: (properties) => {
-        this.featuredProperties = properties;
+      next: (res) => {
+        this.featuredProperties = res;
         this.loading = false;
       },
-      error: () => {
-        this.error.set("Mulklarni yuklashda xatolik yuz berdi. Iltimos, qayta urinib ko'ring.");
-        this.loading = false;
-      },
+      error: () => this.loading = false
     });
   }
 
-  getListingTypeLabel(type: ListingType | undefined): string {
-    switch (type) {
-      case ListingType.Sale:
-        return 'Sotuv';
-      case ListingType.Rent:
-        return 'Ijara';
-      case ListingType.ShortTermRent:
-        return 'Kunlik';
-      default:
-        return '';
+  searchByRegion(region: string) {
+    this.router.navigate(['/properties'], { queryParams: { region, listingType: this.listingType } });
+  }
+
+  onSearch() {
+    this.router.navigate(['/properties'], {
+      queryParams: { search: this.searchQuery.trim(), listingType: this.listingType }
+    });
+  }
+
+  toggleVoiceSearch() {
+    if (this.voiceService.isListening()) {
+      this.voiceService.stop();
+    } else {
+      this.voiceService.setLanguage('uz-UZ');
+      this.voiceService.start();
     }
   }
 
-  // Get image URL from property (handles multiple image formats)
-  // Uses thumbnail for faster loading
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getImageUrl(property: any): string {
-    if (property.images?.length > 0) {
-      // Find primary image or use first one
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const primaryImage = property.images.find((img: any) => img.isPrimary) || property.images[0];
+  openMapPicker() {
+    this.dialog.open(LocationPickerMapComponent, {
+      width: '90%', maxWidth: '600px'
+    }).afterClosed().subscribe(res => {
+      if (res) {
+        this.router.navigate(['/properties'], {
+          queryParams: { lat: res.coordinates.latitude, lng: res.coordinates.longitude, listingType: this.listingType }
+        });
+      }
+    });
+  }
 
-      // Use thumbnail for faster loading, fallback to url
-      return primaryImage.thumbnailUrl || primaryImage.url || primaryImage.imageUrl || '';
+  onFreeListingClick() {
+    this.router.navigate([this.authService.isAuthenticated() ? '/elon-berish/tur' : '/auth/register']);
+  }
+
+  getListingTypeLabel(type: any) {
+    if (type === 'Sale') return 'Sotuv';
+    if (type === 'Rent') return 'Ijara';
+    return 'Kunlik';
+  }
+
+  private imageOptimizationService = inject(ImageOptimizationService);
+
+  getImageUrl(p: any) {
+    const rawUrl = p.images?.[0]?.url || p.images?.[0]?.thumbnailUrl;
+    if (rawUrl) {
+      return this.imageOptimizationService.getOptimizedImage(rawUrl, 600, 400);
     }
-    if (property.thumbnailUrl) return property.thumbnailUrl;
-    if (property.imageUrl) return property.imageUrl;
-    return this.getPlaceholderImage(property);
+    return `https://placehold.co/600x400/0f172a/c9a84c?text=Mulkchi`;
   }
 
-  // Handle image load error
-  onImgError(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    const propertyType = img.getAttribute('data-property-type') || 'Apartment';
-    img.src = this.getPlaceholderImage({ type: propertyType });
+  onImgError(e: any) {
+    e.target.src = 'https://placehold.co/600x400/0f172a/c9a84c?text=Mulk';
   }
 
-  // Get placeholder image based on property type
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getPlaceholderImage(property: any): string {
-    const type = property.type || 'Apartment';
-    const colors: Record<string, string> = {
-      Apartment: '1B3A6B/C9A84C',
-      House: '1B3A6B/ffffff',
-      Villa: 'C9A84C/1B3A6B',
-      Office: '2a4a7c/ffffff',
-    };
-    const color = colors[type] || '1B3A6B/C9A84C';
-    return `https://placehold.co/400x220/${color}?text=${encodeURIComponent(type)}`;
-  }
-
-  navigateToProperty(id: string): void {
+  navigateToProperty(id: string) {
     this.router.navigate(['/properties', id]);
   }
 }

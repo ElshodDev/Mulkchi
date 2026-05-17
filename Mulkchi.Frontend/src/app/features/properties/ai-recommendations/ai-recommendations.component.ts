@@ -672,7 +672,7 @@ export class AiRecommendationsComponent implements OnInit {
   }
 
   addToCompare(property: Property): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const added = this.comparisonService.addToCompare(property as any);
     if (added) {
       this.snackBar.open('Mulk solishtirish ro\'yxatiga qo\'shildi', 'Solishtirish', {

@@ -138,24 +138,28 @@ export class AuthService {
       });
   }
 
-  mapApiAuthResponse(apiResponse: ApiAuthResponse | Record<string, unknown>): AuthResponse {
-    const getValue = (camelKey: string, pascalKey: string): unknown =>
-      (apiResponse as Record<string, unknown>)[camelKey] ??
-      (apiResponse as Record<string, unknown>)[pascalKey];
+  private getAbsoluteUrl(url: string | undefined): string | undefined {
+    if (!url) return undefined;
+    if (url.startsWith('http')) return url;
+    const baseUrl = environment.apiUrl.replace(/\/api\/?$/, '');
+    return `${baseUrl}/${url.startsWith('/') ? url.substring(1) : url}`;
+  }
 
-    const token = (getValue('accessToken', 'AccessToken') || getValue('token', 'Token')) as string;
+  mapApiAuthResponse(apiResponse: ApiAuthResponse | Record<string, any>): AuthResponse {
+    const data = apiResponse as Record<string, any>;
+    const get = (key: string) => data[key] ?? data[key.charAt(0).toUpperCase() + key.slice(1)];
 
     return {
-      token,
-      refreshToken: (getValue('refreshToken', 'RefreshToken') as string | undefined) ?? '',
-      expiresAt: new Date(getValue('expiresAt', 'ExpiresAt') as string),
-      userId: getValue('userId', 'UserId') as string,
-      email: getValue('email', 'Email') as string,
-      firstName: getValue('firstName', 'FirstName') as string,
-      lastName: getValue('lastName', 'LastName') as string,
-      avatarUrl: getValue('avatarUrl', 'AvatarUrl') as string | undefined,
-      role: getValue('role', 'Role') as UserRole,
-      currentMode: getValue('currentMode', 'CurrentMode') as UserRole | undefined,
+      token: get('accessToken') || get('token'),
+      refreshToken: get('refreshToken') || '',
+      expiresAt: new Date(get('expiresAt')),
+      userId: get('userId'),
+      email: get('email'),
+      firstName: get('firstName'),
+      lastName: get('lastName'),
+      avatarUrl: this.getAbsoluteUrl(get('avatarUrl')),
+      role: get('role') as UserRole,
+      currentMode: (get('currentMode') || get('role')) as UserRole,
     };
   }
 
@@ -198,6 +202,7 @@ export class AuthService {
   getCurrentUser(): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/me`).pipe(
       tap((user) => {
+        user.avatarUrl = this.getAbsoluteUrl(user.avatarUrl);
         this._currentUser.set(user);
         this._currentMode.set(user.currentMode ?? user.role ?? UserRole.Guest);
       }),
@@ -207,6 +212,7 @@ export class AuthService {
   updateProfile(user: Partial<User>): Observable<User> {
     return this.http.put<User>(`${this.usersUrl}/me`, user).pipe(
       tap((updatedUser) => {
+        updatedUser.avatarUrl = this.getAbsoluteUrl(updatedUser.avatarUrl);
         this._currentUser.set(updatedUser);
         this._currentMode.set(updatedUser.currentMode ?? updatedUser.role ?? UserRole.Guest);
       }),
@@ -244,17 +250,11 @@ export class AuthService {
       preferredLanguage: 'uz',
       createdDate: new Date(),
       updatedDate: new Date(),
-    });
+    } as User);
 
-    if (!fetchProfile) {
-      return;
+    if (fetchProfile) {
+      this.getCurrentUser().pipe(take(1)).subscribe();
     }
-
-    this.getCurrentUser()
-      .pipe(take(1))
-      .subscribe({
-        error: () => undefined,
-      });
   }
 
   clearAuth(redirectToLogin = true): void {
@@ -269,11 +269,7 @@ export class AuthService {
   }
 
   switchMode(request: { TargetMode: UserRole }): Observable<AuthResponse> {
-    const body = {
-      TargetMode: request.TargetMode,
-    };
-
-    return this.http.post<Record<string, unknown>>(`${this.apiUrl}/switch-role`, body).pipe(
+    return this.http.post<Record<string, any>>(`${this.apiUrl}/switch-role`, { TargetMode: request.TargetMode }).pipe(
       map((apiResponse) => this.mapApiAuthResponse(apiResponse)),
       tap((response) => this.handleAuthResponse(response, false)),
     );
@@ -304,25 +300,20 @@ export class AuthService {
 
   uploadAvatar(file: File): Observable<User> {
     const userId = this._currentUser()?.id;
-
-    if (!userId) {
-      return throwError(() => new Error('Foydalanuvchi aniqlanmadi'));
-    }
+    if (!userId) return throwError(() => new Error('Foydalanuvchi aniqlanmadi'));
 
     const formData = new FormData();
-    formData.append('avatar', file);
+    formData.append('avatarFile', file);
 
-    return this.http.put<User>(`${this.usersUrl}/${userId}/avatar`, formData).pipe(
+    return this.http.put<User>(`${this.usersUrl}/me/avatar`, formData).pipe(
       tap((updatedUser) => {
         const currentUser = this._currentUser();
-        if (!currentUser) {
-          return;
+        if (currentUser) {
+          this._currentUser.set({
+            ...currentUser,
+            avatarUrl: this.getAbsoluteUrl(updatedUser.avatarUrl),
+          });
         }
-
-        this._currentUser.set({
-          ...currentUser,
-          avatarUrl: updatedUser.avatarUrl,
-        });
       }),
     );
   }
@@ -330,17 +321,12 @@ export class AuthService {
   private handleError(error: HttpErrorResponse): string {
     if (error.error instanceof ErrorEvent) {
       return 'Tarmoq xatosi: ' + error.error.message;
-    } else {
-      if (error.status === 400) {
-        return "Noto'g'ri ma'lumot kiritildi";
-      } else if (error.status === 401) {
-        return "Email yoki parol noto'g'ri";
-      } else if (error.status === 409) {
-        return "Bu email allaqachon ro'yxatdan o'tgan";
-      } else if (error.status === 500) {
-        return "Server xatosi. Iltimos keyinroq urinib ko'ring";
-      }
-      return `Xatolik: ${error.status} - ${error.message}`;
     }
+    const status = error.status;
+    if (status === 400) return "Noto'g'ri ma'lumot kiritildi";
+    if (status === 401) return "Email yoki parol noto'g'ri";
+    if (status === 409) return "Bu email allaqachon ro'yxatdan o'tgan";
+    if (status === 500) return "Server xatosi. Iltimos keyinroq urinib ko'ring";
+    return `Xatolik: ${status} - ${error.message}`;
   }
 }

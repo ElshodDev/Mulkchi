@@ -14,10 +14,13 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDialogModule } from '@angular/material/dialog';
 import { Chart, ChartConfiguration } from 'chart.js/auto';
-import { UzbekistanRegion } from '../../core/models';
+import { UzbekistanRegion, Property } from '../../core/models';
 import { AIPriceRequest, AIService } from '../../core/services/ai.service';
-
+import { PropertyService } from '../../core/services/property.service';
+import { ImageOptimizationService } from '../../core/services/image-optimization.service';
+import { Router } from '@angular/router';
 interface AiPricePredictionView {
   recommendedPrice: number;
   minPrice: number;
@@ -58,6 +61,7 @@ interface AiPricePredictionView {
     MatTooltipModule,
     MatChipsModule,
     MatCheckboxModule,
+    MatDialogModule,
   ],
   animations: [
     trigger('fadeIn', [
@@ -79,10 +83,15 @@ interface AiPricePredictionView {
 export class AiPriceComponent implements OnInit, AfterViewInit {
   private fb = inject(FormBuilder);
   aiService = inject(AIService);
+  private propertyService = inject(PropertyService);
+  protected imageOptimizationService = inject(ImageOptimizationService);
+  private router = inject(Router);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   chartCanvas = viewChild<any>('chartCanvas');
   private chart: Chart | null = null;
+
+  similarRealProperties: Property[] = [];
+  isLoadingSimilar = false;
 
   // Form options
   regions = Object.values(UzbekistanRegion);
@@ -165,15 +174,48 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
     if (this.priceForm.invalid) return;
 
     const request: AIPriceRequest = this.priceForm.value as AIPriceRequest;
+    this.similarRealProperties = [];
 
     this.aiService.predictPrice(request).subscribe({
       next: () => {
         setTimeout(() => this.renderChart(), 100);
+        this.fetchSimilarProperties(request);
       },
       error: () => {
         // Error is already shown in UI
       },
     });
+  }
+
+  fetchSimilarProperties(request: AIPriceRequest): void {
+    this.isLoadingSimilar = true;
+    this.propertyService.searchProperties({
+      listingType: request.listingType as any,
+      propertyType: request.propertyType as any,
+      region: request.region as any,
+      location: request.region,
+      pageSize: 3
+    }).subscribe({
+      next: (res: any) => {
+        this.similarRealProperties = res.items || [];
+        this.isLoadingSimilar = false;
+      },
+      error: () => {
+        this.isLoadingSimilar = false;
+      }
+    });
+  }
+
+  navigateToProperty(id: string) {
+    this.router.navigate(['/properties', id]);
+  }
+
+  getImageUrl(p: any) {
+    const rawUrl = p.images?.[0]?.url || p.images?.[0]?.thumbnailUrl;
+    if (rawUrl) {
+      return this.imageOptimizationService.getOptimizedImage(rawUrl, 600, 400);
+    }
+    return `https://placehold.co/600x400/0f172a/c9a84c?text=Mulkchi`;
   }
 
   formatPrice(price: number | undefined): string {

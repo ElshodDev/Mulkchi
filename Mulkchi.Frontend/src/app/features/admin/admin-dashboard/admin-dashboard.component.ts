@@ -276,7 +276,7 @@ import { PropertyService } from '../../../core/services/property.service';
 
           <!-- Announcements Tab -->
           <mat-tab label="E'lonlar">
-            <div class="tab-content">
+            <div class="tab-content announcement-tab">
               <p class="announcement-info">
                 <mat-icon>info</mat-icon>
                 E'lonlarni boshqarish uchun quyidagi tugmani bosing
@@ -285,6 +285,50 @@ import { PropertyService } from '../../../core/services/property.service';
                 <mat-icon>edit</mat-icon>
                 E'lonlarni boshqarish
               </a>
+            </div>
+          </mat-tab>
+
+          <!-- Logs Tab -->
+          <mat-tab label="Tizim loglari">
+            <div class="logs-container">
+              <div class="logs-header">
+                <div class="logs-stats">
+                  <div class="stat-item error">
+                    <span class="label">Xatolar:</span>
+                    <span class="value">{{ logStats()?.errorCount ?? 0 }}</span>
+                  </div>
+                  <div class="stat-item warning">
+                    <span class="label">Ogohlantirishlar:</span>
+                    <span class="value">{{ logStats()?.warningCount ?? 0 }}</span>
+                  </div>
+                  <div class="stat-item info">
+                    <span class="label">Ma'lumot:</span>
+                    <span class="value">{{ logStats()?.infoCount ?? 0 }}</span>
+                  </div>
+                </div>
+                <button mat-stroked-button (click)="loadLogs()">
+                  <mat-icon>refresh</mat-icon>
+                  Yangilash
+                </button>
+              </div>
+
+              <div class="logs-viewer">
+                @if (logsLoading()) {
+                  <div class="loading-container">
+                    <mat-progress-spinner diameter="30"></mat-progress-spinner>
+                  </div>
+                } @else {
+                  <div class="log-lines">
+                    @for (line of systemLogs(); track $index) {
+                      <div class="log-line" [class]="getLogLevel(line)">
+                        {{ line }}
+                      </div>
+                    } @empty {
+                      <div class="no-logs">Loglar topilmadi</div>
+                    }
+                  </div>
+                }
+              </div>
             </div>
           </mat-tab>
         </mat-tab-group>
@@ -548,20 +592,63 @@ import { PropertyService } from '../../../core/services/property.service';
         align-items: center;
       }
 
-      @media (max-width: 1200px) {
-        .overview-cards {
-          grid-template-columns: repeat(2, 1fr);
-        }
+      .logs-container {
+        padding: 24px 0;
       }
 
-      @media (max-width: 768px) {
-        .overview-cards {
-          grid-template-columns: 1fr;
-        }
+      .logs-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
 
-        .page-header h1 {
-          font-size: 1.5rem;
-        }
+      .logs-stats {
+        display: flex;
+        gap: 24px;
+      }
+
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+      }
+
+      .stat-item .value {
+        font-weight: 700;
+      }
+
+      .stat-item.error .value { color: #f44336; }
+      .stat-item.warning .value { color: #ff9800; }
+      .stat-item.info .value { color: #2196f3; }
+
+      .logs-viewer {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        border-radius: 8px;
+        padding: 16px;
+        font-family: 'Cascadia Code', 'Consolas', monospace;
+        font-size: 0.85rem;
+        max-height: 500px;
+        overflow-y: auto;
+        border: 1px solid #333;
+      }
+
+      .log-line {
+        padding: 2px 0;
+        white-space: pre-wrap;
+        border-bottom: 1px solid #2a2a2a;
+      }
+
+      .log-line.err { color: #f48771; }
+      .log-line.wrn { color: #cca700; }
+      .log-line.inf { color: #75beff; }
+
+      .no-logs {
+        text-align: center;
+        padding: 40px;
+        color: #666;
       }
     `,
   ],
@@ -584,6 +671,10 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   totalBookings = signal(0);
   totalRevenue = signal(0);
 
+  systemLogs = signal<string[]>([]);
+  logStats = signal<any>(null);
+  logsLoading = signal(false);
+
   userColumns = ['user', 'role', 'phone', 'status', 'joined', 'actions'];
   propertyColumns = ['property', 'type', 'price', 'status', 'owner', 'actions'];
 
@@ -597,6 +688,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadDashboardData();
+    this.loadLogs();
   }
 
   ngOnDestroy(): void {
@@ -658,6 +750,39 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         },
         error: () => {},
       });
+  }
+
+  loadLogs(): void {
+    this.logsLoading.set(true);
+    this.http
+      .get<any>(`${environment.apiUrl}/logs?count=100`)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.systemLogs.set(res.logs || []);
+          this.logsLoading.set(false);
+        },
+        error: () => {
+          this.logsLoading.set(false);
+        },
+      });
+
+    this.http
+      .get<any>(`${environment.apiUrl}/logs/stats`)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.logStats.set(res);
+        },
+        error: () => {},
+      });
+  }
+
+  getLogLevel(line: string): string {
+    if (line.includes(' ERR ')) return 'err';
+    if (line.includes(' WRN ')) return 'wrn';
+    if (line.includes(' INF ')) return 'inf';
+    return '';
   }
 
   getRoleLabel(role: string): string {
