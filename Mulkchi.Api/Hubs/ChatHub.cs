@@ -25,7 +25,7 @@ public class ChatHub : Hub
     }
 
     // Send text message to specific user and save to DB
-    public async Task SendMessage(Guid receiverId, string content)
+    public async Task SendMessage(Guid receiverId, string content, Guid? propertyId = null)
     {
         var userIdClaim = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
         if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out Guid senderId))
@@ -34,11 +34,11 @@ public class ChatHub : Hub
         if (string.IsNullOrWhiteSpace(content))
             throw new HubException("Message content cannot be empty.");
 
-        await CreateAndDispatchMessageAsync(senderId, receiverId, content.Trim(), MessageType.Text);
+        await CreateAndDispatchMessageAsync(senderId, receiverId, content.Trim(), MessageType.Text, propertyId);
     }
 
     // Send file message to specific user and save to DB
-    public async Task SendFileMessage(Guid receiverId, string fileUrl, string fileName)
+    public async Task SendFileMessage(Guid receiverId, string fileUrl, string fileName, Guid? propertyId = null)
     {
         var userIdClaim = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
         if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out Guid senderId))
@@ -51,14 +51,15 @@ public class ChatHub : Hub
             ? fileUrl.Trim()
             : $"{fileName.Trim()}|{fileUrl.Trim()}";
 
-        await CreateAndDispatchMessageAsync(senderId, receiverId, content, MessageType.File);
+        await CreateAndDispatchMessageAsync(senderId, receiverId, content, MessageType.File, propertyId);
     }
 
     private async Task CreateAndDispatchMessageAsync(
         Guid senderId,
         Guid receiverId,
         string content,
-        MessageType type)
+        MessageType type,
+        Guid? propertyId = null)
     {
         try
         {
@@ -67,6 +68,7 @@ public class ChatHub : Hub
                 Id = Guid.NewGuid(),
                 SenderId = senderId,
                 ReceiverId = receiverId,
+                PropertyId = propertyId,
                 Content = content,
                 Type = type,
                 IsRead = false,

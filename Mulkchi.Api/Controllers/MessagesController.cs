@@ -146,22 +146,34 @@ public class MessagesController : ControllerBase
                 return Unauthorized();
 
             var users = this.storageBroker.SelectAllUsers().ToList();
+            var properties = this.storageBroker.SelectAllProperties().ToList();
 
             var conversations = this.messageService
                 .RetrieveAllMessages()
                 .Where(message => message.SenderId == currentUserId || message.ReceiverId == currentUserId)
                 .ToList()
-                .GroupBy(message => message.SenderId == currentUserId ? message.ReceiverId : message.SenderId)
+                .GroupBy(message => new 
+                { 
+                    OtherUserId = message.SenderId == currentUserId ? message.ReceiverId : message.SenderId,
+                    PropertyId = message.PropertyId 
+                })
                 .Select(group =>
                 {
                     Message latestMessage = group.OrderByDescending(message => message.CreatedDate).First();
-                    var otherUser = users.FirstOrDefault(user => user.Id == group.Key);
+                    var otherUser = users.FirstOrDefault(user => user.Id == group.Key.OtherUserId);
+                    var property = group.Key.PropertyId.HasValue 
+                        ? properties.FirstOrDefault(p => p.Id == group.Key.PropertyId.Value)
+                        : null;
 
                     return new
                     {
-                        otherUserId = group.Key,
+                        otherUserId = group.Key.OtherUserId,
+                        propertyId = group.Key.PropertyId,
+                        propertyTitle = property?.Title,
+                        propertyImage = property?.Images?.FirstOrDefault(i => i.IsPrimary)?.Url 
+                                        ?? property?.Images?.FirstOrDefault()?.Url,
                         otherUserName = otherUser is null
-                            ? "Suhbatdosh"
+                            ? "Foydalanuvchi"
                             : $"{otherUser.FirstName} {otherUser.LastName}".Trim(),
                         otherUserAvatar = otherUser?.AvatarUrl,
                         lastMessage = latestMessage.Content,
@@ -174,19 +186,15 @@ public class MessagesController : ControllerBase
 
             return Ok(conversations);
         }
-        catch (MessageDependencyException)
+        catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (MessageServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
         }
     }
 
     [HttpGet("conversation/{otherUserId}")]
     [Authorize]
-    public ActionResult<IEnumerable<object>> GetConversationMessages(Guid otherUserId)
+    public ActionResult<IEnumerable<object>> GetConversationMessages(Guid otherUserId, [FromQuery] Guid? propertyId = null)
     {
         try
         {
@@ -199,8 +207,9 @@ public class MessagesController : ControllerBase
             var messages = this.messageService
                 .RetrieveAllMessages()
                 .Where(message =>
-                    (message.SenderId == currentUserId && message.ReceiverId == otherUserId) ||
-                    (message.SenderId == otherUserId && message.ReceiverId == currentUserId))
+                    ((message.SenderId == currentUserId && message.ReceiverId == otherUserId) ||
+                    (message.SenderId == otherUserId && message.ReceiverId == currentUserId)) &&
+                    message.PropertyId == propertyId)
                 .OrderBy(message => message.CreatedDate)
                 .ToList()
                 .Select(message =>
@@ -212,6 +221,7 @@ public class MessagesController : ControllerBase
                         id = message.Id,
                         senderId = message.SenderId,
                         receiverId = message.ReceiverId,
+                        propertyId = message.PropertyId,
                         content = message.Content,
                         type = message.Type,
                         isRead = message.IsRead,
@@ -228,13 +238,9 @@ public class MessagesController : ControllerBase
 
             return Ok(messages);
         }
-        catch (MessageDependencyException)
+        catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (MessageServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = ex.Message });
         }
     }
 
@@ -371,7 +377,7 @@ public class MessagesController : ControllerBase
 
     [HttpPut("conversations/{userId:guid}/read-all")]
     [Authorize]
-    public async ValueTask<ActionResult> MarkConversationAsReadAsync(Guid userId)
+    public async ValueTask<ActionResult> MarkConversationAsReadAsync(Guid userId, [FromQuery] Guid? propertyId = null)
     {
         try
         {
@@ -382,7 +388,8 @@ public class MessagesController : ControllerBase
             var messages = await this.storageBroker.SelectAllMessages()
                 .Where(m => ((m.SenderId == userId && m.ReceiverId == currentUserId) ||
                             (m.SenderId == currentUserId && m.ReceiverId == userId)) &&
-                            !m.IsRead && m.ReceiverId == currentUserId)
+                            !m.IsRead && m.ReceiverId == currentUserId &&
+                            m.PropertyId == propertyId)
                 .ToListAsync();
 
             int markedCount = 0;

@@ -5,6 +5,7 @@ using Mulkchi.Api.Models.Foundations.Bookings;
 using Mulkchi.Api.Models.Foundations.Discounts;
 using Mulkchi.Api.Models.Foundations.Properties;
 using Mulkchi.Api.Models.Foundations.Reviews;
+using Mulkchi.Api.Models.Foundations.PropertyImages;
 using Mulkchi.Api.Models.Foundations.Users;
 
 namespace Mulkchi.Api.DataSeed;
@@ -177,46 +178,70 @@ public static class DevelopmentDataSeeder
 
     private static List<Property> CreatePropertiesToAdd(int existingCount, IReadOnlyList<User> hosts, DateTimeOffset now)
     {
-        if (existingCount >= TargetPropertyCount)
+        // BMI: Himoya uchun bazani boyitish - TargetPropertyCount ni 50 ga ko'taramiz
+        const int NewTargetPropertyCount = 50;
+        
+        if (existingCount >= NewTargetPropertyCount)
         {
             return new List<Property>();
         }
 
         var cityTemplates = new[]
         {
-            new { Region = UzbekistanRegion.ToshkentShahar, City = "Toshkent", District = "Chilonzor", Latitude = 41.2850, Longitude = 69.2030, BaseRent = 700m, BaseSale = 90000m, Metro = true },
-            new { Region = UzbekistanRegion.Samarqand, City = "Samarqand", District = "Markaz", Latitude = 39.6542, Longitude = 66.9597, BaseRent = 520m, BaseSale = 70000m, Metro = false },
-            new { Region = UzbekistanRegion.Buxoro, City = "Buxoro", District = "Kogon", Latitude = 39.7670, Longitude = 64.4550, BaseRent = 460m, BaseSale = 62000m, Metro = false },
-            new { Region = UzbekistanRegion.Fargona, City = "Farg'ona", District = "Yangi", Latitude = 40.3894, Longitude = 71.7870, BaseRent = 430m, BaseSale = 56000m, Metro = false },
-            new { Region = UzbekistanRegion.Namangan, City = "Namangan", District = "Davlatobod", Latitude = 41.0011, Longitude = 71.6673, BaseRent = 440m, BaseSale = 58000m, Metro = false },
-            new { Region = UzbekistanRegion.Andijon, City = "Andijon", District = "Bobur", Latitude = 40.7821, Longitude = 72.3442, BaseRent = 420m, BaseSale = 54000m, Metro = false },
-            new { Region = UzbekistanRegion.ToshkentViloyat, City = "Chirchiq", District = "Markaz", Latitude = 41.4689, Longitude = 69.5822, BaseRent = 500m, BaseSale = 65000m, Metro = false },
-            new { Region = UzbekistanRegion.Qashqadaryo, City = "Qarshi", District = "Nasaf", Latitude = 38.8606, Longitude = 65.7888, BaseRent = 410m, BaseSale = 52000m, Metro = false },
-            new { Region = UzbekistanRegion.Xorazm, City = "Urganch", District = "Al-Xorazmiy", Latitude = 41.5500, Longitude = 60.6333, BaseRent = 400m, BaseSale = 50000m, Metro = false },
-            new { Region = UzbekistanRegion.Navoiy, City = "Navoiy", District = "Karmana", Latitude = 40.0844, Longitude = 65.3792, BaseRent = 420m, BaseSale = 53000m, Metro = false }
+            // BMI: Real bozor narxlari (UZS da)
+            // Toshkent: Sotish ~1 mlrd, Ijara ~8 mln
+            new { Region = UzbekistanRegion.ToshkentShahar, City = "Toshkent", District = "Chilonzor", Latitude = 41.2850, Longitude = 69.2030, BaseRent = 8000000m, BaseSale = 1100000000m, Metro = true },
+            new { Region = UzbekistanRegion.ToshkentShahar, City = "Toshkent", District = "Yunusobod", Latitude = 41.3645, Longitude = 69.2861, BaseRent = 9000000m, BaseSale = 1300000000m, Metro = true },
+            
+            // Samarqand: Sotish ~800 mln, Ijara ~6 mln
+            new { Region = UzbekistanRegion.Samarqand, City = "Samarqand", District = "Markaz", Latitude = 39.6542, Longitude = 66.9597, BaseRent = 6000000m, BaseSale = 850000000m, Metro = false },
+            new { Region = UzbekistanRegion.Samarqand, City = "Samarqand", District = "Siyob", Latitude = 39.6642, Longitude = 66.9797, BaseRent = 5500000m, BaseSale = 750000000m, Metro = false },
+            
+            // Buxoro: Sotish ~700 mln, Ijara ~5 mln
+            new { Region = UzbekistanRegion.Buxoro, City = "Buxoro", District = "Kogon", Latitude = 39.7670, Longitude = 64.4550, BaseRent = 5000000m, BaseSale = 700000000m, Metro = false },
+            
+            // Farg'ona vodiysi: Sotish ~600 mln, Ijara ~4.5 mln
+            new { Region = UzbekistanRegion.Fargona, City = "Farg'ona", District = "Yangi", Latitude = 40.3894, Longitude = 71.7870, BaseRent = 4500000m, BaseSale = 600000000m, Metro = false },
+            new { Region = UzbekistanRegion.Namangan, City = "Namangan", District = "Davlatobod", Latitude = 41.0011, Longitude = 71.6673, BaseRent = 4500000m, BaseSale = 620000000m, Metro = false },
+            new { Region = UzbekistanRegion.Andijon, City = "Andijon", District = "Bobur", Latitude = 40.7821, Longitude = 72.3442, BaseRent = 4500000m, BaseSale = 580000000m, Metro = false },
+            
+            // Boshqa hududlar
+            new { Region = UzbekistanRegion.ToshkentViloyat, City = "Chirchiq", District = "Markaz", Latitude = 41.4689, Longitude = 69.5822, BaseRent = 5000000m, BaseSale = 650000000m, Metro = false },
+            new { Region = UzbekistanRegion.Qashqadaryo, City = "Qarshi", District = "Nasaf", Latitude = 38.8606, Longitude = 65.7888, BaseRent = 4000000m, BaseSale = 550000000m, Metro = false },
+            new { Region = UzbekistanRegion.Xorazm, City = "Urganch", District = "Al-Xorazmiy", Latitude = 41.5500, Longitude = 60.6333, BaseRent = 4000000m, BaseSale = 550000000m, Metro = false },
+            new { Region = UzbekistanRegion.Navoiy, City = "Navoiy", District = "Karmana", Latitude = 40.0844, Longitude = 65.3792, BaseRent = 4500000m, BaseSale = 600000000m, Metro = false }
         };
 
         var properties = new List<Property>();
-        for (int i = existingCount; i < TargetPropertyCount; i++)
+        for (int i = existingCount; i < NewTargetPropertyCount; i++)
         {
             var city = cityTemplates[i % cityTemplates.Length];
             ListingType listingType = (ListingType)(i % 3);
             PropertyType type = i % 5 == 0 ? PropertyType.House : i % 4 == 0 ? PropertyType.Office : PropertyType.Apartment;
             bool isCommercial = type == PropertyType.Office;
+            Guid propertyId = Guid.NewGuid();
+
+            // BMI: Har bir uy uchun chiroyli demo rasmlar qo'shamiz
+            string demoImgUrl = $"https://images.unsplash.com/photo-{(1560000000000 + i * 1234567).ToString().Substring(0, 10)}?auto=format&fit=crop&w=800&q=80";
+
+            decimal? monthlyRent = listingType == ListingType.Rent ? city.BaseRent + (i * 200000) : null;
+            decimal? salePrice = listingType == ListingType.Sale ? city.BaseSale + (i * 15000000) : null;
+            decimal? pricePerNight = listingType == ListingType.ShortTermRent ? 400000 + (i * 20000) : null;
 
             properties.Add(new Property
             {
-                Id = Guid.NewGuid(),
+                Id = propertyId,
                 Title = $"{city.City}da {(type == PropertyType.Office ? "biznes" : "zamonaviy")} {type.ToString().ToLowerInvariant()}",
-                Description = $"{city.City}, {city.District} hududida demo listing. Transport va infratuzilma yaqin.",
+                Description = $"{city.City}, {city.District} hududida joylashgan juda qulay va barcha sharoitlarga ega mulk. BMI doirasida demo listing sifatida yaratilgan.",
                 Type = type,
                 Category = isCommercial ? PropertyCategory.Commercial : PropertyCategory.Residential,
                 Status = PropertyStatus.Active,
                 ListingType = listingType,
-                MonthlyRent = listingType == ListingType.Rent ? city.BaseRent + (i * 25) : null,
-                SalePrice = listingType == ListingType.Sale ? city.BaseSale + (i * 3200) : null,
-                PricePerNight = listingType == ListingType.ShortTermRent ? 45 + (i * 3) : null,
-                SecurityDeposit = listingType == ListingType.Rent ? (city.BaseRent + (i * 25)) * 2 : null,
+                MonthlyRent = monthlyRent,
+                SalePrice = salePrice,
+                PricePerNight = pricePerNight,
+                Price = salePrice ?? monthlyRent ?? pricePerNight ?? 0,
+                SecurityDeposit = listingType == ListingType.Rent ? monthlyRent * 1.5m : null,
                 Area = 45 + (i % 6) * 25,
                 NumberOfBedrooms = type == PropertyType.Office ? 0 : 1 + (i % 4),
                 NumberOfBathrooms = 1 + (i % 3),
@@ -225,7 +250,7 @@ public static class DevelopmentDataSeeder
                 City = city.City,
                 District = city.District,
                 Address = $"{city.District} ko'chasi {10 + i}",
-                Mahalla = "Demo mahalla",
+                Mahalla = "Mulkchi Mahalla",
                 Latitude = city.Latitude + i * 0.001,
                 Longitude = city.Longitude + i * 0.001,
                 HasWifi = true,
@@ -257,14 +282,29 @@ public static class DevelopmentDataSeeder
                 IsSelfCheckIn = listingType == ListingType.ShortTermRent,
                 IsChildFriendly = !isCommercial,
                 IsAccessible = i % 5 == 0,
-                Currency = Currency.USD,
-                ExchangeRate = 12500m,
+                Currency = Currency.UZS,
+                ExchangeRate = 1.0m,
                 HostId = hosts[i % hosts.Count].Id,
                 AverageRating = 4.3m + (i % 6) * 0.1m,
                 ViewsCount = 40 + i * 17,
                 FavoritesCount = 3 + (i % 9),
                 CreatedDate = now.AddDays(-i),
-                UpdatedDate = now
+                UpdatedDate = now,
+                Images = new List<PropertyImage>
+                {
+                    new PropertyImage
+                    {
+                        Id = Guid.NewGuid(),
+                        PropertyId = propertyId,
+                        Url = demoImgUrl,
+                        ThumbnailUrl = demoImgUrl,
+                        MediumUrl = demoImgUrl,
+                        IsPrimary = true,
+                        SortOrder = 0,
+                        CreatedDate = now,
+                        UpdatedDate = now
+                    }
+                }
             });
         }
 
