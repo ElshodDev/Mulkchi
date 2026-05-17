@@ -32,9 +32,9 @@ public partial class StorageBroker
         modelBuilder.Entity<MarketTrend>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.HasIndex(e => new { e.Region, e.District, e.YearMonth })
+            entity.HasIndex(e => new { e.Region, e.District, e.PropertyType, e.YearMonth })
                   .IsUnique()
-                  .HasDatabaseName("IX_MarketTrends_Region_District_YearMonth");
+                  .HasDatabaseName("IX_MarketTrends_Region_District_PropertyType_YearMonth");
             entity.HasIndex(e => e.CalculatedAt)
                   .HasDatabaseName("IX_MarketTrends_CalculatedAt");
         });

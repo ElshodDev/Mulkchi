@@ -331,9 +331,9 @@ namespace Mulkchi.Api.Migrations
                     b.HasIndex("CalculatedAt")
                         .HasDatabaseName("IX_MarketTrends_CalculatedAt");
 
-                    b.HasIndex("Region", "District", "YearMonth")
+                    b.HasIndex("Region", "District", "PropertyType", "YearMonth")
                         .IsUnique()
-                        .HasDatabaseName("IX_MarketTrends_Region_District_YearMonth");
+                        .HasDatabaseName("IX_MarketTrends_Region_District_PropertyType_YearMonth");
 
                     b.ToTable("MarketTrends");
                 });
