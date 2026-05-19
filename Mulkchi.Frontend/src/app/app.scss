@@ -1,0 +1,17 @@
+.skip-link {
+  position: fixed;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: calc(var(--z-toast) + 1);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-3);
+  background: var(--color-surface-elevated);
+  box-shadow: var(--shadow-lg);
+  color: var(--color-text-primary);
+  transform: translateY(-150%);
+  transition: transform var(--transition-fast);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}

@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Mulkchi.Api.Models.Foundations.Reviews;
 using Mulkchi.Api.Models.Foundations.Reviews.Exceptions;
@@ -33,11 +33,11 @@ public partial class ReviewService
         {
             throw CreateAndLogDependencyValidationException(alreadyExistsReviewException);
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedReviewStorageException(
                 message: "Failed Review storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }
@@ -73,11 +73,11 @@ public partial class ReviewService
         {
             return returningReviewsFunction();
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedReviewStorageException(
                 message: "Failed Review storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }

@@ -20,6 +20,10 @@ public partial class StorageBroker
     public async ValueTask<Payment> SelectPaymentByIdAsync(Guid paymentId)
         => (await this.Payments.FindAsync(paymentId))!;
 
+    public async ValueTask<Payment?> SelectPaymentByIdempotencyKeyAsync(string idempotencyKey)
+        => await this.Payments
+            .FirstOrDefaultAsync(p => p.IdempotencyKey == idempotencyKey);
+
     public async ValueTask<Payment> UpdatePaymentAsync(Payment payment)
     {
         this.Entry(payment).State = EntityState.Modified;

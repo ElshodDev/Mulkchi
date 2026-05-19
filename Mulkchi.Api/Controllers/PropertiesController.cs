@@ -1,10 +1,14 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Mulkchi.Api.Models.Foundations.Common;
 using Mulkchi.Api.Models.Foundations.Properties;
 using Mulkchi.Api.Models.Foundations.Properties.Exceptions;
 using Mulkchi.Api.Services.Foundations.Properties;
+using Microsoft.FeatureManagement;
+using System.Threading.Tasks;
+using System;
+using System.Security.Claims;
 
 namespace Mulkchi.Api.Controllers;
 
@@ -13,31 +17,28 @@ namespace Mulkchi.Api.Controllers;
 public class PropertiesController : ControllerBase
 {
     private readonly IPropertyService propertyService;
+    private readonly IFeatureManagerSnapshot featureManager;
 
-    public PropertiesController(IPropertyService propertyService)
+    public PropertiesController(
+        IPropertyService propertyService,
+        IFeatureManagerSnapshot featureManager)
     {
         this.propertyService = propertyService;
+        this.featureManager = featureManager;
     }
 
     [HttpPost]
-    [Authorize(Roles = "Host,Admin")]
-    public async ValueTask<ActionResult<Property>> PostPropertyAsync(Property property)
+    [Authorize] // Any authenticated user can create listings - auto-upgraded to Host role
+    public async Task<ActionResult<PropertyCreateResponse>> PostPropertyAsync([FromBody] PropertyCreateDto dto)
     {
         try
         {
-            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userIdClaim is null || !Guid.TryParse(userIdClaim, out Guid currentUserId))
-                return Unauthorized();
-
-            property.HostId = currentUserId;
-            property.IsFeatured = false;
-            property.IsVerified = false;
-            property.AverageRating = 0;
-            property.ViewsCount = 0;
-            property.FavoritesCount = 0;
-
-            Property addedProperty = await this.propertyService.AddPropertyAsync(property);
-            return Created("property", addedProperty);
+            var response = await this.propertyService.AddPropertyWithUserUpgradeAsync(dto, User);
+            return Created($"api/properties/{response.Property.Id}", response);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
         }
         catch (PropertyValidationException propertyValidationException)
         {
@@ -49,135 +50,164 @@ public class PropertiesController : ControllerBase
         }
         catch (PropertyDependencyException)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            return StatusCode(500, new { message = "Internal server error." });
         }
         catch (PropertyServiceException)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            return StatusCode(500, new { message = "Internal server error." });
         }
     }
 
     [HttpGet]
     [AllowAnonymous]
-    public ActionResult<PagedResult<Property>> GetAllProperties(
-        [FromQuery] PaginationParams pagination,
-        [FromQuery] string? city = null,
-        [FromQuery] decimal? minPrice = null,
-        [FromQuery] decimal? maxPrice = null,
-        [FromQuery] int? bedrooms = null,
-        [FromQuery] UzbekistanRegion? region = null,
-        [FromQuery] ListingType? listingType = null)
+    public async Task<ActionResult<PagedResult<PropertyResponse>>> GetAllProperties([FromQuery] PropertyQueryParams? queryParams)
     {
         try
         {
-            IQueryable<Property> query = this.propertyService.RetrieveAllProperties();
+            // Ensure queryParams is not null with defaults
+            queryParams ??= new PropertyQueryParams { Page = 1, PageSize = 20 };
+            
+            // Validate page parameters
+            if (queryParams.Page < 1) queryParams.Page = 1;
+            if (queryParams.PageSize < 1) queryParams.PageSize = 20;
+            if (queryParams.PageSize > 100) queryParams.PageSize = 100; // Max limit
+            
+            var (items, total) = await this.propertyService.RetrieveAllPropertiesAsync(queryParams);
 
-            if (!string.IsNullOrWhiteSpace(city))
-                query = query.Where(p => p.City == city);
-
-            if (minPrice.HasValue)
-                query = query.Where(p => p.MonthlyRent >= minPrice || p.SalePrice >= minPrice || p.PricePerNight >= minPrice);
-
-            if (maxPrice.HasValue)
-                query = query.Where(p => p.MonthlyRent <= maxPrice || p.SalePrice <= maxPrice || p.PricePerNight <= maxPrice);
-
-            if (bedrooms.HasValue)
-                query = query.Where(p => p.NumberOfBedrooms == bedrooms);
-
-            if (region.HasValue)
-                query = query.Where(p => p.Region == region.Value);
-
-            if (listingType.HasValue)
-                query = query.Where(p => p.ListingType == listingType.Value);
-
-            int totalCount = query.Count();
-
-            var items = query
-                .Skip((pagination.Page - 1) * pagination.PageSize)
-                .Take(pagination.PageSize)
-                .ToList();
-
-            var result = new PagedResult<Property>
+            var result = new PagedResult<PropertyResponse>
             {
                 Items = items,
-                TotalCount = totalCount,
-                Page = pagination.Page,
-                PageSize = pagination.PageSize
+                TotalCount = total,
+                Page = queryParams.Page,
+                PageSize = queryParams.PageSize
             };
 
             return Ok(result);
         }
         catch (PropertyDependencyException)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            return StatusCode(500, new { message = "Internal server error." });
         }
         catch (PropertyServiceException)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            return StatusCode(500, new { message = "Internal server error." });
         }
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:guid}")]
     [AllowAnonymous]
-    public async ValueTask<ActionResult<Property>> GetPropertyByIdAsync(Guid id)
+    public async Task<ActionResult<PropertyResponse>> GetPropertyByIdAsync(Guid id)
     {
         try
         {
-            Property property = await this.propertyService.RetrievePropertyByIdAsync(id);
+            var property = await this.propertyService.RetrievePropertyByIdAsync(id);
+            if (property is null)
+                return NotFound(new { message = $"Property with id '{id}' was not found." });
             return Ok(property);
         }
-        catch (PropertyValidationException propertyValidationException)
-        {
-            return BadRequest(new { message = propertyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (PropertyDependencyValidationException propertyDependencyValidationException)
-            when (propertyDependencyValidationException.InnerException is NotFoundPropertyException)
-        {
-            return NotFound(new { message = propertyDependencyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
         catch (PropertyDependencyValidationException propertyDependencyValidationException)
         {
-            return BadRequest(new { message = propertyDependencyValidationException.InnerException?.Message ?? "An error occurred." });
+            return NotFound(new { message = propertyDependencyValidationException.InnerException?.Message ?? "Not found." });
         }
         catch (PropertyDependencyException)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            return StatusCode(500, new { message = "Internal server error." });
         }
         catch (PropertyServiceException)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            return StatusCode(500, new { message = "Internal server error." });
         }
     }
 
-    [HttpPut]
-    [Authorize(Roles = "Host,Admin")]
-    public async ValueTask<ActionResult<Property>> PutPropertyAsync(Property property)
+    [HttpGet("autocomplete")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<string>>> Autocomplete([FromQuery] string query)
     {
         try
         {
-            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userIdClaim is null || !Guid.TryParse(userIdClaim, out Guid currentUserId))
-                return Unauthorized();
+            var suggestions = await this.propertyService.SearchLocationSuggestionsAsync(query);
+            return Ok(suggestions);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
 
-            bool isAdmin = User.IsInRole("Admin");
-            if (!isAdmin)
+    [HttpGet("{id:guid}/similar")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<PropertyResponse>>> GetSimilarProperties(Guid id, [FromQuery] int count = 6)
+    {
+        try
+        {
+            var similar = await this.propertyService.RetrieveSimilarPropertiesAsync(id, count);
+            return Ok(similar);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("featured")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<PropertyResponse>>> GetFeaturedProperties([FromQuery] int count = 8)
+    {
+        try
+        {
+            var featured = await this.propertyService.RetrieveFeaturedPropertiesAsync(count);
+            return Ok(featured);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("search")]
+    [AllowAnonymous]
+    public async Task<ActionResult<PagedResult<PropertyResponse>>> SearchProperties([FromQuery] PropertySearchParams searchParams)
+    {
+        try
+        {
+            if (!await this.featureManager.IsEnabledAsync("EnableSearch"))
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "Search is temporarily disabled." });
+
+            var (items, total) = await this.propertyService.SearchPropertiesAsync(searchParams);
+
+            var result = new PagedResult<PropertyResponse>
             {
-                Property existingProperty = await this.propertyService.RetrievePropertyByIdAsync(property.Id);
-                if (existingProperty.HostId != currentUserId)
-                    return Forbid();
-            }
+                Items = items,
+                TotalCount = total,
+                Page = 1,
+                PageSize = 50 // Fixed size since no pagination fields
+            };
 
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Host,Admin")]
+    public async ValueTask<ActionResult<Property>> PutPropertyAsync(Guid id, [FromBody] Property property)
+    {
+        try
+        {
+            property.Id = id;
             Property modifiedProperty = await this.propertyService.ModifyPropertyAsync(property);
             return Ok(modifiedProperty);
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
         catch (PropertyValidationException propertyValidationException)
         {
             return BadRequest(new { message = propertyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (PropertyDependencyValidationException propertyDependencyValidationException)
-            when (propertyDependencyValidationException.InnerException is NotFoundPropertyException)
-        {
-            return NotFound(new { message = propertyDependencyValidationException.InnerException?.Message ?? "An error occurred." });
         }
         catch (PropertyDependencyValidationException propertyDependencyValidationException)
         {
@@ -185,31 +215,30 @@ public class PropertiesController : ControllerBase
         }
         catch (PropertyDependencyException)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            return StatusCode(500, new { message = "Internal server error." });
         }
         catch (PropertyServiceException)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            return StatusCode(500, new { message = "Internal server error." });
         }
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Host,Admin")]
-    public async ValueTask<ActionResult<Property>> DeletePropertyByIdAsync(Guid id)
+    public async ValueTask<ActionResult<Property>> DeletePropertyAsync(Guid id)
     {
         try
         {
             Property deletedProperty = await this.propertyService.RemovePropertyByIdAsync(id);
             return Ok(deletedProperty);
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
         catch (PropertyValidationException propertyValidationException)
         {
             return BadRequest(new { message = propertyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (PropertyDependencyValidationException propertyDependencyValidationException)
-            when (propertyDependencyValidationException.InnerException is NotFoundPropertyException)
-        {
-            return NotFound(new { message = propertyDependencyValidationException.InnerException?.Message ?? "An error occurred." });
         }
         catch (PropertyDependencyValidationException propertyDependencyValidationException)
         {
@@ -217,11 +246,130 @@ public class PropertiesController : ControllerBase
         }
         catch (PropertyDependencyException)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            return StatusCode(500, new { message = "Internal server error." });
         }
         catch (PropertyServiceException)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            return StatusCode(500, new { message = "Internal server error." });
+        }
+    }
+
+    // Publish/Unpublish endpoints
+    [HttpPut("{id:guid}/publish")]
+    [Authorize(Roles = "Host,Admin")]
+    public async ValueTask<ActionResult<PropertyResponse>> PublishPropertyAsync(Guid id)
+    {
+        try
+        {
+            var response = await this.propertyService.PublishPropertyAsync(id);
+            return Ok(new { message = "Property published successfully.", isPublished = true, property = response });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpPut("{id:guid}/unpublish")]
+    [Authorize(Roles = "Host,Admin")]
+    public async ValueTask<ActionResult<PropertyResponse>> UnpublishPropertyAsync(Guid id)
+    {
+        try
+        {
+            var response = await this.propertyService.UnpublishPropertyAsync(id);
+            return Ok(new { message = "Property unpublished successfully.", isPublished = false, property = response });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("my/listings")]
+    [Authorize(Roles = "Host,Admin")]
+    public async Task<ActionResult<PagedResult<PropertyResponse>>> GetMyListings([FromQuery] PropertyQueryParams queryParams)
+    {
+        try
+        {
+            // Check if user is in Guest role and provide helpful error message
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+            if (userRole == "Guest")
+            {
+                return Forbid(); // Returns 403 with clear indication that role upgrade is needed
+            }
+
+            var (items, total) = await this.propertyService.RetrieveMyPropertiesAsync(queryParams);
+
+            var result = new PagedResult<PropertyResponse>
+            {
+                Items = items,
+                TotalCount = total,
+                Page = queryParams.Page,
+                PageSize = queryParams.PageSize
+            };
+
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("new-listings")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<PropertyResponse>>> GetNewListings([FromQuery] int days = 7, [FromQuery] int count = 10)
+    {
+        try
+        {
+            var properties = await this.propertyService.RetrieveNewListingsAsync(days, count);
+            return Ok(properties);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("filters/options")]
+    [AllowAnonymous]
+    public ActionResult<object> GetFilterOptions()
+    {
+        try
+        {
+            var options = new
+            {
+                PropertyTypes = Enum.GetNames(typeof(PropertyType)),
+                PropertyCategories = Enum.GetNames(typeof(PropertyCategory)),
+                ListingTypes = Enum.GetNames(typeof(ListingType)),
+                Regions = Enum.GetNames(typeof(UzbekistanRegion)),
+                Amenities = new[] { "WiFi", "Parking", "Pool", "AC", "Elevator", "Furniture", "Security" },
+                PriceRanges = new[]
+                {
+                    new { label = "Under $500", min = 0, max = (int?)500 },
+                    new { label = "$500 - $1000", min = 500, max = (int?)1000 },
+                    new { label = "$1000 - $2000", min = 1000, max = (int?)2000 },
+                    new { label = "$2000+", min = 2000, max = (int?)null }
+                },
+                BedroomOptions = new[] { 1, 2, 3, 4, 5 }
+            };
+            return Ok(options);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
         }
     }
 }

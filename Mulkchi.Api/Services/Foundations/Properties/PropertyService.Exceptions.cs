@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Mulkchi.Api.Models.Foundations.Properties;
 using Mulkchi.Api.Models.Foundations.Properties.Exceptions;
@@ -25,15 +25,15 @@ public partial class PropertyService
         {
             throw CreateAndLogValidationException(invalidPropertyException);
         }
-        catch (NotFoundPropertyException notFoundPropertyException)
+        catch (NotFoundPropertyException)
         {
-            throw CreateAndLogDependencyValidationException(notFoundPropertyException);
+            throw;
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedPropertyStorageException(
                 message: "Failed Property storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }
@@ -69,11 +69,11 @@ public partial class PropertyService
         {
             return returningPropertiesFunction();
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedPropertyStorageException(
                 message: "Failed Property storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }

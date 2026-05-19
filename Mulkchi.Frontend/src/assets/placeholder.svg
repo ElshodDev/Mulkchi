@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#f0f0f0"/>
+  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#999" font-size="18" font-family="Arial, sans-serif">
+    Rasm mavjud emas
+  </text>
+  <path d="M170 130h60v40h-60z" fill="none" stroke="#ccc" stroke-width="2"/>
+  <circle cx="185" cy="145" r="8" fill="#ccc"/>
+  <path d="M175 160l15-15 10 10 15-15 15 20z" fill="#ccc"/>
+</svg>

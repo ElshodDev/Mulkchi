@@ -4,5 +4,9 @@ public enum UserRole
 {
     Guest,
     Host,
-    Admin
+    Admin,
+    SuperAdmin,
+    Agent,
+    Seller,
+    Buyer
 }

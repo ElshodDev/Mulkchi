@@ -18,6 +18,18 @@ public class DiscountsController : ControllerBase
         this.discountService = discountService;
     }
 
+    public sealed class DiscountValidateRequest
+    {
+        public string Code { get; set; } = string.Empty;
+    }
+
+    public sealed class DiscountValidateResponse
+    {
+        public bool IsValid { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public Discount? Discount { get; set; }
+    }
+
     [HttpPost]
     [Authorize(Roles = "Admin,Host")]
     public async ValueTask<ActionResult<Discount>> PostDiscountAsync(Discount discount)
@@ -110,6 +122,101 @@ public class DiscountsController : ControllerBase
         {
             return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
         }
+    }
+
+    [HttpGet("active")]
+    [AllowAnonymous]
+    public ActionResult<IEnumerable<Discount>> GetActiveDiscounts()
+    {
+        try
+        {
+            var now = DateTimeOffset.UtcNow;
+            var activeDiscounts = this.discountService
+                .RetrieveAllDiscounts()
+                .Where(discount =>
+                    discount.IsActive &&
+                    (!discount.StartsAt.HasValue || discount.StartsAt.Value <= now) &&
+                    (!discount.ExpiresAt.HasValue || discount.ExpiresAt.Value >= now) &&
+                    (!discount.MaxUsageCount.HasValue || discount.UsageCount < discount.MaxUsageCount.Value))
+                .ToList();
+
+            return Ok(activeDiscounts);
+        }
+        catch (DiscountDependencyException)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+        }
+        catch (DiscountServiceException)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+        }
+    }
+
+    [HttpPost("validate")]
+    [AllowAnonymous]
+    public ActionResult<DiscountValidateResponse> ValidateDiscountCode([FromBody] DiscountValidateRequest request)
+    {
+        if (request is null || string.IsNullOrWhiteSpace(request.Code))
+        {
+            return BadRequest(new DiscountValidateResponse
+            {
+                IsValid = false,
+                Message = "Discount code is required."
+            });
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var normalizedCode = request.Code.Trim().ToLower();
+
+        var discount = this.discountService
+            .RetrieveAllDiscounts()
+            .FirstOrDefault(d => d.Code.ToLower() == normalizedCode && d.IsActive);
+
+        if (discount is null)
+        {
+            return Ok(new DiscountValidateResponse
+            {
+                IsValid = false,
+                Message = "Discount code is invalid."
+            });
+        }
+
+        if (discount.StartsAt.HasValue && discount.StartsAt.Value > now)
+        {
+            return Ok(new DiscountValidateResponse
+            {
+                IsValid = false,
+                Message = "Discount is not active yet.",
+                Discount = discount
+            });
+        }
+
+        if (discount.ExpiresAt.HasValue && discount.ExpiresAt.Value < now)
+        {
+            return Ok(new DiscountValidateResponse
+            {
+                IsValid = false,
+                Message = "Discount has expired.",
+                Discount = discount
+            });
+        }
+
+        if (discount.MaxUsageCount.HasValue && discount.UsageCount >= discount.MaxUsageCount.Value)
+        {
+            return Ok(new DiscountValidateResponse
+            {
+                IsValid = false,
+                Message = "Discount usage limit reached.",
+                Discount = discount
+            });
+        }
+
+        return Ok(new DiscountValidateResponse
+        {
+            IsValid = true,
+            Message = "Discount is valid.",
+            Discount = discount
+        });
     }
 
     [HttpPut]

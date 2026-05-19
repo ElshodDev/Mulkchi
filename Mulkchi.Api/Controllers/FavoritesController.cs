@@ -31,7 +31,6 @@ public class FavoritesController : ControllerBase
 
             favorite.UserId = currentUserId;
             Favorite addedFavorite = await this.favoriteService.AddFavoriteAsync(favorite);
-            // TODO: FavoritesCount increment should be handled by an Orchestration service
             return Created("favorite", addedFavorite);
         }
         catch (FavoriteValidationException favoriteValidationException)
@@ -59,6 +58,15 @@ public class FavoritesController : ControllerBase
         try
         {
             IQueryable<Favorite> query = this.favoriteService.RetrieveAllFavorites();
+
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var roleClaim = User.FindFirstValue(ClaimTypes.Role);
+
+            if (Guid.TryParse(userIdClaim, out Guid currentUserId) && !string.Equals(roleClaim, "Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(favorite => favorite.UserId == currentUserId);
+            }
+
             int totalCount = query.Count();
 
             var items = query

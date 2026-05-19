@@ -47,6 +47,14 @@ public partial class PaymentService : IPaymentService
             return maybePayment;
         });
 
+    public async ValueTask<Payment?> RetrievePaymentByIdempotencyKeyAsync(string idempotencyKey)
+    {
+        if (string.IsNullOrWhiteSpace(idempotencyKey))
+            return null;
+
+        return await this.storageBroker.SelectPaymentByIdempotencyKeyAsync(idempotencyKey);
+    }
+
     public ValueTask<Payment> ModifyPaymentAsync(Payment payment) =>
         TryCatch(async () =>
         {

@@ -19,7 +19,17 @@ public class Payment
     public Guid ReceiverId { get; set; }
     public Guid? HomeRequestId { get; set; }
     public Guid? ContractId { get; set; }
+    public Guid? BookingId { get; set; }
+
+    /// <summary>
+    /// Client-supplied idempotency key (e.g. from X-Idempotency-Key header).
+    /// Duplicate requests with the same key return the original payment instead
+    /// of creating a new charge, preventing double-billing on network retries.
+    /// </summary>
+    public string IdempotencyKey { get; set; }
+
     public DateTimeOffset CreatedDate { get; set; }
     public DateTimeOffset UpdatedDate { get; set; }
     public DateTimeOffset? DeletedDate { get; set; }
 }
+

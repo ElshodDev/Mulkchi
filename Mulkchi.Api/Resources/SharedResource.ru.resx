@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="PropertyNotFound" xml:space="preserve">
+    <value>Свойство не найдено</value>
+  </data>
+  <data name="UserNotFound" xml:space="preserve">
+    <value>Пользователь не найден</value>
+  </data>
+  <data name="BookingNotFound" xml:space="preserve">
+    <value>Бронирование не найдено</value>
+  </data>
+  <data name="ValidationError" xml:space="preserve">
+    <value>Ошибка валидации</value>
+  </data>
+  <data name="UnauthorizedAccess" xml:space="preserve">
+    <value>Несанкционированный доступ</value>
+  </data>
+  <data name="BookingConfirmed" xml:space="preserve">
+    <value>Бронирование подтверждено</value>
+  </data>
+  <data name="BookingCancelled" xml:space="preserve">
+    <value>Бронирование отменено</value>
+  </data>
+</root>

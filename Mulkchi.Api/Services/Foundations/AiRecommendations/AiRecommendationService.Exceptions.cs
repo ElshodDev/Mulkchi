@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Mulkchi.Api.Models.Foundations.AIs;
 using Mulkchi.Api.Models.Foundations.AIs.Exceptions;
@@ -29,11 +29,11 @@ public partial class AiRecommendationService
         {
             throw CreateAndLogDependencyValidationException(notFoundAiRecommendationException);
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedAiRecommendationStorageException(
                 message: "Failed AiRecommendation storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }
@@ -69,11 +69,11 @@ public partial class AiRecommendationService
         {
             return returningAiRecommendationsFunction();
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedAiRecommendationStorageException(
                 message: "Failed AiRecommendation storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }

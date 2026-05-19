@@ -10,6 +10,19 @@
 *.userosscache
 *.sln.docstates
 *.env
+*.env.example
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.Production.json
+*.secret.json
+bin/
+obj/
+logs/
+wwwroot/uploads/
+
+# Ngrok logs
+ngrok_output.txt
+ngrok_setup_log.txt
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

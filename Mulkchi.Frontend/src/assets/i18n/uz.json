@@ -1,0 +1,208 @@
+{
+  "APP": {
+    "NAME": "Mulkchi",
+    "TAGLINE": "O'zbekistondagi eng yaxshi mulk platformasi",
+    "DESCRIPTION": "Uy-joy, kvartira, ofis va boshqa ko'chmas mulklarni sotish va ijaraga olish platformasi"
+  },
+  "NAV": {
+    "HOME": "Bosh sahifa",
+    "PROPERTIES": "Mulk e'lonlari",
+    "SEARCH": "Qidirish",
+    "FAVORITES": "Sevimlilar",
+    "BOOKINGS": "Bronlar",
+    "PROFILE": "Profil",
+    "HOST": "Host",
+    "ADMIN": "Admin",
+    "LOGIN": "Kirish",
+    "REGISTER": "Ro'yxatdan o'tish",
+    "LOGOUT": "Chiqish"
+  },
+  "HOME": {
+    "HERO": {
+      "TITLE": "O'zbekistonda orzuyingizdagi uy",
+      "SUBTITLE": "Toshkent va butun O'zbekiston bo'ylab 10000+ mulk e'lonlari",
+      "CTA_PRIMARY": "Mulk qidirish",
+      "CTA_SECONDARY": "E'lon berish"
+    },
+    "FEATURED": {
+      "TITLE": "Tavsiya etilgan mulklar",
+      "VIEW_ALL": "Barchasini ko'rish"
+    },
+    "STATS": {
+      "PROPERTIES": "Mulk e'lonlari",
+      "USERS": "Foydalanuvchilar",
+      "BOOKINGS": "Muvaffaqiyatli bronlar",
+      "CITIES": "Shaharlar"
+    }
+  },
+  "AUTH": {
+    "LOGIN": {
+      "TITLE": "Hisobingizga kiring",
+      "EMAIL": "Email manzil",
+      "PASSWORD": "Parol",
+      "REMEMBER": "Meni eslab qol",
+      "FORGOT": "Parolni unutdingizmi?",
+      "SUBMIT": "Kirish",
+      "NO_ACCOUNT": "Hisobingiz yo'qmi?",
+      "REGISTER": "Ro'yxatdan o'tish"
+    },
+    "REGISTER": {
+      "TITLE": "Yangi hisob yaratish",
+      "FIRST_NAME": "Ism",
+      "LAST_NAME": "Familiya",
+      "EMAIL": "Email",
+      "PHONE": "Telefon",
+      "PASSWORD": "Parol",
+      "CONFIRM_PASSWORD": "Parolni tasdiqlang",
+      "ROLE": "Siz kimsiz?",
+      "ROLE_GUEST": "Mehmon (ijaraga olaman)",
+      "ROLE_HOST": "Host (mulk beraman)",
+      "AGREE": "Men shartlarni qabul qilaman",
+      "SUBMIT": "Ro'yxatdan o'tish",
+      "HAVE_ACCOUNT": "Hisobingiz bormi?",
+      "LOGIN": "Kirish"
+    },
+    "FORGOT": {
+      "TITLE": "Parolni tiklash",
+      "SUBTITLE": "Email manzilingizni kiriting, biz sizga tiklash havolasini yuboramiz",
+      "EMAIL": "Email",
+      "SUBMIT": "Yuborish",
+      "BACK": "Kirish sahifasiga qaytish"
+    }
+  },
+  "PROPERTY": {
+    "LIST": {
+      "TITLE": "Mulk e'lonlari",
+      "FILTER": "Filtrlash",
+      "SORT": "Saralash",
+      "GRID": "Setka",
+      "LIST": "Ro'yxat",
+      "RESULTS": "natija topildi",
+      "NO_RESULTS": "Hech narsa topilmadi"
+    },
+    "DETAIL": {
+      "BEDS": "xona",
+      "BATHS": "hammom",
+      "AREA": "m²",
+      "GUESTS": "mehmon",
+      "AMENITIES": "Qulayliklar",
+      "DESCRIPTION": "Tavsif",
+      "LOCATION": "Joylashuv",
+      "HOST": "Host haqida",
+      "REVIEWS": "Sharhlar",
+      "SIMILAR": "O'xshash mulklar",
+      "BOOK": "Bron qilish",
+      "CONTACT": "Aloqa",
+      "FAVORITE": "Sevimlilarga",
+      "SHARE": "Ulashish"
+    },
+    "FORM": {
+      "CREATE": "Yangi mulk qo'shish",
+      "EDIT": "Mulkni tahrirlash",
+      "STEP_BASIC": "Asosiy ma'lumotlar",
+      "STEP_LOCATION": "Joylashuv",
+      "STEP_AMENITIES": "Qulayliklar",
+      "STEP_PHOTOS": "Rasmlar",
+      "TITLE": "Sarlavha",
+      "TYPE": "Mulk turi",
+      "PRICE": "Narx",
+      "AREA": "Maydoni",
+      "BEDROOMS": "Xonalar",
+      "BATHROOMS": "Hammomlar",
+      "DESCRIPTION": "Tavsif",
+      "SAVE": "Saqlash",
+      "CANCEL": "Bekor qilish"
+    }
+  },
+  "BOOKING": {
+    "LIST": {
+      "TITLE": "Mening bronlarim",
+      "UPCOMING": "Kelgusi",
+      "PAST": "O'tgan",
+      "CANCELLED": "Bekor qilingan",
+      "NO_BOOKINGS": "Hozircha bronlar yo'q"
+    },
+    "DETAIL": {
+      "CHECK_IN": "Kirish",
+      "CHECK_OUT": "Chiqish",
+      "GUESTS": "Mehmonlar",
+      "TOTAL": "Jami",
+      "STATUS": "Status",
+      "CANCEL": "Bekor qilish"
+    },
+    "STATUS": {
+      "PENDING": "Kutilmoqda",
+      "CONFIRMED": "Tasdiqlangan",
+      "COMPLETED": "Yakunlangan",
+      "CANCELLED": "Bekor qilingan"
+    }
+  },
+  "PROFILE": {
+    "TITLE": "Mening profilim",
+    "EDIT": "Tahrirlash",
+    "SAVE": "Saqlash",
+    "TABS": {
+      "INFO": "Ma'lumotlar",
+      "SECURITY": "Xavfsizlik",
+      "SETTINGS": "Sozlamalar"
+    },
+    "FIELDS": {
+      "FIRST_NAME": "Ism",
+      "LAST_NAME": "Familiya",
+      "EMAIL": "Email",
+      "PHONE": "Telefon",
+      "ADDRESS": "Manzil",
+      "BIO": "Bio"
+    },
+    "PASSWORD": {
+      "CURRENT": "Joriy parol",
+      "NEW": "Yangi parol",
+      "CONFIRM": "Yangi parolni tasdiqlang",
+      "CHANGE": "Parolni o'zgartirish"
+    }
+  },
+  "COMMON": {
+    "LOADING": "Yuklanmoqda...",
+    "ERROR": "Xatolik yuz berdi",
+    "SUCCESS": "Muvaffaqiyatli",
+    "SAVE": "Saqlash",
+    "CANCEL": "Bekor qilish",
+    "DELETE": "O'chirish",
+    "EDIT": "Tahrirlash",
+    "CREATE": "Yaratish",
+    "SEARCH": "Qidirish",
+    "FILTER": "Filtrlash",
+    "SORT": "Saralash",
+    "MORE": "Ko'proq",
+    "LESS": "Kamroq",
+    "SHOW": "Ko'rsatish",
+    "HIDE": "Yashirish",
+    "YES": "Ha",
+    "NO": "Yo'q",
+    "OK": "OK",
+    "CLOSE": "Yopish",
+    "BACK": "Orqaga",
+    "NEXT": "Keyingisi",
+    "PREVIOUS": "Avvalgisi",
+    "SUBMIT": "Yuborish",
+    "APPLY": "Qo'llash",
+    "RESET": "Qayta tiklash",
+    "SELECT": "Tanlash",
+    "UPLOAD": "Yuklash",
+    "DOWNLOAD": "Yuklab olish",
+    "PRINT": "Chop etish",
+    "SHARE": "Ulashish",
+    "COPY": "Nusxa olish",
+    "COPIED": "Nusxa olindi"
+  },
+  "THEME": {
+    "LIGHT": "Yorug' rejim",
+    "DARK": "Tungi rejim",
+    "SYSTEM": "Tizim sozlamasi"
+  },
+  "LANGUAGE": {
+    "UZ": "O'zbekcha",
+    "RU": "Русский",
+    "EN": "English"
+  }
+}

@@ -37,7 +37,6 @@ public class PropertyViewsController : ControllerBase
                 return Ok(propertyView);
 
             PropertyView addedPropertyView = await this.propertyViewService.AddPropertyViewAsync(propertyView);
-            // TODO: ViewsCount increment should be handled by an Orchestration service
             return Created("propertyView", addedPropertyView);
         }
         catch (PropertyViewValidationException propertyViewValidationException)

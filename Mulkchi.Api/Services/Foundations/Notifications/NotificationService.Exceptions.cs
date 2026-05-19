@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Mulkchi.Api.Models.Foundations.Notifications;
 using Mulkchi.Api.Models.Foundations.Notifications.Exceptions;
@@ -29,11 +29,11 @@ public partial class NotificationService
         {
             throw CreateAndLogDependencyValidationException(notFoundNotificationException);
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedNotificationStorageException(
                 message: "Failed Notification storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }
@@ -69,11 +69,11 @@ public partial class NotificationService
         {
             return returningNotificationsFunction();
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedNotificationStorageException(
                 message: "Failed Notification storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }

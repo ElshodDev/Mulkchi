@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="PropertyNotFound" xml:space="preserve">
+    <value>Xushtuvlik topilmadi</value>
+  </data>
+  <data name="UserNotFound" xml:space="preserve">
+    <value>Foydalanuvchi topilmadi</value>
+  </data>
+  <data name="BookingNotFound" xml:space="preserve">
+    <value>Bron topilmadi</value>
+  </data>
+  <data name="ValidationError" xml:space="preserve">
+    <value>Tasdiqlash xatosi</value>
+  </data>
+  <data name="UnauthorizedAccess" xml:space="preserve">
+    <value>Ruxsatsiz kirish</value>
+  </data>
+  <data name="BookingConfirmed" xml:space="preserve">
+    <value>Bron tasdiqlandi</value>
+  </data>
+  <data name="BookingCancelled" xml:space="preserve">
+    <value>Bron bekor qilindi</value>
+  </data>
+</root>

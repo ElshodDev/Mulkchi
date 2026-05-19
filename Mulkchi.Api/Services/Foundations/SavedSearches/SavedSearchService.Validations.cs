@@ -13,7 +13,7 @@ public partial class SavedSearchService
         (Rule: IsInvalid(savedSearch.Id), Parameter: nameof(SavedSearch.Id)),
         (Rule: IsInvalid(savedSearch.UserId), Parameter: nameof(SavedSearch.UserId)),
         (Rule: IsInvalid(savedSearch.Name), Parameter: nameof(SavedSearch.Name)),
-        (Rule: IsInvalid(savedSearch.SearchQuery), Parameter: nameof(SavedSearch.SearchQuery)));
+        (Rule: IsInvalid(savedSearch.City), Parameter: nameof(SavedSearch.City)));
     }
 
     private void ValidateSavedSearchOnModify(SavedSearch savedSearch)
@@ -23,7 +23,7 @@ public partial class SavedSearchService
         (Rule: IsInvalid(savedSearch.Id), Parameter: nameof(SavedSearch.Id)),
         (Rule: IsInvalid(savedSearch.UserId), Parameter: nameof(SavedSearch.UserId)),
         (Rule: IsInvalid(savedSearch.Name), Parameter: nameof(SavedSearch.Name)),
-        (Rule: IsInvalid(savedSearch.SearchQuery), Parameter: nameof(SavedSearch.SearchQuery)));
+        (Rule: IsInvalid(savedSearch.City), Parameter: nameof(SavedSearch.City)));
     }
 
     private static void ValidateSavedSearchId(Guid savedSearchId)

@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Mulkchi.Api.Models.Foundations.HomeRequests;
 using Mulkchi.Api.Models.Foundations.HomeRequests.Exceptions;
@@ -29,11 +29,11 @@ public partial class HomeRequestService
         {
             throw CreateAndLogDependencyValidationException(notFoundHomeRequestException);
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedHomeRequestStorageException(
                 message: "Failed HomeRequest storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }
@@ -69,11 +69,11 @@ public partial class HomeRequestService
         {
             return returningHomeRequestsFunction();
         }
-        catch (SqlException sqlException)
+        catch (DbException dbException)
         {
             var failedStorage = new FailedHomeRequestStorageException(
                 message: "Failed HomeRequest storage error occurred, contact support.",
-                innerException: sqlException);
+                innerException: dbException);
 
             throw CreateAndLogDependencyException(failedStorage);
         }

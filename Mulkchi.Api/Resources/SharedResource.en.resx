@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="PropertyNotFound" xml:space="preserve">
+    <value>Property not found</value>
+  </data>
+  <data name="UserNotFound" xml:space="preserve">
+    <value>User not found</value>
+  </data>
+  <data name="BookingNotFound" xml:space="preserve">
+    <value>Booking not found</value>
+  </data>
+  <data name="ValidationError" xml:space="preserve">
+    <value>Validation error</value>
+  </data>
+  <data name="UnauthorizedAccess" xml:space="preserve">
+    <value>Unauthorized access</value>
+  </data>
+  <data name="BookingConfirmed" xml:space="preserve">
+    <value>Booking confirmed</value>
+  </data>
+  <data name="BookingCancelled" xml:space="preserve">
+    <value>Booking cancelled</value>
+  </data>
+</root>

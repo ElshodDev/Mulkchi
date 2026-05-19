@@ -1,0 +1,208 @@
+{
+  "APP": {
+    "NAME": "Mulkchi",
+    "TAGLINE": "The best real estate platform in Uzbekistan",
+    "DESCRIPTION": "Platform for selling and renting housing, apartments, offices and other real estate"
+  },
+  "NAV": {
+    "HOME": "Home",
+    "PROPERTIES": "Properties",
+    "SEARCH": "Search",
+    "FAVORITES": "Favorites",
+    "BOOKINGS": "Bookings",
+    "PROFILE": "Profile",
+    "HOST": "Host",
+    "ADMIN": "Admin",
+    "LOGIN": "Login",
+    "REGISTER": "Register",
+    "LOGOUT": "Logout"
+  },
+  "HOME": {
+    "HERO": {
+      "TITLE": "Find your dream home in Uzbekistan",
+      "SUBTITLE": "10000+ property listings across Tashkent and all Uzbekistan",
+      "CTA_PRIMARY": "Find Properties",
+      "CTA_SECONDARY": "List Property"
+    },
+    "FEATURED": {
+      "TITLE": "Featured Properties",
+      "VIEW_ALL": "View All"
+    },
+    "STATS": {
+      "PROPERTIES": "Properties",
+      "USERS": "Users",
+      "BOOKINGS": "Successful Bookings",
+      "CITIES": "Cities"
+    }
+  },
+  "AUTH": {
+    "LOGIN": {
+      "TITLE": "Sign in to your account",
+      "EMAIL": "Email address",
+      "PASSWORD": "Password",
+      "REMEMBER": "Remember me",
+      "FORGOT": "Forgot password?",
+      "SUBMIT": "Sign in",
+      "NO_ACCOUNT": "Don't have an account?",
+      "REGISTER": "Sign up"
+    },
+    "REGISTER": {
+      "TITLE": "Create new account",
+      "FIRST_NAME": "First name",
+      "LAST_NAME": "Last name",
+      "EMAIL": "Email",
+      "PHONE": "Phone",
+      "PASSWORD": "Password",
+      "CONFIRM_PASSWORD": "Confirm password",
+      "ROLE": "Who are you?",
+      "ROLE_GUEST": "Guest (looking for property)",
+      "ROLE_HOST": "Host (listing property)",
+      "AGREE": "I agree to the terms",
+      "SUBMIT": "Sign up",
+      "HAVE_ACCOUNT": "Already have an account?",
+      "LOGIN": "Sign in"
+    },
+    "FORGOT": {
+      "TITLE": "Reset password",
+      "SUBTITLE": "Enter your email address and we'll send you a reset link",
+      "EMAIL": "Email",
+      "SUBMIT": "Send",
+      "BACK": "Back to login"
+    }
+  },
+  "PROPERTY": {
+    "LIST": {
+      "TITLE": "Property Listings",
+      "FILTER": "Filters",
+      "SORT": "Sort by",
+      "GRID": "Grid",
+      "LIST": "List",
+      "RESULTS": "results found",
+      "NO_RESULTS": "No results found"
+    },
+    "DETAIL": {
+      "BEDS": "beds",
+      "BATHS": "baths",
+      "AREA": "m²",
+      "GUESTS": "guests",
+      "AMENITIES": "Amenities",
+      "DESCRIPTION": "Description",
+      "LOCATION": "Location",
+      "HOST": "About host",
+      "REVIEWS": "Reviews",
+      "SIMILAR": "Similar properties",
+      "BOOK": "Book now",
+      "CONTACT": "Contact",
+      "FAVORITE": "Add to favorites",
+      "SHARE": "Share"
+    },
+    "FORM": {
+      "CREATE": "Add new property",
+      "EDIT": "Edit property",
+      "STEP_BASIC": "Basic info",
+      "STEP_LOCATION": "Location",
+      "STEP_AMENITIES": "Amenities",
+      "STEP_PHOTOS": "Photos",
+      "TITLE": "Title",
+      "TYPE": "Property type",
+      "PRICE": "Price",
+      "AREA": "Area",
+      "BEDROOMS": "Bedrooms",
+      "BATHROOMS": "Bathrooms",
+      "DESCRIPTION": "Description",
+      "SAVE": "Save",
+      "CANCEL": "Cancel"
+    }
+  },
+  "BOOKING": {
+    "LIST": {
+      "TITLE": "My Bookings",
+      "UPCOMING": "Upcoming",
+      "PAST": "Past",
+      "CANCELLED": "Cancelled",
+      "NO_BOOKINGS": "No bookings yet"
+    },
+    "DETAIL": {
+      "CHECK_IN": "Check in",
+      "CHECK_OUT": "Check out",
+      "GUESTS": "Guests",
+      "TOTAL": "Total",
+      "STATUS": "Status",
+      "CANCEL": "Cancel"
+    },
+    "STATUS": {
+      "PENDING": "Pending",
+      "CONFIRMED": "Confirmed",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled"
+    }
+  },
+  "PROFILE": {
+    "TITLE": "My Profile",
+    "EDIT": "Edit",
+    "SAVE": "Save",
+    "TABS": {
+      "INFO": "Information",
+      "SECURITY": "Security",
+      "SETTINGS": "Settings"
+    },
+    "FIELDS": {
+      "FIRST_NAME": "First name",
+      "LAST_NAME": "Last name",
+      "EMAIL": "Email",
+      "PHONE": "Phone",
+      "ADDRESS": "Address",
+      "BIO": "Bio"
+    },
+    "PASSWORD": {
+      "CURRENT": "Current password",
+      "NEW": "New password",
+      "CONFIRM": "Confirm new password",
+      "CHANGE": "Change password"
+    }
+  },
+  "COMMON": {
+    "LOADING": "Loading...",
+    "ERROR": "An error occurred",
+    "SUCCESS": "Success",
+    "SAVE": "Save",
+    "CANCEL": "Cancel",
+    "DELETE": "Delete",
+    "EDIT": "Edit",
+    "CREATE": "Create",
+    "SEARCH": "Search",
+    "FILTER": "Filter",
+    "SORT": "Sort",
+    "MORE": "More",
+    "LESS": "Less",
+    "SHOW": "Show",
+    "HIDE": "Hide",
+    "YES": "Yes",
+    "NO": "No",
+    "OK": "OK",
+    "CLOSE": "Close",
+    "BACK": "Back",
+    "NEXT": "Next",
+    "PREVIOUS": "Previous",
+    "SUBMIT": "Submit",
+    "APPLY": "Apply",
+    "RESET": "Reset",
+    "SELECT": "Select",
+    "UPLOAD": "Upload",
+    "DOWNLOAD": "Download",
+    "PRINT": "Print",
+    "SHARE": "Share",
+    "COPY": "Copy",
+    "COPIED": "Copied"
+  },
+  "THEME": {
+    "LIGHT": "Light theme",
+    "DARK": "Dark theme",
+    "SYSTEM": "System theme"
+  },
+  "LANGUAGE": {
+    "UZ": "O'zbekcha",
+    "RU": "Русский",
+    "EN": "English"
+  }
+}

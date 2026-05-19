@@ -1,0 +1,234 @@
+<div class="ai-price-container">
+  <div class="bg-mesh"></div>
+  
+  <div class="container">
+    <!-- HERO -->
+    <header class="ai-hero animate-fade-in">
+      <div class="hero-icon-wrapper">
+        <mat-icon>psychology</mat-icon>
+      </div>
+      <h1>AI Narx Bashorati</h1>
+      <p>O'zbekistondagi eng aniq sun'iy intellekt modeli yordamida mulkingizning real bozor qiymatini soniyalar ichida aniqlang</p>
+    </header>
+
+    <div class="ai-content">
+      <!-- FORM SECTION -->
+      <div class="glass-card animate-slide-up">
+        <div class="card-title">
+          <mat-icon>fact_check</mat-icon>
+          <span>Mulk xususiyatlari</span>
+        </div>
+
+        <form [formGroup]="priceForm" (ngSubmit)="predict()">
+          
+          <div class="listing-type-toggle">
+            <button type="button" class="type-btn" [class.active]="priceForm.get('listingType')?.value === 'Sale'" (click)="priceForm.get('listingType')?.setValue('Sale')">Sotish</button>
+            <button type="button" class="type-btn" [class.active]="priceForm.get('listingType')?.value === 'Rent'" (click)="priceForm.get('listingType')?.setValue('Rent')">Ijara</button>
+            <button type="button" class="type-btn" [class.active]="priceForm.get('listingType')?.value === 'ShortTermRent'" (click)="priceForm.get('listingType')?.setValue('ShortTermRent')">Kunlik</button>
+          </div>
+
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Viloyat</mat-label>
+              <mat-select formControlName="region" required>
+                @for (region of regions; track region) {
+                  <mat-option [value]="region">{{ region }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Mulk turi</mat-label>
+              <mat-select formControlName="propertyType" required>
+                @for (type of propertyTypes; track type.value) {
+                  <mat-option [value]="type.value">{{ type.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Maydon (m²)</mat-label>
+              <input matInput type="number" formControlName="area" required>
+              <span matSuffix>m²</span>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Xonalar soni</mat-label>
+              <mat-select formControlName="rooms" required>
+                @for (num of roomOptions; track num) {
+                  <mat-option [value]="num">{{ num }} xona</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Qavat</mat-label>
+              <input matInput type="number" formControlName="floor" required>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Umumiy qavatlar</mat-label>
+              <input matInput type="number" formControlName="totalFloors" required>
+            </mat-form-field>
+          </div>
+
+          <div class="amenities-group">
+            <label>Qo'shimcha qulayliklar</label>
+            <div class="amenity-chips">
+              <div class="amenity-chip" [class.active]="priceForm.get('isRenovated')?.value" (click)="priceForm.get('isRenovated')?.setValue(!priceForm.get('isRenovated')?.value)">
+                <mat-icon>auto_fix_high</mat-icon> Ta'mirlangan
+              </div>
+              <div class="amenity-chip" [class.active]="priceForm.get('hasFurniture')?.value" (click)="priceForm.get('hasFurniture')?.setValue(!priceForm.get('hasFurniture')?.value)">
+                <mat-icon>chair</mat-icon> Mebel
+              </div>
+              <div class="amenity-chip" [class.active]="priceForm.get('hasParking')?.value" (click)="priceForm.get('hasParking')?.setValue(!priceForm.get('hasParking')?.value)">
+                <mat-icon>local_parking</mat-icon> Avtoturargoh
+              </div>
+              <div class="amenity-chip" [class.active]="priceForm.get('hasElevator')?.value" (click)="priceForm.get('hasElevator')?.setValue(!priceForm.get('hasElevator')?.value)">
+                <mat-icon>elevator</mat-icon> Lift
+              </div>
+              <div class="amenity-chip" [class.active]="priceForm.get('hasAirConditioning')?.value" (click)="priceForm.get('hasAirConditioning')?.setValue(!priceForm.get('hasAirConditioning')?.value)">
+                <mat-icon>ac_unit</mat-icon> Konditsioner
+              </div>
+              <div class="amenity-chip" [class.active]="priceForm.get('hasMetroNearby')?.value" (click)="priceForm.get('hasMetroNearby')?.setValue(!priceForm.get('hasMetroNearby')?.value)">
+                <mat-icon>directions_subway</mat-icon> Metro yaqin
+              </div>
+            </div>
+          </div>
+
+          <button mat-flat-button class="btn-predict" type="submit" [disabled]="priceForm.invalid || isLoading">
+            @if (isLoading) {
+              <mat-spinner diameter="24"></mat-spinner>
+            } @else {
+              <ng-container>
+                <mat-icon>insights</mat-icon>
+                Bashorat qilish
+              </ng-container>
+            }
+          </button>
+        </form>
+      </div>
+
+      <!-- RESULTS SECTION -->
+      <div class="result-pane">
+        @if (!prediction && !isLoading) {
+          <div class="empty-prediction animate-fade-in">
+            <mat-icon>query_stats</mat-icon>
+            <h2>Tayyormisiz?</h2>
+            <p>Mulk ma'lumotlarini chap tomondan to'ldiring va sun'iy intellekt tahlilini ko'ring</p>
+          </div>
+        }
+
+        @if (isLoading) {
+          <div class="empty-prediction">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p style="margin-top: 20px;">AI barcha omillarni tahlil qilmoqda...</p>
+          </div>
+        }
+
+        @if (prediction && !isLoading) {
+          <div class="prediction-card animate-slide-up">
+            <div class="prediction-header">
+              <p class="stat-lab">Tavsiya etilgan bozor narxi</p>
+              <div class="price-display">
+                <span class="price-main">{{ prediction.recommendedPrice | number }}</span>
+                <span class="currency">UZS</span>
+              </div>
+              
+              <div class="confidence-meter">
+                <div class="confidence-fill" [style.width.%]="confidencePercent"></div>
+              </div>
+              <div class="confidence-label">
+                <span>Ishonchlilik darajasi</span>
+                <span>{{ confidencePercent }}%</span>
+              </div>
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-val">{{ prediction.pricePerSqm | number }}</div>
+                <div class="stat-lab">UZS / m²</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-val">{{ prediction.minPrice | number }}</div>
+                <div class="stat-lab">Min. Narx</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-val">{{ prediction.maxPrice | number }}</div>
+                <div class="stat-lab">Max. Narx</div>
+              </div>
+            </div>
+
+            <div class="market-compare">
+              <div class="compare-title">
+                <span>Bozor tahlili</span>
+                <span style="color: var(--gold)">{{ getMarketLabel() }}</span>
+              </div>
+              <div class="compare-bar">
+                <div class="compare-fill" [style.width.%]="prediction.marketScore || 0"></div>
+              </div>
+              <p class="market-hint">
+                <mat-icon style="font-size: 16px; width: 16px; height: 16px;">info</mat-icon>
+                {{ getMarketHint() }}
+              </p>
+            </div>
+
+            @if (prediction.factorBreakdown && getFactorKeys().length > 0) {
+              <div class="market-compare">
+                <div class="compare-title">Asosiy omillar</div>
+                <div class="amenity-chips">
+                  @for (factor of getFactorEntries(); track factor.key) {
+                    <div class="amenity-chip active">
+                      +{{ factor.value }}% {{ factor.key }}
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (isLoadingSimilar) {
+              <div style="margin-top: 40px; text-align: center;">
+                <mat-spinner diameter="30" style="margin: 0 auto;"></mat-spinner>
+                <p style="color: #94a3b8; margin-top: 10px;">O'xshash mulklar qidirilmoqda...</p>
+              </div>
+            } @else if (similarRealProperties.length > 0) {
+              <div class="similar-properties-section animate-slide-up" style="margin-top: 40px; text-align: left;">
+                <div class="compare-title">
+                  Bozordagi o'xshash mulklar
+                </div>
+                <div class="similar-grid">
+                  @for (prop of similarRealProperties; track prop.id) {
+                    <div class="similar-card" (click)="navigateToProperty(prop.id)">
+                      <img [src]="getImageUrl(prop)" [alt]="prop.title" />
+                      <div class="similar-info">
+                        <div class="sim-price">{{ (prop.salePrice || prop.monthlyRent || 0) | number }} UZS</div>
+                        <div class="sim-title">{{ prop.title }}</div>
+                        <div class="sim-meta">
+                          <mat-icon>location_on</mat-icon> {{ prop.district }}
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <div style="margin-top: 30px; text-align: center;">
+              <button mat-button color="accent" (click)="aiService.clearResult()">
+                <mat-icon>refresh</mat-icon> Qayta hisoblash
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (aiService.error()) {
+          <div class="empty-prediction" style="border-color: #ef4444;">
+            <mat-icon style="color: #ef4444;">error_outline</mat-icon>
+            <h2 style="color: #ef4444;">Xatolik</h2>
+            <p>{{ aiService.error() }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

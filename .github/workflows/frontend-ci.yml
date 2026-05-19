@@ -1,0 +1,58 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'Mulkchi.Frontend/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'Mulkchi.Frontend/**'
+
+jobs:
+  build-and-test:
+    name: Build va Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Mulkchi.Frontend
+
+    steps:
+      - name: Kodni yuklab olish
+        uses: actions/checkout@v4
+
+      - name: Node.js 20 o'rnatish
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Mulkchi.Frontend/package-lock.json
+
+      - name: Paketlarni o'rnatish
+        run: npm ci
+
+      - name: Production build
+        run: npm run build -- --configuration production
+
+      - name: Unit testlar
+        run: npm test -- --watch=false --browsers=ChromeHeadless
+
+      - name: Console.log tekshiruvi
+        run: |
+          COUNT=$(grep -rn "console\.log" src/app \
+            --include="*.ts" \
+            | grep -v "spec.ts" | wc -l)
+          echo "console.log soni: $COUNT"
+          if [ "$COUNT" -gt "0" ]; then
+            grep -rn "console\.log" src/app \
+              --include="*.ts" | grep -v "spec.ts"
+            echo "⚠️ $COUNT ta console.log topildi!"
+          fi
+
+      - name: Build natijasini saqlash
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: Mulkchi.Frontend/dist/
+          retention-days: 3

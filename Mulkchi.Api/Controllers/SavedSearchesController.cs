@@ -4,174 +4,259 @@ using Mulkchi.Api.Models.Foundations.Common;
 using Mulkchi.Api.Models.Foundations.SavedSearches;
 using Mulkchi.Api.Models.Foundations.SavedSearches.Exceptions;
 using Mulkchi.Api.Services.Foundations.SavedSearches;
+using System.Security.Claims;
 
-namespace Mulkchi.Api.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-public class SavedSearchesController : ControllerBase
+namespace Mulkchi.Api.Controllers
 {
-    private readonly ISavedSearchService savedSearchService;
-
-    public SavedSearchesController(ISavedSearchService savedSearchService)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class SavedSearchesController : ControllerBase
     {
-        this.savedSearchService = savedSearchService;
-    }
+        private readonly ISavedSearchService savedSearchService;
 
-    [HttpPost]
-    [Authorize]
-    public async ValueTask<ActionResult<SavedSearch>> PostSavedSearchAsync(SavedSearch savedSearch)
-    {
-        try
+        public SavedSearchesController(ISavedSearchService savedSearchService)
         {
-            SavedSearch addedSavedSearch = await this.savedSearchService.AddSavedSearchAsync(savedSearch);
-            return Created("savedSearch", addedSavedSearch);
+            this.savedSearchService = savedSearchService;
         }
-        catch (SavedSearchValidationException savedSearchValidationException)
-        {
-            return BadRequest(new { message = savedSearchValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (SavedSearchDependencyValidationException savedSearchDependencyValidationException)
-        {
-            return BadRequest(new { message = savedSearchDependencyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (SavedSearchDependencyException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (SavedSearchServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-    }
 
-    [HttpGet]
-    [Authorize]
-    public ActionResult<PagedResult<SavedSearch>> GetAllSavedSearches([FromQuery] PaginationParams pagination)
-    {
-        try
+        [HttpPost]
+        [Authorize]
+        public async ValueTask<ActionResult<SavedSearch>> PostSavedSearchAsync(SavedSearch savedSearch)
         {
-            IQueryable<SavedSearch> query = this.savedSearchService.RetrieveAllSavedSearches();
-            int totalCount = query.Count();
-
-            var items = query
-                .Skip((pagination.Page - 1) * pagination.PageSize)
-                .Take(pagination.PageSize)
-                .ToList();
-
-            var result = new PagedResult<SavedSearch>
+            try
             {
-                Items = items,
-                TotalCount = totalCount,
-                Page = pagination.Page,
-                PageSize = pagination.PageSize
-            };
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim, out Guid currentUserId))
+                    return Unauthorized();
 
-            return Ok(result);
+                savedSearch.UserId = currentUserId;
+                SavedSearch addedSavedSearch = await this.savedSearchService.AddSavedSearchAsync(savedSearch);
+                return Created($"/api/savedsearches/{addedSavedSearch.Id}", addedSavedSearch);
+            }
+            catch (SavedSearchValidationException savedSearchValidationException)
+            {
+                return BadRequest(new { message = savedSearchValidationException.InnerException?.Message ?? "An error occurred." });
+            }
+            catch (SavedSearchDependencyValidationException savedSearchDependencyValidationException)
+            {
+                return BadRequest(new { message = savedSearchDependencyValidationException.InnerException?.Message ?? "An error occurred." });
+            }
+            catch (SavedSearchDependencyException)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            }
+            catch (SavedSearchServiceException)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            }
         }
-        catch (SavedSearchDependencyException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (SavedSearchServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-    }
 
-    [HttpGet("{id}")]
-    [Authorize]
-    public async ValueTask<ActionResult<SavedSearch>> GetSavedSearchByIdAsync(Guid id)
-    {
-        try
+        [HttpGet]
+        [Authorize]
+        public ActionResult<PagedResult<SavedSearch>> GetAllSavedSearches([FromQuery] PaginationParams pagination)
         {
-            SavedSearch savedSearch = await this.savedSearchService.RetrieveSavedSearchByIdAsync(id);
-            return Ok(savedSearch);
-        }
-        catch (SavedSearchValidationException savedSearchValidationException)
-        {
-            return BadRequest(new { message = savedSearchValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (SavedSearchDependencyValidationException savedSearchDependencyValidationException)
-            when (savedSearchDependencyValidationException.InnerException is NotFoundSavedSearchException)
-        {
-            return NotFound(new { message = savedSearchDependencyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (SavedSearchDependencyValidationException savedSearchDependencyValidationException)
-        {
-            return BadRequest(new { message = savedSearchDependencyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (SavedSearchDependencyException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (SavedSearchServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-    }
+            try
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim, out Guid currentUserId))
+                    return Unauthorized();
 
-    [HttpPut]
-    [Authorize]
-    public async ValueTask<ActionResult<SavedSearch>> PutSavedSearchAsync(SavedSearch savedSearch)
-    {
-        try
-        {
-            SavedSearch modifiedSavedSearch = await this.savedSearchService.ModifySavedSearchAsync(savedSearch);
-            return Ok(modifiedSavedSearch);
-        }
-        catch (SavedSearchValidationException savedSearchValidationException)
-        {
-            return BadRequest(new { message = savedSearchValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (SavedSearchDependencyValidationException savedSearchDependencyValidationException)
-            when (savedSearchDependencyValidationException.InnerException is NotFoundSavedSearchException)
-        {
-            return NotFound(new { message = savedSearchDependencyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (SavedSearchDependencyValidationException savedSearchDependencyValidationException)
-        {
-            return BadRequest(new { message = savedSearchDependencyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (SavedSearchDependencyException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (SavedSearchServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-    }
+                IQueryable<SavedSearch> query = this.savedSearchService.RetrieveAllSavedSearches()
+                    .Where(s => s.UserId == currentUserId);
+                    
+                int totalCount = query.Count();
 
-    [HttpDelete("{id}")]
-    [Authorize]
-    public async ValueTask<ActionResult<SavedSearch>> DeleteSavedSearchByIdAsync(Guid id)
-    {
-        try
-        {
-            SavedSearch deletedSavedSearch = await this.savedSearchService.RemoveSavedSearchByIdAsync(id);
-            return Ok(deletedSavedSearch);
+                var items = query
+                    .Skip((pagination.Page - 1) * pagination.PageSize)
+                    .Take(pagination.PageSize)
+                    .ToList();
+
+                var result = new PagedResult<SavedSearch>
+                {
+                    Items = items,
+                    TotalCount = totalCount,
+                    Page = pagination.Page,
+                    PageSize = pagination.PageSize
+                };
+
+                return Ok(result);
+            }
+            catch (SavedSearchDependencyException)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            }
+            catch (SavedSearchServiceException)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            }
         }
-        catch (SavedSearchValidationException savedSearchValidationException)
+
+        [HttpGet("{id}")]
+        [Authorize]
+        public async ValueTask<ActionResult<SavedSearch>> GetSavedSearchByIdAsync(Guid id)
         {
-            return BadRequest(new { message = savedSearchValidationException.InnerException?.Message ?? "An error occurred." });
+            try
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim, out Guid currentUserId))
+                    return Unauthorized();
+
+                SavedSearch savedSearch = await this.savedSearchService.RetrieveSavedSearchByIdAsync(id);
+                
+                // Check if user owns this saved search
+                if (savedSearch.UserId != currentUserId)
+                    return Unauthorized();
+
+                return Ok(savedSearch);
+            }
+            catch (SavedSearchValidationException savedSearchValidationException)
+            {
+                return BadRequest(new { message = savedSearchValidationException.InnerException?.Message ?? "An error occurred." });
+            }
+            catch (SavedSearchDependencyValidationException savedSearchDependencyValidationException)
+                when (savedSearchDependencyValidationException.InnerException is NotFoundSavedSearchException)
+            {
+                return NotFound(new { message = savedSearchDependencyValidationException.InnerException?.Message ?? "An error occurred." });
+            }
+            catch (SavedSearchDependencyValidationException savedSearchDependencyValidationException)
+            {
+                return BadRequest(new { message = savedSearchDependencyValidationException.InnerException?.Message ?? "An error occurred." });
+            }
+            catch (SavedSearchDependencyException)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            }
+            catch (SavedSearchServiceException)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            }
         }
-        catch (SavedSearchDependencyValidationException savedSearchDependencyValidationException)
-            when (savedSearchDependencyValidationException.InnerException is NotFoundSavedSearchException)
+
+        [HttpPut]
+        [Authorize]
+        public async ValueTask<ActionResult<SavedSearch>> PutSavedSearchAsync(SavedSearch savedSearch)
         {
-            return NotFound(new { message = savedSearchDependencyValidationException.InnerException?.Message ?? "An error occurred." });
+            try
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim, out Guid currentUserId))
+                    return Unauthorized();
+
+                // Check if user owns this saved search when entity is available
+                SavedSearch existingSearch = await this.savedSearchService.RetrieveSavedSearchByIdAsync(savedSearch.Id);
+                if (existingSearch is not null && existingSearch.UserId != currentUserId)
+                    return Unauthorized();
+
+                savedSearch.UserId = currentUserId;
+                SavedSearch modifiedSavedSearch = await this.savedSearchService.ModifySavedSearchAsync(savedSearch);
+                return Ok(modifiedSavedSearch);
+            }
+            catch (SavedSearchValidationException savedSearchValidationException)
+            {
+                return BadRequest(new { message = savedSearchValidationException.InnerException?.Message ?? "An error occurred." });
+            }
+            catch (SavedSearchDependencyValidationException savedSearchDependencyValidationException)
+                when (savedSearchDependencyValidationException.InnerException is NotFoundSavedSearchException)
+            {
+                return NotFound(new { message = savedSearchDependencyValidationException.InnerException?.Message ?? "An error occurred." });
+            }
+            catch (SavedSearchDependencyValidationException savedSearchDependencyValidationException)
+            {
+                return BadRequest(new { message = savedSearchDependencyValidationException.InnerException?.Message ?? "An error occurred." });
+            }
+            catch (SavedSearchDependencyException)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            }
+            catch (SavedSearchServiceException)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            }
         }
-        catch (SavedSearchDependencyValidationException savedSearchDependencyValidationException)
+
+        [HttpPut("{id}/toggle")]
+        [Authorize]
+        public async ValueTask<ActionResult<SavedSearch>> ToggleSavedSearchAsync(Guid id)
         {
-            return BadRequest(new { message = savedSearchDependencyValidationException.InnerException?.Message ?? "An error occurred." });
+            try
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim, out Guid currentUserId))
+                    return Unauthorized();
+
+                SavedSearch savedSearch = await this.savedSearchService.RetrieveSavedSearchByIdAsync(id);
+                
+                // Check if user owns this saved search
+                if (savedSearch.UserId != currentUserId)
+                    return Unauthorized();
+
+                savedSearch.IsActive = !savedSearch.IsActive;
+                SavedSearch modifiedSavedSearch = await this.savedSearchService.ModifySavedSearchAsync(savedSearch);
+                return Ok(modifiedSavedSearch);
+            }
+            catch (SavedSearchValidationException savedSearchValidationException)
+            {
+                return BadRequest(new { message = savedSearchValidationException.InnerException?.Message ?? "An error occurred." });
+            }
+            catch (SavedSearchDependencyValidationException savedSearchDependencyValidationException)
+                when (savedSearchDependencyValidationException.InnerException is NotFoundSavedSearchException)
+            {
+                return NotFound(new { message = savedSearchDependencyValidationException.InnerException?.Message ?? "An error occurred." });
+            }
+            catch (SavedSearchDependencyValidationException savedSearchDependencyValidationException)
+            {
+                return BadRequest(new { message = savedSearchDependencyValidationException.InnerException?.Message ?? "An error occurred." });
+            }
+            catch (SavedSearchDependencyException)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            }
+            catch (SavedSearchServiceException)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            }
         }
-        catch (SavedSearchDependencyException)
+
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async ValueTask<ActionResult<SavedSearch>> DeleteSavedSearchByIdAsync(Guid id)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (SavedSearchServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            try
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim, out Guid currentUserId))
+                    return Unauthorized();
+
+                SavedSearch savedSearch = await this.savedSearchService.RetrieveSavedSearchByIdAsync(id);
+
+                // Check if user owns this saved search when entity is available
+                if (savedSearch is not null && savedSearch.UserId != currentUserId)
+                    return Unauthorized();
+
+                SavedSearch deletedSavedSearch = await this.savedSearchService.RemoveSavedSearchByIdAsync(id);
+                return Ok(deletedSavedSearch);
+            }
+            catch (SavedSearchValidationException savedSearchValidationException)
+            {
+                return BadRequest(new { message = savedSearchValidationException.InnerException?.Message ?? "An error occurred." });
+            }
+            catch (SavedSearchDependencyValidationException savedSearchDependencyValidationException)
+                when (savedSearchDependencyValidationException.InnerException is NotFoundSavedSearchException)
+            {
+                return NotFound(new { message = savedSearchDependencyValidationException.InnerException?.Message ?? "An error occurred." });
+            }
+            catch (SavedSearchDependencyValidationException savedSearchDependencyValidationException)
+            {
+                return BadRequest(new { message = savedSearchDependencyValidationException.InnerException?.Message ?? "An error occurred." });
+            }
+            catch (SavedSearchDependencyException)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            }
+            catch (SavedSearchServiceException)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
+            }
         }
     }
 }
