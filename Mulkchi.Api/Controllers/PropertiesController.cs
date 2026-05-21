@@ -343,6 +343,42 @@ public class PropertiesController : ControllerBase
         }
     }
 
+    [HttpPost("{id:guid}/bump")]
+    [Authorize(Roles = "Host,Admin")]
+    public async Task<ActionResult<object>> BumpPropertyAsync(Guid id)
+    {
+        try
+        {
+            // Verify that current user owns this property
+            var property = await this.propertyService.RetrievePropertyByIdAsync(id);
+            
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || property.UserId.ToString() != userIdClaim)
+            {
+                return Unauthorized(new { message = "You can only bump your own properties." });
+            }
+
+            // Update property's listing bump timestamp
+            property.BumpedAt = DateTimeOffset.UtcNow;
+            await this.propertyService.UpdatePropertyAsync(property);
+
+            return Ok(new 
+            { 
+                message = "Property bumped successfully. It will now appear higher in search results for 24 hours.",
+                propertyId = id,
+                bumpedAt = property.BumpedAt
+            });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
     [HttpGet("filters/options")]
     [AllowAnonymous]
     public ActionResult<object> GetFilterOptions()

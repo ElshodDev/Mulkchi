@@ -180,6 +180,14 @@ export interface PriceHistoryItem {
   source: string;
 }
 
+export interface HostDashboardStats {
+  totalListings: number;
+  totalViews: number;
+  totalBookings: number;
+  averageRating: number;
+  totalRevenue: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -298,5 +306,12 @@ export class AnalyticsService {
    */
   getPriceHistory(propertyId: string): Observable<PriceHistoryItem[]> {
     return this.http.get<PriceHistoryItem[]>(`${this.apiUrl}/price-history/${propertyId}`);
+  }
+
+  /**
+   * Get host dashboard statistics
+   */
+  getHostDashboardStats(): Observable<HostDashboardStats> {
+    return this.http.get<HostDashboardStats>(`${this.apiUrl}/host-dashboard`);
   }
 }

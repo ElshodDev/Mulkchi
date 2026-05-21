@@ -13,6 +13,7 @@ using Mulkchi.Api.Services.Foundations.Users;
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -259,6 +260,48 @@ public class AnalyticsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AnalyticsController), nameof(GetDashboard));
+            return StatusCode(500, new { message = "Internal server error." });
+        }
+    }
+
+    [HttpGet("host-dashboard")]
+    [Authorize]
+    public ActionResult GetHostDashboard()
+    {
+        try
+        {
+            var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("id");
+            if (string.IsNullOrEmpty(currentUserIdStr) || !Guid.TryParse(currentUserIdStr, out Guid userId))
+                return Unauthorized(new { message = "User not authorized or ID not found." });
+
+            var properties = this.propertyService.RetrieveAllProperties().Where(p => p.HostId == userId && !p.DeletedDate.HasValue).ToList();
+            var propertyIds = properties.Select(p => p.Id).ToList();
+            var bookings = this.bookingService.RetrieveAllBookings().Where(b => propertyIds.Contains(b.PropertyId) && !b.DeletedDate.HasValue).ToList();
+            
+            int totalListings = properties.Count;
+            int totalViews = properties.Sum(p => p.ViewsCount);
+            int totalBookings = bookings.Count;
+            
+            decimal averageRating = totalListings > 0 
+                ? (decimal)properties.Average(p => (double)p.AverageRating)
+                : 0m;
+
+            decimal totalRevenue = bookings
+                .Where(b => b.Status == Models.Foundations.Bookings.BookingStatus.Confirmed || b.Status == Models.Foundations.Bookings.BookingStatus.Completed)
+                .Sum(b => b.TotalPrice);
+
+            return Ok(new
+            {
+                totalListings,
+                totalViews,
+                totalBookings,
+                averageRating = Math.Round(averageRating, 1),
+                totalRevenue
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AnalyticsController), nameof(GetHostDashboard));
             return StatusCode(500, new { message = "Internal server error." });
         }
     }

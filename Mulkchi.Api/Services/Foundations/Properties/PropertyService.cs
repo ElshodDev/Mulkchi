@@ -374,6 +374,9 @@ public partial class PropertyService : IPropertyService
         if (searchParams.Bedrooms.HasValue)
             query = query.Where(p => p.NumberOfBedrooms == searchParams.Bedrooms);
 
+        if (!string.IsNullOrWhiteSpace(searchParams.Region) && Enum.TryParse(searchParams.Region, true, out UzbekistanRegion parsedRegion))
+            query = query.Where(p => p.Region == parsedRegion);
+
         if (searchParams.ListingType.HasValue)
             query = query.Where(p => p.ListingType == searchParams.ListingType.Value);
 
@@ -428,6 +431,20 @@ public partial class PropertyService : IPropertyService
 
         if (maybeProperty is null)
             throw new NotFoundPropertyException(propertyId);
+
+        try
+        {
+            var host = await this.userService.RetrieveUserByIdAsync(maybeProperty.HostId);
+            if (host != null)
+            {
+                maybeProperty.HostName = $"{host.FirstName} {host.LastName}".Trim();
+                maybeProperty.HostAvatarUrl = host.AvatarUrl;
+            }
+        }
+        catch (Exception ex)
+        {
+            this.loggingBroker.LogWarning($"Failed to retrieve host for property {propertyId}: {ex.Message}");
+        }
 
         return maybeProperty;
     }

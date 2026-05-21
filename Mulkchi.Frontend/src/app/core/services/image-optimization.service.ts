@@ -28,7 +28,7 @@ export class ImageOptimizationService {
     // environment.apiUrl is usually http://localhost:5000/api
     // Images are served from http://localhost:5000/uploads
     const baseUrl = environment.apiUrl.replace('/api', '');
-    
+
     // If it's a relative path starting with /assets, it belongs to the frontend
     if (url.startsWith('/assets')) {
       return url;
@@ -38,6 +38,16 @@ export class ImageOptimizationService {
     let normalizedUrl = url.replace(/\\/g, '/');
     if (normalizedUrl.startsWith('/')) {
       normalizedUrl = normalizedUrl.substring(1);
+    }
+
+    // If we only get a filename, infer its storage folder
+    if (!normalizedUrl.includes('/')) {
+      const lower = normalizedUrl.toLowerCase();
+      if (lower.endsWith('.webp')) {
+        normalizedUrl = `uploads/property-images/${normalizedUrl}`;
+      } else if (lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.png')) {
+        normalizedUrl = `avatars/${normalizedUrl}`;
+      }
     }
 
     const fullUrl = `${baseUrl}/${normalizedUrl}`;
@@ -167,7 +177,7 @@ export class ImageOptimizationService {
               }
             },
             'image/jpeg',
-            quality
+            quality,
           );
         };
       };

@@ -455,3 +455,116 @@
   .ai-content { grid-template-columns: 1fr; }
   .ai-hero h1 { font-size: 3rem; }
 }
+
+/* --- SCANNER ANIMATIONS --- */
+.scanning-container {
+  height: 650px;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-glow);
+  border-radius: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 80px rgba(99, 102, 241, 0.1) inset;
+}
+
+.radar-box {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 2px solid rgba(99, 102, 241, 0.3);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 40px;
+  background: 
+    linear-gradient(90deg, transparent 49%, rgba(99,102,241,0.2) 49%, rgba(99,102,241,0.2) 51%, transparent 51%),
+    linear-gradient(0deg, transparent 49%, rgba(99,102,241,0.2) 49%, rgba(99,102,241,0.2) 51%, transparent 51%);
+}
+
+.radar-beam {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100px;
+  height: 100px;
+  background: conic-gradient(from 0deg, transparent 70%, rgba(99, 102, 241, 0.8) 100%);
+  transform-origin: 0% 0%;
+  animation: radar-spin 2s linear infinite;
+}
+
+@keyframes radar-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.radar-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--gold);
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--gold);
+  opacity: 0;
+  animation: dot-flash 2s infinite;
+}
+
+.dot-1 { top: 30%; left: 60%; animation-delay: 0.5s; }
+.dot-2 { top: 70%; left: 30%; animation-delay: 1.2s; }
+.dot-3 { top: 40%; left: 20%; animation-delay: 1.8s; }
+
+@keyframes dot-flash {
+  0%, 100% { opacity: 0; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.5); }
+}
+
+.scan-text {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 24px;
+  font-family: monospace;
+}
+
+.typing-effect {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid var(--indigo);
+  animation: typing 2s steps(40, end) infinite, blink-caret .75s step-end infinite;
+}
+
+@keyframes typing {
+  0% { width: 0 }
+  50% { width: 100% }
+  100% { width: 100% }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: var(--indigo) }
+}
+
+.scan-progress-bar {
+  width: 80%;
+  height: 4px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.scan-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--indigo), var(--violet));
+  animation: progress-load 3s ease-in-out infinite;
+}
+
+@keyframes progress-load {
+  0% { width: 0%; transform: translateX(-100%); }
+  50% { width: 100%; transform: translateX(0); }
+  100% { width: 100%; transform: translateX(100%); }
+}

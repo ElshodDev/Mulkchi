@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -6,8 +6,9 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
-import { ComparisonService } from '../../../core/services/comparison.service';
+import { ComparisonService, ComparisonResult, PropertyComparisonDetail } from '../../../core/services/comparison.service';
 import { ImageOptimizationService } from '../../../core/services/image-optimization.service';
 import { animate, style, transition, trigger, query, stagger } from '@angular/animations';
 
@@ -22,7 +23,8 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
     MatDividerModule, 
     RouterLink, 
     MatChipsModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatProgressSpinnerModule
   ],
   animations: [
     trigger('listAnimation', [
@@ -33,6 +35,12 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
             animate('400ms cubic-bezier(0.16, 1, 0.3, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
           ])
         ], { optional: true })
+      ])
+    ]),
+    trigger('fadeAnimation', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(10px)' }),
+        animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
       ])
     ])
   ],
@@ -66,6 +74,27 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
             </button>
           </div>
         } @else {
+          
+          <!-- AI Summary Alert -->
+          @if (apiResult()) {
+            <div class="ai-summary-alert" @fadeAnimation>
+              <div class="ai-icon"><mat-icon>auto_awesome</mat-icon></div>
+              <div class="ai-content">
+                <h3>Sun'iy intellekt tahlili</h3>
+                <p [innerHTML]="formatSummary(apiResult()!.summary)"></p>
+                <div class="recommendation-badge">
+                  <mat-icon>verified</mat-icon>
+                  <span>{{ apiResult()!.recommendation }}</span>
+                </div>
+              </div>
+            </div>
+          } @else if (isLoading()) {
+            <div class="ai-loading">
+              <mat-spinner diameter="24"></mat-spinner>
+              <span>Bozor narxlari va tahlillar yuklanmoqda...</span>
+            </div>
+          }
+
           <div class="compare-grid-wrapper" @listAnimation>
             <div class="compare-table">
               <!-- Labels Column (Fixed on Left) -->
@@ -74,7 +103,9 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
                   <span class="lbl-summary">Taqqoslash jadvali ({{ comparisonService.count() }} / 4)</span>
                 </div>
                 @for (label of compareLabels; track label.key) {
-                  <div class="label-cell">{{ label.title }}</div>
+                  <div class="label-cell" [class.highlight-label]="label.key === 'valueRating' || label.key === 'score'">
+                    {{ label.title }}
+                  </div>
                 }
               </div>
 
@@ -84,12 +115,13 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
                   <div class="compare-col">
                     <!-- Property Card (Header) -->
                     <div class="prop-header">
-                      <button class="remove-btn" (click)="comparisonService.removeFromCompare(prop.id)" matTooltip="Solishtirishdan olib tashlash">
+                      <button class="remove-btn" (click)="removeProperty(prop.id)" matTooltip="Solishtirishdan olib tashlash">
                         <mat-icon>close</mat-icon>
                       </button>
                       <div class="img-frame" (click)="viewProperty(prop.id)">
                         <img [src]="getImg(prop)" [alt]="prop.title" (error)="onImgError($event)" />
-                        <div class="listing-badge" [class]="prop.listingType?.toLowerCase()">
+                        <!-- WARNING FIXED: prop.listingType?.toLowerCase() replaced with safe check -->
+                        <div class="listing-badge" [class]="(prop.listingType || '').toLowerCase()">
                           {{ getListingLabel(prop.listingType) }}
                         </div>
                       </div>
@@ -126,6 +158,26 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
                           <span [class.active]="prop.hasElevator" matTooltip="Lift mavjud"><mat-icon>elevator</mat-icon></span>
                           <span [class.active]="prop.hasAirConditioning" matTooltip="Konditsioner"><mat-icon>ac_unit</mat-icon></span>
                         </div>
+                      </div>
+                      
+                      <!-- AI SMART DATA CELLS -->
+                      <div class="value-cell score-cell">
+                        @if (getAiDetail(prop.id); as detail) {
+                          <div class="score-circle" [class.high]="detail.score >= 80" [class.medium]="detail.score >= 60 && detail.score < 80" [class.low]="detail.score < 60">
+                            {{ detail.score }}
+                          </div>
+                        } @else {
+                          <span class="text-gray-400">-</span>
+                        }
+                      </div>
+                      <div class="value-cell value-rating-cell">
+                        @if (getAiDetail(prop.id); as detail) {
+                          <span class="rating-badge" [class.great]="detail.valueRating.includes('Arzon')" [class.premium]="detail.valueRating.includes('Premium')" [class.avg]="detail.valueRating.includes('rtacha')">
+                            {{ detail.valueRating }}
+                          </span>
+                        } @else {
+                          <span class="text-gray-400">-</span>
+                        }
                       </div>
                     </div>
                   </div>
@@ -164,7 +216,7 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      margin-bottom: 40px;
+      margin-bottom: 30px;
       flex-wrap: wrap;
       gap: 20px;
       padding-bottom: 24px;
@@ -176,6 +228,56 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
     .page-subtitle { font-size: 1.1rem; color: #64748b; margin: 0; }
 
     .btn-clear-all { border-radius: 16px !important; height: 48px !important; display: flex; align-items: center; gap: 8px; font-weight: 600; }
+
+    /* --- AI ALERTS --- */
+    .ai-summary-alert {
+      background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 32px;
+      display: flex;
+      gap: 20px;
+      border: 1px solid #c7d2fe;
+      box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.1);
+    }
+    .ai-icon {
+      width: 48px;
+      height: 48px;
+      background: #4f46e5;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+    }
+    .ai-content h3 { font-size: 1.2rem; font-weight: 800; color: #1e3a8a; margin: 0 0 12px 0; }
+    .ai-content p { color: #334155; line-height: 1.6; margin: 0 0 16px 0; font-size: 1rem; }
+    .recommendation-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #10b981;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .recommendation-badge mat-icon { font-size: 20px; width: 20px; height: 20px; }
+    
+    .ai-loading {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      background: white;
+      border-radius: 16px;
+      margin-bottom: 32px;
+      border: 1px solid #e2e8f0;
+      color: #64748b;
+      font-weight: 600;
+    }
 
     /* --- EMPTY STATE --- */
     .empty-state {
@@ -233,6 +335,7 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
       border-bottom: 1px solid #f1f5f9;
     }
     .label-cell:last-child { border-bottom: none; }
+    .label-cell.highlight-label { color: #4f46e5; background: #eef2ff; }
 
     /* PROPERTIES CONTAINER */
     .properties-container {
@@ -328,6 +431,33 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
     .feature-icons span { width: 36px; height: 36px; border-radius: 10px; background: #f1f5f9; color: #cbd5e1; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
     .feature-icons span.active { background: #ecfdf5; color: #10b981; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); }
     .feature-icons mat-icon { font-size: 20px; width: 20px; height: 20px; }
+    
+    .score-cell { background: #f8fafc; }
+    .score-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 1.1rem;
+      color: white;
+    }
+    .score-circle.high { background: #10b981; box-shadow: 0 4px 10px rgba(16,185,129,0.3); }
+    .score-circle.medium { background: #f59e0b; box-shadow: 0 4px 10px rgba(245,158,11,0.3); }
+    .score-circle.low { background: #ef4444; box-shadow: 0 4px 10px rgba(239,68,68,0.3); }
+    
+    .value-rating-cell { background: #f8fafc; }
+    .rating-badge {
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+    .rating-badge.great { background: #ecfdf5; color: #059669; border: 1px solid #10b981; }
+    .rating-badge.premium { background: #fff1f2; color: #e11d48; border: 1px solid #f43f5e; }
+    .rating-badge.avg { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
 
     /* ADD COLUMN */
     .add-col { width: 310px; flex-shrink: 0; padding: 24px; display: flex; align-items: center; justify-content: center; }
@@ -345,12 +475,16 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
       .label-cell { font-size: 0.95rem; padding: 0 16px; }
       .compare-col, .add-col { width: 260px; }
       .value-cell { padding: 0 16px; font-size: 0.95rem; }
+      .ai-summary-alert { flex-direction: column; }
     }
   `]
 })
-export class ComparisonComponent {
+export class ComparisonComponent implements OnInit {
   comparisonService = inject(ComparisonService);
   private imageService = inject(ImageOptimizationService);
+
+  apiResult = signal<ComparisonResult | null>(null);
+  isLoading = signal<boolean>(false);
 
   compareLabels = [
     { key: 'type', title: 'Mulk turi' },
@@ -358,8 +492,59 @@ export class ComparisonComponent {
     { key: 'rooms', title: 'Xonalar soni' },
     { key: 'bathrooms', title: 'Hammom' },
     { key: 'location', title: 'Joylashuvi' },
-    { key: 'features', title: 'Qulayliklar' }
+    { key: 'features', title: 'Qulayliklar' },
+    { key: 'score', title: "Sun'iy Intellekt Balli" },
+    { key: 'valueRating', title: 'Bozor bahosi' }
   ];
+
+  constructor() {
+    effect(() => {
+      // Re-fetch API whenever the count changes (but only if > 1)
+      const count = this.comparisonService.count();
+      if (count > 1) {
+        this.fetchSmartComparison();
+      } else {
+        this.apiResult.set(null);
+      }
+    }, { allowSignalWrites: true });
+  }
+
+  ngOnInit() {
+    // Initial fetch if we have items
+    if (this.comparisonService.count() > 1) {
+      this.fetchSmartComparison();
+    }
+  }
+
+  fetchSmartComparison() {
+    this.isLoading.set(true);
+    this.comparisonService.getSmartComparison().subscribe({
+      next: (res) => {
+        this.apiResult.set(res);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error fetching comparison', err);
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  removeProperty(id: string) {
+    this.comparisonService.removeFromCompare(id);
+  }
+
+  getAiDetail(propertyId: string): PropertyComparisonDetail | undefined {
+    return this.apiResult()?.details.find(d => d.propertyId === propertyId);
+  }
+
+  formatSummary(summary: string): string {
+    if (!summary) return '';
+    return summary
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br/>')
+      .replace(/- /g, '<br/>• ');
+  }
 
   getImg(prop: any): string {
     const url = prop.images?.[0]?.url || prop.images?.[0]?.imageUrl || prop.imageUrl || '';

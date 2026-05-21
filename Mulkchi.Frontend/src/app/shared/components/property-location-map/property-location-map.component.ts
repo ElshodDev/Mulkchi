@@ -95,6 +95,54 @@ import * as L from 'leaflet';
         font-family: inherit;
       }
 
+      :host ::ng-deep .custom-price-marker {
+        background: transparent;
+        border: none;
+      }
+
+      :host ::ng-deep .marker-bubble {
+        background: white;
+        border-radius: 20px;
+        padding: 8px 14px;
+        font-weight: 800;
+        font-size: 0.9rem;
+        color: #0f172a;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border: 2px solid white;
+        white-space: nowrap;
+        display: inline-block;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        cursor: pointer;
+      }
+
+      :host ::ng-deep .marker-bubble::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-top: 8px solid white;
+        transition: all 0.3s ease;
+      }
+
+      :host ::ng-deep .custom-price-marker:hover .marker-bubble {
+        background: #0f172a;
+        color: white;
+        transform: scale(1.15) translateY(-6px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.25);
+        border-color: #0f172a;
+        z-index: 1000 !important;
+      }
+
+      :host ::ng-deep .custom-price-marker:hover .marker-bubble::after {
+        border-top-color: #0f172a;
+      }
+
       .popup-content {
         text-align: center;
         min-width: 150px;
@@ -126,6 +174,8 @@ export class PropertyLocationMapComponent implements AfterViewInit, OnDestroy, O
   @Input() address = '';
   @Input() height = '300px';
   @Input() draggable = false;
+  @Input() price: number | null = null;
+  @Input() currency = 'UZS';
   @Output() locationChange = new EventEmitter<{ lat: number; lng: number }>();
 
   private map: L.Map | null = null;
@@ -202,8 +252,41 @@ export class PropertyLocationMapComponent implements AfterViewInit, OnDestroy, O
   private addMarker(): void {
     if (!this.map) return;
 
-    // Custom marker icon
-    const customIcon = L.divIcon({
+    // Use price bubble marker if price is provided, otherwise use standard marker
+    const customIcon = this.price 
+      ? this.createPriceBubbleMarker()
+      : this.createStandardMarker();
+
+    this.marker = L.marker([this.latitude, this.longitude], {
+      icon: customIcon,
+      draggable: this.draggable,
+    }).addTo(this.map);
+
+    // Add popup
+    if (this.showPopup) {
+      const popupContent = `
+        <div class="popup-content">
+          <div class="popup-title">${this.title}</div>
+          ${this.price ? `<div class="popup-price">${this.formatPriceDisplay(this.price)}</div>` : ''}
+          ${this.address ? `<div class="popup-address">${this.address}</div>` : ''}
+        </div>
+      `;
+      this.marker.bindPopup(popupContent);
+    }
+  }
+
+  private createPriceBubbleMarker(): L.DivIcon {
+    const shortPrice = this.formatShortPrice(this.price || 0);
+    return L.divIcon({
+      className: 'custom-price-marker',
+      html: `<div class="marker-bubble">${shortPrice}</div>`,
+      iconSize: [0, 0],
+      iconAnchor: [30, 40]
+    });
+  }
+
+  private createStandardMarker(): L.DivIcon {
+    return L.divIcon({
       className: 'custom-marker',
       html: `
         <div style="
@@ -231,22 +314,23 @@ export class PropertyLocationMapComponent implements AfterViewInit, OnDestroy, O
       iconSize: [40, 40],
       iconAnchor: [20, 40],
     });
+  }
 
-    this.marker = L.marker([this.latitude, this.longitude], {
-      icon: customIcon,
-      draggable: this.draggable,
-    }).addTo(this.map);
-
-    // Add popup
-    if (this.showPopup) {
-      const popupContent = `
-        <div class="popup-content">
-          <div class="popup-title">${this.title}</div>
-          ${this.address ? `<div class="popup-address">${this.address}</div>` : ''}
-        </div>
-      `;
-      this.marker.bindPopup(popupContent);
+  private formatShortPrice(price: number): string {
+    if (price >= 1000000000) {
+      return `${(price / 1000000000).toFixed(1)} mlrd`;
     }
+    if (price >= 1000000) {
+      return `${(price / 1000000).toFixed(1)} mln`;
+    }
+    if (price >= 1000) {
+      return `${(price / 1000).toFixed(0)}k`;
+    }
+    return price.toString();
+  }
+
+  private formatPriceDisplay(price: number): string {
+    return `${price.toLocaleString()} ${this.currency}`;
   }
 
   zoomIn(): void {

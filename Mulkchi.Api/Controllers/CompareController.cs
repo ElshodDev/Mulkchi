@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Mulkchi.Api.Models.Foundations.Chat;
-using Mulkchi.Api.Services.Foundations.Chat;
+using Mulkchi.Api.Models.Foundations.Compare;
+using Mulkchi.Api.Services.Foundations.Compare;
 
 namespace Mulkchi.Api.Controllers;
 
@@ -9,11 +9,11 @@ namespace Mulkchi.Api.Controllers;
 [Route("api/[controller]")]
 public class CompareController : ControllerBase
 {
-    private readonly IChatService chatService;
+    private readonly ICompareService compareService;
 
-    public CompareController(IChatService chatService)
+    public CompareController(ICompareService compareService)
     {
-        this.chatService = chatService;
+        this.compareService = compareService;
     }
 
     [HttpPost]
@@ -28,7 +28,7 @@ public class CompareController : ControllerBase
             if (propertyIds.Count > 5)
                 return BadRequest(new { message = "Maximum 5 properties can be compared at once." });
 
-            var result = await this.chatService.ComparePropertiesAsync(propertyIds);
+            var result = await this.compareService.ComparePropertiesAsync(propertyIds);
             return Ok(result);
         }
         catch (ArgumentException ex)
@@ -62,7 +62,7 @@ public class CompareController : ControllerBase
             if (propertyIds.Count > 5)
                 return BadRequest(new { message = "Maximum 5 properties can be compared at once." });
 
-            var result = await this.chatService.ComparePropertiesAsync(propertyIds);
+            var result = await this.compareService.ComparePropertiesAsync(propertyIds);
             return Ok(result);
         }
         catch (ArgumentException ex)
@@ -93,7 +93,7 @@ public class CompareController : ControllerBase
             if (propertyIds.Count < 2)
                 return BadRequest(new { message = "At least 2 valid property IDs are required." });
 
-            var summary = await this.chatService.GenerateComparisonSummaryAsync(propertyIds);
+            var summary = await this.compareService.GenerateComparisonSummaryAsync(propertyIds);
             return Ok(new { summary });
         }
         catch (Exception ex)

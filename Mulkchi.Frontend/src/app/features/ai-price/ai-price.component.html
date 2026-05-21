@@ -120,9 +120,19 @@
         }
 
         @if (isLoading) {
-          <div class="empty-prediction">
-            <mat-spinner diameter="40"></mat-spinner>
-            <p style="margin-top: 20px;">AI barcha omillarni tahlil qilmoqda...</p>
+          <div class="scanning-container animate-fade-in">
+            <div class="radar-box">
+              <div class="radar-beam"></div>
+              <div class="radar-dot dot-1"></div>
+              <div class="radar-dot dot-2"></div>
+              <div class="radar-dot dot-3"></div>
+            </div>
+            <div class="scan-text">
+              <span class="typing-effect">Ma'lumotlar tahlil qilinmoqda...</span>
+            </div>
+            <div class="scan-progress-bar">
+              <div class="scan-progress-fill"></div>
+            </div>
           </div>
         }
 

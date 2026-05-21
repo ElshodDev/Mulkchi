@@ -17,14 +17,27 @@ public class EmailAuthController : ControllerBase
     }
 
     [HttpPost("send-code")]
-    public async ValueTask<ActionResult<object>> SendCode([FromBody] EmailAuthRequest request)
+    public async ValueTask<ActionResult<object>> SendCode([FromBody] EmailAuthRequest? request)
     {
-        if (string.IsNullOrWhiteSpace(request?.Email))
-            return BadRequest("Email is required.");
+        if (request == null)
+            return BadRequest(new { message = "Request body is required." });
 
-        var sessionId = await _authService.SendEmailCodeAsync(request.Email);
+        if (string.IsNullOrWhiteSpace(request.Email))
+            return BadRequest(new { message = "Email address is required." });
 
-        return Ok(new { sessionId });
+        // Basic email validation
+        if (!request.Email.Contains("@") || !request.Email.Contains("."))
+            return BadRequest(new { message = "Invalid email format." });
+
+        try
+        {
+            var sessionId = await _authService.SendEmailCodeAsync(request.Email);
+            return Ok(new { sessionId, message = "Verification code sent to your email." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = $"Failed to send code: {ex.Message}" });
+        }
     }
 
     [HttpPost("verify-code")]
