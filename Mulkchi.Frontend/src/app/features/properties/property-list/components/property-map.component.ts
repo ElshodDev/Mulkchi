@@ -74,6 +74,53 @@ import * as L from 'leaflet';
       opacity: 0.9;
     }
 
+    ::ng-deep .custom-price-marker {
+      background: transparent;
+      border: none;
+    }
+
+    ::ng-deep .marker-bubble {
+      background: white;
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      color: #0f172a;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      border: 2px solid white;
+      white-space: nowrap;
+      display: inline-block;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    ::ng-deep .marker-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 6px solid white;
+      transition: all 0.3s ease;
+    }
+
+    ::ng-deep .custom-price-marker:hover .marker-bubble {
+      background: #0f172a;
+      color: white;
+      transform: scale(1.1) translateY(-4px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+      border-color: #0f172a;
+      z-index: 1000 !important;
+    }
+
+    ::ng-deep .custom-price-marker:hover .marker-bubble::after {
+      border-top-color: #0f172a;
+    }
+
     @media (max-width: 768px) {
       .map-container {
         height: 400px;
@@ -146,15 +193,23 @@ export class PropertyMapComponent implements AfterViewInit, OnDestroy, OnChanges
 
     this.properties.forEach(property => {
       if (property.latitude && property.longitude) {
-        const marker = L.marker([property.latitude, property.longitude])
+        const shortPrice = this.formatShortPrice(property);
+        
+        const customIcon = L.divIcon({
+          className: 'custom-price-marker',
+          html: `<div class="marker-bubble">${shortPrice}</div>`,
+          iconSize: [0, 0],
+          iconAnchor: [30, 40]
+        });
+
+        const marker = L.marker([property.latitude, property.longitude], { icon: customIcon })
           .addTo(this.map!)
           .on('click', () => {
-            // We don't necessarily want to navigate on single click if there's a popup
-            // But we can emit if needed
+            this.propertyClick.emit(property.id);
           });
 
         const popupContent = this.createPopupContent(property);
-        marker.bindPopup(popupContent);
+        marker.bindPopup(popupContent, { offset: [30, -30] });
 
         this.markers.push(marker);
         bounds.push([property.latitude, property.longitude]);
@@ -192,5 +247,25 @@ export class PropertyMapComponent implements AfterViewInit, OnDestroy, OnChanges
     if (p.monthlyRent) return `${p.monthlyRent.toLocaleString()} UZS/oy`;
     if (p.pricePerNight) return `${p.pricePerNight.toLocaleString()} UZS/tun`;
     return 'Narx so\'ralmagan';
+  }
+
+  private formatShortPrice(property: Property): string {
+    const p = property as any;
+    let price = 0;
+    if (p.salePrice) price = p.salePrice;
+    else if (p.monthlyRent) price = p.monthlyRent;
+    else if (p.pricePerNight) price = p.pricePerNight;
+    else return 'N/A';
+
+    if (price >= 1000000000) {
+      return `${(price / 1000000000).toFixed(1)} mlrd`;
+    }
+    if (price >= 1000000) {
+      return `${(price / 1000000).toFixed(1)} mln`;
+    }
+    if (price >= 1000) {
+      return `${(price / 1000).toFixed(0)}k`;
+    }
+    return price.toString();
   }
 }

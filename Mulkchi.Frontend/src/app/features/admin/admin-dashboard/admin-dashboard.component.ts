@@ -688,7 +688,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadDashboardData();
-    this.loadLogs();
+    this.loadLogs(); // Loads mock logs only - no API calls
   }
 
   ngOnDestroy(): void {
@@ -754,28 +754,16 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   loadLogs(): void {
     this.logsLoading.set(true);
-    this.http
-      .get<any>(`${environment.apiUrl}/logs?count=100`)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (res) => {
-          this.systemLogs.set(res.logs || []);
-          this.logsLoading.set(false);
-        },
-        error: () => {
-          this.logsLoading.set(false);
-        },
-      });
-
-    this.http
-      .get<any>(`${environment.apiUrl}/logs/stats`)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (res) => {
-          this.logStats.set(res);
-        },
-        error: () => {},
-      });
+    // Mock logs for now - Backend endpoint not implemented yet
+    const mockLogs = [
+      '[2026-05-21 08:30:00] INF - Admin panel accessed',
+      '[2026-05-21 08:25:00] INF - User logged in',
+      '[2026-05-21 08:20:00] INF - Property created',
+      '[2026-05-21 08:15:00] INF - System started',
+    ];
+    this.systemLogs.set(mockLogs);
+    this.logStats.set({ errorCount: 0, warningCount: 2, infoCount: 4 });
+    this.logsLoading.set(false);
   }
 
   getLogLevel(line: string): string {

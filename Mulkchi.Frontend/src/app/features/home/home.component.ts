@@ -148,7 +148,7 @@ import { ImageOptimizationService } from '../../core/services/image-optimization
           </div>
           <div class="regions-grid">
             @for (region of topRegions; track region.id) {
-              <div class="region-card animate-fade-in" [style.animation-delay]="region.delay" (click)="searchByRegion(region.name)">
+              <div class="region-card animate-fade-in" [style.animation-delay]="region.delay" (click)="searchByRegion(region.enumValue)">
                 <img [src]="region.img" [alt]="region.name" (error)="onRegionImgError($event)" />
                 <div class="region-overlay">
                   <h3>{{ region.name }}</h3>
@@ -539,19 +539,19 @@ export class HomeComponent implements OnInit {
   listingTypeEnum = ListingType;
 
   topRegions = [
-    { id: 1, name: 'Toshkent', count: '1,200+ e\'lon', img: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=800&auto=format&fit=crop', delay: '0s' },
-    { id: 2, name: 'Samarqand', count: '450+ e\'lon', img: 'https://images.unsplash.com/photo-1528154291023-a6525fabe5b4?q=80&w=800&auto=format&fit=crop', delay: '0.1s' },
-    { id: 3, name: 'Buxoro', count: '280+ e\'lon', img: 'https://images.unsplash.com/photo-1580191947416-62d35a55e71d?q=80&w=800&auto=format&fit=crop', delay: '0.2s' },
-    { id: 4, name: 'Namangan', count: '150+ e\'lon', img: 'https://images.unsplash.com/photo-1493246507139-91e8bef99c02?q=80&w=800&auto=format&fit=crop', delay: '0.3s' },
-    { id: 5, name: 'Andijon', count: '210+ e\'lon', img: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800&auto=format&fit=crop', delay: '0.4s' },
-    { id: 6, name: 'Farg\'ona', count: '190+ e\'lon', img: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=800&auto=format&fit=crop', delay: '0.5s' },
-    { id: 7, name: 'Xorazm', count: '120+ e\'lon', img: 'https://images.unsplash.com/photo-1505761671935-60b3a7427bad?q=80&w=800&auto=format&fit=crop', delay: '0.6s' },
-    { id: 8, name: 'Navoiy', count: '90+ e\'lon', img: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=800&auto=format&fit=crop', delay: '0.7s' },
-    { id: 9, name: 'Qashqadaryo', count: '110+ e\'lon', img: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=800&auto=format&fit=crop', delay: '0.8s' },
-    { id: 10, name: 'Surxondaryo', count: '85+ e\'lon', img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop', delay: '0.9s' },
-    { id: 11, name: 'Jizzax', count: '70+ e\'lon', img: 'https://images.unsplash.com/photo-1500382017468-9049fee74a62?q=80&w=800&auto=format&fit=crop', delay: '1.0s' },
-    { id: 12, name: 'Sirdaryo', count: '60+ e\'lon', img: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=800&auto=format&fit=crop', delay: '1.1s' },
-    { id: 13, name: 'Qoraqalpog\'iston', count: '95+ e\'lon', img: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?q=80&w=800&auto=format&fit=crop', delay: '1.2s' },
+    { id: 1, name: 'Toshkent', enumValue: 'Toshkent', count: '1,200+ e\'lon', img: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=800&auto=format&fit=crop', delay: '0s' },
+    { id: 2, name: 'Samarqand', enumValue: 'Samarqand', count: '450+ e\'lon', img: 'https://images.unsplash.com/photo-1528154291023-a6525fabe5b4?q=80&w=800&auto=format&fit=crop', delay: '0.1s' },
+    { id: 3, name: 'Buxoro', enumValue: 'Buxoro', count: '280+ e\'lon', img: 'https://images.unsplash.com/photo-1580191947416-62d35a55e71d?q=80&w=800&auto=format&fit=crop', delay: '0.2s' },
+    { id: 4, name: 'Namangan', enumValue: 'Namangan', count: '150+ e\'lon', img: 'https://images.unsplash.com/photo-1493246507139-91e8bef99c02?q=80&w=800&auto=format&fit=crop', delay: '0.3s' },
+    { id: 5, name: 'Andijon', enumValue: 'Andijon', count: '210+ e\'lon', img: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800&auto=format&fit=crop', delay: '0.4s' },
+    { id: 6, name: 'Farg\'ona', enumValue: 'Fargona', count: '190+ e\'lon', img: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=800&auto=format&fit=crop', delay: '0.5s' },
+    { id: 7, name: 'Xorazm', enumValue: 'Xorazm', count: '120+ e\'lon', img: 'https://images.unsplash.com/photo-1505761671935-60b3a7427bad?q=80&w=800&auto=format&fit=crop', delay: '0.6s' },
+    { id: 8, name: 'Navoiy', enumValue: 'Navoi', count: '90+ e\'lon', img: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=800&auto=format&fit=crop', delay: '0.7s' },
+    { id: 9, name: 'Qashqadaryo', enumValue: 'Qashqadaryo', count: '110+ e\'lon', img: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=800&auto=format&fit=crop', delay: '0.8s' },
+    { id: 10, name: 'Surxondaryo', enumValue: 'Surxondaryo', count: '85+ e\'lon', img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop', delay: '0.9s' },
+    { id: 11, name: 'Jizzax', enumValue: 'Jizzax', count: '70+ e\'lon', img: 'https://images.unsplash.com/photo-1500382017468-9049fee74a62?q=80&w=800&auto=format&fit=crop', delay: '1.0s' },
+    { id: 12, name: 'Sirdaryo', enumValue: 'Sirdaryo', count: '60+ e\'lon', img: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=800&auto=format&fit=crop', delay: '1.1s' },
+    { id: 13, name: 'Qoraqalpog\'iston', enumValue: 'Nukus', count: '95+ e\'lon', img: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?q=80&w=800&auto=format&fit=crop', delay: '1.2s' },
   ];
 
   onRegionImgError(e: any) {

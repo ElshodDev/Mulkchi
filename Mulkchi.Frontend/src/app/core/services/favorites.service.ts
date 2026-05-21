@@ -69,7 +69,9 @@ export class FavoritesService {
             this.http.get<Property>(`${environment.apiUrl}/properties/${favorite.propertyId}`).pipe(
               map((property) => ({ favorite, property })),
               catchError((error) => {
-                console.error('Error loading favorite property:', error);
+                if (error?.status !== 404) {
+                  console.error('Error loading favorite property:', error);
+                }
                 return of(null);
               }),
             ),

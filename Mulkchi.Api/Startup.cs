@@ -40,6 +40,7 @@ using Mulkchi.Api.Services.Foundations.Subscriptions;
 using Mulkchi.Api.Services.Foundations.Geo;
 using Mulkchi.Api.Services.Foundations.Amenities;
 using Mulkchi.Api.Services.Foundations.Chat;
+using Mulkchi.Api.Services.Foundations.Compare;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.Extensions.Caching.Distributed;
@@ -55,6 +56,8 @@ using Mulkchi.Api.Services.Search;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.FeatureManagement;
+using Hangfire;
+using Hangfire.PostgreSQL;
 
 namespace Mulkchi.Api;
 
@@ -158,6 +161,12 @@ public class Startup
             }
         });
 
+        // Add Hangfire dashboard (development only)
+        if (env.IsDevelopment())
+        {
+            app.UseHangfireDashboard("/hangfire");
+        }
+
         app.UseRouting();
         app.UseCors(env.IsDevelopment() ? "AllowAngular" : "Production");
         
@@ -192,6 +201,26 @@ public class Startup
             endpoints.MapHub<ChatHub>("/hubs/chat");
             endpoints.MapHub<NotificationHub>("/hubs/notifications");
         });
+
+        // Schedule recurring Hangfire jobs
+        ScheduleRecurringJobs();
+    }
+
+    private void ScheduleRecurringJobs()
+    {
+        // Schedule subscription renewal daily at 2 AM UTC
+        RecurringJob.AddOrUpdate<SubscriptionRenewalService>(
+            "subscription-renewal",
+            x => x.RenewExpiredSubscriptionsAsync(),
+            "0 2 * * *", // 2 AM daily
+            timeZone: TimeZoneInfo.Utc);
+
+        // Schedule expiration reminders daily at 8 AM UTC
+        RecurringJob.AddOrUpdate<SubscriptionRenewalService>(
+            "subscription-expiration-reminders",
+            x => x.SendExpirationRemindersAsync(),
+            "0 8 * * *", // 8 AM daily
+            timeZone: TimeZoneInfo.Utc);
     }
 
     private void AddSwagger(IServiceCollection services)
@@ -400,6 +429,7 @@ public class Startup
         services.AddScoped<IGeoService, GeoService>();
         services.AddScoped<IAmenityService, AmenityService>();
         services.AddScoped<IChatService, ChatService>();
+        services.AddScoped<ICompareService, CompareService>();
         services.AddScoped<IAnalyticsService, AnalyticsService>();
         services.AddScoped<IPriceRecommendationService, PriceRecommendationService>();
         
@@ -475,6 +505,23 @@ public class Startup
         services.AddHostedService<ExpiredBookingHoldCleanupService>();
         services.AddHostedService<OutboxProcessorService>();
         services.AddHostedService<AnalyticsCollectionService>();
+
+        // Add Hangfire for subscription auto-renewal
+        var connectionString = this.configuration.GetConnectionString("DefaultConnection");
+        services.AddHangfire(config => config
+            .UsePostgreSQLStorage(connectionString)
+            .WithJobExpirationTimeout(TimeSpan.FromDays(7)));
+
+        services.AddHangfireServer(options =>
+        {
+            options.WorkerCount = 2; // Use 2 background workers
+            options.Queues = new[] { "default", "subscriptions" };
+            options.ServerTimeout = TimeSpan.FromMinutes(5);
+            options.ShutdownTimeout = TimeSpan.FromSeconds(30);
+        });
+
+        // Register subscription renewal service for Hangfire
+        services.AddScoped<SubscriptionRenewalService>();
     }
 
     private string? GetRedisConnectionString() =>

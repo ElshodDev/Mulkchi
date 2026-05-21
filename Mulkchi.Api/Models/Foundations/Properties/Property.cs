@@ -79,6 +79,13 @@ public class Property
     public int ViewsCount { get; set; }
     public int FavoritesCount { get; set; }
     public Guid HostId { get; set; }
+    
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string HostName { get; set; }
+    
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string HostAvatarUrl { get; set; }
+
     public ICollection<PropertyImage> Images { get; set; }
     public Currency Currency { get; set; } = Currency.UZS;
     public decimal ExchangeRate { get; set; } = 1.0m;

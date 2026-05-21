@@ -142,7 +142,11 @@ export class AuthService {
     if (!url) return undefined;
     if (url.startsWith('http')) return url;
     const baseUrl = environment.apiUrl.replace(/\/api\/?$/, '');
-    return `${baseUrl}/${url.startsWith('/') ? url.substring(1) : url}`;
+    const normalized = url.startsWith('/') ? url.substring(1) : url;
+    if (!normalized.includes('/')) {
+      return `${baseUrl}/avatars/${normalized}`;
+    }
+    return `${baseUrl}/${normalized}`;
   }
 
   mapApiAuthResponse(apiResponse: ApiAuthResponse | Record<string, any>): AuthResponse {
@@ -253,7 +257,15 @@ export class AuthService {
     } as User);
 
     if (fetchProfile) {
-      this.getCurrentUser().pipe(take(1)).subscribe();
+      // Refresh user profile from server to get latest role and permissions
+      this.getCurrentUser()
+        .pipe(take(1))
+        .subscribe({
+          error: (err) => {
+            console.warn('Failed to fetch current user profile:', err);
+            // Continue anyway - don't block on profile fetch
+          },
+        });
     }
   }
 
@@ -269,10 +281,12 @@ export class AuthService {
   }
 
   switchMode(request: { TargetMode: UserRole }): Observable<AuthResponse> {
-    return this.http.post<Record<string, any>>(`${this.apiUrl}/switch-role`, { TargetMode: request.TargetMode }).pipe(
-      map((apiResponse) => this.mapApiAuthResponse(apiResponse)),
-      tap((response) => this.handleAuthResponse(response, false)),
-    );
+    return this.http
+      .post<Record<string, any>>(`${this.apiUrl}/switch-role`, { TargetMode: request.TargetMode })
+      .pipe(
+        map((apiResponse) => this.mapApiAuthResponse(apiResponse)),
+        tap((response) => this.handleAuthResponse(response, false)),
+      );
   }
 
   isInHostMode(): boolean {

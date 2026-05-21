@@ -1,11 +1,37 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 import { PropertyResponse } from '../models';
+import { Observable } from 'rxjs';
+
+export interface PropertyComparisonDetail {
+  propertyId: string;
+  title: string;
+  price: number;
+  area: number;
+  bedrooms: number;
+  district: string;
+  pros: string[];
+  cons: string[];
+  score: number;
+  valueRating: string;
+}
+
+export interface ComparisonResult {
+  comparedPropertyIds: string[];
+  summary: string;
+  details: PropertyComparisonDetail[];
+  recommendation: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class ComparisonService {
+  private http = inject(HttpClient);
+  private apiUrl = `${environment.apiUrl}/compare`;
   private readonly STORAGE_KEY = 'mulkchi_compare_properties';
+
   private properties = signal<PropertyResponse[]>([]);
 
   constructor() {
@@ -76,5 +102,9 @@ export class ComparisonService {
   isInComparison(propertyId: string): boolean {
     return this.properties().some(p => p.id === propertyId);
   }
-}
 
+  getSmartComparison(): Observable<ComparisonResult> {
+    const ids = this.properties().map(p => p.id);
+    return this.http.post<ComparisonResult>(this.apiUrl, ids);
+  }
+}

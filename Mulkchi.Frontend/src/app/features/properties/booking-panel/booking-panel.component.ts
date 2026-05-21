@@ -37,26 +37,17 @@ import { ToastService } from '../../../core/services/toast.service';
     MatSelectModule,
   ],
   template: `
-    <article class="booking-card surface-card">
+    <article class="booking-card glass-panel">
       <div class="booking-card__header">
         <div>
-          <span class="eyebrow">Bron</span>
-          <h2>Sanalarni band qiling</h2>
-        </div>
-        <div class="booking-price">
-          @if (property().listingType === listingType.ShortTermRent && property().pricePerNight) {
-            <strong>{{ property().pricePerNight | number }} {{ property().currency }}</strong>
-            <span>/ tun</span>
-          } @else if (property().listingType === listingType.Rent && property().monthlyRent) {
-            <strong>{{ property().monthlyRent | number }} {{ property().currency }}</strong>
-            <span>/ oy</span>
-          }
+          <span class="eyebrow"><mat-icon>date_range</mat-icon> Taqvim</span>
+          <h2>Kunlarni tanlang</h2>
         </div>
       </div>
 
       <form [formGroup]="bookingForm" class="booking-form" (ngSubmit)="onSubmit()">
         <div class="booking-grid">
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="premium-field">
             <mat-label>Kirish sanasi</mat-label>
             <input matInput [matDatepicker]="checkInPicker" formControlName="checkInDate" [min]="minDate" />
             <mat-datepicker-toggle matIconSuffix [for]="checkInPicker"></mat-datepicker-toggle>
@@ -66,7 +57,7 @@ import { ToastService } from '../../../core/services/toast.service';
             }
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" class="premium-field">
             <mat-label>Chiqish sanasi</mat-label>
             <input
               matInput
@@ -82,7 +73,7 @@ import { ToastService } from '../../../core/services/toast.service';
           </mat-form-field>
         </div>
 
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" class="premium-field">
           <mat-label>Mehmonlar soni</mat-label>
           <mat-select formControlName="numberOfGuests">
             @for (guest of guestOptions(); track guest) {
@@ -91,56 +82,54 @@ import { ToastService } from '../../../core/services/toast.service';
           </mat-select>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" class="premium-field">
           <mat-label>Qo'shimcha izoh</mat-label>
           <textarea
             matInput
-            rows="3"
+            rows="2"
             formControlName="notes"
-            placeholder="Kelib kelish vaqti yoki maxsus ehtiyojlaringiz bo‘lsa yozing"
+            placeholder="Kelib kelish vaqti yoki maxsus istaklar..."
           ></textarea>
         </mat-form-field>
 
         <div class="price-sheet">
           @if (nightsCount() > 0 && property().listingType === listingType.ShortTermRent) {
             <div class="price-row">
-              <span>{{ nightsCount() }} tun x {{ property().pricePerNight | number }}</span>
+              <span>{{ property().pricePerNight | number }} {{ property().currency }} x {{ nightsCount() }} tun</span>
               <strong>{{ basePrice() | number }} {{ property().currency }}</strong>
             </div>
             <div class="price-row">
               <span>Xizmat haqi</span>
               <strong>{{ serviceFee() | number }} {{ property().currency }}</strong>
             </div>
+            <mat-divider></mat-divider>
+            <div class="price-row price-row--total">
+              <span>Jami summa</span>
+              <strong>{{ totalPrice() | number }} {{ property().currency }}</strong>
+            </div>
           } @else {
-            <div class="price-row">
-              <span>Oylik to'lov</span>
-              <strong>{{ property().monthlyRent || 0 | number }} {{ property().currency }}</strong>
+            <div class="empty-state-calc">
+              <mat-icon>calculate</mat-icon>
+              <span>Jami hisob-kitobni ko'rish uchun sanalarni tanlang</span>
             </div>
           }
-
-          <mat-divider></mat-divider>
-
-          <div class="price-row price-row--total">
-            <span>Jami</span>
-            <strong>{{ totalPrice() | number }} {{ property().currency }}</strong>
-          </div>
         </div>
 
         @if (errorMessage()) {
           <div class="form-alert">
-            <mat-icon>error</mat-icon>
+            <mat-icon>error_outline</mat-icon>
             <span>{{ errorMessage() }}</span>
           </div>
         }
 
         <button mat-flat-button type="submit" class="submit-button" [disabled]="submitDisabled()">
           @if (isLoading()) {
-            <mat-progress-spinner diameter="18" mode="indeterminate"></mat-progress-spinner>
-            <span>Yuborilyapti...</span>
+            <mat-progress-spinner diameter="20" mode="indeterminate" color="accent"></mat-progress-spinner>
+            <span>Band qilinmoqda...</span>
           } @else {
             <ng-container>
-              <mat-icon>calendar_month</mat-icon>
-              <span>Bron qilish</span>
+              <mat-icon>check_circle</mat-icon>
+              <span>Tasdiqlash va Bron</span>
             </ng-container>
           }
         </button>
@@ -149,105 +138,53 @@ import { ToastService } from '../../../core/services/toast.service';
   `,
   styles: [
     `
-      .booking-card {
-        display: grid;
-        gap: var(--space-5);
-        padding: var(--space-5);
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        border-radius: 28px;
+        padding: 32px;
+        box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        margin-top: 24px;
+        position: relative;
+        overflow: hidden;
+      }
+      .glass-panel::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #10b981, #059669); }
+
+      .booking-card__header { margin-bottom: 24px; }
+      .eyebrow { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #ecfdf5; color: #059669; border-radius: 12px; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+      .eyebrow mat-icon { font-size: 16px; width: 16px; height: 16px; }
+      h2 { margin: 12px 0 0; font-size: 1.6rem; font-weight: 900; color: #0f172a; letter-spacing: -0.5px; }
+
+      .booking-form { display: flex; flex-direction: column; gap: 16px; }
+      .booking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+      ::ng-deep .premium-field .mdc-text-field--outlined {
+        --mdc-outlined-text-field-container-shape: 14px;
+        background: rgba(255, 255, 255, 0.6);
       }
 
-      .booking-card__header,
-      .booking-price,
-      .price-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--space-3);
-      }
+      .price-sheet { padding: 24px; background: #f8fafc; border-radius: 20px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 16px; }
+      .price-row { display: flex; justify-content: space-between; align-items: center; color: #475569; font-size: 1.05rem; }
+      .price-row strong { color: #0f172a; font-weight: 800; }
+      .price-row--total { margin-top: 8px; }
+      .price-row--total span { font-weight: 800; color: #0f172a; font-size: 1.15rem; }
+      .price-row--total strong { font-size: 1.5rem; color: #1e40af; }
 
-      .eyebrow {
-        display: inline-flex;
-        align-items: center;
-        min-height: 2rem;
-        padding: 0 var(--space-3);
-        border-radius: var(--radius-round);
-        background: rgba(15, 118, 110, 0.1);
-        color: var(--color-brand-600);
-        font-size: var(--font-size-2);
-        font-weight: var(--font-weight-semibold);
-      }
+      .empty-state-calc { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #94a3b8; text-align: center; font-size: 0.95rem; font-weight: 600; padding: 10px 0; }
+      .empty-state-calc mat-icon { font-size: 28px; width: 28px; height: 28px; color: #cbd5e1; }
 
-      h2 {
-        margin: var(--space-2) 0 0;
-        font-size: var(--font-size-6);
-      }
+      .form-alert { display: flex; align-items: center; gap: 12px; padding: 16px; background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; border-radius: 16px; font-weight: 600; font-size: 0.95rem; }
 
-      .booking-price {
-        flex-direction: column;
-        align-items: flex-end;
-      }
-
-      .booking-price strong {
-        font-size: var(--font-size-6);
-        color: var(--color-brand-600);
-      }
-
-      .booking-price span,
-      .price-row span {
-        color: var(--color-text-secondary);
-      }
-
-      .booking-form,
-      .price-sheet {
-        display: grid;
-        gap: var(--space-4);
-      }
-
-      .booking-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: var(--space-4);
-      }
-
-      .price-sheet {
-        padding: var(--space-4);
-        border-radius: var(--radius-3);
-        background: rgba(15, 118, 110, 0.05);
-      }
-
-      .price-row--total strong {
-        font-size: var(--font-size-5);
-      }
-
-      .form-alert {
-        display: flex;
-        align-items: center;
-        gap: var(--space-2);
-        padding: var(--space-3) var(--space-4);
-        border-radius: var(--radius-3);
-        background: rgba(220, 38, 38, 0.08);
-        color: var(--color-danger-600);
-      }
-
-      .submit-button {
-        gap: var(--space-2);
-        min-height: 52px;
-        background: linear-gradient(135deg, var(--color-brand-500), var(--color-brand-700));
-        color: white !important;
-      }
+      .submit-button { height: 56px !important; border-radius: 16px !important; font-size: 1.15rem !important; font-weight: 800 !important; background: linear-gradient(135deg, #10b981, #059669) !important; color: white !important; letter-spacing: 0.5px; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2) !important; transition: all 0.3s ease !important; }
+      .submit-button:not(:disabled):hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(16, 185, 129, 0.35) !important; }
+      .submit-button:disabled { background: #cbd5e1 !important; color: white !important; box-shadow: none !important; }
+      .submit-button ::ng-deep .mdc-button__label { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
 
       @media (max-width: 640px) {
-        .booking-card__header,
-        .booking-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .booking-card__header {
-          align-items: flex-start;
-        }
-
-        .booking-price {
-          align-items: flex-start;
-        }
+        .booking-grid { grid-template-columns: 1fr; }
+        .glass-panel { padding: 24px; border-radius: 20px; }
       }
     `,
   ],

@@ -17,7 +17,9 @@ import { ChatUtils } from '../../../../core/utils/chat.utils';
       
       <div class="avatar-wrapper">
         <ng-container *ngIf="conversation.otherUser.avatarUrl; else noAvatar">
-          <img [src]="conversation.otherUser.avatarUrl" [alt]="conversation.otherUser.firstName">
+          <img [src]="conversation.otherUser.avatarUrl" 
+               (error)="onAvatarError($event)"
+               [alt]="conversation.otherUser.firstName">
         </ng-container>
         <ng-template #noAvatar>
           <div class="avatar-placeholder" [style.background]="getAvatarColor(conversation.otherUser.firstName)">
@@ -197,5 +199,19 @@ export class ConversationCardComponent {
 
   getAvatarColor(name: string): string {
     return ChatUtils.getAvatarColor(name);
+  }
+
+  onAvatarError(event: any): void {
+    // Hide broken image and show fallback avatar
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+    const wrapper = img.parentElement;
+    if (wrapper) {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'avatar-placeholder';
+      placeholder.style.background = this.getAvatarColor(this.conversation.otherUser.firstName);
+      placeholder.textContent = this.conversation.otherUser.firstName.charAt(0);
+      wrapper.appendChild(placeholder);
+    }
   }
 }

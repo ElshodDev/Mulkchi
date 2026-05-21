@@ -172,6 +172,16 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/admin/admin.routes').then((module) => module.ADMIN_ROUTES),
       },
+      {
+        path: 'admin-panel',
+        redirectTo: 'admin',
+        pathMatch: 'full',
+      },
+      {
+        path: 'admin-dashboard',
+        redirectTo: 'admin',
+        pathMatch: 'full',
+      },
     ],
   },
   {

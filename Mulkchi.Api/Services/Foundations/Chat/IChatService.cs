@@ -13,9 +13,7 @@ public interface IChatService
     // AI Chat
     ValueTask<AIChatResponse> ProcessMessageAsync(AIChatRequest request, Guid? userId);
 
-    // Property Comparison
-    ValueTask<ComparisonResult> ComparePropertiesAsync(List<Guid> propertyIds);
-    ValueTask<string> GenerateComparisonSummaryAsync(List<Guid> propertyIds);
+
 
     // Intent Detection
     ValueTask<string> DetectIntentAsync(string message); // "search", "compare", "general", "price"

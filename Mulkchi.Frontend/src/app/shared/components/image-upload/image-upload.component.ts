@@ -164,24 +164,40 @@ export interface UploadedImage {
       }
 
       .upload-area {
-        border: 3px dashed #e0e0e0;
-        border-radius: 16px;
-        padding: 48px 24px;
+        border: 3px dashed #cbd5e1;
+        border-radius: 24px;
+        padding: 80px 24px;
         text-align: center;
         cursor: pointer;
-        transition: all 0.3s ease;
-        background: #fafafa;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        background: #f8fafc;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .upload-area::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(99, 102, 241, 0.03);
+        opacity: 0;
+        transition: opacity 0.4s;
       }
 
       .upload-area:hover {
-        border-color: #667eea;
-        background: #f0f4ff;
+        border-color: #6366f1;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.2);
       }
 
+      .upload-area:hover::before { opacity: 1; }
+
       .upload-area.dragging {
-        border-color: #667eea;
-        background: #e8eeff;
-        transform: scale(1.01);
+        border-color: #6366f1;
+        background: #eef2ff;
+        transform: scale(1.02);
+        border-style: solid;
+        box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.3);
       }
 
       .upload-area.has-images {
@@ -192,20 +208,29 @@ export interface UploadedImage {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 12px;
+        gap: 16px;
+        position: relative;
+        z-index: 1;
       }
 
       .upload-icon {
-        font-size: 64px;
-        width: 64px;
-        height: 64px;
-        color: #667eea;
+        font-size: 80px;
+        width: 80px;
+        height: 80px;
+        color: #6366f1;
+        margin-bottom: 8px;
+        filter: drop-shadow(0 10px 10px rgba(99, 102, 241, 0.2));
+        transition: transform 0.4s;
+      }
+
+      .upload-area:hover .upload-icon {
+        transform: scale(1.1) translateY(-5px);
       }
 
       .upload-content h3 {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #333;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f172a;
         margin: 0;
       }
 

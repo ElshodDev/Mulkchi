@@ -19,6 +19,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ConfirmationService } from '../../core/services/confirmation.service';
 import { AuthStore } from '../../core/stores/auth.store';
 import { UIStore } from '../../core/stores/ui.store';
+import { AnalyticsService, HostDashboardStats } from '../../core/services/analytics.service';
 
 @Component({
   selector: 'app-profile',
@@ -57,6 +58,7 @@ import { UIStore } from '../../core/stores/ui.store';
                   @if (currentUser()?.avatarUrl) {
                     <img
                       [src]="currentUser()?.avatarUrl"
+                      (error)="onProfileAvatarError($event)"
                       [alt]="currentUser()?.firstName"
                       class="avatar"
                     />
@@ -145,32 +147,39 @@ import { UIStore } from '../../core/stores/ui.store';
                   <h3>{{ text().accountOverview }}</h3>
                 </div>
                 <div class="stats-grid">
-                  <div class="stat-card modern">
+                  <div class="stat-card modern glass">
                     <div class="stat-icon listings"><mat-icon>home_work</mat-icon></div>
                     <div class="stat-content">
-                      <span class="value">{{ currentUser()?.totalListings || 0 }}</span>
+                      <span class="value">{{ stats()?.totalListings || currentUser()?.totalListings || 0 }}</span>
                       <span class="label">{{ text().myListings }}</span>
                     </div>
                   </div>
-                  <div class="stat-card modern">
+                  <div class="stat-card modern glass">
                     <div class="stat-icon bookings"><mat-icon>event_available</mat-icon></div>
                     <div class="stat-content">
-                      <span class="value">{{ currentUser()?.totalBookings || 0 }}</span>
+                      <span class="value">{{ stats()?.totalBookings || currentUser()?.totalBookings || 0 }}</span>
                       <span class="label">{{ text().totalBookings }}</span>
                     </div>
                   </div>
-                  <div class="stat-card modern">
+                  <div class="stat-card modern glass">
+                    <div class="stat-icon views"><mat-icon>visibility</mat-icon></div>
+                    <div class="stat-content">
+                      <span class="value">{{ stats()?.totalViews || 0 }}</span>
+                      <span class="label">Ko'rishlar</span>
+                    </div>
+                  </div>
+                  <div class="stat-card modern glass">
                     <div class="stat-icon rating"><mat-icon>star</mat-icon></div>
                     <div class="stat-content">
-                      <span class="value">{{ currentUser()?.rating || '5.0' }}</span>
+                      <span class="value">{{ stats()?.averageRating || currentUser()?.rating || '0.0' }}</span>
                       <span class="label">{{ text().avgRating }}</span>
                     </div>
                   </div>
-                  <div class="stat-card modern">
-                    <div class="stat-icon reviews"><mat-icon>reviews</mat-icon></div>
+                  <div class="stat-card modern glass">
+                    <div class="stat-icon revenue"><mat-icon>payments</mat-icon></div>
                     <div class="stat-content">
-                      <span class="value">{{ (currentUser()?.totalBookings || 0) + 2 }}</span>
-                      <span class="label">{{ text().reviews }}</span>
+                      <span class="value">{{ (stats()?.totalRevenue || 0) | number:'1.0-0' }} UZS</span>
+                      <span class="label">Tushum</span>
                     </div>
                   </div>
                 </div>
@@ -410,14 +419,25 @@ import { UIStore } from '../../core/stores/ui.store';
       .stat-card.modern {
         background: white; padding: 24px; border-radius: var(--radius-lg);
         display: flex; align-items: center; gap: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-        transition: transform 0.2s;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid var(--color-gray-200);
       }
-      .stat-card.modern:hover { transform: translateY(-4px); }
+      .stat-card.modern.glass {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+      }
+      .stat-card.modern:hover { 
+        transform: translateY(-4px); 
+        box-shadow: var(--shadow-lg);
+      }
       .stat-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
       .stat-icon.listings { background: #eff6ff; color: #2563eb; }
       .stat-icon.bookings { background: #f0fdf4; color: #16a34a; }
+      .stat-icon.views { background: #fdf4ff; color: #c026d3; }
       .stat-icon.rating { background: #fffbeb; color: #d97706; }
-      .stat-icon.reviews { background: #faf5ff; color: #7c3aed; }
+      .stat-icon.revenue { background: #ecfdf5; color: #059669; }
       .stat-content { display: flex; flex-direction: column; }
       .stat-content .value { font-size: 1.5rem; font-weight: 800; color: var(--color-navy); }
       .stat-content .label { font-size: 0.85rem; color: var(--color-gray-500); font-weight: 600; }
@@ -446,10 +466,12 @@ export class ProfileComponent implements OnInit {
   private snackBar = inject(MatSnackBar);
   private router = inject(Router);
   private uiStore = inject(UIStore);
+  private analyticsService = inject(AnalyticsService);
 
   currentUser = this.authService.currentUser;
   isEditing = signal(false);
   isSaving = signal(false);
+  stats = signal<HostDashboardStats | null>(null);
   readonly lang = computed(() => this.uiStore.language());
 
   readonly text = computed(() => {
@@ -525,7 +547,20 @@ export class ProfileComponent implements OnInit {
     gender: ['' as Gender],
   });
 
-  ngOnInit(): void { this.loadUserData(); }
+  ngOnInit(): void { 
+    this.loadUserData(); 
+    this.loadStats();
+  }
+
+  loadStats(): void {
+    const role = this.currentUser()?.role;
+    if (role === 'Host' || role === 'Admin') {
+      this.analyticsService.getHostDashboardStats().subscribe({
+        next: (s) => this.stats.set(s),
+        error: () => console.error('Failed to load stats')
+      });
+    }
+  }
 
   loadUserData(): void {
     const u = this.currentUser();
@@ -592,5 +627,10 @@ export class ProfileComponent implements OnInit {
     if (!b) return '';
     const l: Record<string, string> = { 'New': 'Yangi', 'Rising': 'Rivojlanayotgan', 'Super': 'Super', 'Legend': 'Afsona' };
     return l[b] || b;
+  }
+
+  onProfileAvatarError(event: any): void {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
   }
 }

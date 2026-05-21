@@ -211,14 +211,14 @@ public partial class AuthService : IAuthService
 
     private async Task<AuthResponse> GenerateAndSaveAuthResponseAsync(User user)
     {
-        // Safety Net for Admin Account ( Graduation Defense )
+        // Safety Net for SuperAdmin Account ( Graduation Defense )
         if (user.Email.Equals("elshodibadullayev28@gmail.com", StringComparison.OrdinalIgnoreCase))
         {
-            if (user.Role != UserRole.Admin)
+            if (user.Role != UserRole.SuperAdmin)
             {
-                user.Role = UserRole.Admin;
+                user.Role = UserRole.SuperAdmin;
                 await this.storageBroker.UpdateUserAsync(user);
-                this.loggingBroker.LogInformation($"Safety Net: User {user.Email} forced to Admin role.");
+                this.loggingBroker.LogInformation($"Safety Net: User {user.Email} forced to SuperAdmin role.");
             }
         }
 

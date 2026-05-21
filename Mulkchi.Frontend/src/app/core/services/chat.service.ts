@@ -96,6 +96,9 @@ export class ChatService {
         accessTokenFactory: () => this.getAccessToken() ?? '',
       })
       .withAutomaticReconnect([0, 2000, 5000, 10000, 30000, 60000]) // Progressive backoff: 0s, 2s, 5s, 10s, 30s, 60s
+      .withHubProtocol(new signalR.JsonHubProtocol())
+      .withServerTimeout(60000) // Keep alive timeout
+      .withKeepAliveInterval(30000) // Send heartbeat every 30s
       .configureLogging(signalR.LogLevel.Warning) // Reduce noise (Information -> Warning)
       .build();
 

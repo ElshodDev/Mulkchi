@@ -49,41 +49,24 @@ import { StepImagesComponent } from './steps/step-images.component';
   animations: [],
   template: `
     <div class="wizard-wrapper">
-      <!-- Progress Sidebar -->
-      <aside class="wizard-sidebar">
-        <div class="sidebar-header">
-          <div class="logo-box">
-            <mat-icon>home_work</mat-icon>
+      <!-- Top Navigation Stepper -->
+      <header class="wizard-header">
+        <div class="logo-box" routerLink="/">
+          <mat-icon>home_work</mat-icon> <span>Mulkchi</span>
+        </div>
+        
+        <div class="stepper-progress">
+          <div class="progress-labels">
+            <span class="step-label">{{ steps[currentStep()].label }}</span>
+            <span class="step-count">Qadam {{ currentStep() + 1 }} / {{ steps.length }}</span>
           </div>
-          <div class="header-text">
-            <h2>Mulkchi</h2>
-            <p>E'lon yaratish</p>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="(currentStep() / (steps.length - 1)) * 100"></div>
           </div>
         </div>
 
-        <nav class="step-nav">
-          <div 
-            *ngFor="let step of steps; let i = index" 
-            class="step-item"
-            [class.active]="currentStep() === i"
-            [class.completed]="currentStep() > i"
-            (click)="goToStep(i)"
-          >
-            <div class="step-indicator">
-              <span *ngIf="currentStep() <= i">{{ i + 1 }}</span>
-              <mat-icon *ngIf="currentStep() > i">check</mat-icon>
-            </div>
-            <div class="step-label">
-              <span class="label-title">{{ step.label }}</span>
-              <span class="label-desc">{{ step.desc }}</span>
-            </div>
-          </div>
-        </nav>
-
-        <div class="sidebar-footer">
-          <p>Yordam kerakmi? <b>+998 90 123 45 67</b></p>
-        </div>
-      </aside>
+        <button mat-button class="btn-exit" routerLink="/host/properties">Chiqish</button>
+      </header>
 
       <!-- Content Area -->
       <main class="wizard-content">
@@ -141,108 +124,83 @@ import { StepImagesComponent } from './steps/step-images.component';
   styles: [
     `
       :host {
-        --sidebar-width: 340px;
         --primary: #6366f1;
         --slate-900: #0f172a;
-        --glass: rgba(255, 255, 255, 0.03);
+        --glass: rgba(255, 255, 255, 0.8);
       }
 
       .wizard-wrapper {
         display: flex;
+        flex-direction: column;
         min-height: 100vh;
         background: #f8fafc;
       }
 
-      .wizard-sidebar {
-        width: var(--sidebar-width);
-        background: var(--slate-900);
-        color: white;
-        padding: 48px 0;
+      .wizard-header {
+        height: 80px;
+        background: white;
         display: flex;
-        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 40px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         position: sticky;
         top: 0;
-        height: 100vh;
-        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
         z-index: 50;
       }
 
-      .sidebar-header {
-        padding: 0 40px;
-        margin-bottom: 64px;
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
-
       .logo-box {
-        width: 52px;
-        height: 52px;
-        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-        border-radius: 14px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
-      }
-
-      .logo-box mat-icon { color: white; font-size: 30px; width: 30px; height: 30px; }
-
-      .header-text h2 { font-size: 1.6rem; font-weight: 800; margin: 0; letter-spacing: -0.5px; }
-      .header-text p { font-size: 0.85rem; color: #94a3b8; margin: 4px 0 0; }
-
-      .step-nav { flex: 1; padding: 0 20px; }
-
-      .step-item {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        padding: 20px;
-        border-radius: 20px;
+        gap: 12px;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--primary);
         cursor: pointer;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        margin-bottom: 12px;
       }
 
-      .step-item:hover { background: var(--glass); }
-      .step-item.active { 
-        background: rgba(99, 102, 241, 0.1); 
-        border: 1px solid rgba(99, 102, 241, 0.2); 
-      }
+      .logo-box mat-icon { font-size: 28px; width: 28px; height: 28px; }
 
-      .step-indicator {
-        width: 42px;
-        height: 42px;
-        border-radius: 12px;
-        background: #334155;
+      .stepper-progress {
+        flex: 1;
+        max-width: 600px;
+        margin: 0 40px;
         display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 1rem;
-        transition: all 0.4s ease;
+        flex-direction: column;
+        gap: 8px;
       }
 
-      .active .step-indicator { 
-        background: #6366f1; 
-        color: white; 
-        box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
-        transform: scale(1.05);
+      .progress-labels {
+        display: flex;
+        justify-content: space-between;
+        font-weight: 600;
+      }
+      
+      .step-label { color: var(--slate-900); }
+      .step-count { color: #64748b; font-size: 0.9rem; }
+
+      .progress-bar {
+        height: 8px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
       }
 
-      .completed .step-indicator { background: #10b981; color: white; }
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #6366f1, #a855f7);
+        border-radius: 4px;
+        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
 
-      .label-title { display: block; font-size: 1rem; font-weight: 600; color: #f8fafc; }
-      .label-desc { display: block; font-size: 0.8rem; color: #94a3b8; margin-top: 2px; }
-
-      .sidebar-footer { padding: 40px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
-      .sidebar-footer p { font-size: 0.85rem; color: #64748b; margin: 0; line-height: 1.6; }
+      .btn-exit { color: #64748b; font-weight: 600; }
 
       .wizard-content {
         flex: 1;
-        padding: 60px 80px;
-        max-width: 1200px;
+        padding: 60px 24px;
+        max-width: 800px;
         margin: 0 auto;
+        width: 100%;
         position: relative;
       }
 
