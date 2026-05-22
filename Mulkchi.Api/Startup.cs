@@ -211,14 +211,14 @@ public class Startup
         // Schedule subscription renewal daily at 2 AM UTC
         RecurringJob.AddOrUpdate<SubscriptionRenewalService>(
             "subscription-renewal",
-            x => x.RenewExpiredSubscriptionsAsync().GetAwaiter().GetResult(),
+            x => x.RenewExpiredSubscriptionsAsync(),
             "0 2 * * *", // 2 AM daily
             timeZone: TimeZoneInfo.Utc);
 
         // Schedule expiration reminders daily at 8 AM UTC
         RecurringJob.AddOrUpdate<SubscriptionRenewalService>(
             "subscription-expiration-reminders",
-            x => x.SendExpirationRemindersAsync().GetAwaiter().GetResult(),
+            x => x.SendExpirationRemindersAsync(),
             "0 8 * * *", // 8 AM daily
             timeZone: TimeZoneInfo.Utc);
     }

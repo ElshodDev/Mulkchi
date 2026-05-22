@@ -33,7 +33,7 @@ public class SubscriptionRenewalService
     /// Process subscription renewals for expired subscriptions with AutoRenew enabled.
     /// Called daily via Hangfire background job.
     /// </summary>
-    public async ValueTask RenewExpiredSubscriptionsAsync()
+    public async Task RenewExpiredSubscriptionsAsync()
     {
         try
         {
@@ -116,7 +116,7 @@ public class SubscriptionRenewalService
     /// Send expiration reminder emails to users with subscriptions expiring in 3 days.
     /// Called daily via Hangfire.
     /// </summary>
-    public async ValueTask SendExpirationRemindersAsync()
+    public async Task SendExpirationRemindersAsync()
     {
         try
         {
