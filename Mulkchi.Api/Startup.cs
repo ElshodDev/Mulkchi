@@ -57,7 +57,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.FeatureManagement;
 using Hangfire;
-using Hangfire.PostgreSQL;
+using Hangfire.PostgreSql;
 
 namespace Mulkchi.Api;
 
@@ -211,14 +211,14 @@ public class Startup
         // Schedule subscription renewal daily at 2 AM UTC
         RecurringJob.AddOrUpdate<SubscriptionRenewalService>(
             "subscription-renewal",
-            x => x.RenewExpiredSubscriptionsAsync(),
+            x => x.RenewExpiredSubscriptionsAsync().GetAwaiter().GetResult(),
             "0 2 * * *", // 2 AM daily
             timeZone: TimeZoneInfo.Utc);
 
         // Schedule expiration reminders daily at 8 AM UTC
         RecurringJob.AddOrUpdate<SubscriptionRenewalService>(
             "subscription-expiration-reminders",
-            x => x.SendExpirationRemindersAsync(),
+            x => x.SendExpirationRemindersAsync().GetAwaiter().GetResult(),
             "0 8 * * *", // 8 AM daily
             timeZone: TimeZoneInfo.Utc);
     }
@@ -509,7 +509,7 @@ public class Startup
         // Add Hangfire for subscription auto-renewal
         var connectionString = this.configuration.GetConnectionString("DefaultConnection");
         services.AddHangfire(config => config
-            .UsePostgreSQLStorage(connectionString)
+            .UsePostgreSqlStorage(connectionString)
             .WithJobExpirationTimeout(TimeSpan.FromDays(7)));
 
         services.AddHangfireServer(options =>

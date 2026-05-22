@@ -98,9 +98,7 @@ public class SubscriptionRenewalService
                 catch (Exception ex)
                 {
                     failedCount++;
-                    this.loggingBroker.LogError(
-                        ex,
-                        $"Failed to renew subscription {subscription.Id}: {ex.Message}");
+                    this.loggingBroker.LogError(ex);
                 }
             }
 
@@ -109,7 +107,7 @@ public class SubscriptionRenewalService
         }
         catch (Exception ex)
         {
-            this.loggingBroker.LogError(ex, "Error in subscription renewal process");
+            this.loggingBroker.LogError(ex);
             throw;
         }
     }
@@ -150,7 +148,7 @@ public class SubscriptionRenewalService
         }
         catch (Exception ex)
         {
-            this.loggingBroker.LogError(ex, "Error sending expiration reminders");
+            this.loggingBroker.LogError(ex);
         }
     }
 }

@@ -353,14 +353,14 @@ public class PropertiesController : ControllerBase
             var property = await this.propertyService.RetrievePropertyByIdAsync(id);
             
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdClaim) || property.UserId.ToString() != userIdClaim)
+            if (property is null || string.IsNullOrEmpty(userIdClaim) || property.HostId.ToString() != userIdClaim)
             {
                 return Unauthorized(new { message = "You can only bump your own properties." });
             }
 
             // Update property's listing bump timestamp
             property.BumpedAt = DateTimeOffset.UtcNow;
-            await this.propertyService.UpdatePropertyAsync(property);
+            await this.propertyService.ModifyPropertyAsync(property);
 
             return Ok(new 
             { 

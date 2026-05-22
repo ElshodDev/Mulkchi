@@ -79,6 +79,7 @@ public class Property
     public int ViewsCount { get; set; }
     public int FavoritesCount { get; set; }
     public Guid HostId { get; set; }
+    public DateTimeOffset? BumpedAt { get; set; }
     
     [System.ComponentModel.DataAnnotations.Schema.NotMapped]
     public string HostName { get; set; }
