@@ -1183,6 +1183,9 @@ namespace Mulkchi.Api.Migrations
                     b.Property<int>("Bathrooms")
                         .HasColumnType("integer");
 
+                    b.Property<DateTimeOffset?>("BumpedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("Category")
                         .HasColumnType("integer");
 
