@@ -66,12 +66,12 @@ public class PropertiesController : ControllerBase
         {
             // Ensure queryParams is not null with defaults
             queryParams ??= new PropertyQueryParams { Page = 1, PageSize = 20 };
-            
+
             // Validate page parameters
             if (queryParams.Page < 1) queryParams.Page = 1;
             if (queryParams.PageSize < 1) queryParams.PageSize = 20;
             if (queryParams.PageSize > 100) queryParams.PageSize = 100; // Max limit
-            
+
             var (items, total) = await this.propertyService.RetrieveAllPropertiesAsync(queryParams);
 
             var result = new PagedResult<PropertyResponse>
@@ -192,7 +192,7 @@ public class PropertiesController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async ValueTask<ActionResult<Property>> PutPropertyAsync(Guid id, [FromBody] Property property)
     {
         try
@@ -224,7 +224,7 @@ public class PropertiesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async ValueTask<ActionResult<Property>> DeletePropertyAsync(Guid id)
     {
         try
@@ -254,9 +254,36 @@ public class PropertiesController : ControllerBase
         }
     }
 
+    [HttpPatch("{id:guid}/verify")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public async ValueTask<ActionResult<Property>> PatchPropertyVerifyAsync(Guid id)
+    {
+        try
+        {
+            Property verifiedProperty = await this.propertyService.VerifyPropertyAsync(id);
+            return Ok(verifiedProperty);
+        }
+        catch (PropertyValidationException propertyValidationException)
+        {
+            return BadRequest(new { message = propertyValidationException.InnerException?.Message ?? "An error occurred." });
+        }
+        catch (PropertyDependencyValidationException propertyDependencyValidationException)
+        {
+            return BadRequest(new { message = propertyDependencyValidationException.InnerException?.Message ?? "An error occurred." });
+        }
+        catch (PropertyDependencyException)
+        {
+            return StatusCode(500, new { message = "Internal server error." });
+        }
+        catch (PropertyServiceException)
+        {
+            return StatusCode(500, new { message = "Internal server error." });
+        }
+    }
+
     // Publish/Unpublish endpoints
     [HttpPut("{id:guid}/publish")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async ValueTask<ActionResult<PropertyResponse>> PublishPropertyAsync(Guid id)
     {
         try
@@ -275,7 +302,7 @@ public class PropertiesController : ControllerBase
     }
 
     [HttpPut("{id:guid}/unpublish")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async ValueTask<ActionResult<PropertyResponse>> UnpublishPropertyAsync(Guid id)
     {
         try
@@ -294,7 +321,7 @@ public class PropertiesController : ControllerBase
     }
 
     [HttpGet("my/listings")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async Task<ActionResult<PagedResult<PropertyResponse>>> GetMyListings([FromQuery] PropertyQueryParams queryParams)
     {
         try
@@ -344,14 +371,14 @@ public class PropertiesController : ControllerBase
     }
 
     [HttpPost("{id:guid}/bump")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async Task<ActionResult<object>> BumpPropertyAsync(Guid id)
     {
         try
         {
             // Verify that current user owns this property
             var property = await this.propertyService.RetrievePropertyByIdAsync(id);
-            
+
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (property is null || string.IsNullOrEmpty(userIdClaim) || property.HostId.ToString() != userIdClaim)
             {
@@ -362,8 +389,8 @@ public class PropertiesController : ControllerBase
             property.BumpedAt = DateTimeOffset.UtcNow;
             await this.propertyService.ModifyPropertyAsync(property);
 
-            return Ok(new 
-            { 
+            return Ok(new
+            {
                 message = "Property bumped successfully. It will now appear higher in search results for 24 hours.",
                 propertyId = id,
                 bumpedAt = property.BumpedAt

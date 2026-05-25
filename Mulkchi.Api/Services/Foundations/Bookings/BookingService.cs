@@ -66,7 +66,7 @@ namespace Mulkchi.Api.Services.Foundations.Bookings
 
             if (bookingConflict)
                 throw new InvalidOperationException("Tanlangan sanalar allaqachon band.");
-            
+
             var booking = new Booking
             {
                 Id = Guid.NewGuid(),
@@ -82,11 +82,11 @@ namespace Mulkchi.Api.Services.Foundations.Bookings
 
             ValidateBookingOnAdd(booking);
             var addedBooking = await this.storageBroker.InsertBookingAsync(booking);
-            
+
             // Emails...
             await SendBookingConfirmationToGuestAsync(addedBooking, property);
             await SendNewBookingAlertToHostAsync(addedBooking, property);
-            
+
             return ToBookingResponse(addedBooking);
         }
 
@@ -125,7 +125,7 @@ namespace Mulkchi.Api.Services.Foundations.Bookings
             {
                 query = query.Where(b => b.Property.HostId == currentUserId.Value);
             }
-            else 
+            else
             {
                 // General guest bookings (unless admin is retrieving all)
                 if (queryParams.UserId.HasValue)
@@ -150,14 +150,14 @@ namespace Mulkchi.Api.Services.Foundations.Bookings
             ValidateBookingId(bookingId);
             Booking booking = await this.storageBroker.SelectBookingByIdAsync(bookingId);
             ValidateStorageBooking(booking, bookingId);
-            
+
             var currentUserId = this.currentUserService.GetCurrentUserId();
-            if (!currentUserId.HasValue || (!this.currentUserService.IsInRole("Admin") && 
+            if (!currentUserId.HasValue || (!this.currentUserService.IsInRole("Admin") &&
                 booking.GuestId != currentUserId.Value && booking.Property.HostId != currentUserId.Value))
             {
                 throw new UnauthorizedAccessException("You can only access your own bookings.");
             }
-            
+
             return ToBookingResponse(booking);
         }
 
@@ -192,7 +192,7 @@ namespace Mulkchi.Api.Services.Foundations.Bookings
             ValidateStorageBooking(booking, bookingId);
 
             var currentUserId = this.currentUserService.GetCurrentUserId();
-            if (!currentUserId.HasValue || (!this.currentUserService.IsInRole("Admin") && 
+            if (!currentUserId.HasValue || (!this.currentUserService.IsInRole("Admin") &&
                 booking.GuestId != currentUserId.Value && booking.Property.HostId != currentUserId.Value))
             {
                 throw new UnauthorizedAccessException("You can only cancel your own bookings.");
@@ -343,7 +343,7 @@ namespace Mulkchi.Api.Services.Foundations.Bookings
                 UpdatedDate = b.UpdatedDate
             };
         }
-        
+
         private Task SendBookingConfirmationToGuestAsync(Booking booking, Models.Foundations.Properties.Property property) =>
             Task.CompletedTask;
 

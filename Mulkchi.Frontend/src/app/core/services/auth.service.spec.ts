@@ -1,8 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { signal } from '@angular/core';
@@ -66,13 +63,11 @@ describe('AuthService', () => {
   // ─── login ────────────────────────────────────────────────────────────────
 
   it('login() — should authenticate user on success', () => {
-    service
-      .login({ email: 'test@example.com', password: 'P@ssw0rd!' })
-      .subscribe((response) => {
-        expect(response.token).toBe('mock-access-token');
-        expect(response.email).toBe('test@example.com');
-        expect(service.isAuthenticated()).toBe(true);
-      });
+    service.login({ email: 'test@example.com', password: 'P@ssw0rd!' }).subscribe((response) => {
+      expect(response.token).toBe('mock-access-token');
+      expect(response.email).toBe('test@example.com');
+      expect(service.isAuthenticated()).toBe(true);
+    });
 
     const req = httpMock.expectOne(`${apiUrl}/login`);
     expect(req.request.method).toBe('POST');

@@ -59,8 +59,8 @@ public static class PropertyGeoExtensions
         // Simple squared distance formula is translatable to SQL and good enough for sorting nearby properties
         return properties
             .Where(p => p.Latitude.HasValue && p.Longitude.HasValue)
-            .OrderBy(p => 
-                (p.Latitude!.Value - latitude) * (p.Latitude!.Value - latitude) + 
+            .OrderBy(p =>
+                (p.Latitude!.Value - latitude) * (p.Latitude!.Value - latitude) +
                 (p.Longitude!.Value - longitude) * (p.Longitude!.Value - longitude));
     }
 

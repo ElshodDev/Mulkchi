@@ -265,7 +265,7 @@ public partial class AuthService : IAuthService
             ValidateEmail(email);
 
             User? user = await this.storageBroker.SelectUserByEmailAsync(email);
-            
+
             // Always return success to prevent email enumeration
             if (user is null)
                 return;
@@ -370,7 +370,7 @@ public partial class AuthService : IAuthService
         ValidateUserId(userId);
 
         var storageUser = await this.storageBroker.SelectUserByIdAsync(userId);
-        
+
         if (storageUser is null)
             throw new NotFoundUserException(userId);
 
@@ -394,7 +394,7 @@ public partial class AuthService : IAuthService
         ValidateUpdateProfileRequest(request);
 
         var storageUser = await this.storageBroker.SelectUserByIdAsync(userId);
-        
+
         if (storageUser is null)
             throw new NotFoundUserException(userId);
 
@@ -407,7 +407,7 @@ public partial class AuthService : IAuthService
         storageUser.DateOfBirth = request.DateOfBirth ?? storageUser.DateOfBirth;
         storageUser.Gender = request.Gender;
         storageUser.AvatarUrl = request.AvatarUrl ?? storageUser.AvatarUrl;
-        
+
         if (request.CurrentMode.HasValue)
         {
             storageUser.CurrentMode = request.CurrentMode.Value;
@@ -422,7 +422,7 @@ public partial class AuthService : IAuthService
         storageUser.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
 
         var updatedUser = await this.storageBroker.UpdateUserAsync(storageUser);
-        
+
         return updatedUser;
     }
 
@@ -431,7 +431,7 @@ public partial class AuthService : IAuthService
         ValidateUserId(userId);
 
         var storageUser = await this.storageBroker.SelectUserByIdAsync(userId);
-        
+
         if (storageUser is null)
             throw new NotFoundUserException(userId);
 
@@ -534,7 +534,7 @@ public partial class AuthService : IAuthService
 
             // Send via email broker
             var isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
-            
+
             try
             {
                 await this.emailBroker.SendEmailAsync(

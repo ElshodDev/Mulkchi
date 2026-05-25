@@ -1,32 +1,30 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal, inject, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatStepperModule } from '@angular/material/stepper';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { trigger, transition, style, animate, query, group } from '@angular/animations';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { ActivatedRoute, Router } from '@angular/router';
 
-import { PropertyService } from '../../../core/services/property.service';
-import { AuthService } from '../../../core/services/auth.service';
-import { 
-  Property, 
-  PropertyType, 
-  PropertyCategory, 
-  ListingType, 
-  Currency, 
-  UzbekistanRegion 
+import {
+  Currency,
+  ListingType,
+  Property,
+  PropertyCategory,
+  PropertyType,
+  UzbekistanRegion,
 } from '../../../core/models/property.model';
+import { AuthService } from '../../../core/services/auth.service';
+import { PropertyService } from '../../../core/services/property.service';
 import { UploadedImage } from '../../../shared/components/image-upload/image-upload.component';
 
-import { StepBasicInfoComponent } from './steps/step-basic-info.component';
-import { StepLocationComponent } from './steps/step-location.component';
-import { StepDetailsComponent } from './steps/step-details.component';
 import { StepAmenitiesComponent } from './steps/step-amenities.component';
+import { StepBasicInfoComponent } from './steps/step-basic-info.component';
+import { StepDetailsComponent } from './steps/step-details.component';
 import { StepImagesComponent } from './steps/step-images.component';
+import { StepLocationComponent } from './steps/step-location.component';
 
 @Component({
   selector: 'app-property-form',
@@ -54,14 +52,17 @@ import { StepImagesComponent } from './steps/step-images.component';
         <div class="logo-box" routerLink="/">
           <mat-icon>home_work</mat-icon> <span>Mulkchi</span>
         </div>
-        
+
         <div class="stepper-progress">
           <div class="progress-labels">
             <span class="step-label">{{ steps[currentStep()].label }}</span>
             <span class="step-count">Qadam {{ currentStep() + 1 }} / {{ steps.length }}</span>
           </div>
           <div class="progress-bar">
-            <div class="progress-fill" [style.width.%]="(currentStep() / (steps.length - 1)) * 100"></div>
+            <div
+              class="progress-fill"
+              [style.width.%]="(currentStep() / (steps.length - 1)) * 100"
+            ></div>
           </div>
         </div>
 
@@ -143,7 +144,7 @@ import { StepImagesComponent } from './steps/step-images.component';
         align-items: center;
         justify-content: space-between;
         padding: 0 40px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         position: sticky;
         top: 0;
         z-index: 50;
@@ -159,7 +160,11 @@ import { StepImagesComponent } from './steps/step-images.component';
         cursor: pointer;
       }
 
-      .logo-box mat-icon { font-size: 28px; width: 28px; height: 28px; }
+      .logo-box mat-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+      }
 
       .stepper-progress {
         flex: 1;
@@ -175,9 +180,14 @@ import { StepImagesComponent } from './steps/step-images.component';
         justify-content: space-between;
         font-weight: 600;
       }
-      
-      .step-label { color: var(--slate-900); }
-      .step-count { color: #64748b; font-size: 0.9rem; }
+
+      .step-label {
+        color: var(--slate-900);
+      }
+      .step-count {
+        color: #64748b;
+        font-size: 0.9rem;
+      }
 
       .progress-bar {
         height: 8px;
@@ -193,7 +203,10 @@ import { StepImagesComponent } from './steps/step-images.component';
         transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
-      .btn-exit { color: #64748b; font-weight: 600; }
+      .btn-exit {
+        color: #64748b;
+        font-weight: 600;
+      }
 
       .wizard-content {
         flex: 1;
@@ -209,8 +222,14 @@ import { StepImagesComponent } from './steps/step-images.component';
       }
 
       @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
       .loading-overlay {
@@ -225,8 +244,12 @@ import { StepImagesComponent } from './steps/step-images.component';
       }
 
       @media (max-width: 1024px) {
-        .wizard-sidebar { display: none; }
-        .wizard-content { padding: 40px 24px; }
+        .wizard-sidebar {
+          display: none;
+        }
+        .wizard-content {
+          padding: 40px 24px;
+        }
       }
     `,
   ],
@@ -246,11 +269,27 @@ export class PropertyFormComponent implements OnInit {
   isSubmitting = signal(false);
 
   steps = [
-    { label: 'Asosiy', desc: 'Tur va narx', fullDesc: "Mulkning asosiy parametrlarini kiriting" },
-    { label: 'Joylashuv', desc: 'Manzil va xarita', fullDesc: "Mulk qayerda joylashganini ko'rsating" },
-    { label: 'Tafsilotlar', desc: 'Xonalar va maydon', fullDesc: "Mulkning o'lchamlari va xonalari haqida" },
-    { label: 'Qulayliklar', desc: 'Sharoitlar', fullDesc: "Mulkdagi mavjud qulayliklarni belgilang" },
-    { label: 'Rasmlar', desc: 'Vizual ma\'lumot', fullDesc: "Mulkning rasmlari va tavsifini yuklang" }
+    { label: 'Asosiy', desc: 'Tur va narx', fullDesc: 'Mulkning asosiy parametrlarini kiriting' },
+    {
+      label: 'Joylashuv',
+      desc: 'Manzil va xarita',
+      fullDesc: "Mulk qayerda joylashganini ko'rsating",
+    },
+    {
+      label: 'Tafsilotlar',
+      desc: 'Xonalar va maydon',
+      fullDesc: "Mulkning o'lchamlari va xonalari haqida",
+    },
+    {
+      label: 'Qulayliklar',
+      desc: 'Sharoitlar',
+      fullDesc: 'Mulkdagi mavjud qulayliklarni belgilang',
+    },
+    {
+      label: 'Rasmlar',
+      desc: "Vizual ma'lumot",
+      fullDesc: 'Mulkning rasmlari va tavsifini yuklang',
+    },
   ];
 
   nextStep(): void {
@@ -414,7 +453,7 @@ export class PropertyFormComponent implements OnInit {
     this.updatePriceValidators(this.basicInfoForm.get('listingType')?.value || 'Sale');
 
     // Listen for listingType changes
-    this.basicInfoForm.get('listingType')?.valueChanges.subscribe(type => {
+    this.basicInfoForm.get('listingType')?.valueChanges.subscribe((type) => {
       if (type) this.updatePriceValidators(type);
     });
 
@@ -584,19 +623,30 @@ export class PropertyFormComponent implements OnInit {
     const amenities = this.amenitiesForm.value;
     // Map frontend string enums to backend integer enums
     const propertyTypeMap: Record<string, number> = {
-      'Apartment': 0, 'House': 1, 'Villa': 2, 'Room': 3, 'Office': 4, 'Land': 5, 'Commercial': 6
+      Apartment: 0,
+      House: 1,
+      Villa: 2,
+      Room: 3,
+      Office: 4,
+      Land: 5,
+      Commercial: 6,
     };
     const categoryMap: Record<string, number> = {
-      'Residential': 0, 'Commercial': 1, 'Industrial': 2, 'Agricultural': 3
+      Residential: 0,
+      Commercial: 1,
+      Industrial: 2,
+      Agricultural: 3,
     };
     const listingTypeMap: Record<string, number> = {
-      'Rent': 0, 'Sale': 1, 'ShortTermRent': 2
+      Rent: 0,
+      Sale: 1,
+      ShortTermRent: 2,
     };
     const currencyMap: Record<string, number> = {
-      'UZS': 0, 'USD': 1
+      UZS: 0,
+      USD: 1,
     };
 
-     
     const formData: Record<string, any> = {
       title: this.basicInfoForm.value.title!,
       description: this.descriptionForm.value.description!,
@@ -623,7 +673,7 @@ export class PropertyFormComponent implements OnInit {
       isInstantBook: !!this.descriptionForm.value.isInstantBook,
       isVacant: true,
       distanceToCityCenter: 0,
-      
+
       // Amenities
       hasWifi: !!amenities.hasWifi,
       hasParking: !!amenities.hasParking,
@@ -656,7 +706,6 @@ export class PropertyFormComponent implements OnInit {
     };
 
     if (this.isEditMode() && this.propertyId()) {
-       
       this.propertyService.updateProperty(this.propertyId()!, formData as any).subscribe({
         next: () => {
           this.uploadImages(this.propertyId()!);
@@ -671,7 +720,6 @@ export class PropertyFormComponent implements OnInit {
         },
       });
     } else {
-       
       this.propertyService.createProperty(formData as any).subscribe({
         next: (property) => {
           this.uploadImages(property.id);
@@ -701,7 +749,7 @@ export class PropertyFormComponent implements OnInit {
 
   handleImagesChange(images: UploadedImage[]): void {
     this.selectedImages.set(images);
-    this.selectedFiles = images.filter(i => i.file).map(i => i.file as File);
+    this.selectedFiles = images.filter((i) => i.file).map((i) => i.file as File);
   }
 
   onFinalStep(): void {
@@ -725,8 +773,8 @@ export class PropertyFormComponent implements OnInit {
       return;
     }
 
-    const uploadObservables = this.selectedFiles.map(file => 
-      this.propertyService.uploadPropertyImage(file, propertyId)
+    const uploadObservables = this.selectedFiles.map((file) =>
+      this.propertyService.uploadPropertyImage(file, propertyId),
     );
 
     import('rxjs').then(({ forkJoin }) => {
@@ -736,8 +784,13 @@ export class PropertyFormComponent implements OnInit {
         },
         error: (error) => {
           console.error('Image upload failed', error);
-          this.finishSubmission("Mulk yaratildi, lekin ba'zi rasmlarni yuklashda xatolik yuz berdi.");
-        }
+          const errorMessage =
+            error instanceof Error && error.message
+              ? error.message
+              : "Mulk yaratildi, lekin ba'zi rasmlarni yuklashda xatolik yuz berdi.";
+
+          this.finishSubmission(errorMessage);
+        },
       });
     });
   }
@@ -753,7 +806,7 @@ export class PropertyFormComponent implements OnInit {
     // Refresh user data to get updated Host role from backend
     this.authService.getCurrentUser().subscribe({
       next: () => this.router.navigate(['/host/properties']),
-      error: () => this.router.navigate(['/host/properties'])
+      error: () => this.router.navigate(['/host/properties']),
     });
   }
 

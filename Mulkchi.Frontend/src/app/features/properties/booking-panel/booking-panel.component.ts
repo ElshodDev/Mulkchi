@@ -49,10 +49,17 @@ import { ToastService } from '../../../core/services/toast.service';
         <div class="booking-grid">
           <mat-form-field appearance="outline" class="premium-field">
             <mat-label>Kirish sanasi</mat-label>
-            <input matInput [matDatepicker]="checkInPicker" formControlName="checkInDate" [min]="minDate" />
+            <input
+              matInput
+              [matDatepicker]="checkInPicker"
+              formControlName="checkInDate"
+              [min]="minDate"
+            />
             <mat-datepicker-toggle matIconSuffix [for]="checkInPicker"></mat-datepicker-toggle>
             <mat-datepicker #checkInPicker></mat-datepicker>
-            @if (bookingForm.controls.checkInDate.invalid && bookingForm.controls.checkInDate.touched) {
+            @if (
+              bookingForm.controls.checkInDate.invalid && bookingForm.controls.checkInDate.touched
+            ) {
               <mat-error>Iltimos, kirish sanasini tanlang.</mat-error>
             }
           </mat-form-field>
@@ -67,7 +74,9 @@ import { ToastService } from '../../../core/services/toast.service';
             />
             <mat-datepicker-toggle matIconSuffix [for]="checkOutPicker"></mat-datepicker-toggle>
             <mat-datepicker #checkOutPicker></mat-datepicker>
-            @if (bookingForm.controls.checkOutDate.invalid && bookingForm.controls.checkOutDate.touched) {
+            @if (
+              bookingForm.controls.checkOutDate.invalid && bookingForm.controls.checkOutDate.touched
+            ) {
               <mat-error>Iltimos, chiqish sanasini tanlang.</mat-error>
             }
           </mat-form-field>
@@ -95,7 +104,10 @@ import { ToastService } from '../../../core/services/toast.service';
         <div class="price-sheet">
           @if (nightsCount() > 0 && property().listingType === listingType.ShortTermRent) {
             <div class="price-row">
-              <span>{{ property().pricePerNight | number }} {{ property().currency }} x {{ nightsCount() }} tun</span>
+              <span
+                >{{ property().pricePerNight | number }} {{ property().currency }} x
+                {{ nightsCount() }} tun</span
+              >
               <strong>{{ basePrice() | number }} {{ property().currency }}</strong>
             </div>
             <div class="price-row">
@@ -124,7 +136,11 @@ import { ToastService } from '../../../core/services/toast.service';
 
         <button mat-flat-button type="submit" class="submit-button" [disabled]="submitDisabled()">
           @if (isLoading()) {
-            <mat-progress-spinner diameter="20" mode="indeterminate" color="accent"></mat-progress-spinner>
+            <mat-progress-spinner
+              diameter="20"
+              mode="indeterminate"
+              color="accent"
+            ></mat-progress-spinner>
             <span>Band qilinmoqda...</span>
           } @else {
             <ng-container>
@@ -145,46 +161,168 @@ import { ToastService } from '../../../core/services/toast.service';
         border: 1px solid rgba(255, 255, 255, 0.8);
         border-radius: 28px;
         padding: 32px;
-        box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        box-shadow:
+          0 20px 40px -10px rgba(15, 23, 42, 0.08),
+          inset 0 1px 0 rgba(255, 255, 255, 0.6);
         margin-top: 24px;
         position: relative;
         overflow: hidden;
       }
-      .glass-panel::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #10b981, #059669); }
+      .glass-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(90deg, #10b981, #059669);
+      }
 
-      .booking-card__header { margin-bottom: 24px; }
-      .eyebrow { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #ecfdf5; color: #059669; border-radius: 12px; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
-      .eyebrow mat-icon { font-size: 16px; width: 16px; height: 16px; }
-      h2 { margin: 12px 0 0; font-size: 1.6rem; font-weight: 900; color: #0f172a; letter-spacing: -0.5px; }
+      .booking-card__header {
+        margin-bottom: 24px;
+      }
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: #ecfdf5;
+        color: #059669;
+        border-radius: 12px;
+        font-weight: 800;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .eyebrow mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+      h2 {
+        margin: 12px 0 0;
+        font-size: 1.6rem;
+        font-weight: 900;
+        color: #0f172a;
+        letter-spacing: -0.5px;
+      }
 
-      .booking-form { display: flex; flex-direction: column; gap: 16px; }
-      .booking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .booking-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .booking-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
 
       ::ng-deep .premium-field .mdc-text-field--outlined {
         --mdc-outlined-text-field-container-shape: 14px;
         background: rgba(255, 255, 255, 0.6);
       }
 
-      .price-sheet { padding: 24px; background: #f8fafc; border-radius: 20px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 16px; }
-      .price-row { display: flex; justify-content: space-between; align-items: center; color: #475569; font-size: 1.05rem; }
-      .price-row strong { color: #0f172a; font-weight: 800; }
-      .price-row--total { margin-top: 8px; }
-      .price-row--total span { font-weight: 800; color: #0f172a; font-size: 1.15rem; }
-      .price-row--total strong { font-size: 1.5rem; color: #1e40af; }
+      .price-sheet {
+        padding: 24px;
+        background: #f8fafc;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .price-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #475569;
+        font-size: 1.05rem;
+      }
+      .price-row strong {
+        color: #0f172a;
+        font-weight: 800;
+      }
+      .price-row--total {
+        margin-top: 8px;
+      }
+      .price-row--total span {
+        font-weight: 800;
+        color: #0f172a;
+        font-size: 1.15rem;
+      }
+      .price-row--total strong {
+        font-size: 1.5rem;
+        color: #1e40af;
+      }
 
-      .empty-state-calc { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #94a3b8; text-align: center; font-size: 0.95rem; font-weight: 600; padding: 10px 0; }
-      .empty-state-calc mat-icon { font-size: 28px; width: 28px; height: 28px; color: #cbd5e1; }
+      .empty-state-calc {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        color: #94a3b8;
+        text-align: center;
+        font-size: 0.95rem;
+        font-weight: 600;
+        padding: 10px 0;
+      }
+      .empty-state-calc mat-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+        color: #cbd5e1;
+      }
 
-      .form-alert { display: flex; align-items: center; gap: 12px; padding: 16px; background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; border-radius: 16px; font-weight: 600; font-size: 0.95rem; }
+      .form-alert {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: #fef2f2;
+        border: 1px solid #fca5a5;
+        color: #b91c1c;
+        border-radius: 16px;
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
 
-      .submit-button { height: 56px !important; border-radius: 16px !important; font-size: 1.15rem !important; font-weight: 800 !important; background: linear-gradient(135deg, #10b981, #059669) !important; color: white !important; letter-spacing: 0.5px; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2) !important; transition: all 0.3s ease !important; }
-      .submit-button:not(:disabled):hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(16, 185, 129, 0.35) !important; }
-      .submit-button:disabled { background: #cbd5e1 !important; color: white !important; box-shadow: none !important; }
-      .submit-button ::ng-deep .mdc-button__label { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
+      .submit-button {
+        height: 56px !important;
+        border-radius: 16px !important;
+        font-size: 1.15rem !important;
+        font-weight: 800 !important;
+        background: linear-gradient(135deg, #10b981, #059669) !important;
+        color: white !important;
+        letter-spacing: 0.5px;
+        box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2) !important;
+        transition: all 0.3s ease !important;
+      }
+      .submit-button:not(:disabled):hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 25px rgba(16, 185, 129, 0.35) !important;
+      }
+      .submit-button:disabled {
+        background: #cbd5e1 !important;
+        color: white !important;
+        box-shadow: none !important;
+      }
+      .submit-button ::ng-deep .mdc-button__label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+      }
 
       @media (max-width: 640px) {
-        .booking-grid { grid-template-columns: 1fr; }
-        .glass-panel { padding: 24px; border-radius: 20px; }
+        .booking-grid {
+          grid-template-columns: 1fr;
+        }
+        .glass-panel {
+          padding: 24px;
+          border-radius: 20px;
+        }
       }
     `,
   ],
@@ -209,9 +347,7 @@ export class BookingPanelComponent {
     notes: [''],
   });
 
-  protected readonly submitDisabled = computed(
-    () => this.bookingForm.invalid || this.isLoading(),
-  );
+  protected readonly submitDisabled = computed(() => this.bookingForm.invalid || this.isLoading());
 
   protected readonly guestOptions = computed(() => {
     const maxGuests = this.property().maxGuests || 10;
@@ -307,7 +443,7 @@ export class BookingPanelComponent {
         this.errorMessage.set(error.error?.message || "Ma'lumotlarni qayta tekshirib ko‘ring.");
         break;
       case 403:
-        this.errorMessage.set("Bu amalni bajarish uchun ruxsat yetarli emas.");
+        this.errorMessage.set('Bu amalni bajarish uchun ruxsat yetarli emas.');
         break;
       default:
         this.errorMessage.set('Bron yuborishda xatolik yuz berdi. Qayta urinib ko‘ring.');

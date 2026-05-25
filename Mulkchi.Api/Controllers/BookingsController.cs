@@ -74,7 +74,7 @@ namespace Mulkchi.Api.Controllers
 
                 queryParams.UserId = currentUserId; // Set internally for Guest lookup
                 queryParams.IsHostView = false;
-                
+
                 var (items, total) = await this.bookingService.RetrieveBookingsAsync(queryParams);
 
                 var result = new PagedResult<BookingResponse>
@@ -95,7 +95,7 @@ namespace Mulkchi.Api.Controllers
         }
 
         [HttpGet("host")]
-        [Authorize(Roles = "Host,Admin")]
+        [Authorize(Roles = "Host,Admin,SuperAdmin")]
         public async Task<ActionResult<PagedResult<BookingResponse>>> GetHostBookings([FromQuery] BookingQueryParams queryParams)
         {
             try
@@ -108,7 +108,7 @@ namespace Mulkchi.Api.Controllers
                 }
 
                 queryParams.IsHostView = true; // Tell service to filter by Host
-                
+
                 var (items, total) = await this.bookingService.RetrieveBookingsAsync(queryParams);
 
                 var result = new PagedResult<BookingResponse>
@@ -169,7 +169,7 @@ namespace Mulkchi.Api.Controllers
         }
 
         [HttpPost("{id}/confirm")]
-        [Authorize(Roles = "Host,Admin")]
+        [Authorize(Roles = "Host,Admin,SuperAdmin")]
         public async ValueTask<ActionResult<BookingResponse>> ConfirmBookingAsync(Guid id)
         {
             try

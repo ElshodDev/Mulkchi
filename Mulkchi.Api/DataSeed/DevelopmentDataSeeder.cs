@@ -180,7 +180,7 @@ public static class DevelopmentDataSeeder
     {
         // BMI: Himoya uchun bazani boyitish - TargetPropertyCount ni 50 ga ko'taramiz
         const int NewTargetPropertyCount = 50;
-        
+
         if (existingCount >= NewTargetPropertyCount)
         {
             return new List<Property>();

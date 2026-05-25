@@ -11,6 +11,6 @@ export const authGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
     return true;
   }
 
-  const returnUrl = route.url.map(segment => segment.path).join('/');
+  const returnUrl = route.url.map((segment) => segment.path).join('/');
   return router.createUrlTree(['/auth/login'], { queryParams: { returnUrl } });
 };

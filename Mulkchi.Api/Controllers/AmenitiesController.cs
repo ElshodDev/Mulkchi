@@ -47,7 +47,7 @@ public class AmenitiesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async ValueTask<ActionResult<AmenityResponse>> CreateAmenityAsync([FromBody] AmenityCreateDto dto)
     {
         try
@@ -62,7 +62,7 @@ public class AmenitiesController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async ValueTask<ActionResult<AmenityResponse>> UpdateAmenityAsync(Guid id, [FromBody] AmenityCreateDto dto)
     {
         try
@@ -81,7 +81,7 @@ public class AmenitiesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async ValueTask<ActionResult> DeleteAmenityAsync(Guid id)
     {
         try
@@ -99,7 +99,7 @@ public class AmenitiesController : ControllerBase
     }
 
     [HttpPost("seed")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async ValueTask<ActionResult> SeedAmenitiesAsync()
     {
         try
@@ -130,7 +130,7 @@ public class AmenitiesController : ControllerBase
     }
 
     [HttpPut("properties/{propertyId:guid}")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async ValueTask<ActionResult> UpdatePropertyAmenitiesAsync(Guid propertyId, [FromBody] PropertyAmenitiesUpdateDto dto)
     {
         try

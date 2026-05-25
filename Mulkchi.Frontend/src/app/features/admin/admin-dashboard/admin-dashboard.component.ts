@@ -619,9 +619,15 @@ import { PropertyService } from '../../../core/services/property.service';
         font-weight: 700;
       }
 
-      .stat-item.error .value { color: #f44336; }
-      .stat-item.warning .value { color: #ff9800; }
-      .stat-item.info .value { color: #2196f3; }
+      .stat-item.error .value {
+        color: #f44336;
+      }
+      .stat-item.warning .value {
+        color: #ff9800;
+      }
+      .stat-item.info .value {
+        color: #2196f3;
+      }
 
       .logs-viewer {
         background: #1e1e1e;
@@ -641,9 +647,15 @@ import { PropertyService } from '../../../core/services/property.service';
         border-bottom: 1px solid #2a2a2a;
       }
 
-      .log-line.err { color: #f48771; }
-      .log-line.wrn { color: #cca700; }
-      .log-line.inf { color: #75beff; }
+      .log-line.err {
+        color: #f48771;
+      }
+      .log-line.wrn {
+        color: #cca700;
+      }
+      .log-line.inf {
+        color: #75beff;
+      }
 
       .no-logs {
         text-align: center;

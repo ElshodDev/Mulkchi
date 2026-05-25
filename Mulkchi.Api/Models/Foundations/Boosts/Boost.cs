@@ -16,7 +16,7 @@ public class Boost
     public DateTimeOffset CreatedDate { get; set; }
     public DateTimeOffset? UpdatedDate { get; set; }
     public DateTimeOffset? DeletedDate { get; set; }
-    
+
     public virtual Property Property { get; set; }
     public virtual User User { get; set; }
 }

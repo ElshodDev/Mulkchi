@@ -23,7 +23,7 @@ public class Property
     public double Area { get; set; }
     public int NumberOfBedrooms { get; set; }
     public int NumberOfBathrooms { get; set; }
-    
+
     // Alias properties for compatibility
     public int Rooms { get => NumberOfBedrooms; set => NumberOfBedrooms = value; }
     public int Bathrooms { get => NumberOfBathrooms; set => NumberOfBathrooms = value; }
@@ -80,10 +80,10 @@ public class Property
     public int FavoritesCount { get; set; }
     public Guid HostId { get; set; }
     public DateTimeOffset? BumpedAt { get; set; }
-    
+
     [System.ComponentModel.DataAnnotations.Schema.NotMapped]
     public string HostName { get; set; }
-    
+
     [System.ComponentModel.DataAnnotations.Schema.NotMapped]
     public string HostAvatarUrl { get; set; }
 

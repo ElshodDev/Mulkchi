@@ -73,7 +73,10 @@ interface AiPricePredictionView {
     trigger('slideUp', [
       transition(':enter', [
         style({ transform: 'translateY(20px)', opacity: 0 }),
-        animate('500ms cubic-bezier(0.35, 0, 0.25, 1)', style({ transform: 'translateY(0)', opacity: 1 })),
+        animate(
+          '500ms cubic-bezier(0.35, 0, 0.25, 1)',
+          style({ transform: 'translateY(0)', opacity: 1 }),
+        ),
       ]),
     ]),
   ],
@@ -137,12 +140,19 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
     const viewModel = result as AiPricePredictionView;
     const area = Number(this.priceForm.value.area || 0) || 1;
     const price = viewModel.recommendedPrice || 0;
-    
+
     // Fallbacks for missing fields in backend response
     const pricePerSqm = viewModel.pricePerSqm ?? Math.round(price / area);
-    const estimatedRent = viewModel.estimatedRent ?? (this.priceForm.value.listingType === 'Sale' ? Math.round(price * 0.007) : 0);
-    const roi = viewModel.roi ?? (this.priceForm.value.listingType === 'Sale' ? Number((((estimatedRent * 12) / Math.max(price, 1)) * 100).toFixed(1)) : 0);
-    const marketScore = viewModel.marketScore ?? Math.round(Math.min(95, 40 + (viewModel.confidence || 0) * 50));
+    const estimatedRent =
+      viewModel.estimatedRent ??
+      (this.priceForm.value.listingType === 'Sale' ? Math.round(price * 0.007) : 0);
+    const roi =
+      viewModel.roi ??
+      (this.priceForm.value.listingType === 'Sale'
+        ? Number((((estimatedRent * 12) / Math.max(price, 1)) * 100).toFixed(1))
+        : 0);
+    const marketScore =
+      viewModel.marketScore ?? Math.round(Math.min(95, 40 + (viewModel.confidence || 0) * 50));
 
     return {
       ...viewModel,
@@ -189,21 +199,23 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
 
   fetchSimilarProperties(request: AIPriceRequest): void {
     this.isLoadingSimilar = true;
-    this.propertyService.searchProperties({
-      listingType: request.listingType as any,
-      propertyType: request.propertyType as any,
-      region: request.region as any,
-      location: request.region,
-      pageSize: 3
-    }).subscribe({
-      next: (res: any) => {
-        this.similarRealProperties = res.items || [];
-        this.isLoadingSimilar = false;
-      },
-      error: () => {
-        this.isLoadingSimilar = false;
-      }
-    });
+    this.propertyService
+      .searchProperties({
+        listingType: request.listingType as any,
+        propertyType: request.propertyType as any,
+        region: request.region as any,
+        location: request.region,
+        pageSize: 3,
+      })
+      .subscribe({
+        next: (res: any) => {
+          this.similarRealProperties = res.items || [];
+          this.isLoadingSimilar = false;
+        },
+        error: () => {
+          this.isLoadingSimilar = false;
+        },
+      });
   }
 
   navigateToProperty(id: string) {

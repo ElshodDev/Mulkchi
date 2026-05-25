@@ -96,7 +96,7 @@ public class GlobalExceptionMiddleware
 
         // If it's a validation error or specific auth error, return the actual message
         var innermostException = GetInnermostException(exception);
-        if (exception.GetType().Name.EndsWith("ValidationException") || 
+        if (exception.GetType().Name.EndsWith("ValidationException") ||
             innermostException.GetType().Name.StartsWith("Invalid"))
         {
             return innermostException.Message;

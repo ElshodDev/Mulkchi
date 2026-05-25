@@ -39,7 +39,7 @@ public class PropertyImagesUploadController : ControllerBase
     }
 
     [HttpPost("upload")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async Task<ActionResult<PropertyImage>> UploadPropertyImage([FromForm] PropertyImageUploadRequest request)
     {
         try
@@ -109,7 +109,7 @@ public class PropertyImagesUploadController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async Task<ActionResult> DeletePropertyImage(Guid id)
     {
         try

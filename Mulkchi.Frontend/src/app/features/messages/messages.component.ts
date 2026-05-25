@@ -1,4 +1,14 @@
-import { AfterViewChecked, Component, DestroyRef, ElementRef, OnInit, inject, signal, viewChild, computed } from '@angular/core';
+import {
+  AfterViewChecked,
+  Component,
+  DestroyRef,
+  ElementRef,
+  OnInit,
+  inject,
+  signal,
+  viewChild,
+  computed,
+} from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatMenuModule } from '@angular/material/menu';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -37,7 +47,7 @@ import { ConversationCardComponent } from './components/conversation-card/conver
     MatTooltipModule,
     MatSnackBarModule,
     MatMenuModule,
-    ConversationCardComponent
+    ConversationCardComponent,
   ],
   templateUrl: './messages.component.html',
   styleUrl: './messages.component.css',
@@ -45,31 +55,37 @@ import { ConversationCardComponent } from './components/conversation-card/conver
     trigger('fadeIn', [
       transition(':enter', [
         style({ opacity: 0, transform: 'translateY(10px)' }),
-        animate('400ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
-      ])
+        animate(
+          '400ms cubic-bezier(0.4, 0, 0.2, 1)',
+          style({ opacity: 1, transform: 'translateY(0)' }),
+        ),
+      ]),
     ]),
     trigger('slideIn', [
       transition(':enter', [
         style({ transform: 'translateY(-100%)', opacity: 0 }),
-        animate('300ms ease-out', style({ transform: 'translateY(0)', opacity: 1 }))
+        animate('300ms ease-out', style({ transform: 'translateY(0)', opacity: 1 })),
       ]),
       transition(':leave', [
-        animate('200ms ease-in', style({ transform: 'translateY(-100%)', opacity: 0 }))
-      ])
+        animate('200ms ease-in', style({ transform: 'translateY(-100%)', opacity: 0 })),
+      ]),
     ]),
     trigger('messageAppear', [
       transition(':enter', [
         style({ opacity: 0, transform: 'scale(0.95) translateY(10px)' }),
-        animate('250ms cubic-bezier(0.175, 0.885, 0.32, 1.275)', style({ opacity: 1, transform: 'scale(1) translateY(0)' }))
-      ])
+        animate(
+          '250ms cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+          style({ opacity: 1, transform: 'scale(1) translateY(0)' }),
+        ),
+      ]),
     ]),
     trigger('listAnimation', [
       transition(':enter', [
         style({ opacity: 0, transform: 'translateX(-10px)' }),
-        animate('200ms ease-out', style({ opacity: 1, transform: 'translateX(0)' }))
-      ])
-    ])
-  ]
+        animate('200ms ease-out', style({ opacity: 1, transform: 'translateX(0)' })),
+      ]),
+    ]),
+  ],
 })
 export class MessagesComponent implements OnInit, AfterViewChecked {
   chatService = inject(ChatService);
@@ -78,7 +94,7 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private snackBar = inject(MatSnackBar);
-  
+
   messagesContainer = viewChild<ElementRef>('messagesContainer');
   messageInput = viewChild<ElementRef>('messageInput');
 
@@ -86,7 +102,7 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
   searchQuery = '';
   isSending = signal(false);
   shouldScroll = signal(false);
-  propertyContext = signal<{id: string, title: string, image: string} | null>(null);
+  propertyContext = signal<{ id: string; title: string; image: string } | null>(null);
 
   conversations = this.chatService.conversations;
   activeConversation = this.chatService.activeConversation;
@@ -95,11 +111,12 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
   filteredConversations = computed(() => {
     const query = this.searchQuery.toLowerCase().trim();
     if (!query) return this.conversations();
-    
-    return this.conversations().filter(c => 
-      c.otherUser.firstName.toLowerCase().includes(query) || 
-      c.otherUser.lastName.toLowerCase().includes(query) ||
-      (c.lastMessage && c.lastMessage.toLowerCase().includes(query))
+
+    return this.conversations().filter(
+      (c) =>
+        c.otherUser.firstName.toLowerCase().includes(query) ||
+        c.otherUser.lastName.toLowerCase().includes(query) ||
+        (c.lastMessage && c.lastMessage.toLowerCase().includes(query)),
     );
   });
 
@@ -112,18 +129,23 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
     this.chatService.tryConnect();
     this.chatService.getConversations();
 
-    this.route.queryParams
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(params => {
-        const userId = params['userId'];
-        const userName = params['userName'];
-        const userAvatar = params['userAvatar'];
-        const propertyId = params['propertyId'];
-        
-        if (userId) {
-          this.startConversationWithUser(userId, userName, userAvatar, propertyId, params['propertyTitle'], params['propertyImage']);
-        }
-      });
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const userId = params['userId'];
+      const userName = params['userName'];
+      const userAvatar = params['userAvatar'];
+      const propertyId = params['propertyId'];
+
+      if (userId) {
+        this.startConversationWithUser(
+          userId,
+          userName,
+          userAvatar,
+          propertyId,
+          params['propertyTitle'],
+          params['propertyImage'],
+        );
+      }
+    });
   }
 
   ngAfterViewChecked(): void {
@@ -140,9 +162,18 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
     }
   }
 
-  private startConversationWithUser(userId: string, userName?: string, userAvatar?: string, propertyId?: string, propertyTitle?: string, propertyImage?: string): void {
-    const existing = this.conversations().find(c => c.otherUserId === userId && c.propertyId === propertyId);
-    
+  private startConversationWithUser(
+    userId: string,
+    userName?: string,
+    userAvatar?: string,
+    propertyId?: string,
+    propertyTitle?: string,
+    propertyImage?: string,
+  ): void {
+    const existing = this.conversations().find(
+      (c) => c.otherUserId === userId && c.propertyId === propertyId,
+    );
+
     if (existing) {
       this.selectConversation(existing);
     } else {
@@ -156,13 +187,13 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
           firstName: userName?.split(' ')[0] || 'Foydalanuvchi',
           lastName: userName?.split(' ').slice(1).join(' ') || '',
           avatarUrl: userAvatar,
-          isOnline: false
+          isOnline: false,
         },
         lastMessage: '',
         lastMessageDate: new Date(),
-        unreadCount: 0
+        unreadCount: 0,
       };
-      
+
       this.chatService.setActiveConversation(tempConv);
     }
   }
@@ -196,17 +227,21 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
       await this.chatService.sendMessage(
         this.activeConversation()!.otherUserId,
         text,
-        this.activeConversation()?.propertyId
+        this.activeConversation()?.propertyId,
       );
-      
+
       this.newMessageText = '';
       this.resetInputHeight();
       this.shouldScroll.set(true);
     } catch (error: any) {
-      this.snackBar.open('Xabar yuborishda xatolik yuz berdi. Iltimos qayta urinib ko\'ring.', 'Yopish', {
-        duration: 5000,
-        panelClass: ['error-snackbar']
-      });
+      this.snackBar.open(
+        "Xabar yuborishda xatolik yuz berdi. Iltimos qayta urinib ko'ring.",
+        'Yopish',
+        {
+          duration: 5000,
+          panelClass: ['error-snackbar'],
+        },
+      );
     } finally {
       this.isSending.set(false);
     }
@@ -239,10 +274,10 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
 
   shouldShowDateDivider(index: number): boolean {
     if (index === 0) return true;
-    
+
     const current = new Date(this.currentMessages()[index].createdDate).toDateString();
     const prev = new Date(this.currentMessages()[index - 1].createdDate).toDateString();
-    
+
     return current !== prev;
   }
 

@@ -108,9 +108,9 @@ public class LocalFileStorageBroker : IFileStorageBroker
 
         string baseName = System.Guid.NewGuid().ToString();
 
-        string fullUrl      = await SaveVariantAsync(file, uploadsFolder, baseName, "full",   null, null, QualityFull);
-        string mediumUrl    = await SaveVariantAsync(file, uploadsFolder, baseName, "medium",  MediumWidth, MediumHeight, QualityMedium);
-        string thumbnailUrl = await SaveVariantAsync(file, uploadsFolder, baseName, "thumb",   ThumbWidth,  ThumbHeight,  QualityThumbnail);
+        string fullUrl = await SaveVariantAsync(file, uploadsFolder, baseName, "full", null, null, QualityFull);
+        string mediumUrl = await SaveVariantAsync(file, uploadsFolder, baseName, "medium", MediumWidth, MediumHeight, QualityMedium);
+        string thumbnailUrl = await SaveVariantAsync(file, uploadsFolder, baseName, "thumb", ThumbWidth, ThumbHeight, QualityThumbnail);
 
         return new ImageVariants(Thumbnail: thumbnailUrl, Medium: mediumUrl, Full: fullUrl);
     }
@@ -128,7 +128,7 @@ public class LocalFileStorageBroker : IFileStorageBroker
         string filePath = Path.Combine(uploadsFolder, fileName);
 
         using var stream = file.OpenReadStream();
-        using var image  = await Image.LoadAsync(stream);
+        using var image = await Image.LoadAsync(stream);
 
         if (targetWidth.HasValue && targetHeight.HasValue)
         {
@@ -157,7 +157,7 @@ public class LocalFileStorageBroker : IFileStorageBroker
     {
         if (string.IsNullOrEmpty(suffix)) return url;
 
-        var ext  = Path.GetExtension(url);
+        var ext = Path.GetExtension(url);
         var base_ = url[..^ext.Length];
         return $"{base_}{suffix}{ext}";
     }
@@ -168,7 +168,9 @@ public class LocalFileStorageBroker : IFileStorageBroker
             throw new ArgumentException("Fayl talab qilinadi.");
 
         if (file.Length > maxFileSize)
-            throw new ArgumentException($"Fayl hajmi {maxFileSize / (1024 * 1024)} MB dan oshmasligi kerak.");
+            throw new BadHttpRequestException(
+                $"Fayl hajmi {maxFileSize / (1024 * 1024)} MB dan oshmasligi kerak.",
+                StatusCodes.Status413RequestEntityTooLarge);
 
         string fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
 

@@ -230,7 +230,7 @@ public class AiRecommendationsController : ControllerBase
         {
             // Get the property to find similar ones
             var property = await this.aiRecommendationService.RetrieveAiRecommendationByIdAsync(propertyId);
-            
+
             // In a real app, this would use a vector database or complex SQL query
             // Here we'll simulate by getting some random properties with same type and region
             var query = this.storageBroker.SelectAllProperties()
@@ -369,33 +369,33 @@ public class AiRecommendationsController : ControllerBase
         // === VILOYAT BO'YICHA BAZAVIY NARX (USD/m²) ===
         decimal basePricePerSqm = request.Region switch
         {
-            "Toshkent"            => 1280m,
-            "ToshkentViloyat"     => 620m,
-            "Samarqand"           => 580m,
-            "Buxoro"              => 510m,
-            "Namangan"            => 440m,
-            "Andijon"             => 460m,
-            "Fargona"             => 450m,
-            "Qashqadaryo"         => 390m,
-            "Surxondaryo"         => 360m,
-            "Xorazm"              => 390m,
-            "Navoiy"              => 420m,
-            "Jizzax"              => 380m,
-            "Sirdaryo"            => 370m,
-            "Qoraqalpogiston"     => 340m,
-            _                     => 480m
+            "Toshkent" => 1280m,
+            "ToshkentViloyat" => 620m,
+            "Samarqand" => 580m,
+            "Buxoro" => 510m,
+            "Namangan" => 440m,
+            "Andijon" => 460m,
+            "Fargona" => 450m,
+            "Qashqadaryo" => 390m,
+            "Surxondaryo" => 360m,
+            "Xorazm" => 390m,
+            "Navoiy" => 420m,
+            "Jizzax" => 380m,
+            "Sirdaryo" => 370m,
+            "Qoraqalpogiston" => 340m,
+            _ => 480m
         };
 
         // Mulk turiga qarab mantiqiy o'zgarishlar
         decimal typeMultiplier = request.PropertyType switch
         {
             "Apartment" => 1.00m,
-            "House"     => 1.12m,
-            "Villa"     => 1.85m,
-            "Office"    => 1.45m,
+            "House" => 1.12m,
+            "Villa" => 1.85m,
+            "Office" => 1.45m,
             "Commercial" => 1.75m,
-            "Studio"    => 1.15m,
-            _           => 1.00m
+            "Studio" => 1.15m,
+            _ => 1.00m
         };
 
         // === XONALAR SONI KOEFFITSIENTI ===
@@ -421,33 +421,33 @@ public class AiRecommendationsController : ControllerBase
         // === BINO YOSHI KOEFFITSIENTI ===
         decimal ageMultiplier = request.BuildingAge switch
         {
-            <= 0    => 1.18m, // Yangi qurilish
-            <= 3    => 1.12m,
-            <= 10   => 1.05m,
-            <= 25   => 0.95m,
-            _       => 0.85m
+            <= 0 => 1.18m, // Yangi qurilish
+            <= 3 => 1.12m,
+            <= 10 => 1.05m,
+            <= 25 => 0.95m,
+            _ => 0.85m
         };
 
         // === QULAYLIKLAR BONUSLARI ===
         var factors = new Dictionary<string, decimal>();
-        if (request.IsRenovated)         { factors["Ta'mirlangan"] = 0.15m; }
-        if (request.HasMetroNearby)      { factors["Metro yaqin"]  = 0.12m; }
-        if (request.HasFurniture)        { factors["Mebel"]        = 0.08m; }
-        if (request.HasParking)          { factors["Avtoturargoh"] = 0.06m; }
-        if (request.HasPool)             { factors["Hovuz"]        = 0.10m; }
-        if (request.HasSecurity)         { factors["Qo'riqlash"]   = 0.05m; }
-        if (request.HasAirConditioning)  { factors["Konditsioner"] = 0.04m; }
-        if (request.HasElevator)         { factors["Lift"]         = 0.03m; }
-        if (request.HasWifi)             { factors["WiFi"]         = 0.02m; }
+        if (request.IsRenovated) { factors["Ta'mirlangan"] = 0.15m; }
+        if (request.HasMetroNearby) { factors["Metro yaqin"] = 0.12m; }
+        if (request.HasFurniture) { factors["Mebel"] = 0.08m; }
+        if (request.HasParking) { factors["Avtoturargoh"] = 0.06m; }
+        if (request.HasPool) { factors["Hovuz"] = 0.10m; }
+        if (request.HasSecurity) { factors["Qo'riqlash"] = 0.05m; }
+        if (request.HasAirConditioning) { factors["Konditsioner"] = 0.04m; }
+        if (request.HasElevator) { factors["Lift"] = 0.03m; }
+        if (request.HasWifi) { factors["WiFi"] = 0.02m; }
 
         decimal totalBonus = factors.Values.Sum();
 
         // === ASOSIY NARX HISOBLASH ===
-        decimal pricePerSqm = basePricePerSqm 
-            * typeMultiplier 
-            * roomMultiplier 
-            * floorMultiplier 
-            * ageMultiplier 
+        decimal pricePerSqm = basePricePerSqm
+            * typeMultiplier
+            * roomMultiplier
+            * floorMultiplier
+            * ageMultiplier
             * (1 + totalBonus);
 
         decimal recommendedPrice = pricePerSqm * request.Area;
@@ -467,7 +467,7 @@ public class AiRecommendationsController : ControllerBase
         // Bozor o'rtachasi (simulyatsiya)
         decimal marketAverage = recommendedPrice * 0.98m;
         decimal comparisonPercentage = ((recommendedPrice - marketAverage) / marketAverage) * 100;
-        
+
         // Ishonch darajasi (confidence)
         double confidence = 0.85;
         if (request.BuildingAge > 40) confidence -= 0.1;
@@ -495,24 +495,24 @@ public class AiRecommendationsController : ControllerBase
         // Simulate AI processing delay
         await Task.Delay(800);
 
-        var amenitiesList = request.Amenities?.Any() == true 
-            ? string.Join(", ", request.Amenities) 
+        var amenitiesList = request.Amenities?.Any() == true
+            ? string.Join(", ", request.Amenities)
             : "barcha qulayliklar";
 
         var templates = new List<string>
         {
             $"{request.Region}ning eng nufuzli hududida joylashgan, {request.Area} m² maydonga ega ushbu {request.Rooms} xonali {request.PropertyType.ToLower()} sotuvga qo'yildi. {request.Floor}-qavatda joylashgan bo'lib, {request.TotalFloors} qavatli binoda qulay joylashuvga ega. Uyda {amenitiesList} mavjud bo'lib, yashash uchun barcha sharoitlar yaratilgan. Sifatli ta'mir va shinam atmosfera sizni kutmoqda.",
-            
+
             $"Premium taklif! {request.Region} markazida {request.Rooms} xonali shinam xonadon. Umumiy maydoni {request.Area} m². Bino {request.TotalFloors} qavatli, xonadon esa {request.Floor}-qavatda. {amenitiesList} bilan jihozlangan ushbu maskan zamonaviy hayot tarzi uchun ideal tanlovdir. O'tkazib yubormang!",
-            
+
             $"Siz qidirgan qulaylik va sifat! {request.Area} m² maydonli {request.Rooms} xonali {request.PropertyType.ToLower()}. {request.Region} hududidagi eng yaxshi variantlardan biri. Binoda {request.TotalFloors} qavat bor, uy {request.Floor}-qavatda. {amenitiesList} kabi afzalliklarga ega. Batafsil ma'lumot uchun bog'laning."
         };
 
         var random = new Random();
         var selectedDescription = templates[random.Next(templates.Count)];
 
-        return Ok(new AIDescriptionResponse 
-        { 
+        return Ok(new AIDescriptionResponse
+        {
             Description = selectedDescription,
             Confidence = 0.95
         });

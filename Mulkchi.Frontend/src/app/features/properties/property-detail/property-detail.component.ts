@@ -50,9 +50,12 @@ import { animate, style, transition, trigger } from '@angular/animations';
     trigger('fadeInUp', [
       transition(':enter', [
         style({ opacity: 0, transform: 'translateY(20px)' }),
-        animate('0.6s cubic-bezier(0.16, 1, 0.3, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
-      ])
-    ])
+        animate(
+          '0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+          style({ opacity: 1, transform: 'translateY(0)' }),
+        ),
+      ]),
+    ]),
   ],
   template: `
     <div class="property-detail-container">
@@ -95,19 +98,29 @@ import { animate, style, transition, trigger } from '@angular/animations';
           <div class="main-details-grid">
             <!-- Left Column -->
             <div class="left-column">
-              
               <!-- Property Header -->
               <div class="property-header">
                 <div class="badges">
-                  <span *ngIf="property()?.isFeatured" class="badge featured"><mat-icon>auto_awesome</mat-icon> Top</span>
-                  <span *ngIf="property()?.isVerified" class="badge verified"><mat-icon>verified</mat-icon> Tasdiqlangan</span>
-                  <span class="badge type" [ngClass]="property()?.listingType?.toLowerCase() || ''">{{ getListingLabel(property()?.listingType) }}</span>
+                  <span *ngIf="property()?.isFeatured" class="badge featured"
+                    ><mat-icon>auto_awesome</mat-icon> Top</span
+                  >
+                  <span *ngIf="property()?.isVerified" class="badge verified"
+                    ><mat-icon>verified</mat-icon> Tasdiqlangan</span
+                  >
+                  <span
+                    class="badge type"
+                    [ngClass]="property()?.listingType?.toLowerCase() || ''"
+                    >{{ getListingLabel(property()?.listingType) }}</span
+                  >
                 </div>
                 <h1 class="property-title">{{ property()?.title }}</h1>
                 <div class="location-row">
                   <div class="location">
                     <mat-icon>place</mat-icon>
-                    <span>{{ property()?.address }}, {{ property()?.district }}, {{ property()?.city }}</span>
+                    <span
+                      >{{ property()?.address }}, {{ property()?.district }},
+                      {{ property()?.city }}</span
+                    >
                   </div>
                 </div>
               </div>
@@ -116,7 +129,12 @@ import { animate, style, transition, trigger } from '@angular/animations';
               <div class="gallery-section-modern">
                 <div class="main-stage">
                   <ng-container *ngIf="currentImage(); else noImage">
-                    <img [src]="currentImage()" [alt]="property()?.title" class="stage-img" (error)="onMainImageError()" />
+                    <img
+                      [src]="currentImage()"
+                      [alt]="property()?.title"
+                      class="stage-img"
+                      (error)="onMainImageError()"
+                    />
                     <div class="img-overlay"></div>
                   </ng-container>
                   <ng-template #noImage>
@@ -126,20 +144,37 @@ import { animate, style, transition, trigger } from '@angular/animations';
                     </div>
                   </ng-template>
 
-                  <div class="gallery-controls" *ngIf="property()?.images && property()!.images!.length > 1">
-                    <button class="nav-arrow prev" (click)="prevImage()"><mat-icon>west</mat-icon></button>
-                    <button class="nav-arrow next" (click)="nextImage()"><mat-icon>east</mat-icon></button>
-                    <div class="count-pill">{{ currentImageIndex() + 1 }} / {{ property()!.images!.length }}</div>
+                  <div
+                    class="gallery-controls"
+                    *ngIf="property()?.images && property()!.images!.length > 1"
+                  >
+                    <button class="nav-arrow prev" (click)="prevImage()">
+                      <mat-icon>west</mat-icon>
+                    </button>
+                    <button class="nav-arrow next" (click)="nextImage()">
+                      <mat-icon>east</mat-icon>
+                    </button>
+                    <div class="count-pill">
+                      {{ currentImageIndex() + 1 }} / {{ property()!.images!.length }}
+                    </div>
                   </div>
                 </div>
 
-                <div class="thumbnail-strip" *ngIf="property()?.images && property()!.images!.length > 1">
+                <div
+                  class="thumbnail-strip"
+                  *ngIf="property()?.images && property()!.images!.length > 1"
+                >
                   @for (image of property()!.images; track $index) {
-                    <div 
-                      class="thumb-item" 
+                    <div
+                      class="thumb-item"
                       [class.active]="$index === currentImageIndex()"
-                      (click)="selectImage($index)">
-                      <img [src]="getThumbnailUrl(image)" [alt]="image.caption || ''" (error)="onThumbnailError($index)" />
+                      (click)="selectImage($index)"
+                    >
+                      <img
+                        [src]="getThumbnailUrl(image)"
+                        [alt]="image.caption || ''"
+                        (error)="onThumbnailError($index)"
+                      />
                     </div>
                   }
                 </div>
@@ -183,7 +218,9 @@ import { animate, style, transition, trigger } from '@angular/animations';
               <!-- Description -->
               <div class="description-section content-card">
                 <h2 class="section-title">Uy haqida</h2>
-                <p class="description-text">{{ property()?.description || 'Tavsif mavjud emas' }}</p>
+                <p class="description-text">
+                  {{ property()?.description || 'Tavsif mavjud emas' }}
+                </p>
               </div>
 
               <!-- Amenities -->
@@ -198,7 +235,9 @@ import { animate, style, transition, trigger } from '@angular/animations';
                     <div class="amenity-icon" [class.active]="amenity.available">
                       <mat-icon>{{ getAmenityIcon(amenity.name) }}</mat-icon>
                     </div>
-                    <span class="amenity-label" [class.strike]="!amenity.available">{{ amenity.label }}</span>
+                    <span class="amenity-label" [class.strike]="!amenity.available">{{
+                      amenity.label
+                    }}</span>
                   </div>
                 </div>
               </div>
@@ -211,48 +250,123 @@ import { animate, style, transition, trigger } from '@angular/animations';
                 <div class="glass-card price-card">
                   <div class="price-header">
                     <div class="price-display">
-                      <span *ngIf="property()?.listingType === ListingType.Sale && property()?.salePrice" class="price-amount">{{ property()?.salePrice | number }} <span class="currency">{{ property()?.currency }}</span></span>
-                      <span *ngIf="property()?.listingType === ListingType.Sale && property()?.salePrice" class="price-type">Sotuv</span>
-                      <span *ngIf="property()?.listingType === ListingType.Rent && property()?.monthlyRent" class="price-amount">{{ property()?.monthlyRent | number }} <span class="currency">{{ property()?.currency }}</span></span>
-                      <span *ngIf="property()?.listingType === ListingType.Rent && property()?.monthlyRent" class="price-period">/ oy</span>
-                      <span *ngIf="property()?.listingType === ListingType.ShortTermRent && property()?.pricePerNight" class="price-amount">{{ property()?.pricePerNight | number }} <span class="currency">{{ property()?.currency }}</span></span>
-                      <span *ngIf="property()?.listingType === ListingType.ShortTermRent && property()?.pricePerNight" class="price-period">/ tun</span>
+                      <span
+                        *ngIf="
+                          property()?.listingType === ListingType.Sale && property()?.salePrice
+                        "
+                        class="price-amount"
+                        >{{ property()?.salePrice | number }}
+                        <span class="currency">{{ property()?.currency }}</span></span
+                      >
+                      <span
+                        *ngIf="
+                          property()?.listingType === ListingType.Sale && property()?.salePrice
+                        "
+                        class="price-type"
+                        >Sotuv</span
+                      >
+                      <span
+                        *ngIf="
+                          property()?.listingType === ListingType.Rent && property()?.monthlyRent
+                        "
+                        class="price-amount"
+                        >{{ property()?.monthlyRent | number }}
+                        <span class="currency">{{ property()?.currency }}</span></span
+                      >
+                      <span
+                        *ngIf="
+                          property()?.listingType === ListingType.Rent && property()?.monthlyRent
+                        "
+                        class="price-period"
+                        >/ oy</span
+                      >
+                      <span
+                        *ngIf="
+                          property()?.listingType === ListingType.ShortTermRent &&
+                          property()?.pricePerNight
+                        "
+                        class="price-amount"
+                        >{{ property()?.pricePerNight | number }}
+                        <span class="currency">{{ property()?.currency }}</span></span
+                      >
+                      <span
+                        *ngIf="
+                          property()?.listingType === ListingType.ShortTermRent &&
+                          property()?.pricePerNight
+                        "
+                        class="price-period"
+                        >/ tun</span
+                      >
                     </div>
-                    
+
                     <div class="action-buttons">
                       <ng-container *ngIf="isAuthenticated() && !isOwner()">
-                        <button mat-flat-button class="btn-main-action" (click)="handleMainAction()">
+                        <button
+                          mat-flat-button
+                          class="btn-main-action"
+                          (click)="handleMainAction()"
+                        >
                           {{ getMainActionLabel() }}
                           <mat-icon>arrow_forward</mat-icon>
                         </button>
-                        
+
                         <div class="secondary-actions">
-                          <button class="btn-fav-icon" [class.active]="isFavorite()" (click)="toggleFavorite()" [matTooltip]="getFavoriteTooltip()">
+                          <button
+                            class="btn-fav-icon"
+                            [class.active]="isFavorite()"
+                            (click)="toggleFavorite()"
+                            [matTooltip]="getFavoriteTooltip()"
+                          >
                             <mat-icon>{{ isFavorite() ? 'favorite' : 'favorite_border' }}</mat-icon>
                           </button>
                         </div>
                       </ng-container>
 
                       <ng-container *ngIf="isAuthenticated() && isOwner()">
-                        <button mat-flat-button class="btn-main-action" (click)="bumpPropertyDetail()" [disabled]="isBumpingProperty()">
+                        <button
+                          mat-flat-button
+                          class="btn-main-action"
+                          (click)="bumpPropertyDetail()"
+                          [disabled]="isBumpingProperty()"
+                        >
                           @if (isBumpingProperty()) {
-                            <mat-progress-spinner diameter="20" mode="indeterminate" color="accent"></mat-progress-spinner>
-                            <span>Ko'tarilmoqda...</span>
+                            <mat-progress-spinner
+                              diameter="20"
+                              mode="indeterminate"
+                              color="accent"
+                            ></mat-progress-spinner>
                           } @else {
                             <mat-icon>rocket_launch</mat-icon>
+                          }
+                          @if (isBumpingProperty()) {
+                            <span>Ko'tarilmoqda...</span>
+                          } @else {
                             <span>TOPga ko'tarish</span>
                           }
                         </button>
-                        <button mat-flat-button class="btn-edit" [routerLink]="['/host/properties/edit', property()?.id]">
+                        <button
+                          mat-flat-button
+                          class="btn-edit"
+                          [routerLink]="['/host/properties/edit', property()?.id]"
+                        >
                           <mat-icon>edit</mat-icon> Tahrirlash
                         </button>
-                        <button mat-stroked-button color="warn" class="btn-delete" (click)="deleteProperty()">
+                        <button
+                          mat-stroked-button
+                          color="warn"
+                          class="btn-delete"
+                          (click)="deleteProperty()"
+                        >
                           <mat-icon>delete_outline</mat-icon> O'chirish
                         </button>
                       </ng-container>
 
                       <ng-container *ngIf="!isAuthenticated()">
-                        <button mat-flat-button class="btn-main-action" (click)="handleMainAction()">
+                        <button
+                          mat-flat-button
+                          class="btn-main-action"
+                          (click)="handleMainAction()"
+                        >
                           Tizimga kirish
                           <mat-icon>login</mat-icon>
                         </button>
@@ -264,19 +378,31 @@ import { animate, style, transition, trigger } from '@angular/animations';
                 <!-- Host Card Glass -->
                 <div class="glass-card host-card">
                   <div class="host-avatar">
-                    <img *ngIf="property()?.hostAvatarUrl" [src]="property()?.hostAvatarUrl" [alt]="property()?.hostName">
-                    <div *ngIf="!property()?.hostAvatarUrl" class="avatar-placeholder"><mat-icon>person</mat-icon></div>
+                    <img
+                      *ngIf="property()?.hostAvatarUrl"
+                      [src]="property()?.hostAvatarUrl"
+                      [alt]="property()?.hostName"
+                    />
+                    <div *ngIf="!property()?.hostAvatarUrl" class="avatar-placeholder">
+                      <mat-icon>person</mat-icon>
+                    </div>
                   </div>
                   <div class="host-details">
                     <span class="host-label">Uy egasi</span>
                     <h4 class="host-name">{{ property()?.hostName || 'Foydalanuvchi' }}</h4>
-                    <div class="host-badge"><mat-icon>verified_user</mat-icon><span>Tasdiqlangan</span></div>
+                    <div class="host-badge">
+                      <mat-icon>verified_user</mat-icon><span>Tasdiqlangan</span>
+                    </div>
                   </div>
                 </div>
 
                 <!-- Booking Panel (Only for ShortTermRent) -->
                 <app-booking-panel
-                  *ngIf="isAuthenticated() && !isOwner() && property()?.listingType === ListingType.ShortTermRent"
+                  *ngIf="
+                    isAuthenticated() &&
+                    !isOwner() &&
+                    property()?.listingType === ListingType.ShortTermRent
+                  "
                   [property]="property()!"
                 ></app-booking-panel>
               </div>
@@ -296,9 +422,10 @@ import { animate, style, transition, trigger } from '@angular/animations';
               @for (rel of similarProperties(); track rel.id) {
                 <div class="rel-card-premium" [routerLink]="['/properties', rel.id]">
                   <div class="rel-image-box">
-                    <img [src]="getSimilarPropertyImage(rel)" alt="Similar">
+                    <img [src]="getSimilarPropertyImage(rel)" alt="Similar" />
                     <div class="rel-price-overlay">
-                      {{ rel.salePrice || rel.monthlyRent || rel.pricePerNight | number }} {{ rel.currency || 'UZS' }}
+                      {{ rel.salePrice || rel.monthlyRent || rel.pricePerNight | number }}
+                      {{ rel.currency || 'UZS' }}
                     </div>
                   </div>
                   <div class="rel-body">
@@ -330,82 +457,362 @@ import { animate, style, transition, trigger } from '@angular/animations';
         font-family: 'Inter', sans-serif;
       }
 
-      .property-detail-container { min-height: 100vh; background: var(--color-bg); color: var(--color-text-main); }
-      .property-content { max-width: 1320px; margin: 0 auto; padding: 32px 24px; }
-      
-      /* Breadcrumb */
-      .breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--color-text-muted); margin-bottom: 24px; font-weight: 500; }
-      .breadcrumb a { color: var(--color-blue-dark); text-decoration: none; transition: color 0.2s; }
-      .breadcrumb a:hover { color: var(--color-blue-accent); }
-      .breadcrumb mat-icon { font-size: 18px; width: 18px; height: 18px; }
+      .property-detail-container {
+        min-height: 100vh;
+        background: var(--color-bg);
+        color: var(--color-text-main);
+      }
+      .property-content {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 32px 24px;
+      }
 
-      .main-details-grid { display: grid; grid-template-columns: 1fr 420px; gap: 40px; align-items: start; }
+      /* Breadcrumb */
+      .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
+        margin-bottom: 24px;
+        font-weight: 500;
+      }
+      .breadcrumb a {
+        color: var(--color-blue-dark);
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .breadcrumb a:hover {
+        color: var(--color-blue-accent);
+      }
+      .breadcrumb mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+
+      .main-details-grid {
+        display: grid;
+        grid-template-columns: 1fr 420px;
+        gap: 40px;
+        align-items: start;
+      }
 
       /* --- HEADER --- */
-      .property-header { margin-bottom: 24px; }
-      .badges { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-      .badge { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-      .badge.featured { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #b45309; }
-      .badge.verified { background: #dcfce7; color: #15803d; }
-      .badge.type { background: #e0e7ff; color: #4338ca; }
-      .badge.type.sale { background: #fee2e2; color: #b91c1c; }
-      .badge.type.rent { background: #dcfce7; color: #15803d; }
-      .badge.type.shorttermrent { background: #e0e7ff; color: #4338ca; }
-      .badge mat-icon { font-size: 16px; width: 16px; height: 16px; }
+      .property-header {
+        margin-bottom: 24px;
+      }
+      .badges {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .badge.featured {
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        color: #b45309;
+      }
+      .badge.verified {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      .badge.type {
+        background: #e0e7ff;
+        color: #4338ca;
+      }
+      .badge.type.sale {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+      .badge.type.rent {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      .badge.type.shorttermrent {
+        background: #e0e7ff;
+        color: #4338ca;
+      }
+      .badge mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
 
-      .property-title { font-size: 2.5rem; font-weight: 900; color: var(--color-navy); margin: 0 0 16px 0; line-height: 1.2; letter-spacing: -1px; }
-      .location-row { display: flex; align-items: center; gap: 16px; color: var(--color-text-muted); font-size: 1.05rem; }
-      .location { display: flex; align-items: center; gap: 6px; }
-      .location mat-icon { color: var(--color-blue-accent); }
+      .property-title {
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: var(--color-navy);
+        margin: 0 0 16px 0;
+        line-height: 1.2;
+        letter-spacing: -1px;
+      }
+      .location-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        color: var(--color-text-muted);
+        font-size: 1.05rem;
+      }
+      .location {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .location mat-icon {
+        color: var(--color-blue-accent);
+      }
 
       /* --- GALLERY MODERN --- */
-      .gallery-section-modern { margin-bottom: 32px; }
-      .main-stage { position: relative; height: 500px; border-radius: 24px; overflow: hidden; background: #cbd5e1; box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
-      .stage-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-      .main-stage:hover .stage-img { transform: scale(1.03); }
-      .img-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(15,23,42,0.3) 0%, transparent 40%); pointer-events: none; }
-      .nav-arrow { width: 56px; height: 56px; background: rgba(255,255,255,0.85); border: none; border-radius: 16px; color: var(--color-navy); cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); transition: all 0.3s ease; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-      .nav-arrow:hover { background: white; transform: scale(1.1); color: var(--color-blue-accent); }
-      .gallery-controls { position: absolute; bottom: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center; z-index: 5; }
-      .count-pill { background: rgba(15,23,42,0.7); backdrop-filter: blur(12px); color: white; padding: 8px 16px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.1); }
+      .gallery-section-modern {
+        margin-bottom: 32px;
+      }
+      .main-stage {
+        position: relative;
+        height: 500px;
+        border-radius: 24px;
+        overflow: hidden;
+        background: #cbd5e1;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+      }
+      .stage-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .main-stage:hover .stage-img {
+        transform: scale(1.03);
+      }
+      .img-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(15, 23, 42, 0.3) 0%, transparent 40%);
+        pointer-events: none;
+      }
+      .nav-arrow {
+        width: 56px;
+        height: 56px;
+        background: rgba(255, 255, 255, 0.85);
+        border: none;
+        border-radius: 16px;
+        color: var(--color-navy);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(8px);
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      }
+      .nav-arrow:hover {
+        background: white;
+        transform: scale(1.1);
+        color: var(--color-blue-accent);
+      }
+      .gallery-controls {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 5;
+      }
+      .count-pill {
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(12px);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
 
-      .thumbnail-strip { display: flex; gap: 12px; margin-top: 16px; overflow-x: auto; padding: 4px 4px 16px 4px; }
-      .thumbnail-strip::-webkit-scrollbar { height: 6px; }
-      .thumbnail-strip::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-      .thumb-item { flex-shrink: 0; width: 120px; height: 85px; border-radius: 16px; overflow: hidden; cursor: pointer; position: relative; transition: all 0.3s ease; opacity: 0.7; }
-      .thumb-item:hover { opacity: 1; }
-      .thumb-item.active { opacity: 1; border: 3px solid var(--color-blue-accent); transform: translateY(-4px); box-shadow: 0 10px 20px rgba(59,130,246,0.2); }
-      .thumb-item img { width: 100%; height: 100%; object-fit: cover; }
+      .thumbnail-strip {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+        overflow-x: auto;
+        padding: 4px 4px 16px 4px;
+      }
+      .thumbnail-strip::-webkit-scrollbar {
+        height: 6px;
+      }
+      .thumbnail-strip::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+      }
+      .thumb-item {
+        flex-shrink: 0;
+        width: 120px;
+        height: 85px;
+        border-radius: 16px;
+        overflow: hidden;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.3s ease;
+        opacity: 0.7;
+      }
+      .thumb-item:hover {
+        opacity: 1;
+      }
+      .thumb-item.active {
+        opacity: 1;
+        border: 3px solid var(--color-blue-accent);
+        transform: translateY(-4px);
+        box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
+      }
+      .thumb-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
 
       /* --- QUICK STATS GLASS --- */
-      .quick-stats-glass { display: flex; justify-content: space-between; align-items: center; background: white; padding: 24px 32px; border-radius: 24px; margin-bottom: 32px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; }
-      .stat-item { display: flex; align-items: center; gap: 16px; }
-      .stat-icon-wrapper { width: 48px; height: 48px; background: #eff6ff; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--color-blue-dark); transition: transform 0.3s; }
-      .quick-stats-glass:hover .stat-icon-wrapper { transform: translateY(-3px) rotate(5deg); }
-      .stat-info { display: flex; flex-direction: column; }
-      .stat-value { font-size: 1.2rem; font-weight: 800; color: var(--color-navy); }
-      .stat-label { font-size: 0.85rem; color: var(--color-text-muted); font-weight: 600; }
-      .divider-vertical { width: 1px; height: 40px; background: #e2e8f0; }
+      .quick-stats-glass {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: white;
+        padding: 24px 32px;
+        border-radius: 24px;
+        margin-bottom: 32px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+        border: 1px solid #e2e8f0;
+      }
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .stat-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        background: #eff6ff;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-blue-dark);
+        transition: transform 0.3s;
+      }
+      .quick-stats-glass:hover .stat-icon-wrapper {
+        transform: translateY(-3px) rotate(5deg);
+      }
+      .stat-info {
+        display: flex;
+        flex-direction: column;
+      }
+      .stat-value {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--color-navy);
+      }
+      .stat-label {
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        font-weight: 600;
+      }
+      .divider-vertical {
+        width: 1px;
+        height: 40px;
+        background: #e2e8f0;
+      }
 
       /* --- CONTENT CARDS --- */
-      .content-card { background: white; padding: 32px; border-radius: 24px; margin-bottom: 32px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); border: 1px solid #f1f5f9; }
-      .section-title { font-size: 1.5rem; font-weight: 800; color: var(--color-navy); margin: 0 0 20px 0; letter-spacing: -0.5px; }
-      .description-text { font-size: 1.05rem; line-height: 1.7; color: #334155; white-space: pre-wrap; margin: 0; }
+      .content-card {
+        background: white;
+        padding: 32px;
+        border-radius: 24px;
+        margin-bottom: 32px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+        border: 1px solid #f1f5f9;
+      }
+      .section-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--color-navy);
+        margin: 0 0 20px 0;
+        letter-spacing: -0.5px;
+      }
+      .description-text {
+        font-size: 1.05rem;
+        line-height: 1.7;
+        color: #334155;
+        white-space: pre-wrap;
+        margin: 0;
+      }
 
       /* --- AMENITIES GRID --- */
-      .amenities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-      .amenity-item { display: flex; align-items: center; gap: 12px; }
-      .amenity-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; color: #94a3b8; transition: all 0.3s; }
-      .amenity-icon.active { background: #eff6ff; color: var(--color-blue-dark); }
-      .amenity-item:hover .amenity-icon.active { transform: scale(1.1); background: var(--color-blue-dark); color: white; }
-      .amenity-label { font-size: 1rem; font-weight: 600; color: var(--color-text-main); }
-      .amenity-label.strike { text-decoration: line-through; color: #94a3b8; }
-      .unavailable { opacity: 0.6; }
+      .amenities-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 20px;
+      }
+      .amenity-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .amenity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f1f5f9;
+        color: #94a3b8;
+        transition: all 0.3s;
+      }
+      .amenity-icon.active {
+        background: #eff6ff;
+        color: var(--color-blue-dark);
+      }
+      .amenity-item:hover .amenity-icon.active {
+        transform: scale(1.1);
+        background: var(--color-blue-dark);
+        color: white;
+      }
+      .amenity-label {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--color-text-main);
+      }
+      .amenity-label.strike {
+        text-decoration: line-through;
+        color: #94a3b8;
+      }
+      .unavailable {
+        opacity: 0.6;
+      }
 
       /* --- SIDEBAR & GLASSMORPHISM --- */
-      .sidebar-column { position: relative; }
-      .sticky-wrapper { position: sticky; top: 32px; display: flex; flex-direction: column; gap: 24px; }
-      
+      .sidebar-column {
+        position: relative;
+      }
+      .sticky-wrapper {
+        position: sticky;
+        top: 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
       .glass-card {
         background: rgba(255, 255, 255, 0.85);
         backdrop-filter: blur(24px);
@@ -413,89 +820,336 @@ import { animate, style, transition, trigger } from '@angular/animations';
         border: 1px solid rgba(255, 255, 255, 0.8);
         border-radius: 28px;
         padding: 32px;
-        box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        box-shadow:
+          0 20px 40px -10px rgba(15, 23, 42, 0.08),
+          inset 0 1px 0 rgba(255, 255, 255, 0.6);
         position: relative;
         overflow: hidden;
       }
-      
-      .price-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, var(--color-blue-accent), var(--color-blue-dark)); }
-      
-      .price-display { margin-bottom: 24px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; }
-      .price-amount { font-size: 2.4rem; font-weight: 900; color: var(--color-navy); letter-spacing: -1px; }
-      .currency { font-size: 1.2rem; font-weight: 700; color: var(--color-text-muted); }
-      .price-period, .price-type { font-size: 1.1rem; color: var(--color-text-muted); font-weight: 600; }
-      
-      .action-buttons { display: flex; flex-direction: column; gap: 16px; }
-      
-      .btn-main-action { 
-        height: 56px !important; 
-        border-radius: 16px !important; 
-        font-size: 1.15rem !important; 
-        font-weight: 800 !important; 
+
+      .price-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(90deg, var(--color-blue-accent), var(--color-blue-dark));
+      }
+
+      .price-display {
+        margin-bottom: 24px;
+        display: flex;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .price-amount {
+        font-size: 2.4rem;
+        font-weight: 900;
+        color: var(--color-navy);
+        letter-spacing: -1px;
+      }
+      .currency {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--color-text-muted);
+      }
+      .price-period,
+      .price-type {
+        font-size: 1.1rem;
+        color: var(--color-text-muted);
+        font-weight: 600;
+      }
+
+      .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .btn-main-action {
+        height: 56px !important;
+        border-radius: 16px !important;
+        font-size: 1.15rem !important;
+        font-weight: 800 !important;
         letter-spacing: 0.5px;
-        background: linear-gradient(135deg, var(--color-blue-accent), var(--color-blue-dark)) !important; 
-        color: white !important; 
+        background: linear-gradient(
+          135deg,
+          var(--color-blue-accent),
+          var(--color-blue-dark)
+        ) !important;
+        color: white !important;
         transition: all 0.3s ease !important;
         box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3) !important;
       }
-      .btn-main-action:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(37, 99, 235, 0.4) !important; }
-      .btn-main-action ::ng-deep .mdc-button__label { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; }
+      .btn-main-action:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 25px rgba(37, 99, 235, 0.4) !important;
+      }
+      .btn-main-action ::ng-deep .mdc-button__label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+      }
 
-      .secondary-actions { display: flex; gap: 12px; }
-      .btn-chat { flex: 1; height: 48px !important; border-radius: 14px !important; font-weight: 700 !important; color: var(--color-navy) !important; border-color: #cbd5e1 !important; }
-      .btn-chat:hover { background: #f8fafc !important; border-color: var(--color-blue-accent) !important; color: var(--color-blue-dark) !important; }
-      
-      .btn-fav-icon { width: 48px; height: 48px; border-radius: 14px; border: 1px solid #cbd5e1; background: transparent; color: var(--color-text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
-      .btn-fav-icon:hover { background: #fee2e2; border-color: #fca5a5; color: #ef4444; }
-      .btn-fav-icon.active { background: #ef4444; border-color: #ef4444; color: white; box-shadow: 0 8px 16px rgba(239,68,68,0.3); }
+      .secondary-actions {
+        display: flex;
+        gap: 12px;
+      }
+      .btn-chat {
+        flex: 1;
+        height: 48px !important;
+        border-radius: 14px !important;
+        font-weight: 700 !important;
+        color: var(--color-navy) !important;
+        border-color: #cbd5e1 !important;
+      }
+      .btn-chat:hover {
+        background: #f8fafc !important;
+        border-color: var(--color-blue-accent) !important;
+        color: var(--color-blue-dark) !important;
+      }
 
-      .btn-edit { height: 48px !important; border-radius: 14px !important; font-weight: 700 !important; background: var(--color-gold) !important; color: var(--color-navy) !important; }
-      .btn-delete { height: 48px !important; border-radius: 14px !important; font-weight: 700 !important; }
+      .btn-fav-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        border: 1px solid #cbd5e1;
+        background: transparent;
+        color: var(--color-text-muted);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+      }
+      .btn-fav-icon:hover {
+        background: #fee2e2;
+        border-color: #fca5a5;
+        color: #ef4444;
+      }
+      .btn-fav-icon.active {
+        background: #ef4444;
+        border-color: #ef4444;
+        color: white;
+        box-shadow: 0 8px 16px rgba(239, 68, 68, 0.3);
+      }
+
+      .btn-edit {
+        height: 48px !important;
+        border-radius: 14px !important;
+        font-weight: 700 !important;
+        background: var(--color-gold) !important;
+        color: var(--color-navy) !important;
+      }
+      .btn-delete {
+        height: 48px !important;
+        border-radius: 14px !important;
+        font-weight: 700 !important;
+      }
 
       /* --- HOST CARD --- */
-      .host-card { display: flex; align-items: center; gap: 20px; padding: 24px; }
-      .host-avatar { width: 64px; height: 64px; border-radius: 50%; overflow: hidden; background: #e2e8f0; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 2px solid white; }
-      .host-avatar img { width: 100%; height: 100%; object-fit: cover; }
-      .avatar-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #94a3b8; }
-      .host-details { display: flex; flex-direction: column; gap: 4px; }
-      .host-label { font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-      .host-name { font-size: 1.2rem; font-weight: 800; color: var(--color-navy); margin: 0; }
-      .host-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #10b981; font-weight: 600; }
-      .host-badge mat-icon { font-size: 16px; width: 16px; height: 16px; }
+      .host-card {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 24px;
+      }
+      .host-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        overflow: hidden;
+        background: #e2e8f0;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border: 2px solid white;
+      }
+      .host-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .avatar-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+      }
+      .host-details {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .host-label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .host-name {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--color-navy);
+        margin: 0;
+      }
+      .host-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.85rem;
+        color: #10b981;
+        font-weight: 600;
+      }
+      .host-badge mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
 
       /* --- RECOMMENDATIONS --- */
-      .recommendations-section { margin-top: 60px; padding-top: 60px; border-top: 1px solid #e2e8f0; }
-      .rec-header { display: flex; align-items: center; gap: 20px; margin-bottom: 32px; }
-      .rec-icon { width: 56px; height: 56px; background: linear-gradient(135deg, #e0e7ff, #c7d2fe); color: var(--color-blue-dark); border-radius: 16px; display: flex; align-items: center; justify-content: center; }
-      .rec-icon mat-icon { font-size: 28px; width: 28px; height: 28px; }
-      .section-subtitle { font-size: 1.1rem; color: var(--color-text-muted); margin: 0; }
+      .recommendations-section {
+        margin-top: 60px;
+        padding-top: 60px;
+        border-top: 1px solid #e2e8f0;
+      }
+      .rec-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 32px;
+      }
+      .rec-icon {
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+        color: var(--color-blue-dark);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .rec-icon mat-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+      }
+      .section-subtitle {
+        font-size: 1.1rem;
+        color: var(--color-text-muted);
+        margin: 0;
+      }
 
-      .recommendations-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
-      .rel-card-premium { background: white; border-radius: 24px; overflow: hidden; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 10px 20px rgba(0,0,0,0.02); }
-      .rel-card-premium:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); border-color: #cbd5e1; }
-      .rel-image-box { position: relative; height: 200px; }
-      .rel-image-box img { width: 100%; height: 100%; object-fit: cover; }
-      .rel-price-overlay { position: absolute; bottom: 12px; right: 12px; background: rgba(15,23,42,0.85); backdrop-filter: blur(8px); color: white; padding: 6px 12px; border-radius: 10px; font-weight: 800; font-size: 0.95rem; }
-      .rel-body { padding: 20px; }
-      .rel-title { font-size: 1.1rem; font-weight: 800; margin: 0 0 10px 0; color: var(--color-navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .rel-meta { display: flex; align-items: center; gap: 6px; color: var(--color-text-muted); font-size: 0.9rem; font-weight: 500; }
-      .rel-meta mat-icon { font-size: 16px; width: 16px; height: 16px; color: var(--color-blue-accent); }
+      .recommendations-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 24px;
+      }
+      .rel-card-premium {
+        background: white;
+        border-radius: 24px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.02);
+      }
+      .rel-card-premium:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        border-color: #cbd5e1;
+      }
+      .rel-image-box {
+        position: relative;
+        height: 200px;
+      }
+      .rel-image-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .rel-price-overlay {
+        position: absolute;
+        bottom: 12px;
+        right: 12px;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(8px);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 10px;
+        font-weight: 800;
+        font-size: 0.95rem;
+      }
+      .rel-body {
+        padding: 20px;
+      }
+      .rel-title {
+        font-size: 1.1rem;
+        font-weight: 800;
+        margin: 0 0 10px 0;
+        color: var(--color-navy);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .rel-meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+      .rel-meta mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        color: var(--color-blue-accent);
+      }
 
       @media (max-width: 1024px) {
-        .main-details-grid { grid-template-columns: 1fr; }
-        .sticky-wrapper { position: static; }
+        .main-details-grid {
+          grid-template-columns: 1fr;
+        }
+        .sticky-wrapper {
+          position: static;
+        }
       }
       @media (max-width: 768px) {
-        .property-title { font-size: 2rem; }
-        .main-stage { height: 300px; border-radius: 16px; }
-        .quick-stats-glass { flex-wrap: wrap; gap: 20px; padding: 20px; }
-        .divider-vertical { display: none; }
-        .stat-item { width: 45%; }
-        .glass-card { padding: 24px; border-radius: 20px; }
-        .content-card { padding: 24px; border-radius: 20px; }
+        .property-title {
+          font-size: 2rem;
+        }
+        .main-stage {
+          height: 300px;
+          border-radius: 16px;
+        }
+        .quick-stats-glass {
+          flex-wrap: wrap;
+          gap: 20px;
+          padding: 20px;
+        }
+        .divider-vertical {
+          display: none;
+        }
+        .stat-item {
+          width: 45%;
+        }
+        .glass-card {
+          padding: 24px;
+          border-radius: 20px;
+        }
+        .content-card {
+          padding: 24px;
+          border-radius: 20px;
+        }
       }
     `,
-
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -541,7 +1195,7 @@ export class PropertyDetailComponent {
       metro: 'directions_subway',
       market: 'storefront',
       school: 'school',
-      hospital: 'local_hospital'
+      hospital: 'local_hospital',
     };
     return icons[name] || 'check_circle';
   }
@@ -651,7 +1305,7 @@ export class PropertyDetailComponent {
     this.propertyService.searchProperties({ pageSize: 4 }).subscribe({
       next: (res: any) => {
         this.similarProperties.set(res.items.filter((p: any) => p.id !== id));
-      }
+      },
     });
   }
 
@@ -677,18 +1331,22 @@ export class PropertyDetailComponent {
 
   getListingLabel(listingType: string | undefined): string {
     switch (listingType) {
-      case 'Rent': return 'Ijaraga';
-      case 'Sale': return 'Sotuvda';
-      case 'ShortTermRent': return 'Kunlik ijara';
-      default: return 'Ijara / Sotuv';
+      case 'Rent':
+        return 'Ijaraga';
+      case 'Sale':
+        return 'Sotuvda';
+      case 'ShortTermRent':
+        return 'Kunlik ijara';
+      default:
+        return 'Ijara / Sotuv';
     }
   }
 
   getMainActionLabel(): string {
     const type = this.property()?.listingType;
-    if (type === ListingType.Sale) return "Sotib olish";
-    if (type === ListingType.Rent) return "Ijaraga olish";
-    return "Sanani tanlash va Bron";
+    if (type === ListingType.Sale) return 'Sotib olish';
+    if (type === ListingType.Rent) return 'Ijaraga olish';
+    return 'Sanani tanlash va Bron';
   }
 
   handleMainAction(): void {
@@ -721,14 +1379,14 @@ export class PropertyDetailComponent {
     const prop = this.property();
     if (prop?.hostId) {
       void this.router.navigate(['/messages'], {
-        queryParams: { 
+        queryParams: {
           userId: prop.hostId,
           userName: prop.hostName || 'Foydalanuvchi',
           userAvatar: prop.hostAvatarUrl || '',
           propertyId: prop.id,
           propertyTitle: prop.title,
-          propertyImage: prop.images?.[0]?.url || ''
-        }
+          propertyImage: prop.images?.[0]?.url || '',
+        },
       });
     } else {
       this.toastService.error("Host ma'lumotlari topilmadi.");
@@ -781,7 +1439,7 @@ export class PropertyDetailComponent {
       error: () => {
         this.isBumpingProperty.set(false);
         this.toastService.error("Ko'tarishda xatolik yuz berdi");
-      }
+      },
     });
   }
 
@@ -829,8 +1487,14 @@ export class PropertyDetailComponent {
   }
 
   getSimilarPropertyImage(rel: any): string {
-    const url = rel.images?.[0]?.url || rel.images?.[0]?.thumbnailUrl || rel.imageUrl || rel.mainImageUrl || '';
-    if (!url) return 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=400&auto=format&fit=crop';
+    const url =
+      rel.images?.[0]?.url ||
+      rel.images?.[0]?.thumbnailUrl ||
+      rel.imageUrl ||
+      rel.mainImageUrl ||
+      '';
+    if (!url)
+      return 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=400&auto=format&fit=crop';
     return this.imageOptimizationService.getOptimizedImage(url, 400, 300);
   }
 }

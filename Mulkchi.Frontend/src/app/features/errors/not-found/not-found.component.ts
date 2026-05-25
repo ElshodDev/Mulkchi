@@ -16,8 +16,8 @@ import { MatIconModule } from '@angular/material/icon';
         <span class="status">404</span>
         <h1>Qidirgan joyimiz topilmadi</h1>
         <p>
-          Havola eskirgan bo‘lishi mumkin yoki sahifa boshqa manzilga ko‘chgan. Keling, asosiy yo‘lga
-          qaytamiz.
+          Havola eskirgan bo‘lishi mumkin yoki sahifa boshqa manzilga ko‘chgan. Keling, asosiy
+          yo‘lga qaytamiz.
         </p>
 
         <div class="actions">

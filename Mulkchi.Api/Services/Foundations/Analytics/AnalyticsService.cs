@@ -21,7 +21,7 @@ public class AnalyticsService : IAnalyticsService
     {
         var today = System.DateTimeOffset.UtcNow.Date;
         var yesterday = today.AddDays(-1);
-        
+
         var properties = this.storageBroker.Properties
             .Where(p => !p.DeletedDate.HasValue)
             .AsQueryable();
@@ -69,7 +69,7 @@ public class AnalyticsService : IAnalyticsService
             .AverageAsync();
 
         // Sotish va ijara narxlarining o'rtacha farqi
-        var priceChangePercent = newListingsYesterday > 0 
+        var priceChangePercent = newListingsYesterday > 0
             ? ((double)(newListingsToday - newListingsYesterday) / newListingsYesterday * 100)
             : 0;
 
@@ -481,8 +481,8 @@ public class AnalyticsService : IAnalyticsService
         var districtPrices = comparables.Select(c => c.SalePrice.GetValueOrDefault()).ToList();
         var districtAvgPrice = districtPrices.Any() ? districtPrices.Average() : currentPrice;
         var districtMedianPrice = districtPrices.Any() ? CalculateMedian(districtPrices) : currentPrice;
-        var districtAvgPricePerSqm = comparables.Any(c => c.Area > 0) 
-            ? comparables.Where(c => c.Area > 0).Average(c => c.SalePrice.GetValueOrDefault() / (decimal)c.Area) 
+        var districtAvgPricePerSqm = comparables.Any(c => c.Area > 0)
+            ? comparables.Where(c => c.Area > 0).Average(c => c.SalePrice.GetValueOrDefault() / (decimal)c.Area)
             : 0m;
 
         // Adjust for property features
@@ -521,13 +521,13 @@ public class AnalyticsService : IAnalyticsService
         // Calculate market volatility (simulated for BMI demonstration)
         var volatilityFactor = 0.05; // 5% base volatility
         var marketSentiment = 1.02; // 2% growth trend
-        
+
         // Incorporate volatility into the final price estimation
         var priceMultiplier = marketSentiment + (volatilityFactor * 0.5); // Add half-volatility as a buffer
         var estimatedMarketPrice = (districtAvgPrice + featureAdjustment) * (decimal)priceMultiplier;
         var priceDifference = currentPrice - estimatedMarketPrice;
-        var priceDifferencePercent = estimatedMarketPrice > 0 
-            ? (double)(priceDifference / estimatedMarketPrice) * 100 
+        var priceDifferencePercent = estimatedMarketPrice > 0
+            ? (double)(priceDifference / estimatedMarketPrice) * 100
             : 0;
 
         // Determine status
@@ -542,7 +542,7 @@ public class AnalyticsService : IAnalyticsService
 
         // Calculate value score
         var valueScore = Math.Max(0, Math.Min(100, 50 - priceDifferencePercent * 2));
-        
+
         // Calculate investment potential
         var investmentPotential = CalculateInvestmentPotential(property, districtPrices, comparables.Count);
 
@@ -563,7 +563,7 @@ public class AnalyticsService : IAnalyticsService
 
         if (property.ViewsCount < 10 && property.CreatedDate < DateTimeOffset.UtcNow.AddDays(-30))
             riskFactors.Add("Kam ko'rishlar - e'lon uzoq vaqt turibdi");
-        
+
         if (property.AverageRating < 3.0m)
             riskFactors.Add("Past reyting - ehtiyot bo'ling");
 
@@ -610,7 +610,7 @@ public class AnalyticsService : IAnalyticsService
         // Location popularity & Engagement Velocity
         var daysListed = Math.Max(1, (DateTimeOffset.UtcNow - property.CreatedDate).TotalDays);
         var viewsPerDay = property.ViewsCount / daysListed;
-        
+
         if (viewsPerDay > 5) score += 15;
         if (viewsPerDay > 10) score += 10;
 
@@ -832,7 +832,7 @@ public class AnalyticsService : IAnalyticsService
 
         var query = this.storageBroker.Properties
             .Where(p => !p.DeletedDate.HasValue && p.District == district);
-        
+
         if (regionEnum.HasValue)
         {
             query = query.Where(p => p.Region == regionEnum.Value);
@@ -858,10 +858,10 @@ public class AnalyticsService : IAnalyticsService
             .ToListAsync();
 
         if (!properties.Any())
-            return new LocationScore 
-            { 
-                Region = region, 
-                District = district, 
+            return new LocationScore
+            {
+                Region = region,
+                District = district,
                 OverallScore = 0,
                 Verdict = "Ma'lumot yetarli emas"
             };
@@ -896,7 +896,7 @@ public class AnalyticsService : IAnalyticsService
         var avgRating = properties.Average(p => p.AverageRating);
         var safetyScore = (double)avgRating * 20;
 
-        var overallScore = (affordabilityScore + infrastructureScore + connectivityScore + 
+        var overallScore = (affordabilityScore + infrastructureScore + connectivityScore +
                            amenitiesScore + growthScore + safetyScore) / 6;
 
         var verdict = overallScore switch
@@ -908,7 +908,7 @@ public class AnalyticsService : IAnalyticsService
             _ => "🔴 Tavsiya etilmaydi"
         };
 
-        var investmentOutlook = growthScore > 70 
+        var investmentOutlook = growthScore > 70
             ? "📈 Yuqori o'sish potensiali - Narxlarni oshishi kutilmoqda"
             : growthScore > 50
             ? "📊 Barqaror bozor - Xavfsiz investitsiya"
@@ -936,7 +936,7 @@ public class AnalyticsService : IAnalyticsService
     public async Task<List<LocationInsight>> GetLocationInsightsAsync(string region, string district)
     {
         var insights = new List<LocationInsight>();
-        
+
         // Parse region string to enum
         UzbekistanRegion? regionEnum = null;
         if (!string.IsNullOrEmpty(region))
@@ -950,7 +950,7 @@ public class AnalyticsService : IAnalyticsService
 
         var query = this.storageBroker.Properties
             .Where(p => !p.DeletedDate.HasValue && p.District == district);
-        
+
         if (regionEnum.HasValue)
         {
             query = query.Where(p => p.Region == regionEnum.Value);
@@ -1158,12 +1158,12 @@ public class AnalyticsService : IAnalyticsService
         // Get historical data
         var query = this.storageBroker.Properties
             .Where(p => !p.DeletedDate.HasValue && p.District == district);
-        
+
         if (regionEnum.HasValue)
         {
             query = query.Where(p => p.Region == regionEnum.Value);
         }
-        
+
         var historicalData = await query
             .Where(p => p.SalePrice.HasValue && p.SalePrice > 0)
             .Where(p => p.CreatedDate >= DateTimeOffset.UtcNow.AddMonths(-6))
@@ -1204,7 +1204,7 @@ public class AnalyticsService : IAnalyticsService
             var forecastDate = DateTimeOffset.UtcNow.AddMonths(i);
             var predictedChange = monthlyChange * i;
             var predictedPrice = currentPrice * (1 + (decimal)predictedChange / 100);
-            
+
             forecasts.Add(new MonthlyForecast
             {
                 Month = $"{forecastDate:yyyy-MM}",

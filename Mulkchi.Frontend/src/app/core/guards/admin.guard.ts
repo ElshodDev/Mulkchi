@@ -10,7 +10,10 @@ export const adminGuard: CanActivateFn = () => {
 
   const currentUser = authStore.currentUser();
 
-  if (currentUser && (currentUser.role === UserRole.Admin || currentUser.role === UserRole.SuperAdmin)) {
+  if (
+    currentUser &&
+    (currentUser.role === UserRole.Admin || currentUser.role === UserRole.SuperAdmin)
+  ) {
     return true;
   }
 

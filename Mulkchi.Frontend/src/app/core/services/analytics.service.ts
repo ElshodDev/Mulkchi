@@ -189,7 +189,7 @@ export interface HostDashboardStats {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AnalyticsService {
   private http = inject(HttpClient);
@@ -202,11 +202,11 @@ export class AnalyticsService {
     this.loading.set(true);
     return this.http.get<MarketOverview>(`${this.apiUrl}/market-overview`).pipe(
       tap(() => this.loading.set(false)),
-      catchError(err => {
+      catchError((err) => {
         this.error.set('Bozor maʼlumotlarini yuklashda xatolik yuz berdi');
         this.loading.set(false);
         return throwError(() => err);
-      })
+      }),
     );
   }
 
@@ -229,14 +229,16 @@ export class AnalyticsService {
    */
   analyzeProperty(propertyId: string): Observable<PropertyAnalysisResult> {
     this.loading.set(true);
-    return this.http.get<PropertyAnalysisResult>(`${this.apiUrl}/property-analysis/${propertyId}`).pipe(
-      tap(() => this.loading.set(false)),
-      catchError(err => {
-        this.error.set('Mulk tahlilini yuklashda xatolik');
-        this.loading.set(false);
-        return throwError(() => err);
-      })
-    );
+    return this.http
+      .get<PropertyAnalysisResult>(`${this.apiUrl}/property-analysis/${propertyId}`)
+      .pipe(
+        tap(() => this.loading.set(false)),
+        catchError((err) => {
+          this.error.set('Mulk tahlilini yuklashda xatolik');
+          this.loading.set(false);
+          return throwError(() => err);
+        }),
+      );
   }
 
   /**
@@ -262,19 +264,19 @@ export class AnalyticsService {
    */
   getSmartDeals(limit = 10): Observable<SmartFilterResult> {
     return this.http.get<SmartFilterResult>(`${this.apiUrl}/smart-filters/best-deals`, {
-      params: { limit: limit.toString() }
+      params: { limit: limit.toString() },
     });
   }
 
   getHighRoiProperties(limit = 10): Observable<SmartFilterResult> {
     return this.http.get<SmartFilterResult>(`${this.apiUrl}/smart-filters/high-roi`, {
-      params: { limit: limit.toString() }
+      params: { limit: limit.toString() },
     });
   }
 
   getFastSellingProperties(limit = 10): Observable<SmartFilterResult> {
     return this.http.get<SmartFilterResult>(`${this.apiUrl}/smart-filters/fast-selling`, {
-      params: { limit: limit.toString() }
+      params: { limit: limit.toString() },
     });
   }
 

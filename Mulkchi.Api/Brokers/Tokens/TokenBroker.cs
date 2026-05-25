@@ -26,7 +26,7 @@ namespace Mulkchi.Api.Brokers.Tokens
                 ?? throw new InvalidOperationException("JWT Secret is not configured. Set the MULKCHI_JWT_SECRET environment variable or JwtSettings:Secret in appsettings.");
             var issuer = jwtSettings["Issuer"];
             var audience = jwtSettings["Audience"];
-            
+
             if (!int.TryParse(jwtSettings["ExpiryMinutes"], out int expiryMinutes))
                 expiryMinutes = 15;
 

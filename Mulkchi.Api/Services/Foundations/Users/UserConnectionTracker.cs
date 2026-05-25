@@ -24,9 +24,9 @@ public class UserConnectionTracker : IUserConnectionTracker
 
     public void AddConnection(string userId, string connectionId)
     {
-        userConnections.AddOrUpdate(userId, 
-            new HashSet<string> { connectionId }, 
-            (key, existing) => 
+        userConnections.AddOrUpdate(userId,
+            new HashSet<string> { connectionId },
+            (key, existing) =>
             {
                 lock (existing)
                 {

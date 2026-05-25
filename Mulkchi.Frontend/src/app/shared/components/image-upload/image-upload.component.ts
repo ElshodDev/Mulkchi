@@ -128,7 +128,7 @@ export interface UploadedImage {
             </div>
 
             <div *ngIf="image.caption" class="image-caption">{{ image.caption }}</div>
-            
+
             <!-- AI Tags -->
             <div *ngIf="image.tags && image.tags.length > 0" class="image-tags">
               <span *ngFor="let tag of image.tags" class="ai-tag">
@@ -190,7 +190,9 @@ export interface UploadedImage {
         box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.2);
       }
 
-      .upload-area:hover::before { opacity: 1; }
+      .upload-area:hover::before {
+        opacity: 1;
+      }
 
       .upload-area.dragging {
         border-color: #6366f1;
@@ -584,13 +586,13 @@ export class ImageUploadComponent {
           isPrimary: this.images().length === 0, // First image is primary
           isUploading: false,
           isAnalyzing: true,
-          tags: []
+          tags: [],
         };
 
         const index = this.images().length;
         this.images.update((imgs) => [...imgs, newImage]);
         this.analyzeImageWithAI(index);
-        
+
         this.imagesChange.emit(this.images());
         this.imageUpload.emit(newImage);
       };
@@ -602,27 +604,32 @@ export class ImageUploadComponent {
     // Simulate AI analysis delay
     setTimeout(() => {
       const possibleTags = [
-        'Yorug\' xona', 'Zamonaviy dizayn', 'Yevro ta\'mir', 
-        'Keng mehmonxona', 'Shinam yotoqxona', 'Ochiq balkon', 
-        'Yangi oshxona mebeli', 'Sifatli santexnika'
+        "Yorug' xona",
+        'Zamonaviy dizayn',
+        "Yevro ta'mir",
+        'Keng mehmonxona',
+        'Shinam yotoqxona',
+        'Ochiq balkon',
+        'Yangi oshxona mebeli',
+        'Sifatli santexnika',
       ];
-      
+
       // Randomly pick 2-3 tags
       const count = Math.floor(Math.random() * 2) + 1;
       const tags: string[] = [];
       const shuffled = [...possibleTags].sort(() => 0.5 - Math.random());
-      
+
       for (let i = 0; i < count; i++) {
         tags.push(shuffled[i]);
       }
 
-      this.images.update(imgs => {
+      this.images.update((imgs) => {
         const newImgs = [...imgs];
         if (newImgs[index]) {
-          newImgs[index] = { 
-            ...newImgs[index], 
-            tags: tags, 
-            isAnalyzing: false 
+          newImgs[index] = {
+            ...newImgs[index],
+            tags: tags,
+            isAnalyzing: false,
           };
         }
         return newImgs;

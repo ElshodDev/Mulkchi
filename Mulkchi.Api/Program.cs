@@ -1,6 +1,7 @@
 using Serilog;
 using Serilog.Events;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http.Features;
 using Mulkchi.Api.DataSeed;
 using Mulkchi.Api.Brokers.Storages;
 
@@ -22,11 +23,33 @@ public partial class Program
             .AddEnvironmentVariables();
 
         // Validate critical configuration values
-        var jwtSecret = Environment.GetEnvironmentVariable("MULKCHI_JWT_SECRET") 
+        var jwtSecret = builder.Configuration["MULKCHI_JWT_SECRET"]
             ?? builder.Configuration["JwtSettings:Secret"];
-        var telegramToken = Environment.GetEnvironmentVariable("MULKCHI_TELEGRAM_TOKEN") 
+        var telegramToken = builder.Configuration["MULKCHI_TELEGRAM_TOKEN"]
             ?? builder.Configuration["TelegramAuth:BotToken"];
-        var dbPassword = Environment.GetEnvironmentVariable("MULKCHI_DB_PASSWORD");
+        var dbPassword = builder.Configuration["MULKCHI_DB_PASSWORD"];
+        var connectionString = builder.Configuration["MULKCHI_DB_CONNECTION_STRING"]
+            ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
+        if (!string.IsNullOrWhiteSpace(connectionString))
+        {
+            builder.Configuration["ConnectionStrings:DefaultConnection"] = connectionString;
+        }
+
+        if (!string.IsNullOrWhiteSpace(jwtSecret))
+        {
+            builder.Configuration["JwtSettings:Secret"] = jwtSecret;
+        }
+
+        if (!string.IsNullOrWhiteSpace(telegramToken))
+        {
+            builder.Configuration["TelegramAuth:BotToken"] = telegramToken;
+        }
+
+        if (!string.IsNullOrWhiteSpace(dbPassword))
+        {
+            builder.Configuration["MULKCHI_DB_PASSWORD"] = dbPassword;
+        }
 
         if (string.IsNullOrEmpty(jwtSecret) || jwtSecret == "SET_IN_ENVIRONMENT")
         {
@@ -38,16 +61,22 @@ public partial class Program
             throw new InvalidOperationException("Telegram Bot Token not configured. Set MULKCHI_TELEGRAM_TOKEN environment variable or configure TelegramAuth:BotToken in appsettings.");
         }
 
-        if (!string.IsNullOrEmpty(dbPassword) && dbPassword != "SET_IN_ENVIRONMENT")
+        if (!string.IsNullOrEmpty(dbPassword) && connectionString != null && connectionString.Contains("SET_IN_ENVIRONMENT"))
         {
             // Replace placeholder in connection string if environment variable is provided
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-            if (connectionString != null && connectionString.Contains("SET_IN_ENVIRONMENT"))
-            {
-                connectionString = connectionString.Replace("SET_IN_ENVIRONMENT", dbPassword);
-                builder.Configuration["ConnectionStrings:DefaultConnection"] = connectionString;
-            }
+            connectionString = connectionString.Replace("SET_IN_ENVIRONMENT", dbPassword);
+            builder.Configuration["ConnectionStrings:DefaultConnection"] = connectionString;
         }
+
+        builder.Services.Configure<FormOptions>(options =>
+        {
+            options.MultipartBodyLengthLimit = 10 * 1024 * 1024;
+        });
+
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.Limits.MaxRequestBodySize = 10 * 1024 * 1024;
+        });
 
         // Configure Serilog with URL logging suppression for security
         // BMI: Tokenlar URL'da ko'rinmasligi uchun - OWASP Sensitive Data Exposure protection
@@ -59,7 +88,7 @@ public partial class Program
             .WriteTo.Console(
                 outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}",
                 restrictedToMinimumLevel: LogEventLevel.Information)
-            .WriteTo.File("logs/mulkchi-.txt", 
+            .WriteTo.File("logs/mulkchi-.txt",
                 rollingInterval: RollingInterval.Day,
                 outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}",
                 restrictedToMinimumLevel: LogEventLevel.Debug)
@@ -78,6 +107,30 @@ public partial class Program
         var startup = new Startup(builder.Configuration, builder.Environment);
         startup.ConfigureServices(builder.Services);
         var app = builder.Build();
+
+        app.Use(async (context, next) =>
+        {
+            try
+            {
+                await next(context);
+            }
+            catch (BadHttpRequestException ex)
+                when (ex.StatusCode == StatusCodes.Status413RequestEntityTooLarge)
+            {
+                if (context.Response.HasStarted)
+                {
+                    throw;
+                }
+
+                context.Response.Clear();
+                context.Response.StatusCode = StatusCodes.Status413RequestEntityTooLarge;
+                await context.Response.WriteAsJsonAsync(new
+                {
+                    error = "File size exceeds the maximum allowed limit of 10MB."
+                });
+            }
+        });
+
         startup.Configure(app, app.Environment);
 
         // Conditionally apply pending migrations based on configuration

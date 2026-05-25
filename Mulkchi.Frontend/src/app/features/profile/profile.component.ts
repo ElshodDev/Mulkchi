@@ -110,7 +110,10 @@ import { AnalyticsService, HostDashboardStats } from '../../core/services/analyt
                 <div class="user-meta-info">
                   <div class="meta-item">
                     <mat-icon>calendar_today</mat-icon>
-                    <span>{{ text().memberSince }}: {{ currentUser()?.createdDate | date:'mediumDate' }}</span>
+                    <span
+                      >{{ text().memberSince }}:
+                      {{ currentUser()?.createdDate | date: 'mediumDate' }}</span
+                    >
                   </div>
                   <div class="meta-item" *ngIf="currentUser()?.isVerified">
                     <mat-icon color="primary">verified</mat-icon>
@@ -150,14 +153,18 @@ import { AnalyticsService, HostDashboardStats } from '../../core/services/analyt
                   <div class="stat-card modern glass">
                     <div class="stat-icon listings"><mat-icon>home_work</mat-icon></div>
                     <div class="stat-content">
-                      <span class="value">{{ stats()?.totalListings || currentUser()?.totalListings || 0 }}</span>
+                      <span class="value">{{
+                        stats()?.totalListings || currentUser()?.totalListings || 0
+                      }}</span>
                       <span class="label">{{ text().myListings }}</span>
                     </div>
                   </div>
                   <div class="stat-card modern glass">
                     <div class="stat-icon bookings"><mat-icon>event_available</mat-icon></div>
                     <div class="stat-content">
-                      <span class="value">{{ stats()?.totalBookings || currentUser()?.totalBookings || 0 }}</span>
+                      <span class="value">{{
+                        stats()?.totalBookings || currentUser()?.totalBookings || 0
+                      }}</span>
                       <span class="label">{{ text().totalBookings }}</span>
                     </div>
                   </div>
@@ -171,14 +178,18 @@ import { AnalyticsService, HostDashboardStats } from '../../core/services/analyt
                   <div class="stat-card modern glass">
                     <div class="stat-icon rating"><mat-icon>star</mat-icon></div>
                     <div class="stat-content">
-                      <span class="value">{{ stats()?.averageRating || currentUser()?.rating || '0.0' }}</span>
+                      <span class="value">{{
+                        stats()?.averageRating || currentUser()?.rating || '0.0'
+                      }}</span>
                       <span class="label">{{ text().avgRating }}</span>
                     </div>
                   </div>
                   <div class="stat-card modern glass">
                     <div class="stat-icon revenue"><mat-icon>payments</mat-icon></div>
                     <div class="stat-content">
-                      <span class="value">{{ (stats()?.totalRevenue || 0) | number:'1.0-0' }} UZS</span>
+                      <span class="value"
+                        >{{ stats()?.totalRevenue || 0 | number: '1.0-0' }} UZS</span
+                      >
                       <span class="label">Tushum</span>
                     </div>
                   </div>
@@ -199,7 +210,10 @@ import { AnalyticsService, HostDashboardStats } from '../../core/services/analyt
                         >
                           @if (isSaving()) {
                             <ng-container>
-                              <mat-progress-spinner diameter="20" class="inline-spinner"></mat-progress-spinner>
+                              <mat-progress-spinner
+                                diameter="20"
+                                class="inline-spinner"
+                              ></mat-progress-spinner>
                               <span>{{ text().saving }}</span>
                             </ng-container>
                           } @else {
@@ -269,7 +283,9 @@ import { AnalyticsService, HostDashboardStats } from '../../core/services/analyt
 
                         @if (isEditing()) {
                           <div class="form-actions">
-                            <button mat-button type="button" (click)="toggleEdit()">{{ text().cancel }}</button>
+                            <button mat-button type="button" (click)="toggleEdit()">
+                              {{ text().cancel }}
+                            </button>
                           </div>
                         }
                       </form>
@@ -288,7 +304,8 @@ import { AnalyticsService, HostDashboardStats } from '../../core/services/analyt
       </div>
     </div>
   `,
-  styles: [`
+  styles: [
+    `
       :host {
         --color-navy: #1b3a6b;
         --color-navy-light: #2a4a7c;
@@ -319,7 +336,12 @@ import { AnalyticsService, HostDashboardStats } from '../../core/services/analyt
         left: 0;
         width: 100%;
         height: 280px;
-        background: linear-gradient(135deg, var(--color-navy-dark) 0%, var(--color-navy) 50%, var(--color-navy-light) 100%);
+        background: linear-gradient(
+          135deg,
+          var(--color-navy-dark) 0%,
+          var(--color-navy) 50%,
+          var(--color-navy-light) 100%
+        );
       }
 
       .profile-main-wrapper {
@@ -339,7 +361,7 @@ import { AnalyticsService, HostDashboardStats } from '../../core/services/analyt
         font-size: 2.5rem;
         font-weight: 800;
         margin: 0;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
       }
 
       .container {
@@ -355,7 +377,8 @@ import { AnalyticsService, HostDashboardStats } from '../../core/services/analyt
       }
 
       /* Sidebar Styles */
-      .profile-card, .quick-links-card {
+      .profile-card,
+      .quick-links-card {
         padding: 32px;
         background: white;
         border-radius: var(--radius-xl);
@@ -363,7 +386,9 @@ import { AnalyticsService, HostDashboardStats } from '../../core/services/analyt
         margin-bottom: 24px;
       }
 
-      .profile-card { margin-top: -60px; }
+      .profile-card {
+        margin-top: -60px;
+      }
 
       .avatar-section {
         position: relative;
@@ -373,53 +398,171 @@ import { AnalyticsService, HostDashboardStats } from '../../core/services/analyt
       }
 
       .avatar {
-        width: 100%; height: 100%; border-radius: 50%;
-        object-fit: cover; border: 6px solid white;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 6px solid white;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
       }
 
       .avatar-placeholder {
-        width: 100%; height: 100%; border-radius: 50%;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
         background: linear-gradient(135deg, var(--color-navy), var(--color-navy-dark));
-        border: 6px solid white; display: flex; align-items: center; justify-content: center;
+        border: 6px solid white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
-      .avatar-placeholder mat-icon { font-size: 72px; width: 72px; height: 72px; color: var(--color-gold); }
+      .avatar-placeholder mat-icon {
+        font-size: 72px;
+        width: 72px;
+        height: 72px;
+        color: var(--color-gold);
+      }
 
-      .user-info { text-align: center; margin-bottom: 24px; }
-      .user-info h2 { font-size: 1.5rem; font-weight: 800; color: var(--color-navy); margin: 0; }
-      .user-info .email { color: var(--color-gray-500); margin-top: 4px; }
+      .user-info {
+        text-align: center;
+        margin-bottom: 24px;
+      }
+      .user-info h2 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--color-navy);
+        margin: 0;
+      }
+      .user-info .email {
+        color: var(--color-gray-500);
+        margin-top: 4px;
+      }
 
-      .badges-row { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+      .badges-row {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 12px;
+      }
 
-      .role-badge { padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-      .role-badge.guest { background: #f1f5f9; color: #475569; }
-      .role-badge.host { background: #fffbeb; color: #b45309; }
-      .role-badge.admin { background: #fef2f2; color: #dc2626; }
+      .role-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .role-badge.guest {
+        background: #f1f5f9;
+        color: #475569;
+      }
+      .role-badge.host {
+        background: #fffbeb;
+        color: #b45309;
+      }
+      .role-badge.admin {
+        background: #fef2f2;
+        color: #dc2626;
+      }
 
-      .host-badge { display: flex; align-items: center; gap: 4px; color: var(--color-gold); font-size: 0.8rem; font-weight: 700; }
+      .host-badge {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--color-gold);
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
 
-      .user-meta-info { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
-      .meta-item { display: flex; align-items: center; gap: 10px; color: var(--color-gray-500); font-size: 0.9rem; }
-      .meta-item mat-icon { font-size: 18px; width: 18px; height: 18px; }
+      .user-meta-info {
+        margin-top: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--color-gray-500);
+        font-size: 0.9rem;
+      }
+      .meta-item mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
 
-      .quick-links-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; color: var(--color-navy); }
-      .links-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-      .link-item { display: flex; flex-direction: column; align-items: center; gap: 8px; text-decoration: none; color: var(--color-gray-500); transition: all 0.2s; }
-      .link-item:hover { color: var(--color-navy); }
-      .icon-box { width: 44px; height: 44px; background: #f8fafc; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
-      .link-item:hover .icon-box { background: #eff6ff; color: #3b82f6; }
-      .link-item span { font-size: 0.75rem; font-weight: 600; text-align: center; }
+      .quick-links-card h3 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+        color: var(--color-navy);
+      }
+      .links-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+      .link-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        color: var(--color-gray-500);
+        transition: all 0.2s;
+      }
+      .link-item:hover {
+        color: var(--color-navy);
+      }
+      .icon-box {
+        width: 44px;
+        height: 44px;
+        background: #f8fafc;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .link-item:hover .icon-box {
+        background: #eff6ff;
+        color: #3b82f6;
+      }
+      .link-item span {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-align: center;
+      }
 
       /* Main Content Styles */
-      .stats-dashboard { margin-bottom: 24px; }
-      .dashboard-header h3 { font-size: 1.3rem; font-weight: 800; color: var(--color-navy); margin-bottom: 16px; }
-      .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-      
+      .stats-dashboard {
+        margin-bottom: 24px;
+      }
+      .dashboard-header h3 {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: var(--color-navy);
+        margin-bottom: 16px;
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+      }
+
       .stat-card.modern {
-        background: white; padding: 24px; border-radius: var(--radius-lg);
-        display: flex; align-items: center; gap: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-        transition: transform 0.2s, box-shadow 0.2s;
+        background: white;
+        padding: 24px;
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
         border: 1px solid var(--color-gray-200);
       }
       .stat-card.modern.glass {
@@ -428,36 +571,101 @@ import { AnalyticsService, HostDashboardStats } from '../../core/services/analyt
         -webkit-backdrop-filter: blur(12px);
         border: 1px solid rgba(255, 255, 255, 0.5);
       }
-      .stat-card.modern:hover { 
-        transform: translateY(-4px); 
+      .stat-card.modern:hover {
+        transform: translateY(-4px);
         box-shadow: var(--shadow-lg);
       }
-      .stat-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
-      .stat-icon.listings { background: #eff6ff; color: #2563eb; }
-      .stat-icon.bookings { background: #f0fdf4; color: #16a34a; }
-      .stat-icon.views { background: #fdf4ff; color: #c026d3; }
-      .stat-icon.rating { background: #fffbeb; color: #d97706; }
-      .stat-icon.revenue { background: #ecfdf5; color: #059669; }
-      .stat-content { display: flex; flex-direction: column; }
-      .stat-content .value { font-size: 1.5rem; font-weight: 800; color: var(--color-navy); }
-      .stat-content .label { font-size: 0.85rem; color: var(--color-gray-500); font-weight: 600; }
+      .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .stat-icon.listings {
+        background: #eff6ff;
+        color: #2563eb;
+      }
+      .stat-icon.bookings {
+        background: #f0fdf4;
+        color: #16a34a;
+      }
+      .stat-icon.views {
+        background: #fdf4ff;
+        color: #c026d3;
+      }
+      .stat-icon.rating {
+        background: #fffbeb;
+        color: #d97706;
+      }
+      .stat-icon.revenue {
+        background: #ecfdf5;
+        color: #059669;
+      }
+      .stat-content {
+        display: flex;
+        flex-direction: column;
+      }
+      .stat-content .value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--color-navy);
+      }
+      .stat-content .label {
+        font-size: 0.85rem;
+        color: var(--color-gray-500);
+        font-weight: 600;
+      }
 
-      .main-info-card { border-radius: var(--radius-xl); border: none; box-shadow: var(--shadow-lg); }
-      .tab-content { padding: 32px; }
-      .tab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
-      .profile-form { display: flex; flex-direction: column; gap: 20px; }
-      .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+      .main-info-card {
+        border-radius: var(--radius-xl);
+        border: none;
+        box-shadow: var(--shadow-lg);
+      }
+      .tab-content {
+        padding: 32px;
+      }
+      .tab-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+      }
+      .profile-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
 
       @media (max-width: 1024px) {
-        .profile-content { grid-template-columns: 1fr; }
-        .profile-sidebar { max-width: 600px; margin: 0 auto; width: 100%; }
-        .profile-header-modern { text-align: center; }
+        .profile-content {
+          grid-template-columns: 1fr;
+        }
+        .profile-sidebar {
+          max-width: 600px;
+          margin: 0 auto;
+          width: 100%;
+        }
+        .profile-header-modern {
+          text-align: center;
+        }
       }
       @media (max-width: 640px) {
-        .stats-grid { grid-template-columns: 1fr 1fr; }
-        .form-row { grid-template-columns: 1fr; }
+        .stats-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .form-row {
+          grid-template-columns: 1fr;
+        }
       }
-  `]
+    `,
+  ],
 })
 export class ProfileComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -479,22 +687,29 @@ export class ProfileComponent implements OnInit {
     const labels = {
       uz: {
         title: 'Mening profilim',
-        description: "Shaxsiy boshqaruv panelingiz",
+        description: 'Shaxsiy boshqaruv panelingiz',
         infoTab: "Ma'lumotlar",
         personalInfo: "Shaxsiy ma'lumotlar",
         accountOverview: 'Hisob qisqartmasi',
         myListings: "Mening e'lonlarim",
         totalBookings: 'Jami bronlar',
-        avgRating: 'O\'rtacha reyting',
+        avgRating: "O'rtacha reyting",
         reviews: 'Sharhlar',
-        memberSince: 'A\'zolik sanasi',
+        memberSince: "A'zolik sanasi",
         verifiedUser: 'Tasdiqlangan foydalanuvchi',
         quickActions: 'Tezkor harakatlar',
-        postAd: 'E\'lon berish',
+        postAd: "E'lon berish",
         messages: 'Xabarlar',
         favorites: 'Sevimlilar',
-        firstName: 'Ism', lastName: 'Familiya', phone: 'Telefon', dob: 'Tug\'ilgan sana', gender: 'Jins',
-        edit: 'Tahrirlash', save: 'Saqlash', saving: 'Saqlanmoqda...', cancel: 'Bekor qilish'
+        firstName: 'Ism',
+        lastName: 'Familiya',
+        phone: 'Telefon',
+        dob: "Tug'ilgan sana",
+        gender: 'Jins',
+        edit: 'Tahrirlash',
+        save: 'Saqlash',
+        saving: 'Saqlanmoqda...',
+        cancel: 'Bekor qilish',
       },
       ru: {
         title: 'Мой профиль',
@@ -512,8 +727,15 @@ export class ProfileComponent implements OnInit {
         postAd: 'Подать объявление',
         messages: 'Сообщения',
         favorites: 'Избранное',
-        firstName: 'Имя', lastName: 'Фамилия', phone: 'Телефон', dob: 'Дата рождения', gender: 'Пол',
-        edit: 'Ред.', save: 'Сохранить', saving: 'Сохранение...', cancel: 'Отмена'
+        firstName: 'Имя',
+        lastName: 'Фамилия',
+        phone: 'Телефон',
+        dob: 'Дата рождения',
+        gender: 'Пол',
+        edit: 'Ред.',
+        save: 'Сохранить',
+        saving: 'Сохранение...',
+        cancel: 'Отмена',
       },
       en: {
         title: 'My Profile',
@@ -531,9 +753,16 @@ export class ProfileComponent implements OnInit {
         postAd: 'Post Ad',
         messages: 'Messages',
         favorites: 'Favorites',
-        firstName: 'First Name', lastName: 'Last Name', phone: 'Phone', dob: 'Date of Birth', gender: 'Gender',
-        edit: 'Edit', save: 'Save', saving: 'Saving...', cancel: 'Cancel'
-      }
+        firstName: 'First Name',
+        lastName: 'Last Name',
+        phone: 'Phone',
+        dob: 'Date of Birth',
+        gender: 'Gender',
+        edit: 'Edit',
+        save: 'Save',
+        saving: 'Saving...',
+        cancel: 'Cancel',
+      },
     };
     return labels[l as keyof typeof labels];
   });
@@ -547,17 +776,17 @@ export class ProfileComponent implements OnInit {
     gender: ['' as Gender],
   });
 
-  ngOnInit(): void { 
-    this.loadUserData(); 
+  ngOnInit(): void {
+    this.loadUserData();
     this.loadStats();
   }
 
   loadStats(): void {
     const role = this.currentUser()?.role;
-    if (role === 'Host' || role === 'Admin') {
+    if (role === 'Host' || role === 'Admin' || role === 'SuperAdmin') {
       this.analyticsService.getHostDashboardStats().subscribe({
         next: (s) => this.stats.set(s),
-        error: () => console.error('Failed to load stats')
+        error: () => console.error('Failed to load stats'),
       });
     }
   }
@@ -566,7 +795,10 @@ export class ProfileComponent implements OnInit {
     const u = this.currentUser();
     if (u) {
       this.profileForm.patchValue({
-        firstName: u.firstName, lastName: u.lastName, email: u.email, phone: u.phone || '',
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email,
+        phone: u.phone || '',
         dateOfBirth: u.dateOfBirth ? new Date(u.dateOfBirth).toISOString().split('T')[0] : '',
         gender: u.gender || 'Other',
       });
@@ -574,7 +806,7 @@ export class ProfileComponent implements OnInit {
   }
 
   toggleEdit(): void {
-    this.isEditing.update(v => !v);
+    this.isEditing.update((v) => !v);
     if (!this.isEditing()) this.loadUserData();
   }
 
@@ -585,22 +817,29 @@ export class ProfileComponent implements OnInit {
       firstName: this.profileForm.value.firstName!,
       lastName: this.profileForm.value.lastName!,
       phone: this.profileForm.value.phone || undefined,
-      dateOfBirth: this.profileForm.value.dateOfBirth ? new Date(this.profileForm.value.dateOfBirth) : undefined,
+      dateOfBirth: this.profileForm.value.dateOfBirth
+        ? new Date(this.profileForm.value.dateOfBirth)
+        : undefined,
       gender: this.profileForm.value.gender as Gender,
     };
     this.authService.updateProfile(data).subscribe({
       next: () => {
-        this.isSaving.set(false); this.isEditing.set(false);
+        this.isSaving.set(false);
+        this.isEditing.set(false);
         this.snackBar.open('Profil yangilandi', 'Yopish', { duration: 3000 });
       },
-      error: () => { this.isSaving.set(false); this.snackBar.open('Xatolik', 'Yopish', { duration: 3000 }); }
+      error: () => {
+        this.isSaving.set(false);
+        this.snackBar.open('Xatolik', 'Yopish', { duration: 3000 });
+      },
     });
   }
 
   isUploadingAvatar = signal(false);
   uploadAvatar(): void {
     const input = document.createElement('input');
-    input.type = 'file'; input.accept = 'image/*';
+    input.type = 'file';
+    input.accept = 'image/*';
     input.onchange = (e) => this.handleAvatar(e);
     input.click();
   }
@@ -610,8 +849,13 @@ export class ProfileComponent implements OnInit {
     if (input.files && input.files[0]) {
       this.isUploadingAvatar.set(true);
       this.authService.uploadAvatar(input.files[0]).subscribe({
-        next: () => { this.isUploadingAvatar.set(false); this.snackBar.open('Avatar yangilandi', 'OK'); },
-        error: () => { this.isUploadingAvatar.set(false); }
+        next: () => {
+          this.isUploadingAvatar.set(false);
+          this.snackBar.open('Avatar yangilandi', 'OK');
+        },
+        error: () => {
+          this.isUploadingAvatar.set(false);
+        },
       });
     }
   }
@@ -620,12 +864,18 @@ export class ProfileComponent implements OnInit {
     if (r === 'Guest') return 'Mehmon';
     if (r === 'Host') return 'Host';
     if (r === 'Admin') return 'Admin';
+    if (r === 'SuperAdmin') return 'Super Admin';
     return 'User';
   }
 
   getBadgeLabel(b: HostBadge | undefined): string {
     if (!b) return '';
-    const l: Record<string, string> = { 'New': 'Yangi', 'Rising': 'Rivojlanayotgan', 'Super': 'Super', 'Legend': 'Afsona' };
+    const l: Record<string, string> = {
+      New: 'Yangi',
+      Rising: 'Rivojlanayotgan',
+      Super: 'Super',
+      Legend: 'Afsona',
+    };
     return l[b] || b;
   }
 

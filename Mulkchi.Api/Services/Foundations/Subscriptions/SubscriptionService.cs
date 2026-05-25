@@ -165,7 +165,7 @@ public partial class SubscriptionService : ISubscriptionService
         var updated = await this.storageBroker.UpdateUserSubscriptionAsync(subscription);
         if (updated == null)
             throw new InvalidOperationException("Failed to update subscription");
-        
+
         if (subscription.Plan != null)
             updated.Plan = subscription.Plan;
         return ToSubscriptionResponse(updated);

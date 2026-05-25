@@ -144,7 +144,7 @@ public class SubscriptionsController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async ValueTask<ActionResult<IEnumerable<SubscriptionResponse>>> GetAllSubscriptionsAsync()
     {
         try
@@ -159,7 +159,7 @@ public class SubscriptionsController : ControllerBase
     }
 
     [HttpGet("can-list")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async ValueTask<ActionResult<object>> CanCreateListingAsync()
     {
         try
@@ -180,7 +180,7 @@ public class SubscriptionsController : ControllerBase
     }
 
     [HttpGet("remaining-boosts")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async ValueTask<ActionResult<object>> GetRemainingBoostsAsync()
     {
         try
@@ -199,7 +199,7 @@ public class SubscriptionsController : ControllerBase
     }
 
     [HttpPost("expire")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async ValueTask<ActionResult> ExpireSubscriptionsAsync()
     {
         try
@@ -214,7 +214,7 @@ public class SubscriptionsController : ControllerBase
     }
 
     [HttpGet("expiring-soon")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async ValueTask<ActionResult<IEnumerable<SubscriptionResponse>>> GetExpiringSoonAsync([FromQuery] int days = 7)
     {
         try

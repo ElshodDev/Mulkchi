@@ -19,9 +19,7 @@ import { MatIconModule } from '@angular/material/icon';
       <div class="error-copy">
         <span class="eyebrow">403</span>
         <h1>Bu sahifa siz uchun yopiq</h1>
-        <p>
-          Ruxsat yetarli emas. Avval mos rol bilan tizimga kirganingizni tekshirib ko‘raylik.
-        </p>
+        <p>Ruxsat yetarli emas. Avval mos rol bilan tizimga kirganingizni tekshirib ko‘raylik.</p>
       </div>
 
       <div class="error-actions">

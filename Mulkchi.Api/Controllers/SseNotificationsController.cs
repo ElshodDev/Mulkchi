@@ -43,8 +43,8 @@ public class SseNotificationsController : ControllerBase
         _logger.LogInformation("SSE connection established for user {UserId}", userId);
 
         // Send initial heartbeat
-        yield return new Notification 
-        { 
+        yield return new Notification
+        {
             Type = NotificationType.SystemAlert,
             TitleUz = "Connected",
             BodyUz = "SSE stream established"
@@ -61,7 +61,7 @@ public class SseNotificationsController : ControllerBase
             {
                 break;
             }
-            
+
             // Send heartbeat to keep connection alive
             yield return new Notification
             {

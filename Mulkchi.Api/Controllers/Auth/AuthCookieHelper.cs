@@ -32,8 +32,8 @@ internal static class AuthCookieHelper
         {
             Path = "/",
             HttpOnly = false,
-            Secure = false,
-            SameSite = SameSiteMode.Lax,
+            Secure = UseSecureCookies(),
+            SameSite = SameSiteMode.Strict,
             Expires = DateTimeOffset.UtcNow.AddDays(-1)
         };
 
@@ -71,8 +71,8 @@ internal static class AuthCookieHelper
     {
         Path = "/",
         HttpOnly = true,
-        Secure = false,
-        SameSite = SameSiteMode.Lax,
+        Secure = UseSecureCookies(),
+        SameSite = SameSiteMode.Strict,
         Expires = expiresAt
     };
 
@@ -80,8 +80,8 @@ internal static class AuthCookieHelper
     {
         Path = "/",
         HttpOnly = false,
-        Secure = false,
-        SameSite = SameSiteMode.Lax,
+        Secure = UseSecureCookies(),
+        SameSite = SameSiteMode.Strict,
         Expires = expiresAt
     };
 
@@ -89,10 +89,16 @@ internal static class AuthCookieHelper
     {
         Path = "/",
         HttpOnly = true,
-        Secure = false,
-        SameSite = SameSiteMode.Lax,
+        Secure = UseSecureCookies(),
+        SameSite = SameSiteMode.Strict,
         Expires = expiresAt
     };
+
+    private static bool UseSecureCookies() =>
+        !string.Equals(
+            Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"),
+            "Development",
+            StringComparison.OrdinalIgnoreCase);
 
     private static string GenerateXsrfToken()
     {

@@ -109,7 +109,7 @@ public class AnalyticsCollectionService : BackgroundService
             {
                 await broker.SaveChangesAsync(ct);
             }
-            
+
             _logger.LogInformation("Collected price history for {Count} properties (added {Added})", recentProperties.Count, addedCount);
         }
         catch (Exception ex)
@@ -124,7 +124,7 @@ public class AnalyticsCollectionService : BackgroundService
     private async Task UpdateMarketTrendsAsync(StorageBroker broker, CancellationToken ct)
     {
         var currentMonth = DateTimeOffset.UtcNow.ToString("yyyy-MM");
-        
+
         // Get all regions and districts
         var locations = await broker.Properties
             .Where(p => !p.DeletedDate.HasValue)

@@ -188,7 +188,6 @@ export class SavedSearchesComponent implements OnInit {
 
   editSearch(search: SavedSearch): void {
     // Trigger edit dialog/modal
-    console.log('Edit search:', search);
   }
 
   deleteSearch(id: string): void {

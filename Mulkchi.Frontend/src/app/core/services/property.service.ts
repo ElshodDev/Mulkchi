@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { catchError, map, Observable, tap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -33,7 +33,6 @@ export class PropertyService {
   readonly currentProperty = this._currentProperty.asReadonly();
   readonly totalCount = this._totalCount.asReadonly();
   readonly loading = this._loading.asReadonly();
-
 
   // Get all properties with pagination
   getAllProperties(
@@ -187,9 +186,17 @@ export class PropertyService {
     formData.append('file', file);
     formData.append('propertyId', propertyId);
 
-    return this.http.post<PropertyImage>(`${environment.apiUrl}/PropertyImagesUpload/upload`, formData).pipe(
-      catchError((error) => throwError(() => error)),
-    );
+    return this.http
+      .post<PropertyImage>(`${environment.apiUrl}/PropertyImagesUpload/upload`, formData)
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          if (error.status === 413) {
+            return throwError(() => new Error('Fayl hajmi 10MB dan oshmasligi kerak'));
+          }
+
+          return throwError(() => error);
+        }),
+      );
   }
 
   // Delete property (Host only)

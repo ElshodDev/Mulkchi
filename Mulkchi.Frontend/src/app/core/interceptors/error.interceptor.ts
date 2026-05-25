@@ -20,8 +20,7 @@ const SKIP_404_NAVIGATION_PATHS = [
 
 function shouldRetryRequest(req: HttpRequest<unknown>, error: HttpErrorResponse): boolean {
   return (
-    (req.method === 'GET' || req.method === 'HEAD') &&
-    (error.status === 0 || error.status >= 500)
+    (req.method === 'GET' || req.method === 'HEAD') && (error.status === 0 || error.status >= 500)
   );
 }
 
@@ -81,10 +80,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       if (error.status === 400) {
         const validationErrors = error.error?.errors as Record<string, string[]> | undefined;
         const validationMessage =
-          (validationErrors &&
-            Object.values(validationErrors)
-              .flat()
-              .join(' ')) ||
+          (validationErrors && Object.values(validationErrors).flat().join(' ')) ||
           error.error?.error?.message ||
           error.error?.message ||
           "So'rovni qayta tekshirib ko'ring.";

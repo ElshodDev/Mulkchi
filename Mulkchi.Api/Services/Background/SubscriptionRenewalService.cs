@@ -38,7 +38,7 @@ public class SubscriptionRenewalService
         try
         {
             var now = this.dateTimeBroker.GetCurrentDateTimeOffset();
-            
+
             // Find all subscriptions that:
             // 1. Have ended (EndDate <= now)
             // 2. Have AutoRenew enabled
@@ -46,9 +46,9 @@ public class SubscriptionRenewalService
             var expiredSubscriptions = await this.storageBroker
                 .SelectAllUserSubscriptions()
                 .Include(s => s.Plan)
-                .Where(s => 
-                    s.EndDate <= now && 
-                    s.AutoRenew == true && 
+                .Where(s =>
+                    s.EndDate <= now &&
+                    s.AutoRenew == true &&
                     s.Status != SubscriptionStatus.Cancelled)
                 .ToListAsync();
 
@@ -73,7 +73,7 @@ public class SubscriptionRenewalService
                     {
                         this.loggingBroker.LogWarning(
                             $"Subscription {subscription.Id} has inactive/missing plan. Cancelling auto-renew.");
-                        
+
                         subscription.AutoRenew = false;
                         subscription.Status = SubscriptionStatus.Cancelled;
                         await this.storageBroker.UpdateUserSubscriptionAsync(subscription);
@@ -127,8 +127,8 @@ public class SubscriptionRenewalService
             var expiringSubscriptions = await this.storageBroker
                 .SelectAllUserSubscriptions()
                 .Include(s => s.Plan)
-                .Where(s => 
-                    s.EndDate > now && 
+                .Where(s =>
+                    s.EndDate > now &&
                     s.EndDate <= reminderDate &&
                     s.Status == SubscriptionStatus.Active)
                 .ToListAsync();
@@ -142,7 +142,7 @@ public class SubscriptionRenewalService
             this.loggingBroker.LogInformation(
                 $"Found {expiringSubscriptions.Count} subscriptions expiring soon. " +
                 "Note: Email notification implementation pending.");
-            
+
             // TODO: Send reminder emails when EmailNotificationService is fully implemented
             // This is a placeholder for future email notification logic
         }

@@ -98,7 +98,7 @@ export interface AIDescriptionResponse {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AIService {
   private readonly apiUrl = `${environment.apiUrl}/airecommendations`;
@@ -128,11 +128,11 @@ export class AIService {
     this._error.set(null);
 
     return this.http.post<AIPriceResponse>(`${this.apiUrl}/predict-price`, request).pipe(
-      tap(result => {
+      tap((result) => {
         this._priceResult.set(result);
         this._loading.set(false);
       }),
-      catchError(error => {
+      catchError((error) => {
         this._loading.set(false);
         // Specific error messages based on HTTP status
         if (error.status === 404) {
@@ -140,10 +140,10 @@ export class AIService {
         } else if (error.status === 401) {
           this._error.set('Iltimos, tizimga kiring');
         } else {
-          this._error.set('Xatolik yuz berdi, qayta urinib ko\'ring');
+          this._error.set("Xatolik yuz berdi, qayta urinib ko'ring");
         }
         return throwError(() => error);
-      })
+      }),
     );
   }
 
@@ -155,22 +155,21 @@ export class AIService {
     const request = { limit: count };
 
     return this.http.post<HybridRecommendationResponse[]>(`${this.apiUrl}/hybrid`, request).pipe(
-      map(responses => responses.map(r => this.mapHybridToProperty(r.property))),
-      tap(properties => {
+      map((responses) => responses.map((r) => this.mapHybridToProperty(r.property))),
+      tap((properties) => {
         this._recommendations.set(properties);
         this._loading.set(false);
       }),
-      catchError(error => {
+      catchError((error) => {
         this._loading.set(false);
         this._error.set('Tavsiyalarni yuklashda xatolik yuz berdi');
         this._recommendations.set([]);
         return throwError(() => error);
-      })
+      }),
     );
   }
 
   private mapHybridToProperty(hybrid: HybridRecommendationProperty): Property {
-     
     return {
       id: hybrid.id,
       title: hybrid.title || 'Mulk',
@@ -196,17 +195,21 @@ export class AIService {
       averageRating: hybrid.rating,
       viewsCount: hybrid.viewsCount,
       favoritesCount: 0,
-      images: hybrid.images?.map((imgUrl, index) => ({
-        id: `${hybrid.id}-img-${index}`,
-        propertyId: hybrid.id,
-        url: imgUrl,
-        imageUrl: imgUrl,
-        mediumUrl: imgUrl,
-        thumbnailUrl: imgUrl,
-        isPrimary: index === 0,
-        sortOrder: index,
-        createdDate: new Date()
-      } as any)) || [],
+      images:
+        hybrid.images?.map(
+          (imgUrl, index) =>
+            ({
+              id: `${hybrid.id}-img-${index}`,
+              propertyId: hybrid.id,
+              url: imgUrl,
+              imageUrl: imgUrl,
+              mediumUrl: imgUrl,
+              thumbnailUrl: imgUrl,
+              isPrimary: index === 0,
+              sortOrder: index,
+              createdDate: new Date(),
+            }) as any,
+        ) || [],
       hostId: hybrid.hostId,
       hostName: hybrid.hostName || '',
       currency: 'UZS' as any,
@@ -239,9 +242,8 @@ export class AIService {
       hasWorkspace: false,
       isSelfCheckIn: false,
       isChildFriendly: false,
-      isAccessible: false
+      isAccessible: false,
     } as Property;
-     
   }
 
   getSimilarProperties(propertyId: string, count = 5): Observable<Property[]> {
@@ -251,16 +253,16 @@ export class AIService {
     const params = new HttpParams().set('count', count.toString());
 
     return this.http.get<Property[]>(`${this.apiUrl}/similar/${propertyId}`, { params }).pipe(
-      tap(properties => {
+      tap((properties) => {
         this._similarProperties.set(properties);
         this._loading.set(false);
       }),
-      catchError(error => {
+      catchError((error) => {
         this._loading.set(false);
-        this._error.set('O\'xshash mulklarni yuklashda xatolik yuz berdi');
+        this._error.set("O'xshash mulklarni yuklashda xatolik yuz berdi");
         this._similarProperties.set([]);
         return throwError(() => error);
-      })
+      }),
     );
   }
 

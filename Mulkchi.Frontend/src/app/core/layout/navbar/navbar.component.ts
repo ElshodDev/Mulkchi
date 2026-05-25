@@ -73,11 +73,7 @@ import { UIStore } from '../../stores/ui.store';
 
             <mat-menu #languageMenu="matMenu">
               @for (language of languages; track language.code) {
-                <button
-                  mat-menu-item
-                  type="button"
-                  (click)="uiStore.setLanguage(language.code)"
-                >
+                <button mat-menu-item type="button" (click)="uiStore.setLanguage(language.code)">
                   <span>{{ language.label }}</span>
                 </button>
               }
@@ -181,11 +177,7 @@ import { UIStore } from '../../stores/ui.store';
             </div>
           }
 
-          <button
-            type="button"
-            class="menu-toggle"
-            (click)="uiStore.toggleSidebar()"
-          >
+          <button type="button" class="menu-toggle" (click)="uiStore.toggleSidebar()">
             <mat-icon>{{ uiStore.sidebarOpen() ? 'close' : 'menu' }}</mat-icon>
           </button>
         </div>
@@ -453,7 +445,8 @@ import { UIStore } from '../../stores/ui.store';
           background: #3a4a63;
           border-color: var(--color-brand-500);
         }
-        .profile-copy small, .expand-icon {
+        .profile-copy small,
+        .expand-icon {
           color: #cbd5e0;
         }
         .quick-actions mat-icon {
@@ -481,7 +474,9 @@ import { UIStore } from '../../stores/ui.store';
           min-height: 4rem;
           padding: 0 var(--space-4);
         }
-        .profile-copy, .desktop-utilities, .guest-actions {
+        .profile-copy,
+        .desktop-utilities,
+        .guest-actions {
           display: none;
         }
         .post-button {
@@ -522,13 +517,13 @@ export class NavbarComponent {
         login: 'Kirish',
         register: "Ro'yxatdan o'tish",
         themeLight: "Yorug' rejim",
-        themeDark: "Tungi rejim",
+        themeDark: 'Tungi rejim',
         ariaLanguage: 'Tilni tanlash',
         subscriptions: 'Obunalar',
         myProperties: 'Mening mulklarim',
         aiAssistant: 'AI Yordamchi',
         market: 'Bozor',
-        compare: 'Taqqoslash'
+        compare: 'Taqqoslash',
       },
       ru: {
         brandTagline: 'Ваш спутник в мире недвижимости',
@@ -549,7 +544,7 @@ export class NavbarComponent {
         myProperties: 'Мои объекты',
         aiAssistant: 'AI Помощник',
         market: 'Рынок',
-        compare: 'Сравнение'
+        compare: 'Сравнение',
       },
       en: {
         brandTagline: 'Your companion in real estate',
@@ -570,23 +565,21 @@ export class NavbarComponent {
         myProperties: 'My properties',
         aiAssistant: 'AI Assistant',
         market: 'Market',
-        compare: 'Compare'
+        compare: 'Compare',
       },
     } as const;
     return labels[language as keyof typeof labels] || labels.uz;
   });
 
-  protected readonly navItems = computed<{ label: string; link: string; exact?: boolean }[]>(
-    () => {
-      const t = this.text();
-      return [
-        { label: t.navHome, link: '/', exact: true },
-        { label: t.navProperties, link: '/properties' },
-        { label: t.aiAssistant, link: '/ai-tools' },
-        { label: t.market, link: '/market' },
-      ];
-    },
-  );
+  protected readonly navItems = computed<{ label: string; link: string; exact?: boolean }[]>(() => {
+    const t = this.text();
+    return [
+      { label: t.navHome, link: '/', exact: true },
+      { label: t.navProperties, link: '/properties' },
+      { label: t.aiAssistant, link: '/ai-tools' },
+      { label: t.market, link: '/market' },
+    ];
+  });
 
   protected readonly languages = [
     { code: 'uz' as const, label: "O'zbekcha" },
@@ -613,7 +606,8 @@ export class NavbarComponent {
       { label: t.market, link: '/market', icon: 'trending_up' },
       { label: t.compare, link: '/compare', icon: 'compare' },
     ];
-    if (!this.authStore.isLoggedIn()) return [...baseItems, { label: t.login, link: '/auth/login', icon: 'login' }];
+    if (!this.authStore.isLoggedIn())
+      return [...baseItems, { label: t.login, link: '/auth/login', icon: 'login' }];
     return [...baseItems, { label: t.profile, link: '/profile', icon: 'person' }];
   });
 }

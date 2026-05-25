@@ -10,6 +10,7 @@ namespace Mulkchi.Api.Controllers.Auth;
 
 [ApiController]
 [Route("api/auth")]
+[Authorize]
 public class AccountController : ControllerBase
 {
     private readonly IAuthService authService;
@@ -20,6 +21,7 @@ public class AccountController : ControllerBase
     }
 
     [HttpPost("login")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(AuthUserInfo), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -50,18 +52,21 @@ public class AccountController : ControllerBase
         }
         catch (AuthDependencyValidationException ex)
         {
+            if (ex.InnerException is NotFoundUserByEmailException)
+            {
+                return Unauthorized(new { message = "Invalid email or password." });
+            }
+
             return BadRequest(new { message = ex.InnerException?.Message ?? ex.Message });
         }
-        catch (Exception ex)
+        catch (AuthValidationException ex)
         {
-            // Log the exception
-            Console.WriteLine($"Login error: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
-            return StatusCode(500, new { message = "An error occurred during login.", error = ex.Message });
+            return BadRequest(new { message = ex.InnerException?.Message ?? ex.Message });
         }
     }
 
     [HttpPost("register")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(AuthUserInfo), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -160,7 +165,7 @@ public class AccountController : ControllerBase
             return BadRequest(new { message = "Faqat Guest yoki Host rejimga o'tish mumkin." });
 
         var user = await this.authService.RetrieveUserByIdAsync(currentUserId);
-        
+
         if (request.TargetMode == UserRole.Host)
         {
             bool canBecomeHost = user.Role == UserRole.Host

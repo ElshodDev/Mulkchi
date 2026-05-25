@@ -24,7 +24,7 @@
 - **Boshqalar**: Serilog, OpenTelemetry, FluentValidation, SixLabors.ImageSharp
 
 ### Frontend
-- **Framework**: Angular 20
+- **Framework**: Angular 20 (confirmed with Angular CLI 20.3.x / Angular core 20.3.x)
 - **UI Kit**: Angular Material
 - **Xarita**: Leaflet
 - **Grafiklar**: Chart.js

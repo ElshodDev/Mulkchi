@@ -22,7 +22,7 @@
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: 
+  background:
     radial-gradient(circle at 15% 25%, rgba(99, 102, 241, 0.2) 0%, transparent 40%),
     radial-gradient(circle at 85% 75%, rgba(168, 85, 247, 0.2) 0%, transparent 40%),
     radial-gradient(circle at 50% 50%, rgba(201, 168, 76, 0.05) 0%, transparent 50%);
@@ -80,14 +80,23 @@
 }
 
 .glass-card::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: -1px;
   border-radius: 40px;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent, rgba(99, 102, 241, 0.2));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.2),
+    transparent,
+    rgba(99, 102, 241, 0.2)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -103,7 +112,12 @@
   color: #ffffff;
 }
 
-.card-title mat-icon { color: var(--gold); font-size: 32px; width: 32px; height: 32px; }
+.card-title mat-icon {
+  color: var(--gold);
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+}
 
 /* --- CUSTOM INPUTS STYLING --- */
 ::ng-deep {
@@ -123,7 +137,7 @@
   }
 
   /* FORCED BRIGHT LABELS */
-  .mat-mdc-form-field-label, 
+  .mat-mdc-form-field-label,
   .mat-mdc-form-field-label label,
   .mat-mdc-select-placeholder,
   .mat-placeholder-required {
@@ -139,7 +153,7 @@
   }
 
   /* Input Values */
-  .mat-mdc-input-element, 
+  .mat-mdc-input-element,
   .mat-mdc-select-value-text {
     color: #ffffff !important;
     font-size: 1.1rem !important;
@@ -267,7 +281,7 @@
   font-size: 4.5rem;
   font-weight: 1000;
   color: #ffffff;
-  text-shadow: 0 0 40px rgba(255,255,255,0.3);
+  text-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
   letter-spacing: -2px;
 }
 
@@ -452,8 +466,12 @@
 }
 
 @media (max-width: 1024px) {
-  .ai-content { grid-template-columns: 1fr; }
-  .ai-hero h1 { font-size: 3rem; }
+  .ai-content {
+    grid-template-columns: 1fr;
+  }
+  .ai-hero h1 {
+    font-size: 3rem;
+  }
 }
 
 /* --- SCANNER ANIMATIONS --- */
@@ -481,9 +499,21 @@
   position: relative;
   overflow: hidden;
   margin-bottom: 40px;
-  background: 
-    linear-gradient(90deg, transparent 49%, rgba(99,102,241,0.2) 49%, rgba(99,102,241,0.2) 51%, transparent 51%),
-    linear-gradient(0deg, transparent 49%, rgba(99,102,241,0.2) 49%, rgba(99,102,241,0.2) 51%, transparent 51%);
+  background:
+    linear-gradient(
+      90deg,
+      transparent 49%,
+      rgba(99, 102, 241, 0.2) 49%,
+      rgba(99, 102, 241, 0.2) 51%,
+      transparent 51%
+    ),
+    linear-gradient(
+      0deg,
+      transparent 49%,
+      rgba(99, 102, 241, 0.2) 49%,
+      rgba(99, 102, 241, 0.2) 51%,
+      transparent 51%
+    );
 }
 
 .radar-beam {
@@ -498,8 +528,12 @@
 }
 
 @keyframes radar-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .radar-dot {
@@ -513,13 +547,32 @@
   animation: dot-flash 2s infinite;
 }
 
-.dot-1 { top: 30%; left: 60%; animation-delay: 0.5s; }
-.dot-2 { top: 70%; left: 30%; animation-delay: 1.2s; }
-.dot-3 { top: 40%; left: 20%; animation-delay: 1.8s; }
+.dot-1 {
+  top: 30%;
+  left: 60%;
+  animation-delay: 0.5s;
+}
+.dot-2 {
+  top: 70%;
+  left: 30%;
+  animation-delay: 1.2s;
+}
+.dot-3 {
+  top: 40%;
+  left: 20%;
+  animation-delay: 1.8s;
+}
 
 @keyframes dot-flash {
-  0%, 100% { opacity: 0; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.5); }
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.5);
+  }
 }
 
 .scan-text {
@@ -535,24 +588,37 @@
   overflow: hidden;
   white-space: nowrap;
   border-right: 2px solid var(--indigo);
-  animation: typing 2s steps(40, end) infinite, blink-caret .75s step-end infinite;
+  animation:
+    typing 2s steps(40, end) infinite,
+    blink-caret 0.75s step-end infinite;
 }
 
 @keyframes typing {
-  0% { width: 0 }
-  50% { width: 100% }
-  100% { width: 100% }
+  0% {
+    width: 0;
+  }
+  50% {
+    width: 100%;
+  }
+  100% {
+    width: 100%;
+  }
 }
 
 @keyframes blink-caret {
-  from, to { border-color: transparent }
-  50% { border-color: var(--indigo) }
+  from,
+  to {
+    border-color: transparent;
+  }
+  50% {
+    border-color: var(--indigo);
+  }
 }
 
 .scan-progress-bar {
   width: 80%;
   height: 4px;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -564,7 +630,16 @@
 }
 
 @keyframes progress-load {
-  0% { width: 0%; transform: translateX(-100%); }
-  50% { width: 100%; transform: translateX(0); }
-  100% { width: 100%; transform: translateX(100%); }
+  0% {
+    width: 0%;
+    transform: translateX(-100%);
+  }
+  50% {
+    width: 100%;
+    transform: translateX(0);
+  }
+  100% {
+    width: 100%;
+    transform: translateX(100%);
+  }
 }

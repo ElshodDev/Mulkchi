@@ -27,11 +27,11 @@
           </button>
         </mat-menu>
       </div>
-      
+
       <div class="search-box">
         <div class="search-input-wrapper">
           <mat-icon>search</mat-icon>
-          <input type="text" placeholder="Ism yoki xabarni qidirish..." [(ngModel)]="searchQuery">
+          <input type="text" placeholder="Ism yoki xabarni qidirish..." [(ngModel)]="searchQuery" />
         </div>
       </div>
 
@@ -39,7 +39,7 @@
         @if (chatService.isLoading() && conversations().length === 0) {
           <!-- Skeleton Loaders -->
           <div class="skeleton-list">
-            @for (i of [1,2,3,4,5]; track i) {
+            @for (i of [1, 2, 3, 4, 5]; track i) {
               <div class="skeleton-card">
                 <div class="skeleton-avatar"></div>
                 <div class="skeleton-info">
@@ -68,7 +68,8 @@
                 [conversation]="conv"
                 [isActive]="isActiveConversation(conv)"
                 (select)="selectConversation($event)"
-                [@listAnimation]>
+                [@listAnimation]
+              >
               </app-conversation-card>
             }
           </div>
@@ -85,21 +86,34 @@
             <button mat-icon-button class="back-btn-mobile" (click)="closeConversation()">
               <mat-icon>arrow_back</mat-icon>
             </button>
-            
+
             <div class="user-meta" (click)="viewProfile()">
               <div class="avatar-wrapper small">
                 @if (activeConversation()?.otherUser?.avatarUrl) {
-                  <img [src]="activeConversation()?.otherUser?.avatarUrl" 
-                       [alt]="activeConversation()?.otherUser?.firstName">
+                  <img
+                    [src]="activeConversation()?.otherUser?.avatarUrl"
+                    [alt]="activeConversation()?.otherUser?.firstName"
+                  />
                 } @else {
-                  <div class="avatar-placeholder small" [style.background]="getAvatarColor(activeConversation()?.otherUser?.firstName || '')">
+                  <div
+                    class="avatar-placeholder small"
+                    [style.background]="
+                      getAvatarColor(activeConversation()?.otherUser?.firstName || '')
+                    "
+                  >
                     {{ activeConversation()?.otherUser?.firstName?.charAt(0) }}
                   </div>
                 }
-                <span class="status-indicator" [class.online]="activeConversation()?.otherUser?.isOnline"></span>
+                <span
+                  class="status-indicator"
+                  [class.online]="activeConversation()?.otherUser?.isOnline"
+                ></span>
               </div>
               <div class="meta-text">
-                <h3>{{ activeConversation()?.otherUser?.firstName }} {{ activeConversation()?.otherUser?.lastName }}</h3>
+                <h3>
+                  {{ activeConversation()?.otherUser?.firstName }}
+                  {{ activeConversation()?.otherUser?.lastName }}
+                </h3>
                 <span class="status" [class.online]="activeConversation()?.otherUser?.isOnline">
                   {{ activeConversation()?.otherUser?.isOnline ? 'Onlayn' : 'Oflayn' }}
                 </span>
@@ -108,7 +122,12 @@
           </div>
 
           <div class="header-actions">
-            <button mat-icon-button matTooltip="Mulkni ko'rish" *ngIf="activeConversation()?.propertyId" (click)="viewProperty()">
+            <button
+              mat-icon-button
+              matTooltip="Mulkni ko'rish"
+              *ngIf="activeConversation()?.propertyId"
+              (click)="viewProperty()"
+            >
               <mat-icon>home</mat-icon>
             </button>
             <button mat-icon-button [matMenuTriggerFor]="chatMenu">
@@ -132,7 +151,12 @@
           <!-- Property Context Bar (Modern) -->
           <div class="property-context-bar" *ngIf="propertyContext()" [@slideIn]>
             <div class="context-img">
-              <img [src]="propertyContext()?.image || 'https://placehold.co/100x100/0f172a/c9a84c?text=Mulk'" alt="Property">
+              <img
+                [src]="
+                  propertyContext()?.image || 'https://placehold.co/100x100/0f172a/c9a84c?text=Mulk'
+                "
+                alt="Property"
+              />
             </div>
             <div class="context-info">
               <span class="label">Suhbat mavzusi</span>
@@ -158,9 +182,11 @@
               }
 
               <div class="message-row" [class.own]="isOwnMessage(msg)" [@messageAppear]>
-                <div class="message-bubble" 
-                     [class.first-in-group]="isFirstInGroup($index)"
-                     [class.last-in-group]="isLastInGroup($index)">
+                <div
+                  class="message-bubble"
+                  [class.first-in-group]="isFirstInGroup($index)"
+                  [class.last-in-group]="isLastInGroup($index)"
+                >
                   <p class="text">{{ msg.content }}</p>
                   <div class="message-meta">
                     <span class="time">{{ formatTime(msg.createdDate) }}</span>
@@ -173,7 +199,7 @@
                 </div>
               </div>
             }
-            
+
             @if (activeConversation()?.isTyping) {
               <div class="typing-indicator" [@fadeIn]>
                 <div class="dot"></div>
@@ -190,16 +216,17 @@
             <button mat-icon-button class="attach-btn" (click)="attachFile()">
               <mat-icon>add</mat-icon>
             </button>
-            
+
             <div class="input-wrapper">
-              <textarea 
+              <textarea
                 #messageInput
-                [(ngModel)]="newMessageText" 
+                [(ngModel)]="newMessageText"
                 placeholder="Xabar yozing..."
                 (keydown.enter)="handleEnter($event)"
                 (input)="onTyping(); adjustHeight($event)"
                 [attr.disabled]="isSending() ? true : null"
-                rows="1"></textarea>
+                rows="1"
+              ></textarea>
             </div>
 
             <div class="action-group">
@@ -207,14 +234,19 @@
                 <mat-icon>sentiment_satisfied</mat-icon>
               </button>
 
-              <button 
-                class="send-btn" 
+              <button
+                class="send-btn"
                 [class.active]="newMessageText.trim()"
                 [class.sending]="isSending()"
                 (click)="sendMessage()"
-                [disabled]="!newMessageText.trim() || isSending()">
+                [disabled]="!newMessageText.trim() || isSending()"
+              >
                 @if (isSending()) {
-                  <mat-progress-spinner diameter="24" mode="indeterminate" strokeWidth="3"></mat-progress-spinner>
+                  <mat-progress-spinner
+                    diameter="24"
+                    mode="indeterminate"
+                    strokeWidth="3"
+                  ></mat-progress-spinner>
                 } @else {
                   <mat-icon>send</mat-icon>
                 }
@@ -231,8 +263,11 @@
                 <mat-icon>business</mat-icon>
               </div>
               <h2>Xush kelibsiz!</h2>
-              <p>Mulkchi chat orqali barcha savollaringizga javob oling va bitimlarni amalga oshiring.</p>
-              
+              <p>
+                Mulkchi chat orqali barcha savollaringizga javob oling va bitimlarni amalga
+                oshiring.
+              </p>
+
               <div class="welcome-stats">
                 <div class="stat-item">
                   <span class="val">100%</span>

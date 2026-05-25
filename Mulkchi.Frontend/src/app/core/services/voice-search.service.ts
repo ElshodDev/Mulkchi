@@ -7,7 +7,7 @@ import { Subject } from 'rxjs';
 export class VoiceSearchService {
   private recognition: any;
   private isListeningSignal = signal(false);
-  
+
   public textResult$ = new Subject<string>();
   public isListening = this.isListeningSignal.asReadonly();
 

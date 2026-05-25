@@ -86,12 +86,7 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
                 </div>
               }
 
-              <button
-                mat-flat-button
-                type="submit"
-                class="submit-button"
-                [disabled]="isLoading()"
-              >
+              <button mat-flat-button type="submit" class="submit-button" [disabled]="isLoading()">
                 @if (isLoading()) {
                   <mat-progress-spinner diameter="18" mode="indeterminate"></mat-progress-spinner>
                   <span>Kutib turing...</span>
@@ -114,8 +109,13 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
           @if (step() === 2) {
             <form [formGroup]="otpForm" class="auth-form" (ngSubmit)="onOtpSubmit()">
               <div class="otp-header">
-                <p><strong>{{ emailForm.get('email')?.value }}</strong> pochtasiga 6 xonali tasdiqlash kodi yubordik.</p>
-                <button type="button" mat-button color="primary" (click)="step.set(1)">Emailni o'zgartirish</button>
+                <p>
+                  <strong>{{ emailForm.get('email')?.value }}</strong> pochtasiga 6 xonali
+                  tasdiqlash kodi yubordik.
+                </p>
+                <button type="button" mat-button color="primary" (click)="step.set(1)">
+                  Emailni o'zgartirish
+                </button>
               </div>
 
               <mat-form-field appearance="outline">
@@ -274,7 +274,7 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
         background: linear-gradient(135deg, var(--color-brand-500), var(--color-brand-700));
         color: white !important;
       }
-      
+
       .submit-button:disabled {
         opacity: 0.7;
         cursor: not-allowed;
@@ -353,7 +353,7 @@ export class LoginComponent {
   private readonly toastService = inject(ToastService);
 
   protected readonly googleClientId = environment.googleClientId;
-  
+
   protected readonly step = signal<1 | 2>(1);
   protected readonly isLoading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -379,25 +379,31 @@ export class LoginComponent {
     try {
       const email = this.emailForm.getRawValue().email;
       const response = await firstValueFrom(this.authStore.sendEmailCode(email));
-      
+
       this.currentSessionId.set(response.sessionId);
       this.step.set(2);
       this.toastService.success('Tasdiqlash kodi yuborildi!');
+
+      if (response.devCode) {
+        this.otpForm.patchValue({ code: response.devCode });
+        setTimeout(() => this.onOtpSubmit(), 1000);
+      }
     } catch (error: unknown) {
       const err = error as { error?: { error?: { message?: string }; message?: string } };
-      const message = err.error?.error?.message || err.error?.message || 'Kod yuborishda xatolik yuz berdi.';
+      const message =
+        err.error?.error?.message || err.error?.message || 'Kod yuborishda xatolik yuz berdi.';
       this.errorMessage.set(message);
 
       // Agar xatolik ichida kod bo'lsa (DEV rejim), "Sehrli" kirishni amalga oshiramiz
       if (message.includes('DEV REJIM UCHUN KOD:')) {
         const sessionIdMatch = message.match(/SESSION: ([\w-]+)/);
         const codeMatch = message.match(/KOD: (\d+)/);
-        
+
         if (sessionIdMatch && codeMatch) {
           this.currentSessionId.set(sessionIdMatch[1]);
           this.otpForm.patchValue({ code: codeMatch[1] });
           this.step.set(2);
-          
+
           // 1 soniyadan keyin avtomatik tasdiqlash (foydalanuvchi nima bo'lganini ko'rib ulgurishi uchun)
           setTimeout(() => this.onOtpSubmit(), 1000);
         }
@@ -427,8 +433,7 @@ export class LoginComponent {
       await this.router.navigateByUrl(returnUrl);
     } catch (error: unknown) {
       const message =
-        (error as { error?: { message?: string } })?.error?.message ||
-        'Kod xato yoki eskirgan.';
+        (error as { error?: { message?: string } })?.error?.message || 'Kod xato yoki eskirgan.';
       this.errorMessage.set(message);
     } finally {
       this.isLoading.set(false);

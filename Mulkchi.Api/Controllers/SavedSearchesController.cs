@@ -63,7 +63,7 @@ namespace Mulkchi.Api.Controllers
 
                 IQueryable<SavedSearch> query = this.savedSearchService.RetrieveAllSavedSearches()
                     .Where(s => s.UserId == currentUserId);
-                    
+
                 int totalCount = query.Count();
 
                 var items = query
@@ -102,7 +102,7 @@ namespace Mulkchi.Api.Controllers
                     return Unauthorized();
 
                 SavedSearch savedSearch = await this.savedSearchService.RetrieveSavedSearchByIdAsync(id);
-                
+
                 // Check if user owns this saved search
                 if (savedSearch.UserId != currentUserId)
                     return Unauthorized();
@@ -185,7 +185,7 @@ namespace Mulkchi.Api.Controllers
                     return Unauthorized();
 
                 SavedSearch savedSearch = await this.savedSearchService.RetrieveSavedSearchByIdAsync(id);
-                
+
                 // Check if user owns this saved search
                 if (savedSearch.UserId != currentUserId)
                     return Unauthorized();

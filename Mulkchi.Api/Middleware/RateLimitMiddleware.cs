@@ -29,10 +29,10 @@ public class RateLimitMiddleware
         _isEnabled = configuration.GetValue<bool>("RateLimiting:Enabled", true);
 
         // Read configurable limits from appsettings (fallback to safe defaults)
-        _authMaxRequests    = configuration.GetValue<int>("RateLimiting:Auth",    20);
-        _uploadMaxRequests  = configuration.GetValue<int>("RateLimiting:Upload",  30);
+        _authMaxRequests = configuration.GetValue<int>("RateLimiting:Auth", 20);
+        _uploadMaxRequests = configuration.GetValue<int>("RateLimiting:Upload", 30);
         _generalMaxRequests = configuration.GetValue<int>("RateLimiting:General", 300);
-        _windowSeconds      = configuration.GetValue<int>("RateLimiting:WindowSeconds", 60);
+        _windowSeconds = configuration.GetValue<int>("RateLimiting:WindowSeconds", 60);
 
         // Load the list of IP addresses that are allowed to set X-Forwarded-For /
         // X-Real-IP.  Only requests arriving from these addresses should have their

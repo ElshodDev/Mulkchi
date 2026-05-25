@@ -12,7 +12,7 @@ public interface IPropertyService
     ValueTask<PropertyResponse> AddPropertyAsync(PropertyCreateDto dto);
     ValueTask<Property> AddPropertyAsync(Property property);
     ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> RetrieveAllPropertiesAsync(PropertyQueryParams queryParams);
-    
+
     ValueTask<IEnumerable<string>> SearchLocationSuggestionsAsync(string query);
     ValueTask<IEnumerable<PropertyResponse>> RetrieveSimilarPropertiesAsync(Guid propertyId, int count = 6);
     ValueTask<IEnumerable<PropertyResponse>> RetrieveFeaturedPropertiesAsync(int count = 8);
@@ -31,5 +31,6 @@ public interface IPropertyService
     ValueTask<IEnumerable<PropertyResponse>> RetrieveNewListingsAsync(int days, int count);
     ValueTask<PropertyResponse> PublishPropertyAsync(Guid propertyId);
     ValueTask<PropertyResponse> UnpublishPropertyAsync(Guid propertyId);
+    ValueTask<Property> VerifyPropertyAsync(Guid propertyId);
     ValueTask<PropertyCreateResponse> AddPropertyWithUserUpgradeAsync(PropertyCreateDto dto, ClaimsPrincipal user);
 }

@@ -1,10 +1,13 @@
 using System;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Mulkchi.Api.Brokers.Storages;
 
 #nullable disable
 
 namespace Mulkchi.Api.Migrations
 {
+    [DbContext(typeof(StorageBroker))]
     [Migration("20260523000000_AddBumpedAtToProperties")]
     public partial class AddBumpedAtToProperties : Migration
     {

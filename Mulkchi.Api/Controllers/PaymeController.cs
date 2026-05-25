@@ -23,13 +23,13 @@ namespace Mulkchi.Api.Controllers;
 public class PaymeController : ControllerBase
 {
     // ── Payme error codes ──────────────────────────────────────────────────────
-    private const int ErrInvalidAmount        = -31001;
-    private const int ErrTransactionNotFound  = -31003;
-    private const int ErrTransactionDone      = -31060;
+    private const int ErrInvalidAmount = -31001;
+    private const int ErrTransactionNotFound = -31003;
+    private const int ErrTransactionDone = -31060;
     private const int ErrTransactionCancelled = -31061;
-    private const int ErrCantCancelTransaction= -31062;
-    private const int ErrOrderNotFound        = -31050;
-    private const int ErrInternalError        = -32400;
+    private const int ErrCantCancelTransaction = -31062;
+    private const int ErrOrderNotFound = -31050;
+    private const int ErrInternalError = -32400;
 
     private readonly IPaymentService paymentService;
     private readonly IConfiguration configuration;
@@ -53,12 +53,12 @@ public class PaymeController : ControllerBase
 
         return request.Method switch
         {
-            "CheckPerformTransaction"  => Ok(await CheckPerformTransactionAsync(request)),
-            "CreateTransaction"        => Ok(await CreateTransactionAsync(request)),
-            "PerformTransaction"       => Ok(await PerformTransactionAsync(request)),
-            "CancelTransaction"        => Ok(await CancelTransactionAsync(request)),
-            "CheckTransaction"         => Ok(await CheckTransactionAsync(request)),
-            "GetStatement"             => Ok(await GetStatementAsync(request)),
+            "CheckPerformTransaction" => Ok(await CheckPerformTransactionAsync(request)),
+            "CreateTransaction" => Ok(await CreateTransactionAsync(request)),
+            "PerformTransaction" => Ok(await PerformTransactionAsync(request)),
+            "CancelTransaction" => Ok(await CancelTransactionAsync(request)),
+            "CheckTransaction" => Ok(await CheckTransactionAsync(request)),
+            "GetStatement" => Ok(await GetStatementAsync(request)),
             _ => Ok(Error(request.Id, -32601, "Method not found."))
         };
     }
@@ -68,7 +68,7 @@ public class PaymeController : ControllerBase
     private async Task<PaymeResponse> CheckPerformTransactionAsync(PaymeRequest request)
     {
         var orderId = request.Params?.GetValueOrDefault("order_id")?.ToString();
-        var amount  = GetAmount(request.Params);
+        var amount = GetAmount(request.Params);
 
         if (string.IsNullOrWhiteSpace(orderId) || !Guid.TryParse(orderId, out var paymentId))
             return Error(request.Id, ErrOrderNotFound, "Order not found.");
@@ -87,9 +87,9 @@ public class PaymeController : ControllerBase
     private async Task<PaymeResponse> CreateTransactionAsync(PaymeRequest request)
     {
         var transactionId = request.Params?.GetValueOrDefault("id")?.ToString();
-        var orderId       = request.Params?.GetValueOrDefault("order_id")?.ToString();
-        var amount        = GetAmount(request.Params);
-        var createTime    = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var orderId = request.Params?.GetValueOrDefault("order_id")?.ToString();
+        var amount = GetAmount(request.Params);
+        var createTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
         if (string.IsNullOrWhiteSpace(orderId) || !Guid.TryParse(orderId, out var paymentId))
             return Error(request.Id, ErrOrderNotFound, "Order not found.");
@@ -106,9 +106,9 @@ public class PaymeController : ControllerBase
         {
             return Success(request.Id, new
             {
-                create_time  = payment.CreatedDate.ToUnixTimeMilliseconds(),
-                transaction  = payment.Id.ToString(),
-                state        = PaymeTransactionState(payment.Status)
+                create_time = payment.CreatedDate.ToUnixTimeMilliseconds(),
+                transaction = payment.Id.ToString(),
+                state = PaymeTransactionState(payment.Status)
             });
         }
 
@@ -127,7 +127,7 @@ public class PaymeController : ControllerBase
         {
             create_time = createTime,
             transaction = payment.Id.ToString(),
-            state       = 1  // created/in-progress
+            state = 1  // created/in-progress
         });
     }
 
@@ -146,8 +146,8 @@ public class PaymeController : ControllerBase
             return Success(request.Id, new
             {
                 perform_time = payment.UpdatedDate.ToUnixTimeMilliseconds(),
-                transaction  = payment.Id.ToString(),
-                state        = 2
+                transaction = payment.Id.ToString(),
+                state = 2
             });
         }
 
@@ -163,8 +163,8 @@ public class PaymeController : ControllerBase
         return Success(request.Id, new
         {
             perform_time = payment.UpdatedDate.ToUnixTimeMilliseconds(),
-            transaction  = payment.Id.ToString(),
-            state        = 2
+            transaction = payment.Id.ToString(),
+            state = 2
         });
     }
 
@@ -187,7 +187,7 @@ public class PaymeController : ControllerBase
             {
                 cancel_time = payment.UpdatedDate.ToUnixTimeMilliseconds(),
                 transaction = payment.Id.ToString(),
-                state       = -1
+                state = -1
             });
         }
 
@@ -201,7 +201,7 @@ public class PaymeController : ControllerBase
         {
             cancel_time = payment.UpdatedDate.ToUnixTimeMilliseconds(),
             transaction = payment.Id.ToString(),
-            state       = -1
+            state = -1
         });
     }
 
@@ -217,22 +217,22 @@ public class PaymeController : ControllerBase
 
         return Success(request.Id, new
         {
-            create_time  = payment.CreatedDate.ToUnixTimeMilliseconds(),
+            create_time = payment.CreatedDate.ToUnixTimeMilliseconds(),
             perform_time = payment.Status == PaymentStatus.Completed ? payment.UpdatedDate.ToUnixTimeMilliseconds() : 0,
-            cancel_time  = payment.Status == PaymentStatus.Cancelled ? payment.UpdatedDate.ToUnixTimeMilliseconds() : 0,
-            transaction  = payment.Id.ToString(),
-            state        = PaymeTransactionState(payment.Status),
-            reason       = (int?)null
+            cancel_time = payment.Status == PaymentStatus.Cancelled ? payment.UpdatedDate.ToUnixTimeMilliseconds() : 0,
+            transaction = payment.Id.ToString(),
+            state = PaymeTransactionState(payment.Status),
+            reason = (int?)null
         });
     }
 
     private async Task<PaymeResponse> GetStatementAsync(PaymeRequest request)
     {
         var fromMs = Convert.ToInt64(request.Params?.GetValueOrDefault("from") ?? 0);
-        var toMs   = Convert.ToInt64(request.Params?.GetValueOrDefault("to") ?? 0);
+        var toMs = Convert.ToInt64(request.Params?.GetValueOrDefault("to") ?? 0);
 
         var from = DateTimeOffset.FromUnixTimeMilliseconds(fromMs);
-        var to   = DateTimeOffset.FromUnixTimeMilliseconds(toMs);
+        var to = DateTimeOffset.FromUnixTimeMilliseconds(toMs);
 
         var payments = this.paymentService.RetrieveAllPayments()
             .Where(p => p.Method == PaymentMethod.Payme &&
@@ -242,16 +242,16 @@ public class PaymeController : ControllerBase
 
         var transactions = list.Select(p => new
         {
-            id           = p.ExternalTransactionId,
-            time         = p.CreatedDate.ToUnixTimeMilliseconds(),
-            amount       = (long)(p.Amount * 100),
-            account      = new { order_id = p.Id.ToString() },
-            create_time  = p.CreatedDate.ToUnixTimeMilliseconds(),
+            id = p.ExternalTransactionId,
+            time = p.CreatedDate.ToUnixTimeMilliseconds(),
+            amount = (long)(p.Amount * 100),
+            account = new { order_id = p.Id.ToString() },
+            create_time = p.CreatedDate.ToUnixTimeMilliseconds(),
             perform_time = p.Status == PaymentStatus.Completed ? p.UpdatedDate.ToUnixTimeMilliseconds() : 0,
-            cancel_time  = p.Status == PaymentStatus.Cancelled ? p.UpdatedDate.ToUnixTimeMilliseconds() : 0,
-            transaction  = p.Id.ToString(),
-            state        = PaymeTransactionState(p.Status),
-            reason       = (int?)null
+            cancel_time = p.Status == PaymentStatus.Cancelled ? p.UpdatedDate.ToUnixTimeMilliseconds() : 0,
+            transaction = p.Id.ToString(),
+            state = PaymeTransactionState(p.Status),
+            reason = (int?)null
         });
 
         return Success(request.Id, new { transactions });
@@ -299,9 +299,9 @@ public class PaymeController : ControllerBase
 
     private static int PaymeTransactionState(PaymentStatus status) => status switch
     {
-        PaymentStatus.Completed  =>  2,
-        PaymentStatus.Cancelled  => -1,
-        _                        =>  1
+        PaymentStatus.Completed => 2,
+        PaymentStatus.Cancelled => -1,
+        _ => 1
     };
 
     private static PaymeResponse Success(object id, object result) =>
@@ -316,22 +316,22 @@ public class PaymeController : ControllerBase
 public class PaymeRequest
 {
     [JsonPropertyName("jsonrpc")] public string JsonRpc { get; set; } = "2.0";
-    [JsonPropertyName("id")]      public object Id      { get; set; }
-    [JsonPropertyName("method")]  public string Method  { get; set; }
-    [JsonPropertyName("params")]  public Dictionary<string, object> Params { get; set; }
+    [JsonPropertyName("id")] public object Id { get; set; }
+    [JsonPropertyName("method")] public string Method { get; set; }
+    [JsonPropertyName("params")] public Dictionary<string, object> Params { get; set; }
 }
 
 public class PaymeResponse
 {
     [JsonPropertyName("jsonrpc")] public string JsonRpc { get; set; } = "2.0";
-    [JsonPropertyName("id")]      public object Id      { get; set; }
-    [JsonPropertyName("result")]  public object Result  { get; set; }
-    [JsonPropertyName("error")]   public PaymeError Error { get; set; }
+    [JsonPropertyName("id")] public object Id { get; set; }
+    [JsonPropertyName("result")] public object Result { get; set; }
+    [JsonPropertyName("error")] public PaymeError Error { get; set; }
 }
 
 public class PaymeError
 {
-    [JsonPropertyName("code")]    public int    Code    { get; set; }
+    [JsonPropertyName("code")] public int Code { get; set; }
     [JsonPropertyName("message")] public string Message { get; set; }
-    [JsonPropertyName("data")]    public object? Data    { get; set; }
+    [JsonPropertyName("data")] public object? Data { get; set; }
 }

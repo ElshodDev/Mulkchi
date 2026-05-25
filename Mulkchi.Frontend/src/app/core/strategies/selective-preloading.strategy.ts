@@ -32,17 +32,13 @@ export class SelectivePreloadingStrategy implements PreloadingStrategy {
       // Medium priority routes preload after delay
       if (priority === 1) {
         this.log(route);
-        return timer(delay).pipe(
-          mergeMap(() => load())
-        );
+        return timer(delay).pipe(mergeMap(() => load()));
       }
 
       // Low priority routes - only preload if connection is good
       if (priority === 2 && this.shouldPreload()) {
         this.log(route);
-        return timer(delay * 2).pipe(
-          mergeMap(() => load())
-        );
+        return timer(delay * 2).pipe(mergeMap(() => load()));
       }
     }
 

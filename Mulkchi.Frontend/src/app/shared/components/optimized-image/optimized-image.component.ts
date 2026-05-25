@@ -152,11 +152,7 @@ export class OptimizedImageComponent {
 
   // Generate optimized image URLs
   currentSrc = computed(() => {
-    return this.imageOptimizationService.getOptimizedImage(
-      this.src(),
-      this.width(),
-      this.height()
-    );
+    return this.imageOptimizationService.getOptimizedImage(this.src(), this.width(), this.height());
   });
 
   srcset = computed(() => {
@@ -177,7 +173,7 @@ export class OptimizedImageComponent {
   onImageError(event?: Event): void {
     this._hasError.set(true);
     this._isLoading.set(false);
-    
+
     // Fallback to a high-quality house image from Unsplash if the original fails
     if (event && event.target) {
       this._isLoaded.set(false);

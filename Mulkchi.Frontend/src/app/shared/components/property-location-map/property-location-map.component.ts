@@ -107,7 +107,7 @@ import * as L from 'leaflet';
         font-weight: 800;
         font-size: 0.9rem;
         color: #0f172a;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         border: 2px solid white;
         white-space: nowrap;
         display: inline-block;
@@ -134,7 +134,7 @@ import * as L from 'leaflet';
         background: #0f172a;
         color: white;
         transform: scale(1.15) translateY(-6px);
-        box-shadow: 0 12px 24px rgba(0,0,0,0.25);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
         border-color: #0f172a;
         z-index: 1000 !important;
       }
@@ -200,7 +200,7 @@ export class PropertyLocationMapComponent implements AfterViewInit, OnDestroy, O
 
   private initMap(): void {
     // Fix Leaflet default icon path issue
-     
+
     delete (L.Icon.Default.prototype as any)._getIconUrl;
     L.Icon.Default.mergeOptions({
       iconRetinaUrl: 'assets/marker-icon-2x.png',
@@ -253,9 +253,7 @@ export class PropertyLocationMapComponent implements AfterViewInit, OnDestroy, O
     if (!this.map) return;
 
     // Use price bubble marker if price is provided, otherwise use standard marker
-    const customIcon = this.price 
-      ? this.createPriceBubbleMarker()
-      : this.createStandardMarker();
+    const customIcon = this.price ? this.createPriceBubbleMarker() : this.createStandardMarker();
 
     this.marker = L.marker([this.latitude, this.longitude], {
       icon: customIcon,
@@ -281,7 +279,7 @@ export class PropertyLocationMapComponent implements AfterViewInit, OnDestroy, O
       className: 'custom-price-marker',
       html: `<div class="marker-bubble">${shortPrice}</div>`,
       iconSize: [0, 0],
-      iconAnchor: [30, 40]
+      iconAnchor: [30, 40],
     });
   }
 

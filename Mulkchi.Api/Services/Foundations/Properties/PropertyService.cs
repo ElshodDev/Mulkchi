@@ -147,7 +147,7 @@ public partial class PropertyService : IPropertyService
             IsAccessible = dto.IsAccessible,
             Currency = dto.Currency,
             ExchangeRate = dto.ExchangeRate,
-            
+
             // Set defaults enforced by business rules
             IsFeatured = false,
             IsVerified = false,
@@ -165,6 +165,10 @@ public partial class PropertyService : IPropertyService
     private async ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> RetrieveAllPropertiesWithCachingAsync(PropertyQueryParams queryParams)
     {
         string cacheVersion = await GetPropertyCacheVersionAsync();
+        string activeCacheProvider = GetActiveCacheProviderName();
+
+        this.loggingBroker.LogInformation(
+            $"Property list cache provider active: {activeCacheProvider} ({this.distributedCache.GetType().Name}).");
 
         if (cacheVersion != PropertyCacheVersionFallback)
         {
@@ -175,6 +179,9 @@ public partial class PropertyService : IPropertyService
                 var cached = JsonSerializer.Deserialize<CachedPropertyListResult>(cachedJson);
                 if (cached is not null)
                 {
+                    this.loggingBroker.LogInformation(
+                        $"Property list cache hit via {activeCacheProvider}: {cacheKey}");
+
                     return (cached.Items, cached.TotalCount);
                 }
             }
@@ -199,7 +206,7 @@ public partial class PropertyService : IPropertyService
 
         if (queryParams.ListingType.HasValue)
             query = query.Where(p => p.ListingType == queryParams.ListingType.Value);
-            
+
         if (queryParams.PropertyType.HasValue)
             query = query.Where(p => p.Type == queryParams.PropertyType.Value);
 
@@ -230,12 +237,13 @@ public partial class PropertyService : IPropertyService
 
         int totalCount = await query.CountAsync();
 
-        query = queryParams.SortBy switch {
-            "price_asc"  => query.OrderBy(p => p.MonthlyRent ?? p.SalePrice ?? p.PricePerNight),
+        query = queryParams.SortBy switch
+        {
+            "price_asc" => query.OrderBy(p => p.MonthlyRent ?? p.SalePrice ?? p.PricePerNight),
             "price_desc" => query.OrderByDescending(p => p.MonthlyRent ?? p.SalePrice ?? p.PricePerNight),
-            "rating"     => query.OrderByDescending(p => p.AverageRating),
-            "newest"     => query.OrderByDescending(p => p.CreatedDate),
-            _            => query.OrderByDescending(p => p.IsFeatured).ThenByDescending(p => p.AverageRating)
+            "rating" => query.OrderByDescending(p => p.AverageRating),
+            "newest" => query.OrderByDescending(p => p.CreatedDate),
+            _ => query.OrderByDescending(p => p.IsFeatured).ThenByDescending(p => p.AverageRating)
         };
 
         var properties = await query
@@ -262,6 +270,23 @@ public partial class PropertyService : IPropertyService
         }
 
         return (responseItems, totalCount);
+    }
+
+    private string GetActiveCacheProviderName()
+    {
+        string cacheTypeName = this.distributedCache.GetType().FullName ?? this.distributedCache.GetType().Name;
+
+        if (cacheTypeName.Contains("Redis", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Redis";
+        }
+
+        if (cacheTypeName.Contains("Memory", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Memory";
+        }
+
+        return cacheTypeName;
     }
 
     private static string BuildPropertyListCacheKey(PropertyQueryParams queryParams, string version) =>
@@ -404,12 +429,13 @@ public partial class PropertyService : IPropertyService
         }
         else
         {
-            query = searchParams.SortBy switch {
-                "price_asc"  => query.OrderBy(p => p.MonthlyRent ?? p.SalePrice ?? p.PricePerNight),
+            query = searchParams.SortBy switch
+            {
+                "price_asc" => query.OrderBy(p => p.MonthlyRent ?? p.SalePrice ?? p.PricePerNight),
                 "price_desc" => query.OrderByDescending(p => p.MonthlyRent ?? p.SalePrice ?? p.PricePerNight),
-                "rating"     => query.OrderByDescending(p => p.AverageRating),
-                "newest"     => query.OrderByDescending(p => p.CreatedDate),
-                _            => query.OrderByDescending(p => p.IsFeatured).ThenByDescending(p => p.AverageRating)
+                "rating" => query.OrderByDescending(p => p.AverageRating),
+                "newest" => query.OrderByDescending(p => p.CreatedDate),
+                _ => query.OrderByDescending(p => p.IsFeatured).ThenByDescending(p => p.AverageRating)
             };
         }
 
@@ -419,7 +445,7 @@ public partial class PropertyService : IPropertyService
 
         return (responseItems, totalCount);
     }
-    
+
     // Kept for backward compatibility handling
     public IQueryable<Property> RetrieveAllProperties() =>
         TryCatch(() => this.storageBroker.SelectAllProperties());
@@ -453,7 +479,7 @@ public partial class PropertyService : IPropertyService
         TryCatch(async () =>
         {
             ValidatePropertyId(property.Id);
-            
+
             Property maybeProperty = await this.storageBroker.SelectPropertyByIdAsync(property.Id);
             if (maybeProperty is null)
                 throw new NotFoundPropertyException(property.Id);
@@ -488,7 +514,7 @@ public partial class PropertyService : IPropertyService
             maybeProperty.ExchangeRate = property.ExchangeRate;
             maybeProperty.IsInstantBook = property.IsInstantBook;
             maybeProperty.IsVacant = property.IsVacant;
-            
+
             // Amenities
             maybeProperty.HasWifi = property.HasWifi;
             maybeProperty.HasParking = property.HasParking;
@@ -503,14 +529,14 @@ public partial class PropertyService : IPropertyService
             maybeProperty.IsSelfCheckIn = property.IsSelfCheckIn;
             maybeProperty.IsChildFriendly = property.IsChildFriendly;
             maybeProperty.IsAccessible = property.IsAccessible;
-            
+
             // Infrastructure
             maybeProperty.HasMetroNearby = property.HasMetroNearby;
             maybeProperty.HasBusStop = property.HasBusStop;
             maybeProperty.HasMarketNearby = property.HasMarketNearby;
             maybeProperty.HasSchoolNearby = property.HasSchoolNearby;
             maybeProperty.HasHospitalNearby = property.HasHospitalNearby;
-            
+
             // Comfort
             maybeProperty.HasElevator = property.HasElevator;
             maybeProperty.HasSecurity = property.HasSecurity;
@@ -521,10 +547,10 @@ public partial class PropertyService : IPropertyService
 
             ValidatePropertyOnModify(maybeProperty);
             maybeProperty.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
-            
+
             Property updatedProperty = await this.storageBroker.UpdatePropertyAsync(maybeProperty);
             await InvalidatePropertyListCacheAsync();
-            
+
             return updatedProperty;
         });
 
@@ -535,7 +561,7 @@ public partial class PropertyService : IPropertyService
             Property existingProperty = await this.storageBroker.SelectPropertyByIdAsync(propertyId);
             if (existingProperty is null)
                 throw new NotFoundPropertyException(propertyId);
-            
+
             var currentUserId = this.currentUserService.GetCurrentUserId();
             if (!currentUserId.HasValue || (!this.currentUserService.IsInRole("Admin") && existingProperty.HostId != currentUserId.Value))
             {
@@ -572,25 +598,42 @@ public partial class PropertyService : IPropertyService
         return ToPropertyResponse(property);
     }
 
+    public ValueTask<Property> VerifyPropertyAsync(Guid propertyId) =>
+        TryCatch(async () =>
+        {
+            ValidatePropertyId(propertyId);
+
+            Property property = await this.storageBroker.SelectPropertyByIdAsync(propertyId);
+            ValidatePropertyIsNotNull(property);
+
+            property.IsVerified = true;
+            property.UpdatedDate = DateTimeOffset.UtcNow;
+
+            Property updatedProperty = await this.storageBroker.UpdatePropertyAsync(property);
+            await InvalidatePropertyListCacheAsync();
+
+            return updatedProperty;
+        });
+
     public async ValueTask<PropertyCreateResponse> AddPropertyWithUserUpgradeAsync(PropertyCreateDto dto, ClaimsPrincipal user)
     {
         // Auto-upgrade user to Host role if they're creating their first property
         var userIdClaim = user.FindFirstValue(ClaimTypes.NameIdentifier);
         AuthResponse? newTokens = null;
-        
+
         if (userIdClaim is not null && Guid.TryParse(userIdClaim, out Guid userId))
         {
             User upgradedUser = await this.userService.UpgradeToHostAsync(userId);
-            
+
             // If user was upgraded (was Guest), generate new tokens with Host role
             if (upgradedUser.Role == UserRole.Host && upgradedUser.CurrentMode == UserRole.Host)
             {
                 newTokens = await this.authService.GenerateTokensForUserAsync(userId);
             }
         }
-        
+
         var addedProperty = await AddPropertyAsync(dto);
-        
+
         return new PropertyCreateResponse
         {
             Property = addedProperty,
@@ -690,7 +733,7 @@ public partial class PropertyService : IPropertyService
 
         var q = query.ToLower();
         var locations = await this.storageBroker.SelectAllProperties()
-            .Where(p => (p.City != null && p.City.ToLower().Contains(q)) || 
+            .Where(p => (p.City != null && p.City.ToLower().Contains(q)) ||
                         (p.District != null && p.District.ToLower().Contains(q)))
             .Select(p => p.City != null && p.City.ToLower().Contains(q) ? p.City : p.District)
             .Distinct()
@@ -706,8 +749,8 @@ public partial class PropertyService : IPropertyService
         if (sourceProperty is null) return Enumerable.Empty<PropertyResponse>();
 
         var similar = await this.storageBroker.SelectAllProperties()
-            
-            .Where(p => p.Id != propertyId && 
+
+            .Where(p => p.Id != propertyId &&
                         p.IsVacant &&
                         (p.Type == sourceProperty.Type || p.City == sourceProperty.City))
             .OrderByDescending(p => p.AverageRating)
@@ -720,7 +763,7 @@ public partial class PropertyService : IPropertyService
     public async ValueTask<IEnumerable<PropertyResponse>> RetrieveFeaturedPropertiesAsync(int count = 8)
     {
         var featured = await this.storageBroker.SelectAllProperties()
-            
+
             .Where(p => p.IsFeatured && p.IsVacant)
             .OrderByDescending(p => p.AverageRating)
             .Take(count)

@@ -31,7 +31,7 @@ public class DiscountsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,Host")]
+    [Authorize(Roles = "Admin,SuperAdmin,Host")]
     public async ValueTask<ActionResult<Discount>> PostDiscountAsync(Discount discount)
     {
         try
@@ -220,7 +220,7 @@ public class DiscountsController : ControllerBase
     }
 
     [HttpPut]
-    [Authorize(Roles = "Admin,Host")]
+    [Authorize(Roles = "Admin,SuperAdmin,Host")]
     public async ValueTask<ActionResult<Discount>> PutDiscountAsync(Discount discount)
     {
         try
@@ -252,7 +252,7 @@ public class DiscountsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin,Host")]
+    [Authorize(Roles = "Admin,SuperAdmin,Host")]
     public async ValueTask<ActionResult<Discount>> DeleteDiscountByIdAsync(Guid id)
     {
         try

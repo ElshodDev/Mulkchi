@@ -31,7 +31,7 @@ public class NotificationsController : ControllerBase
         try
         {
             Notification addedNotification = await this.notificationService.AddNotificationAsync(notification);
-            
+
             // Send real-time notification to the user
             await this.notificationHub.Clients.User(notification.UserId.ToString())
                 .SendAsync("ReceiveNotification", new
@@ -48,7 +48,7 @@ public class NotificationsController : ControllerBase
                     addedNotification.CreatedDate,
                     Timestamp = DateTime.UtcNow
                 });
-            
+
             return Created("notification", addedNotification);
         }
         catch (NotificationValidationException notificationValidationException)

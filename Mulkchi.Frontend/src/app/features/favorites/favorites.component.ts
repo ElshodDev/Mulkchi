@@ -367,7 +367,7 @@ export class FavoritesComponent implements OnInit {
       thumbnailUrl?: string;
       imageUrl?: string;
     };
-    
+
     let path = '';
 
     if (prop.images && Array.isArray(prop.images) && prop.images.length > 0) {
@@ -380,10 +380,10 @@ export class FavoritesComponent implements OnInit {
     }
 
     if (!path) return 'https://placehold.co/600x400/0f172a/c9a84c?text=Mulkchi';
-    
+
     path = path.replace(/\\/g, '/');
     if (path.startsWith('/')) path = path.substring(1);
-    
+
     if (path.startsWith('http')) return path;
     return environment.apiUrl.replace('/api', '') + '/' + path;
   }

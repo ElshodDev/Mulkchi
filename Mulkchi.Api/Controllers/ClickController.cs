@@ -25,12 +25,12 @@ namespace Mulkchi.Api.Controllers;
 public class ClickController : ControllerBase
 {
     // ── Click error codes ──────────────────────────────────────────────────────
-    private const int ErrOk                   =  0;
-    private const int ErrSignatureMismatch     = -1;
-    private const int ErrOrderNotFound        = -5;
-    private const int ErrAlreadyPaid          = -4;
+    private const int ErrOk = 0;
+    private const int ErrSignatureMismatch = -1;
+    private const int ErrOrderNotFound = -5;
+    private const int ErrAlreadyPaid = -4;
     private const int ErrTransactionCancelled = -9;
-    private const int ErrInvalidAmount        = -2;
+    private const int ErrInvalidAmount = -2;
     private static readonly TimeSpan MaxWebhookSkew = TimeSpan.FromMinutes(5);
 
     // Maximum allowed difference between Click-reported and stored amounts (UZS)
@@ -56,7 +56,7 @@ public class ClickController : ControllerBase
     {
         var response = new ClickResponse
         {
-            ClickTransId   = request.ClickTransId,
+            ClickTransId = request.ClickTransId,
             MerchantTransId = request.MerchantTransId,
             MerchantPrepareId = 0
         };
@@ -127,7 +127,7 @@ public class ClickController : ControllerBase
     {
         var response = new ClickResponse
         {
-            ClickTransId    = request.ClickTransId,
+            ClickTransId = request.ClickTransId,
             MerchantTransId = request.MerchantTransId,
             MerchantConfirmId = 0
         };

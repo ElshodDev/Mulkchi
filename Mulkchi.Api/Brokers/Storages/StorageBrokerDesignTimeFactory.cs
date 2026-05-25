@@ -9,7 +9,7 @@ public class StorageBrokerDesignTimeFactory : IDesignTimeDbContextFactory<Storag
     public StorageBroker CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<StorageBroker>();
-        
+
         // Use configuration for design time - reads from appsettings.json
         var config = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
@@ -20,7 +20,7 @@ public class StorageBrokerDesignTimeFactory : IDesignTimeDbContextFactory<Storag
 
         var connectionString = Environment.GetEnvironmentVariable("MULKCHI_CONNECTION_STRING")
             ?? config.GetConnectionString("DefaultConnection");
-        
+
         optionsBuilder.UseNpgsql(connectionString, options => options.EnableRetryOnFailure());
 
         return new StorageBroker(optionsBuilder.Options);

@@ -7,7 +7,7 @@ public class PropertyAnalysisResult
 {
     public Guid PropertyId { get; set; }
     public string PropertyTitle { get; set; } = string.Empty;
-    
+
     // Price Analysis
     public decimal CurrentPrice { get; set; }
     public decimal EstimatedMarketPrice { get; set; }
@@ -15,18 +15,18 @@ public class PropertyAnalysisResult
     public double PriceDifferencePercent { get; set; }
     public PriceStatus Status { get; set; }
     public string StatusDescription => Status.ToString();
-    
+
     // Market Comparison
     public decimal DistrictAveragePrice { get; set; }
     public decimal DistrictMedianPrice { get; set; }
     public decimal DistrictPricePerSqm { get; set; }
     public int ComparablePropertiesCount { get; set; }
-    
+
     // Value Metrics
     public double ValueScore { get; set; } // 0-100
     public double InvestmentPotential { get; set; } // 0-100
     public string Recommendation { get; set; } = string.Empty;
-    
+
     // Risk Assessment
     public double RiskScore { get; set; } // 0-100 (lower is better)
     public List<string> RiskFactors { get; set; } = new();
@@ -67,7 +67,7 @@ public class LocationScore
     public string Region { get; set; } = string.Empty;
     public string District { get; set; } = string.Empty;
     public double OverallScore { get; set; } // 0-100
-    
+
     // Category Scores
     public double AffordabilityScore { get; set; } // Narx qulayligi
     public double GrowthPotentialScore { get; set; } // O'sish potensiali
@@ -75,7 +75,7 @@ public class LocationScore
     public double SafetyScore { get; set; } // Xavfsizlik
     public double ConnectivityScore { get; set; } // Transport bog'liqligi
     public double AmenitiesScore { get; set; } // Qulayliklar
-    
+
     public string Verdict { get; set; } = string.Empty;
     public string InvestmentOutlook { get; set; } = string.Empty;
 }
