@@ -22,14 +22,89 @@ import { AIService, AIDescriptionRequest } from '../../../../core/services/ai.se
   template: `
     <div class="step-wrapper">
       <div class="section-header">
-        <h1>Rasmlar va tavsif</h1>
-        <p>Sifatli rasmlar va batafsil tavsif mulkingizni tezroq sotishga yordam beradi</p>
+        <h1>🖼️ Rasmlar va tavsif</h1>
+        <p>Sifatli rasmlar va batafsil tavsif mulkingizni tezroq topilishiga yordam beradi</p>
+      </div>
+
+      <!-- SUMMARY CARD: shows what has been filled so far -->
+      <div class="summary-card">
+        <div class="summary-title">
+          <mat-icon>checklist</mat-icon> Kiritilgan ma'lumotlar xulasasi
+        </div>
+        <div class="summary-grid">
+          <div class="summary-item" *ngIf="basicInfoForm.get('type')?.value">
+            <span class="s-label">Mulk turi</span>
+            <span class="s-value">{{ typeLabel(basicInfoForm.get('type')?.value) }}</span>
+          </div>
+          <div class="summary-item" *ngIf="basicInfoForm.get('listingType')?.value">
+            <span class="s-label">E'lon turi</span>
+            <span class="s-value">{{ listingLabel(basicInfoForm.get('listingType')?.value) }}</span>
+          </div>
+          <div class="summary-item" *ngIf="basicInfoForm.get('area')?.value">
+            <span class="s-label">Maydon</span>
+            <span class="s-value">{{ basicInfoForm.get('area')?.value }} m²</span>
+          </div>
+          <div class="summary-item" *ngIf="basicInfoForm.get('numberOfBedrooms')?.value">
+            <span class="s-label">Xonalar</span>
+            <span class="s-value">{{ basicInfoForm.get('numberOfBedrooms')?.value }} ta</span>
+          </div>
+          <div class="summary-item" *ngIf="locationForm.get('city')?.value">
+            <span class="s-label">Shahar</span>
+            <span class="s-value">{{ locationForm.get('city')?.value }}</span>
+          </div>
+          <div class="summary-item" *ngIf="locationForm.get('address')?.value">
+            <span class="s-label">Manzil</span>
+            <span class="s-value">{{ locationForm.get('address')?.value }}</span>
+          </div>
+          <div class="summary-item" *ngIf="getPrice()">
+            <span class="s-label">Narx</span>
+            <span class="s-value price-highlight">{{ getPrice() | number }} {{ basicInfoForm.get('currency')?.value }}</span>
+          </div>
+        </div>
       </div>
 
       <form [formGroup]="form" class="premium-form">
+
+        <!-- AI DESCRIPTION HERO BLOCK -->
+        <div class="ai-hero">
+          <div class="ai-hero-left">
+            <div class="ai-icon-wrap"><mat-icon>auto_awesome</mat-icon></div>
+            <div>
+              <h3>AI yordamida tavsif yarating</h3>
+              <p>Yuqoridagi ma'lumotlar asosida professional tavsif avtomatik yoziladi</p>
+            </div>
+          </div>
+          <button
+            mat-flat-button
+            class="btn-ai-hero"
+            type="button"
+            [disabled]="isGeneratingAI"
+            (click)="generateAI()"
+          >
+            <mat-spinner diameter="20" *ngIf="isGeneratingAI"></mat-spinner>
+            <mat-icon *ngIf="!isGeneratingAI">psychology</mat-icon>
+            <span>{{ isGeneratingAI ? 'Yozilmoqda...' : 'AI tavsif yaratish' }}</span>
+          </button>
+        </div>
+
+        <!-- Description textarea -->
+        <div class="form-section">
+          <mat-form-field appearance="outline" class="full-width premium-field">
+            <mat-label>Batafsil tavsif</mat-label>
+            <textarea
+              matInput
+              formControlName="description"
+              rows="7"
+              placeholder="Mulkning barcha ustunliklari haqida yozing..."
+            ></textarea>
+            <mat-hint align="end">{{ form.get('description')?.value?.length || 0 }} / 2000</mat-hint>
+            <mat-error *ngIf="form.get('description')?.invalid">Tavsif kamida 20 belgidan iborat bo'lishi kerak</mat-error>
+          </mat-form-field>
+        </div>
+
         <!-- Media Upload Zone -->
         <div class="form-section">
-          <label class="section-label">Rasmlar yuklash (Maksimal 10ta)</label>
+          <label class="section-label">📷 Rasmlar yuklash <span class="optional-tag">(ixtiyoriy, 10 tagacha)</span></label>
 
           <input
             #fileInput
@@ -42,9 +117,7 @@ import { AIService, AIDescriptionRequest } from '../../../../core/services/ai.se
 
           <div class="upload-zone" (click)="fileInput.click()">
             <div class="upload-content">
-              <div class="icon-circle">
-                <mat-icon>cloud_upload</mat-icon>
-              </div>
+              <div class="icon-circle"><mat-icon>cloud_upload</mat-icon></div>
               <h3>Rasmlarni yuklang</h3>
               <p>Fayllarni shu yerga tashlang yoki tanlash uchun bosing</p>
               <button mat-flat-button color="primary" type="button" class="btn-browse">
@@ -65,51 +138,18 @@ import { AIService, AIDescriptionRequest } from '../../../../core/services/ai.se
           </div>
         </div>
 
-        <!-- Description Section -->
-        <div class="form-section">
-          <div class="section-header-inline">
-            <label class="section-label">Batafsil tavsif</label>
-            <button
-              mat-stroked-button
-              color="primary"
-              type="button"
-              class="btn-ai"
-              [disabled]="isGeneratingAI"
-              (click)="generateAI()"
-            >
-              <mat-icon *ngIf="!isGeneratingAI">psychology</mat-icon>
-              <mat-spinner diameter="18" *ngIf="isGeneratingAI"></mat-spinner>
-              <span>{{ isGeneratingAI ? 'Yozilmoqda...' : 'AI bilan yozish' }}</span>
-            </button>
-          </div>
-
-          <mat-form-field appearance="outline" class="full-width premium-field">
-            <textarea
-              matInput
-              formControlName="description"
-              rows="6"
-              placeholder="Mulkning barcha ustunliklari haqida yozing..."
-            ></textarea>
-            <mat-hint align="end"
-              >{{ form.get('description')?.value?.length || 0 }} / 2000</mat-hint
-            >
-            <mat-error *ngIf="form.get('description')?.invalid"
-              >Tavsif kamida 20 belgidan iborat bo'lishi kerak</mat-error
-            >
-          </mat-form-field>
-        </div>
-
         <div class="form-footer">
-          <button mat-button type="button" class="btn-cancel" (click)="onPrevious()">Orqaga</button>
+          <button mat-button type="button" class="btn-cancel" (click)="onPrevious()">
+            <mat-icon>arrow_back</mat-icon> Orqaga
+          </button>
           <button
             mat-flat-button
             class="btn-submit"
-            [disabled]="form.invalid || isSubmitting || previews.length === 0"
+            [disabled]="form.invalid || isSubmitting"
             (click)="onSubmit()"
           >
             <mat-spinner diameter="24" *ngIf="isSubmitting"></mat-spinner>
-            <span *ngIf="!isSubmitting">E'lonni joylashtirish</span>
-            <mat-icon *ngIf="!isSubmitting">rocket_launch</mat-icon>
+            <span *ngIf="!isSubmitting">🚀 E'lonni joylashtirish</span>
           </button>
         </div>
       </form>
@@ -140,17 +180,113 @@ import { AIService, AIDescriptionRequest } from '../../../../core/services/ai.se
       .premium-form {
         display: flex;
         flex-direction: column;
-        gap: 32px;
+        gap: 28px;
       }
       .section-label {
         display: block;
-        font-size: 0.95rem;
+        font-size: 0.85rem;
         font-weight: 700;
         color: #334155;
-        margin-bottom: 0;
+        margin-bottom: 12px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
       }
+      .optional-tag {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        font-weight: 400;
+        text-transform: none;
+        letter-spacing: 0;
+      }
+
+      /* ── SUMMARY CARD ── */
+      .summary-card {
+        background: white;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        border: 1px solid #e2e8f0;
+      }
+      .summary-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 16px;
+        font-size: 1rem;
+      }
+      .summary-title mat-icon { color: #6366f1; }
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
+      }
+      .summary-item {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 10px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .s-label {
+        font-size: 0.72rem;
+        color: #94a3b8;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .s-value {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #1e293b;
+      }
+      .price-highlight { color: #6366f1; }
+
+      /* ── AI HERO BLOCK ── */
+      .ai-hero {
+        background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+        border: 2px solid #c4b5fd;
+        border-radius: 20px;
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .ai-hero-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .ai-icon-wrap {
+        width: 52px;
+        height: 52px;
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .ai-icon-wrap mat-icon { color: white; font-size: 28px; width: 28px; height: 28px; }
+      .ai-hero h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: #4c1d95; }
+      .ai-hero p  { margin: 4px 0 0; font-size: 0.9rem; color: #7c3aed; }
+      .btn-ai-hero {
+        height: 48px;
+        padding: 0 28px;
+        border-radius: 14px;
+        font-weight: 700;
+        background: linear-gradient(135deg, #6366f1, #a855f7) !important;
+        color: white !important;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+      }
+      .btn-ai-hero mat-icon { font-size: 20px; width: 20px; height: 20px; }
 
       .section-header-inline {
         display: flex;
@@ -339,6 +475,30 @@ export class StepImagesComponent {
 
   previews: { url: string; file: File }[] = [];
   isGeneratingAI = false;
+
+  /** Returns price value based on listing type */
+  getPrice(): number | null {
+    const type = this.basicInfoForm.get('listingType')?.value;
+    if (type === 'Sale')          return this.basicInfoForm.get('salePrice')?.value;
+    if (type === 'Rent')          return this.basicInfoForm.get('monthlyRent')?.value;
+    if (type === 'ShortTermRent') return this.basicInfoForm.get('pricePerNight')?.value;
+    return null;
+  }
+
+  typeLabel(v: string): string {
+    const m: Record<string,string> = {
+      Apartment:'Kvartira', House:"Uy/Hovli", Villa:'Villa',
+      Office:'Ofis', Commercial:'Tijorat', Land:'Yer'
+    };
+    return m[v] || v;
+  }
+
+  listingLabel(v: string): string {
+    const m: Record<string,string> = {
+      Sale:'Sotish', Rent:'Ijara (oylik)', ShortTermRent:'Kunlik ijara'
+    };
+    return m[v] || v;
+  }
 
   generateAI() {
     const basicInfo = this.basicInfoForm.value;
