@@ -621,7 +621,6 @@ export class PropertyFormComponent implements OnInit {
     };
 
     const amenities = this.amenitiesForm.value;
-    // Map frontend string enums to backend integer enums
     const propertyTypeMap: Record<string, number> = {
       Apartment: 0,
       House: 1,
@@ -630,6 +629,8 @@ export class PropertyFormComponent implements OnInit {
       Office: 4,
       Land: 5,
       Commercial: 6,
+      Shop: 6, // Map Shop to Commercial
+      Other: 6, // Map Other to Commercial
     };
     const categoryMap: Record<string, number> = {
       Residential: 0,

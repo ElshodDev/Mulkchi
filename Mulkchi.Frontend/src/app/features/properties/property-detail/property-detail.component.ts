@@ -18,7 +18,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
-import { ListingType, PropertyImage } from '../../../core/models';
+import { ListingType, PropertyImage, PropertyType } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
 import { FavoritesService } from '../../../core/services/favorites.service';
 import { PropertyService } from '../../../core/services/property.service';
@@ -182,22 +182,22 @@ import { animate, style, transition, trigger } from '@angular/animations';
 
               <!-- Quick Stats Premium -->
               <div class="quick-stats-glass">
-                <div class="stat-item">
+                <div class="stat-item" *ngIf="showRooms()">
                   <div class="stat-icon-wrapper"><mat-icon>bed</mat-icon></div>
                   <div class="stat-info">
                     <span class="stat-value">{{ property()?.numberOfBedrooms || 1 }}</span>
                     <span class="stat-label">Xona</span>
                   </div>
                 </div>
-                <div class="divider-vertical"></div>
-                <div class="stat-item">
+                <div class="divider-vertical" *ngIf="showRooms() && showBathrooms()"></div>
+                <div class="stat-item" *ngIf="showBathrooms()">
                   <div class="stat-icon-wrapper"><mat-icon>bathtub</mat-icon></div>
                   <div class="stat-info">
                     <span class="stat-value">{{ property()?.numberOfBathrooms || 1 }}</span>
                     <span class="stat-label">Hammom</span>
                   </div>
                 </div>
-                <div class="divider-vertical"></div>
+                <div class="divider-vertical" *ngIf="showBathrooms()"></div>
                 <div class="stat-item">
                   <div class="stat-icon-wrapper"><mat-icon>square_foot</mat-icon></div>
                   <div class="stat-info">
@@ -205,8 +205,8 @@ import { animate, style, transition, trigger } from '@angular/animations';
                     <span class="stat-label">m²</span>
                   </div>
                 </div>
-                <div class="divider-vertical"></div>
-                <div class="stat-item">
+                <div class="divider-vertical" *ngIf="showGuests()"></div>
+                <div class="stat-item" *ngIf="showGuests()">
                   <div class="stat-icon-wrapper"><mat-icon>groups</mat-icon></div>
                   <div class="stat-info">
                     <span class="stat-value">{{ property()?.maxGuests || 2 }}</span>
@@ -1288,6 +1288,20 @@ export class PropertyDetailComponent {
 
       this.isFavorite.set(favoriteItems.some((item) => item.favorite.propertyId === prop.id));
     });
+  }
+
+  showRooms(): boolean {
+    const type = this.property()?.type;
+    return type !== PropertyType.Land && type !== PropertyType.Commercial;
+  }
+
+  showBathrooms(): boolean {
+    const type = this.property()?.type;
+    return type !== PropertyType.Land && type !== PropertyType.Commercial && type !== PropertyType.Office;
+  }
+
+  showGuests(): boolean {
+    return this.property()?.listingType === ListingType.ShortTermRent;
   }
 
   loadProperty(id: string): void {

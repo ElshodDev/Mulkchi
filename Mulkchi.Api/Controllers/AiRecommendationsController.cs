@@ -499,13 +499,33 @@ public class AiRecommendationsController : ControllerBase
             ? string.Join(", ", request.Amenities)
             : "barcha qulayliklar";
 
+        string propType = request.PropertyType switch
+        {
+            "Apartment" => "kvartira",
+            "House" => "hovli",
+            "Villa" => "villa",
+            "Office" => "ofis",
+            "Shop" => "do'kon",
+            "Commercial" => "tijorat binosi",
+            "Land" => "yer uchastkasi",
+            _ => "mulk"
+        };
+
+        string regionName = request.Region switch
+        {
+            "ToshkentViloyati" => "Toshkent viloyati",
+            "Qoraqalpogiston" => "Qoraqalpog'iston",
+            "Fargona" => "Farg'ona",
+            _ => request.Region
+        };
+
         var templates = new List<string>
         {
-            $"{request.Region}ning eng nufuzli hududida joylashgan, {request.Area} m² maydonga ega ushbu {request.Rooms} xonali {request.PropertyType.ToLower()} sotuvga qo'yildi. {request.Floor}-qavatda joylashgan bo'lib, {request.TotalFloors} qavatli binoda qulay joylashuvga ega. Uyda {amenitiesList} mavjud bo'lib, yashash uchun barcha sharoitlar yaratilgan. Sifatli ta'mir va shinam atmosfera sizni kutmoqda.",
+            $"{regionName}ning eng nufuzli hududida joylashgan, {request.Area} m² maydonga ega ushbu {request.Rooms} xonali {propType} sotuvga qo'yildi. {(request.TotalFloors > 0 ? $"{request.Floor}-qavatda joylashgan bo'lib, {request.TotalFloors} qavatli binoda qulay joylashuvga ega." : "")} Ushbu obyekda {amenitiesList} mavjud bo'lib, barcha sharoitlar yaratilgan. Sifatli ta'mir va shinam atmosfera sizni kutmoqda.",
 
-            $"Premium taklif! {request.Region} markazida {request.Rooms} xonali shinam xonadon. Umumiy maydoni {request.Area} m². Bino {request.TotalFloors} qavatli, xonadon esa {request.Floor}-qavatda. {amenitiesList} bilan jihozlangan ushbu maskan zamonaviy hayot tarzi uchun ideal tanlovdir. O'tkazib yubormang!",
+            $"Premium taklif! {regionName} markazida {request.Rooms} xonali shinam {propType}. Umumiy maydoni {request.Area} m². {(request.TotalFloors > 0 ? $"Bino {request.TotalFloors} qavatli, obyekt esa {request.Floor}-qavatda." : "")} {amenitiesList} bilan jihozlangan ushbu maskan ideal tanlovdir. O'tkazib yubormang!",
 
-            $"Siz qidirgan qulaylik va sifat! {request.Area} m² maydonli {request.Rooms} xonali {request.PropertyType.ToLower()}. {request.Region} hududidagi eng yaxshi variantlardan biri. Binoda {request.TotalFloors} qavat bor, uy {request.Floor}-qavatda. {amenitiesList} kabi afzalliklarga ega. Batafsil ma'lumot uchun bog'laning."
+            $"Siz qidirgan qulaylik va sifat! {request.Area} m² maydonli {request.Rooms} xonali {propType}. {regionName} hududidagi eng yaxshi variantlardan biri. {(request.TotalFloors > 0 ? $"Binoda {request.TotalFloors} qavat bor, obyekt {request.Floor}-qavatda." : "")} {amenitiesList} kabi afzalliklarga ega. Batafsil ma'lumot uchun bog'laning."
         };
 
         var random = new Random();
