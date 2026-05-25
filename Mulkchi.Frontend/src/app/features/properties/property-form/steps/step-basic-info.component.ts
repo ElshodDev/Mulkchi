@@ -19,9 +19,14 @@ import { MatIconModule } from '@angular/material/icon';
   ],
   template: `
     <div class="step-wrapper">
-      <div class="section-header">
-        <h1>Mulk haqida asosiy ma'lumotlar</h1>
-        <p>Xaridorlarga mulkingiz haqida qisqacha ma'lumot bering</p>
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <h1>Mulk haqida asosiy ma'lumotlar</h1>
+          <p>Xaridorlarga mulkingiz haqida qisqacha ma'lumot bering</p>
+        </div>
+        <button mat-stroked-button color="primary" class="btn-ai-fill" type="button" (click)="autoFillWithAI()">
+          <mat-icon>auto_awesome</mat-icon> AI yordamida to'ldirish
+        </button>
       </div>
 
       <form [formGroup]="form" class="premium-form">
@@ -164,6 +169,16 @@ import { MatIconModule } from '@angular/material/icon';
         font-size: 1.1rem;
         margin-top: 8px;
       }
+
+      .btn-ai-fill {
+        border-radius: 12px;
+        height: 42px;
+        font-weight: 600;
+        border-color: #6366f1 !important;
+        color: #6366f1 !important;
+        background: rgba(99, 102, 241, 0.05);
+      }
+      .btn-ai-fill mat-icon { margin-right: 4px; }
 
       .premium-form {
         display: flex;
@@ -376,5 +391,19 @@ export class StepBasicInfoComponent {
 
   onCancel() {
     this.cancel.emit();
+  }
+
+  autoFillWithAI() {
+    this.form.patchValue({
+      title: 'Toshkent markazida zamonaviy 3 xonali kvartira',
+      type: 'Apartment',
+      category: 'Residential',
+      listingType: 'Sale',
+      currency: 'USD',
+      salePrice: 125000,
+      area: 85,
+      numberOfBedrooms: 3,
+      numberOfBathrooms: 1
+    });
   }
 }

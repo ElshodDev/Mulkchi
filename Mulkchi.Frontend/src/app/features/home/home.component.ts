@@ -154,7 +154,52 @@ import { ImageOptimizationService } from '../../core/services/image-optimization
         </div>
       </section>
 
-      <!-- TOP REGIONS -->
+    <!-- NEARBY PROPERTIES (GEOLOCATION) -->
+    @if (nearbyProperties().length > 0 || loadingNearby()) {
+      <section class="nearby-section">
+        <div class="container">
+          <div class="section-top">
+            <div>
+              <h2 class="section-title">
+                <mat-icon color="primary" style="vertical-align: middle; margin-right: 8px;">my_location</mat-icon>
+                Sizga yaqin mulklar
+              </h2>
+              <p class="section-desc">Joriy joylashuvingizga eng yaqin bo'lgan mulklar ro'yxati</p>
+            </div>
+            <button mat-stroked-button (click)="loadNearbyProperties(true)" [disabled]="loadingNearby()">
+              <mat-icon>refresh</mat-icon> Yangilash
+            </button>
+          </div>
+          
+          @if (loadingNearby()) {
+            <div class="loading-nearby">
+              <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
+              <span>Joylashuvingiz bo'yicha qidirilmoqda...</span>
+            </div>
+          } @else {
+            <div class="regions-grid">
+              @for (prop of nearbyProperties(); track prop.id) {
+                <mat-card class="property-card" (click)="navigateToProperty(prop.id)">
+                  <img mat-card-image [src]="getImageUrl(prop)" [alt]="prop.title" (error)="onImgError($event)" style="height: 200px; object-fit: cover;">
+                  <mat-card-content style="padding: 16px;">
+                    <h3 style="margin: 0 0 8px; font-weight: 700; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ prop.title }}</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0 0 12px;">
+                      <mat-icon style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle;">location_on</mat-icon>
+                      {{ prop.city }}, {{ prop.district }}
+                    </p>
+                    <strong style="color: var(--primary); font-size: 1.2rem;">
+                      {{ (prop.salePrice || prop.monthlyRent || prop.pricePerNight) | number }} {{ prop.currency || 'UZS' }}
+                    </strong>
+                  </mat-card-content>
+                </mat-card>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- TOP REGIONS -->
       <section class="regions-section">
         <div class="container">
           <div class="section-top">
@@ -497,52 +542,30 @@ import { ImageOptimizationService } from '../../core/services/image-optimization
         align-self: center;
       }
 
-      /* --- REGIONS --- */
-      .regions-section {
-        padding: 100px 0;
+      /* --- REGIONS & NEARBY --- */
+      .regions-section, .nearby-section {
+        padding: 80px 0;
         background: #fff;
       }
-      .regions-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 24px;
+      .nearby-section {
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
       }
-      .region-card {
-        position: relative;
-        height: 320px;
-        border-radius: var(--radius-lg);
-        overflow: hidden;
-        cursor: pointer;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-      }
-      .region-card img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-      }
-      .region-card:hover img {
-        transform: scale(1.1);
-      }
-      .region-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, transparent 60%);
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-        padding: 24px;
-        color: var(--white);
-      }
-      .region-overlay h3 {
-        font-size: 1.5rem;
-        font-weight: 800;
-        margin: 0;
-      }
-      .region-overlay span {
-        font-size: 0.9rem;
-        opacity: 0.7;
-      }
+      .section-top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; }
+      .section-title { font-size: 2.2rem; font-weight: 800; color: var(--primary); margin: 0 0 8px; }
+      .section-desc { font-size: 1.1rem; color: var(--text-muted); margin: 0; }
+      
+      .loading-nearby { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 0; gap: 16px; color: var(--text-muted); }
+      .property-card { cursor: pointer; transition: transform 0.3s, box-shadow 0.3s; border-radius: 16px; overflow: hidden; }
+      .property-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+
+      .regions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
+      .region-card { position: relative; height: 320px; border-radius: var(--radius-lg); overflow: hidden; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+      .region-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+      .region-card:hover img { transform: scale(1.1); }
+      .region-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(15,23,42,0.9) 0%, transparent 60%); display: flex; flex-direction: column; justify-content: flex-end; padding: 24px; color: var(--white); }
+      .region-overlay h3 { font-size: 1.5rem; font-weight: 800; margin: 0; }
+      .region-overlay span { font-size: 0.9rem; opacity: 0.7; }
 
       /* --- AI SECTION --- */
       .ai-section {
@@ -887,13 +910,16 @@ export class HomeComponent implements OnInit {
   listingType: 'Sale' | 'Rent' | 'ShortTermRent' = 'Rent';
   listingTypeEnum = ListingType;
 
+  nearbyProperties = signal<any[]>([]);
+  loadingNearby = signal(false);
+
   topRegions = [
     {
       id: 1,
       name: 'Toshkent',
-      enumValue: 'Toshkent',
+      enumValue: 'ToshkentShahar',
       count: "1,200+ e'lon",
-      img: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=800&auto=format&fit=crop',
+      img: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,tashkent,architecture,apartment',
       delay: '0s',
     },
     {
@@ -901,7 +927,7 @@ export class HomeComponent implements OnInit {
       name: 'Samarqand',
       enumValue: 'Samarqand',
       count: "450+ e'lon",
-      img: 'https://images.unsplash.com/photo-1528154291023-a6525fabe5b4?q=80&w=800&auto=format&fit=crop',
+      img: 'https://images.unsplash.com/photo-1528154291023-a6525fabe5b4?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,samarkand,architecture',
       delay: '0.1s',
     },
     {
@@ -909,7 +935,7 @@ export class HomeComponent implements OnInit {
       name: 'Buxoro',
       enumValue: 'Buxoro',
       count: "280+ e'lon",
-      img: 'https://images.unsplash.com/photo-1580191947416-62d35a55e71d?q=80&w=800&auto=format&fit=crop',
+      img: 'https://images.unsplash.com/photo-1580191947416-62d35a55e71d?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,bukhara,architecture,mosque',
       delay: '0.2s',
     },
     {
@@ -917,7 +943,7 @@ export class HomeComponent implements OnInit {
       name: 'Namangan',
       enumValue: 'Namangan',
       count: "150+ e'lon",
-      img: 'https://images.unsplash.com/photo-1493246507139-91e8bef99c02?q=80&w=800&auto=format&fit=crop',
+      img: 'https://images.unsplash.com/photo-1493246507139-91e8bef99c02?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,namangan,modern,apartment',
       delay: '0.3s',
     },
     {
@@ -925,7 +951,7 @@ export class HomeComponent implements OnInit {
       name: 'Andijon',
       enumValue: 'Andijon',
       count: "210+ e'lon",
-      img: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800&auto=format&fit=crop',
+      img: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,andijan,house,residential',
       delay: '0.4s',
     },
     {
@@ -933,7 +959,7 @@ export class HomeComponent implements OnInit {
       name: "Farg'ona",
       enumValue: 'Fargona',
       count: "190+ e'lon",
-      img: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=800&auto=format&fit=crop',
+      img: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,fergana,nature,building',
       delay: '0.5s',
     },
     {
@@ -941,15 +967,15 @@ export class HomeComponent implements OnInit {
       name: 'Xorazm',
       enumValue: 'Xorazm',
       count: "120+ e'lon",
-      img: 'https://images.unsplash.com/photo-1505761671935-60b3a7427bad?q=80&w=800&auto=format&fit=crop',
+      img: 'https://images.unsplash.com/photo-1505761671935-60b3a7427bad?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,khiva,architecture',
       delay: '0.6s',
     },
     {
       id: 8,
       name: 'Navoiy',
-      enumValue: 'Navoi',
+      enumValue: 'Navoiy',
       count: "90+ e'lon",
-      img: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=800&auto=format&fit=crop',
+      img: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,navoi,industrial,modern',
       delay: '0.7s',
     },
     {
@@ -957,7 +983,7 @@ export class HomeComponent implements OnInit {
       name: 'Qashqadaryo',
       enumValue: 'Qashqadaryo',
       count: "110+ e'lon",
-      img: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=800&auto=format&fit=crop',
+      img: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,kashkadarya,building',
       delay: '0.8s',
     },
     {
@@ -965,7 +991,7 @@ export class HomeComponent implements OnInit {
       name: 'Surxondaryo',
       enumValue: 'Surxondaryo',
       count: "85+ e'lon",
-      img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop',
+      img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,surkhandarya,mountain,house',
       delay: '0.9s',
     },
     {
@@ -973,7 +999,7 @@ export class HomeComponent implements OnInit {
       name: 'Jizzax',
       enumValue: 'Jizzax',
       count: "70+ e'lon",
-      img: 'https://images.unsplash.com/photo-1500382017468-9049fee74a62?q=80&w=800&auto=format&fit=crop',
+      img: 'https://images.unsplash.com/photo-1500382017468-9049fee74a62?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,jizzakh,city,apartment',
       delay: '1.0s',
     },
     {
@@ -981,15 +1007,15 @@ export class HomeComponent implements OnInit {
       name: 'Sirdaryo',
       enumValue: 'Sirdaryo',
       count: "60+ e'lon",
-      img: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=800&auto=format&fit=crop',
+      img: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,syrdarya,river,house',
       delay: '1.1s',
     },
     {
       id: 13,
       name: "Qoraqalpog'iston",
-      enumValue: 'Nukus',
+      enumValue: 'Qoraqalpogiston',
       count: "95+ e'lon",
-      img: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?q=80&w=800&auto=format&fit=crop',
+      img: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,nukus,desert,modern',
       delay: '1.2s',
     },
   ];
@@ -1004,7 +1030,45 @@ export class HomeComponent implements OnInit {
       this.onSearch();
     });
     this.loadFeaturedProperties();
+    this.loadNearbyProperties(false);
     this.animateCounters();
+  }
+
+  loadNearbyProperties(forceUpdate: boolean = false) {
+    this.loadingNearby.set(true);
+    
+    // Automatically fallback to Tashkent Center if permission denied or timeout
+    const fallbackLocation = { latitude: 41.2995, longitude: 69.2401 };
+
+    const fetchProperties = (lat: number, lng: number) => {
+      this.propertyService.searchProperties({ latitude: lat, longitude: lng, radiusKm: 20, pageSize: 4 }).subscribe({
+        next: (res: any) => {
+          this.nearbyProperties.set(res.items || []);
+          this.loadingNearby.set(false);
+        },
+        error: () => {
+          this.loadingNearby.set(false);
+        }
+      });
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          fetchProperties(position.coords.latitude, position.coords.longitude);
+        },
+        (error) => {
+          console.warn("Geolocation denied or error. Using fallback location.", error);
+          if (forceUpdate) {
+            this.snackBar.open("Joylashuvni aniqlab bo'lmadi. Toshkent bo'yicha ko'rsatilmoqda", "Yopish", {duration: 3000});
+          }
+          fetchProperties(fallbackLocation.latitude, fallbackLocation.longitude);
+        },
+        { timeout: 5000, maximumAge: 60000 }
+      );
+    } else {
+      fetchProperties(fallbackLocation.latitude, fallbackLocation.longitude);
+    }
   }
 
   onSearchInput(event: any) {

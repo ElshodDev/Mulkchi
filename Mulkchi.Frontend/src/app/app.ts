@@ -5,10 +5,11 @@ import { filter } from 'rxjs/operators';
 
 import { AuthService } from './core/services/auth.service';
 import { TopLoadingBarComponent } from './shared/components/top-loading-bar/top-loading-bar.component';
+import { AiAssistantWidgetComponent } from './shared/components/ai-assistant-widget/ai-assistant-widget.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, TopLoadingBarComponent],
+  imports: [RouterOutlet, TopLoadingBarComponent, AiAssistantWidgetComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
