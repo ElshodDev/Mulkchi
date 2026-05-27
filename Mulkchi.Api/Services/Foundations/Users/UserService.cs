@@ -53,7 +53,7 @@ public partial class UserService : IUserService
         var users = await this.storageBroker.SelectAllUsers().ToListAsync();
         return users.Select(MapToUserResponse);
     }
-    
+
     async ValueTask<UserResponse> IUserService.RetrieveUserByIdAsync(Guid userId)
     {
         ValidateUserId(userId);
@@ -68,9 +68,9 @@ public partial class UserService : IUserService
     {
         Guid? userId = this.currentUserService.GetCurrentUserId();
         if (userId is null) throw new InvalidUserException("User not authenticated.");
-        
+
         User maybeUser = await this.storageBroker.SelectUserByIdAsync(userId.Value);
-        
+
         if (maybeUser is null)
             throw new NotFoundUserException(userId.Value);
 
@@ -81,9 +81,9 @@ public partial class UserService : IUserService
     {
         Guid? userId = this.currentUserService.GetCurrentUserId();
         if (userId is null) throw new InvalidUserException("User not authenticated.");
-        
+
         User user = await this.storageBroker.SelectUserByIdAsync(userId.Value);
-        
+
         if (user is null)
             throw new NotFoundUserException(userId.Value);
 
@@ -92,7 +92,7 @@ public partial class UserService : IUserService
         user.Phone = dto.PhoneNumber ?? user.Phone;
         user.Bio = dto.Bio ?? user.Bio;
         user.PreferredLanguage = dto.PreferredLanguage ?? user.PreferredLanguage;
-        
+
         user.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
         User updatedUser = await this.storageBroker.UpdateUserAsync(user);
 
@@ -102,12 +102,12 @@ public partial class UserService : IUserService
     public async ValueTask<UserResponse> ModifyUserAvatarAsync(IFormFile avatarFile)
     {
         ValidateAvatar(avatarFile);
-        
+
         Guid? userId = this.currentUserService.GetCurrentUserId();
         if (userId is null) throw new InvalidUserException("User not authenticated.");
-        
+
         User user = await this.storageBroker.SelectUserByIdAsync(userId.Value);
-        
+
         if (user is null)
             throw new NotFoundUserException(userId.Value);
 
@@ -117,7 +117,7 @@ public partial class UserService : IUserService
 
         user.AvatarUrl = avatarUrl;
         user.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
-        
+
         User updatedUser = await this.storageBroker.UpdateUserAsync(user);
 
         if (!string.IsNullOrWhiteSpace(oldAvatar))
@@ -132,7 +132,7 @@ public partial class UserService : IUserService
         TryCatch(async () =>
         {
             ValidateUserOnModify(user);
-            user.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();  
+            user.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
             return await this.storageBroker.UpdateUserAsync(user);
         });
 
@@ -140,38 +140,35 @@ public partial class UserService : IUserService
         TryCatch(async () =>
         {
             ValidateUserId(userId);
-            return await this.storageBroker.DeleteUserByIdAsync(userId);        
+            return await this.storageBroker.DeleteUserByIdAsync(userId);
         });
 
     public async ValueTask<User> UpgradeToHostAsync(Guid userId)
     {
         ValidateUserId(userId);
-        
+
         User user = await this.storageBroker.SelectUserByIdAsync(userId);
         if (user is null)
             throw new NotFoundUserException(userId);
-        
-        // If already Host or higher role (Admin, SuperAdmin), no need to upgrade
+
         if (user.Role == UserRole.Host || user.Role == UserRole.Admin || user.Role == UserRole.SuperAdmin)
         {
             return user;
         }
-        
-        // Upgrade to Host role
+
         user.Role = UserRole.Host;
         user.CurrentMode = UserRole.Host;
-        
-        // Set HostSince if this is their first time becoming a host
+
         if (user.HostSince is null)
         {
             user.HostSince = this.dateTimeBroker.GetCurrentDateTimeOffset();
         }
-        
+
         user.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
         User upgradedUser = await this.storageBroker.UpdateUserAsync(user);
-        
+
         this.loggingBroker.LogInformation($"User {user.Email} (ID: {userId}) auto-upgraded to Host role.");
-        
+
         return upgradedUser;
     }
 

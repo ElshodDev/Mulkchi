@@ -66,8 +66,7 @@ public class MessagesController : ControllerBase
         try
         {
             Message addedMessage = await this.messageService.AddMessageAsync(message);
-            
-            // Broadcast message via ChatHub
+
             await this.chatHub.Clients.User(message.ReceiverId.ToString())
                 .SendAsync("ReceiveMessage", new
                 {
@@ -80,7 +79,7 @@ public class MessagesController : ControllerBase
                     addedMessage.CreatedDate,
                     Timestamp = DateTime.UtcNow
                 });
-            
+
             return Created("message", addedMessage);
         }
         catch (MessageValidationException messageValidationException)
@@ -152,16 +151,16 @@ public class MessagesController : ControllerBase
                 .RetrieveAllMessages()
                 .Where(message => message.SenderId == currentUserId || message.ReceiverId == currentUserId)
                 .ToList()
-                .GroupBy(message => new 
-                { 
+                .GroupBy(message => new
+                {
                     OtherUserId = message.SenderId == currentUserId ? message.ReceiverId : message.SenderId,
-                    PropertyId = message.PropertyId 
+                    PropertyId = message.PropertyId
                 })
                 .Select(group =>
                 {
                     Message latestMessage = group.OrderByDescending(message => message.CreatedDate).First();
                     var otherUser = users.FirstOrDefault(user => user.Id == group.Key.OtherUserId);
-                    var property = group.Key.PropertyId.HasValue 
+                    var property = group.Key.PropertyId.HasValue
                         ? properties.FirstOrDefault(p => p.Id == group.Key.PropertyId.Value)
                         : null;
 
@@ -170,7 +169,7 @@ public class MessagesController : ControllerBase
                         otherUserId = group.Key.OtherUserId,
                         propertyId = group.Key.PropertyId,
                         propertyTitle = property?.Title,
-                        propertyImage = property?.Images?.FirstOrDefault(i => i.IsPrimary)?.Url 
+                        propertyImage = property?.Images?.FirstOrDefault(i => i.IsPrimary)?.Url
                                         ?? property?.Images?.FirstOrDefault()?.Url,
                         otherUserName = otherUser is null
                             ? "Foydalanuvchi"
@@ -340,7 +339,6 @@ public class MessagesController : ControllerBase
         }
     }
 
-    // Read status endpoints
     [HttpPut("{id:guid}/read")]
     [Authorize]
     public async ValueTask<ActionResult> MarkAsReadAsync(Guid id)
@@ -355,7 +353,6 @@ public class MessagesController : ControllerBase
             if (message is null)
                 return NotFound(new { message = "Message not found." });
 
-            // Only receiver can mark as read
             if (message.ReceiverId != userId)
                 return Forbid();
 

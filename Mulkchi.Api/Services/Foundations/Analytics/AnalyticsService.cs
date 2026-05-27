@@ -21,7 +21,7 @@ public class AnalyticsService : IAnalyticsService
     {
         var today = System.DateTimeOffset.UtcNow.Date;
         var yesterday = today.AddDays(-1);
-        
+
         var properties = this.storageBroker.Properties
             .Where(p => !p.DeletedDate.HasValue)
             .AsQueryable();
@@ -39,15 +39,12 @@ public class AnalyticsService : IAnalyticsService
             .Where(p => p.MonthlyRent.HasValue && p.MonthlyRent > 0)
             .AverageAsync(p => (decimal?)p.MonthlyRent) ?? 0;
 
-        // Bugungi yangi e'lonlar
         var newListingsToday = await properties
             .CountAsync(p => p.CreatedDate.Date == today);
 
-        // Kechagi yangi e'lonlar (taqqoslash uchun)
         var newListingsYesterday = await properties
             .CountAsync(p => p.CreatedDate.Date == yesterday);
 
-        // Oxirgi 7 kunlik o'rtacha
         var lastWeek = today.AddDays(-7);
         var avgNewListingsPerDay = await properties
             .Where(p => p.CreatedDate.Date >= lastWeek && p.CreatedDate.Date < today)
@@ -55,21 +52,18 @@ public class AnalyticsService : IAnalyticsService
             .Select(g => g.Count())
             .AverageAsync();
 
-        // Eng faol shahar
         var topCity = await properties
             .GroupBy(p => p.City)
             .Select(g => new { City = g.Key, Count = g.Count() })
             .OrderByDescending(x => x.Count)
             .FirstOrDefaultAsync();
 
-        // Oylik o'rtacha kvadrat metr narxi
         var averagePricePerSqm = await properties
             .Where(p => p.SalePrice.HasValue && p.SalePrice > 0 && p.Area > 0)
             .Select(p => p.SalePrice.GetValueOrDefault() / (decimal)p.Area)
             .AverageAsync();
 
-        // Sotish va ijara narxlarining o'rtacha farqi
-        var priceChangePercent = newListingsYesterday > 0 
+        var priceChangePercent = newListingsYesterday > 0
             ? ((double)(newListingsToday - newListingsYesterday) / newListingsYesterday * 100)
             : 0;
 
@@ -259,7 +253,6 @@ public class AnalyticsService : IAnalyticsService
         var viewedRecommendations = recommendations.Count(r => r.IsActedUpon);
         var clickedRecommendations = recommendations.Count(r => r.IsActedUpon);
 
-        // Group by recommendation type
         var byType = recommendations
             .GroupBy(r => r.Type)
             .Select(g => new
@@ -273,7 +266,6 @@ public class AnalyticsService : IAnalyticsService
             })
             .ToList();
 
-        // A/B test performance
         var variantA = recommendations.Count(r =>
             r.Metadata != null && r.Metadata.Contains("\"abVariant\":\"A\""));
         var variantB = recommendations.Count(r =>
@@ -283,7 +275,6 @@ public class AnalyticsService : IAnalyticsService
         var variantBClicks = recommendations.Count(r =>
             r.IsActedUpon && r.Metadata != null && r.Metadata.Contains("\"abVariant\":\"B\""));
 
-        // Price prediction accuracy (compare predicted vs actual sale prices)
         var propertiesWithRecommendations = await this.storageBroker.Properties
             .Where(p => !p.DeletedDate.HasValue && p.SalePrice.HasValue)
             .Join(
@@ -293,7 +284,6 @@ public class AnalyticsService : IAnalyticsService
                 (p, r) => new { Property = p, Recommendation = r })
             .ToListAsync();
 
-        // Calculate accuracy based on recommendation score correlation with actual sales
         var priceAccuracy = propertiesWithRecommendations
             .Where(x => x.Property.SalePrice.HasValue)
             .Select(x => new
@@ -301,8 +291,7 @@ public class AnalyticsService : IAnalyticsService
                 propertyId = x.Property.Id,
                 actualPrice = x.Property.SalePrice.GetValueOrDefault(),
                 score = x.Recommendation.Score,
-                // Higher score should correlate with successful sales
-                isAccurate = x.Recommendation.Score >= 0.7m // Threshold for "accurate" recommendation
+                isAccurate = x.Recommendation.Score >= 0.7m
             })
             .ToList();
 
@@ -336,7 +325,6 @@ public class AnalyticsService : IAnalyticsService
 
     public async Task<object> GetPropertyPriceHeatmapAsync()
     {
-        // Get all properties with location and price data
         var properties = await this.storageBroker.Properties
             .Where(p => !p.DeletedDate.HasValue && p.Latitude.HasValue && p.Longitude.HasValue)
             .Where(p => p.SalePrice.HasValue || p.MonthlyRent.HasValue)
@@ -354,7 +342,6 @@ public class AnalyticsService : IAnalyticsService
             })
             .ToListAsync();
 
-        // Group by grid cells (approximate 0.01 degree grid ~ 1km)
         var heatmapData = properties
             .GroupBy(p => new
             {
@@ -370,12 +357,11 @@ public class AnalyticsService : IAnalyticsService
                 averageRentPrice = g.Where(p => p.MonthlyRent.HasValue).Average(p => (decimal?)p.MonthlyRent) ?? 0m,
                 minPrice = g.Min(p => p.SalePrice ?? p.MonthlyRent ?? 0m),
                 maxPrice = g.Max(p => p.SalePrice ?? p.MonthlyRent ?? 0m),
-                density = g.Count() / (0.01 * 0.01) // Approximate properties per sq km
+                density = g.Count() / (0.01 * 0.01)
             })
             .OrderByDescending(h => h.density)
             .ToList();
 
-        // Calculate price percentiles for coloring
         var allPrices = properties
             .Select(p => p.SalePrice ?? p.MonthlyRent ?? 0m)
             .Where(p => p > 0)
@@ -422,9 +408,6 @@ public class AnalyticsService : IAnalyticsService
 
     #region Property Analysis Engine
 
-    /// <summary>
-    /// Analyze a property to determine if it's overpriced, underpriced, or fair
-    /// </summary>
     public async Task<PropertyAnalysisResult> AnalyzePropertyAsync(Guid propertyId)
     {
         var property = await this.storageBroker.Properties
@@ -455,11 +438,10 @@ public class AnalyticsService : IAnalyticsService
         if (property == null)
             throw new Exception("Property not found");
 
-        var currentPrice = property.SalePrice ?? property.MonthlyRent * 100 ?? 0m; // Rough conversion for rent
+        var currentPrice = property.SalePrice ?? property.MonthlyRent * 100 ?? 0m;
         if (currentPrice == 0)
             throw new Exception("Property has no price set");
 
-        // Get comparable properties in same district
         var comparables = await this.storageBroker.Properties
             .Where(p => !p.DeletedDate.HasValue && p.District == property.District)
             .Where(p => p.Type == property.Type)
@@ -477,60 +459,50 @@ public class AnalyticsService : IAnalyticsService
             })
             .ToListAsync();
 
-        // Calculate market metrics
         var districtPrices = comparables.Select(c => c.SalePrice.GetValueOrDefault()).ToList();
         var districtAvgPrice = districtPrices.Any() ? districtPrices.Average() : currentPrice;
         var districtMedianPrice = districtPrices.Any() ? CalculateMedian(districtPrices) : currentPrice;
-        var districtAvgPricePerSqm = comparables.Any(c => c.Area > 0) 
-            ? comparables.Where(c => c.Area > 0).Average(c => c.SalePrice.GetValueOrDefault() / (decimal)c.Area) 
+        var districtAvgPricePerSqm = comparables.Any(c => c.Area > 0)
+            ? comparables.Where(c => c.Area > 0).Average(c => c.SalePrice.GetValueOrDefault() / (decimal)c.Area)
             : 0m;
 
-        // Adjust for property features
         var featureAdjustment = 0m;
         var comparableCount = comparables.Count;
 
         if (comparableCount > 0)
         {
-            // WiFi premium
             if (property.HasWifi && comparables.Any(c => c.HasWifi))
                 featureAdjustment += districtAvgPrice * 0.02m;
 
-            // Parking premium
             if (property.HasParking && comparables.Any(c => c.HasParking))
                 featureAdjustment += districtAvgPrice * 0.03m;
 
-            // AC premium
             if (property.HasAirConditioning && comparables.Any(c => c.HasAirConditioning))
                 featureAdjustment += districtAvgPrice * 0.015m;
 
-            // Floor adjustment (middle floors are better)
             if (property.Floor > 0 && property.TotalFloors > 0)
             {
                 var floorRatio = (double)property.Floor / property.TotalFloors;
-                if (floorRatio >= 0.3 && floorRatio <= 0.7) // Middle floors
+                if (floorRatio >= 0.3 && floorRatio <= 0.7)
                     featureAdjustment += districtAvgPrice * 0.02m;
-                else if (floorRatio < 0.3) // Lower floors
+                else if (floorRatio < 0.3)
                     featureAdjustment -= districtAvgPrice * 0.01m;
             }
 
-            // Rating adjustment
             if (property.AverageRating > 4.5m && comparables.Any(c => c.AverageRating > 0))
                 featureAdjustment += districtAvgPrice * 0.05m;
         }
 
-        // Calculate market volatility (simulated for BMI demonstration)
-        var volatilityFactor = 0.05; // 5% base volatility
-        var marketSentiment = 1.02; // 2% growth trend
-        
-        // Incorporate volatility into the final price estimation
-        var priceMultiplier = marketSentiment + (volatilityFactor * 0.5); // Add half-volatility as a buffer
+        var volatilityFactor = 0.05;
+        var marketSentiment = 1.02;
+
+        var priceMultiplier = marketSentiment + (volatilityFactor * 0.5);
         var estimatedMarketPrice = (districtAvgPrice + featureAdjustment) * (decimal)priceMultiplier;
         var priceDifference = currentPrice - estimatedMarketPrice;
-        var priceDifferencePercent = estimatedMarketPrice > 0 
-            ? (double)(priceDifference / estimatedMarketPrice) * 100 
+        var priceDifferencePercent = estimatedMarketPrice > 0
+            ? (double)(priceDifference / estimatedMarketPrice) * 100
             : 0;
 
-        // Determine status
         var status = priceDifferencePercent switch
         {
             < -20 => PriceStatus.SignificantlyUnderpriced,
@@ -540,13 +512,10 @@ public class AnalyticsService : IAnalyticsService
             _ => PriceStatus.SignificantlyOverpriced
         };
 
-        // Calculate value score
         var valueScore = Math.Max(0, Math.Min(100, 50 - priceDifferencePercent * 2));
-        
-        // Calculate investment potential
+
         var investmentPotential = CalculateInvestmentPotential(property, districtPrices, comparables.Count);
 
-        // Generate recommendation
         var recommendation = status switch
         {
             PriceStatus.SignificantlyUnderpriced => "🟢 Ajoyib imkoniyat! Bozor narxidan 20%+ arzon. Tezda ko'rib chiqing.",
@@ -557,13 +526,12 @@ public class AnalyticsService : IAnalyticsService
             _ => "Ma'lumot yetarli emas"
         };
 
-        // Risk assessment
         var riskFactors = new List<string>();
         var positiveFactors = new List<string>();
 
         if (property.ViewsCount < 10 && property.CreatedDate < DateTimeOffset.UtcNow.AddDays(-30))
             riskFactors.Add("Kam ko'rishlar - e'lon uzoq vaqt turibdi");
-        
+
         if (property.AverageRating < 3.0m)
             riskFactors.Add("Past reyting - ehtiyot bo'ling");
 
@@ -605,37 +573,29 @@ public class AnalyticsService : IAnalyticsService
 
     private double CalculateInvestmentPotential(dynamic property, List<decimal> districtPrices, int comparableCount)
     {
-        var score = 40.0; // Base score
+        var score = 40.0;
 
-        // Location popularity & Engagement Velocity
         var daysListed = Math.Max(1, (DateTimeOffset.UtcNow - property.CreatedDate).TotalDays);
         var viewsPerDay = property.ViewsCount / daysListed;
-        
+
         if (viewsPerDay > 5) score += 15;
         if (viewsPerDay > 10) score += 10;
 
-        // Features Premium
         if (property.HasWifi) score += 3;
         if (property.HasParking) score += 4;
         if (property.HasAirConditioning) score += 3;
         if (property.HasFurniture) score += 5;
 
-        // Quality index
         score += (double)(property.AverageRating - 2.5m) * 12;
 
-        // Market Scarcity
         if (comparableCount < 10) score += 10;
         if (comparableCount < 5) score += 5;
 
-        // Sentiment adjustment
         if (property.ViewsCount > 200) score += 5;
 
         return Math.Max(0, Math.Min(100, score));
     }
 
-    /// <summary>
-    /// Find best deals - properties significantly below market price
-    /// </summary>
     public async Task<List<PropertyDealScore>> FindBestDealsAsync(int limit = 10)
     {
         var properties = await this.storageBroker.Properties
@@ -659,7 +619,6 @@ public class AnalyticsService : IAnalyticsService
 
         foreach (var prop in properties)
         {
-            // Get district average
             var districtAvg = await this.storageBroker.Properties
                 .Where(p => !p.DeletedDate.HasValue && p.District == prop.District)
                 .Where(p => p.Type == prop.Type)
@@ -668,7 +627,6 @@ public class AnalyticsService : IAnalyticsService
 
             var discountPercent = (double)((districtAvg - prop.SalePrice.GetValueOrDefault()) / districtAvg * 100);
 
-            // Only include if discount > 5%
             if (discountPercent > 5)
             {
                 var dealScore = Math.Min(100, discountPercent * 3 + (double)prop.AverageRating * 5);
@@ -695,9 +653,6 @@ public class AnalyticsService : IAnalyticsService
         return deals.OrderByDescending(d => d.DealScore).Take(limit).ToList();
     }
 
-    /// <summary>
-    /// Find high ROI properties - good for rental investment
-    /// </summary>
     public async Task<List<PropertyDealScore>> FindHighRoiPropertiesAsync(int limit = 10)
     {
         var properties = await this.storageBroker.Properties
@@ -721,11 +676,9 @@ public class AnalyticsService : IAnalyticsService
 
         foreach (var prop in properties)
         {
-            // Calculate annual ROI
             var annualRent = prop.MonthlyRent.GetValueOrDefault() * 12;
             var roi = (double)(annualRent / prop.SalePrice.GetValueOrDefault() * 100);
 
-            // Good ROI is > 8% annually
             if (roi > 8)
             {
                 var dealScore = Math.Min(100, roi * 10 + (double)prop.AverageRating * 3);
@@ -751,9 +704,6 @@ public class AnalyticsService : IAnalyticsService
         return roiProperties.OrderByDescending(r => r.RoiEstimate).Take(limit).ToList();
     }
 
-    /// <summary>
-    /// Find fast selling properties - high demand indicators
-    /// </summary>
     public async Task<List<PropertyDealScore>> FindFastSellingPropertiesAsync(int limit = 10)
     {
         var recentDate = DateTimeOffset.UtcNow.AddDays(-7);
@@ -779,12 +729,10 @@ public class AnalyticsService : IAnalyticsService
 
         foreach (var prop in properties)
         {
-            // Calculate demand score
             var daysListed = (DateTimeOffset.UtcNow - prop.CreatedDate).TotalDays;
             var viewsPerDay = daysListed > 0 ? prop.ViewsCount / daysListed : prop.ViewsCount;
             var engagementScore = viewsPerDay * 2 + prop.FavoritesCount;
 
-            // High engagement = fast selling potential
             if (engagementScore > 5)
             {
                 var dealScore = Math.Min(100, engagementScore * 5 + (double)prop.AverageRating * 5);
@@ -814,12 +762,8 @@ public class AnalyticsService : IAnalyticsService
 
     #region Location Intelligence
 
-    /// <summary>
-    /// Calculate location living score and investment potential
-    /// </summary>
     public async Task<LocationScore> GetLocationScoreAsync(string region, string district)
     {
-        // Parse region string to enum
         UzbekistanRegion? regionEnum = null;
         if (!string.IsNullOrEmpty(region))
         {
@@ -832,7 +776,7 @@ public class AnalyticsService : IAnalyticsService
 
         var query = this.storageBroker.Properties
             .Where(p => !p.DeletedDate.HasValue && p.District == district);
-        
+
         if (regionEnum.HasValue)
         {
             query = query.Where(p => p.Region == regionEnum.Value);
@@ -858,45 +802,39 @@ public class AnalyticsService : IAnalyticsService
             .ToListAsync();
 
         if (!properties.Any())
-            return new LocationScore 
-            { 
-                Region = region, 
-                District = district, 
+            return new LocationScore
+            {
+                Region = region,
+                District = district,
                 OverallScore = 0,
                 Verdict = "Ma'lumot yetarli emas"
             };
 
-        // Affordability Score (lower price = higher score)
         var avgPrice = properties.Where(p => p.SalePrice.HasValue).Average(p => p.SalePrice.GetValueOrDefault());
-        var affordabilityScore = Math.Max(0, 100 - (double)(avgPrice / 10000000m)); // 100M = 0 score
+        var affordabilityScore = Math.Max(0, 100 - (double)(avgPrice / 10000000m));
 
-        // Infrastructure Score
         var totalProps = properties.Count;
         var wifiPct = (double)properties.Count(p => p.HasWifi) / totalProps * 100;
         var parkingPct = (double)properties.Count(p => p.HasParking) / totalProps * 100;
         var acPct = (double)properties.Count(p => p.HasAirConditioning) / totalProps * 100;
         var infrastructureScore = (wifiPct + parkingPct + acPct) / 3;
 
-        // Connectivity Score
         var metroPct = (double)properties.Count(p => p.HasMetroNearby) / totalProps * 100;
         var busPct = (double)properties.Count(p => p.HasBusStop) / totalProps * 100;
         var connectivityScore = (metroPct * 1.5 + busPct) / 2.5;
 
-        // Amenities Score
         var marketPct = (double)properties.Count(p => p.HasMarketNearby) / totalProps * 100;
         var schoolPct = (double)properties.Count(p => p.HasSchoolNearby) / totalProps * 100;
         var hospitalPct = (double)properties.Count(p => p.HasHospitalNearby) / totalProps * 100;
         var amenitiesScore = (marketPct + schoolPct + hospitalPct) / 3;
 
-        // Growth Potential (based on views trend - simplified)
         var avgViews = properties.Average(p => p.ViewsCount);
-        var growthScore = Math.Min(100, avgViews / 5); // More views = higher growth potential
+        var growthScore = Math.Min(100, avgViews / 5);
 
-        // Safety Score (based on rating)
         var avgRating = properties.Average(p => p.AverageRating);
         var safetyScore = (double)avgRating * 20;
 
-        var overallScore = (affordabilityScore + infrastructureScore + connectivityScore + 
+        var overallScore = (affordabilityScore + infrastructureScore + connectivityScore +
                            amenitiesScore + growthScore + safetyScore) / 6;
 
         var verdict = overallScore switch
@@ -908,7 +846,7 @@ public class AnalyticsService : IAnalyticsService
             _ => "🔴 Tavsiya etilmaydi"
         };
 
-        var investmentOutlook = growthScore > 70 
+        var investmentOutlook = growthScore > 70
             ? "📈 Yuqori o'sish potensiali - Narxlarni oshishi kutilmoqda"
             : growthScore > 50
             ? "📊 Barqaror bozor - Xavfsiz investitsiya"
@@ -930,14 +868,10 @@ public class AnalyticsService : IAnalyticsService
         };
     }
 
-    /// <summary>
-    /// Get detailed insights about a location
-    /// </summary>
     public async Task<List<LocationInsight>> GetLocationInsightsAsync(string region, string district)
     {
         var insights = new List<LocationInsight>();
-        
-        // Parse region string to enum
+
         UzbekistanRegion? regionEnum = null;
         if (!string.IsNullOrEmpty(region))
         {
@@ -950,7 +884,7 @@ public class AnalyticsService : IAnalyticsService
 
         var query = this.storageBroker.Properties
             .Where(p => !p.DeletedDate.HasValue && p.District == district);
-        
+
         if (regionEnum.HasValue)
         {
             query = query.Where(p => p.Region == regionEnum.Value);
@@ -967,7 +901,6 @@ public class AnalyticsService : IAnalyticsService
         var schoolCount = properties.Count(p => p.HasSchoolNearby);
         var marketCount = properties.Count(p => p.HasMarketNearby);
 
-        // Pros
         if (metroCount > properties.Count / 3)
             insights.Add(new LocationInsight { Type = "Pro", Title = "Metro yaqinligi", Description = "Hududning 30%+ metroga yaqin", ImpactScore = 8 });
 
@@ -980,7 +913,6 @@ public class AnalyticsService : IAnalyticsService
         if (avgRating > 4.0m)
             insights.Add(new LocationInsight { Type = "Pro", Title = "Yuqori reyting", Description = "Aholining mavjud mulklardan mamnun", ImpactScore = 7 });
 
-        // Cons
         if (metroCount < 5)
             insights.Add(new LocationInsight { Type = "Con", Title = "Uzoq transport", Description = "Metro stansiyalari uzoq", ImpactScore = -6 });
 
@@ -990,23 +922,19 @@ public class AnalyticsService : IAnalyticsService
         if (avgRating < 3.0m)
             insights.Add(new LocationInsight { Type = "Con", Title = "Past sifat", Description = "Mavjud mulklar past reytingli", ImpactScore = -7 });
 
-        // Facts
         insights.Add(new LocationInsight { Type = "Fact", Title = "O'rtacha narx", Description = $"{avgPrice:N0} so'm", ImpactScore = 0 });
         insights.Add(new LocationInsight { Type = "Fact", Title = "Jami e'lonlar", Description = $"{properties.Count} ta mulk", ImpactScore = 0 });
 
         return insights.OrderByDescending(i => Math.Abs(i.ImpactScore)).ToList();
     }
 
-    /// <summary>
-    /// Compare multiple districts
-    /// </summary>
     public async Task<object> GetDistrictComparisonAsync(string[] districts)
     {
         var results = new List<object>();
 
         foreach (var district in districts)
         {
-            var score = await GetLocationScoreAsync("Toshkent", district); // Default to Toshkent
+            var score = await GetLocationScoreAsync("Toshkent", district);
             var insights = await GetLocationInsightsAsync("Toshkent", district);
 
             results.Add(new
@@ -1028,9 +956,6 @@ public class AnalyticsService : IAnalyticsService
 
     #region Price Intelligence
 
-    /// <summary>
-    /// Predict property price based on market data and features
-    /// </summary>
     public async Task<PricePrediction> PredictPriceAsync(Guid propertyId)
     {
         var property = await this.storageBroker.Properties
@@ -1055,7 +980,6 @@ public class AnalyticsService : IAnalyticsService
         if (property == null)
             throw new Exception("Property not found");
 
-        // Get comparable sales
         var comparables = await this.storageBroker.Properties
             .Where(p => !p.DeletedDate.HasValue && p.District == property.District)
             .Where(p => p.Type == property.Type)
@@ -1081,13 +1005,11 @@ public class AnalyticsService : IAnalyticsService
             };
         }
 
-        // Base price per sqm
         var avgPricePerSqm = comparables.Where(c => c.Area > 0)
             .Average(c => c.SalePrice.GetValueOrDefault() / (decimal)c.Area);
 
         var basePrice = avgPricePerSqm * (decimal)property.Area;
 
-        // Adjustments
         var factors = new List<PriceFactor>();
         var adjustments = 0m;
 
@@ -1120,9 +1042,8 @@ public class AnalyticsService : IAnalyticsService
         }
 
         var predictedPrice = basePrice + adjustments;
-        var confidence = Math.Min(95, 40 + comparables.Count * 5); // More comparables = higher confidence
+        var confidence = Math.Min(95, 40 + comparables.Count * 5);
 
-        // Calculate range (±10% based on confidence)
         var rangePercent = (100 - confidence) / 10;
         var minPrice = predictedPrice * (1 - rangePercent / 100);
         var maxPrice = predictedPrice * (1 + rangePercent / 100);
@@ -1139,12 +1060,8 @@ public class AnalyticsService : IAnalyticsService
         };
     }
 
-    /// <summary>
-    /// Forecast future price trends for a location
-    /// </summary>
     public async Task<PriceTrendForecast> GetPriceForecastAsync(string region, string district, int months = 6)
     {
-        // Parse region string to enum
         UzbekistanRegion? regionEnum = null;
         if (!string.IsNullOrEmpty(region))
         {
@@ -1155,15 +1072,14 @@ public class AnalyticsService : IAnalyticsService
             }
         }
 
-        // Get historical data
         var query = this.storageBroker.Properties
             .Where(p => !p.DeletedDate.HasValue && p.District == district);
-        
+
         if (regionEnum.HasValue)
         {
             query = query.Where(p => p.Region == regionEnum.Value);
         }
-        
+
         var historicalData = await query
             .Where(p => p.SalePrice.HasValue && p.SalePrice > 0)
             .Where(p => p.CreatedDate >= DateTimeOffset.UtcNow.AddMonths(-6))
@@ -1189,12 +1105,10 @@ public class AnalyticsService : IAnalyticsService
             };
         }
 
-        // Calculate trend
         var firstMonth = historicalData.First();
         var lastMonth = historicalData.Last();
         var overallTrendPercent = (double)((lastMonth.AvgPrice - firstMonth.AvgPrice) / firstMonth.AvgPrice * 100);
 
-        // Generate forecast
         var forecasts = new List<MonthlyForecast>();
         var currentPrice = lastMonth.AvgPrice;
         var monthlyChange = overallTrendPercent / historicalData.Count;
@@ -1204,13 +1118,13 @@ public class AnalyticsService : IAnalyticsService
             var forecastDate = DateTimeOffset.UtcNow.AddMonths(i);
             var predictedChange = monthlyChange * i;
             var predictedPrice = currentPrice * (1 + (decimal)predictedChange / 100);
-            
+
             forecasts.Add(new MonthlyForecast
             {
                 Month = $"{forecastDate:yyyy-MM}",
                 PredictedAvgPrice = predictedPrice,
                 ChangePercent = predictedChange,
-                Confidence = Math.Max(50, 90 - i * 5) // Confidence decreases over time
+                Confidence = Math.Max(50, 90 - i * 5)
             });
         }
 

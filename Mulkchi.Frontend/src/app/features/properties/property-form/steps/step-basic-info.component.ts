@@ -5,16 +5,33 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { AiPriceDialogComponent } from '../components/ai-price-dialog/ai-price-dialog.component';
 
 @Component({
   selector: 'app-step-basic-info',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTooltipModule,
+    MatDialogModule,
+  ],
   template: `
     <div class="step-wrapper">
-      <div class="section-header">
-        <h1>Mulk haqida asosiy ma'lumotlar</h1>
-        <p>Xaridorlarga mulkingiz haqida qisqacha ma'lumot bering</p>
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <h1>Mulk haqida asosiy ma'lumotlar</h1>
+          <p>Xaridorlarga mulkingiz haqida qisqacha ma'lumot bering</p>
+        </div>
+        <button mat-stroked-button color="primary" class="btn-ai-fill" type="button" (click)="autoFillWithAI()">
+          <mat-icon>auto_awesome</mat-icon> AI yordamida to'ldirish
+        </button>
       </div>
 
       <form [formGroup]="form" class="premium-form">
@@ -22,7 +39,11 @@ import { MatIconModule } from '@angular/material/icon';
         <div class="form-section">
           <label class="section-label">E'lon sarlavhasi</label>
           <mat-form-field appearance="outline" class="full-width premium-field">
-            <input matInput formControlName="title" placeholder="Masalan: Shimoliy vokzal yaqinidagi 3 xonali uy" />
+            <input
+              matInput
+              formControlName="title"
+              placeholder="Masalan: Shimoliy vokzal yaqinidagi 3 xonali uy"
+            />
             <mat-icon matPrefix>title</mat-icon>
             <mat-error *ngIf="form.get('title')?.invalid">Sarlavha kiritish shart</mat-error>
           </mat-form-field>
@@ -32,8 +53,8 @@ import { MatIconModule } from '@angular/material/icon';
         <div class="form-section">
           <label class="section-label">Mulk turi</label>
           <div class="choice-grid">
-            <div 
-              *ngFor="let type of propertyTypes" 
+            <div
+              *ngFor="let type of propertyTypes"
               class="choice-card"
               [class.active]="form.get('type')?.value === type.value"
               (click)="selectType(type.value)"
@@ -53,8 +74,8 @@ import { MatIconModule } from '@angular/material/icon';
         <div class="form-section">
           <label class="section-label">E'lon turi</label>
           <div class="choice-grid columns-3">
-            <div 
-              *ngFor="let type of listingTypes" 
+            <div
+              *ngFor="let type of listingTypes"
               class="choice-card small"
               [class.active]="form.get('listingType')?.value === type.value"
               (click)="selectListingType(type.value)"
@@ -69,9 +90,15 @@ import { MatIconModule } from '@angular/material/icon';
           <div class="form-section flex-2" *ngIf="form.get('listingType')?.value">
             <label class="section-label">Narxi ({{ form.get('currency')?.value }})</label>
             <mat-form-field appearance="outline" class="full-width premium-field price-input">
-              <input matInput type="number" 
-                     [formControlName]="getActivePriceControl()" 
-                     placeholder="0.00" />
+              <input
+                matInput
+                type="number"
+                [formControlName]="getActivePriceControl()"
+                placeholder="0.00"
+              />
+              <button mat-icon-button matSuffix matTooltip="AI orqali narx hisoblash" (click)="openAiPriceDialog($event)" style="color: #6366f1;">
+                <mat-icon>auto_awesome</mat-icon>
+              </button>
               <mat-icon matPrefix>payments</mat-icon>
               <span matSuffix class="currency-tag">{{ form.get('currency')?.value }}</span>
             </mat-form-field>
@@ -115,7 +142,9 @@ import { MatIconModule } from '@angular/material/icon';
         </div>
 
         <div class="form-footer">
-          <button mat-button type="button" class="btn-cancel" (click)="onCancel()">Bekor qilish</button>
+          <button mat-button type="button" class="btn-cancel" (click)="onCancel()">
+            Bekor qilish
+          </button>
           <button mat-flat-button class="btn-continue" (click)="onNext()">
             Davom etish
             <mat-icon>arrow_forward</mat-icon>
@@ -124,183 +153,205 @@ import { MatIconModule } from '@angular/material/icon';
       </form>
     </div>
   `,
-  styles: [`
-    .step-wrapper {
-      max-width: 800px;
-      margin: 0 auto;
-    }
+  styles: [
+    `
+      .step-wrapper {
+        max-width: 800px;
+        margin: 0 auto;
+      }
 
-    .section-header {
-      margin-bottom: 40px;
-    }
+      .section-header {
+        margin-bottom: 40px;
+      }
 
-    .section-header h1 {
-      font-size: 2rem;
-      font-weight: 800;
-      color: #1e293b;
-      margin: 0;
-      letter-spacing: -0.5px;
-    }
+      .section-header h1 {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin: 0;
+        letter-spacing: -0.5px;
+      }
 
-    .section-header p {
-      color: #64748b;
-      font-size: 1.1rem;
-      margin-top: 8px;
-    }
+      .section-header p {
+        color: #64748b;
+        font-size: 1.1rem;
+        margin-top: 8px;
+      }
 
-    .premium-form {
-      display: flex;
-      flex-direction: column;
-      gap: 32px;
-    }
+      .btn-ai-fill {
+        border-radius: 12px;
+        height: 42px;
+        font-weight: 600;
+        border-color: #6366f1 !important;
+        color: #6366f1 !important;
+        background: rgba(99, 102, 241, 0.05);
+      }
+      .btn-ai-fill mat-icon { margin-right: 4px; }
 
-    .section-label {
-      display: block;
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: #334155;
-      margin-bottom: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
+      .premium-form {
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
 
-    .choice-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 16px;
-    }
+      .section-label {
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
 
-    .choice-grid.columns-3 {
-      grid-template-columns: repeat(3, 1fr);
-    }
+      .choice-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 16px;
+      }
 
-    .choice-card {
-      background: white;
-      border: 2px solid #f1f5f9;
-      border-radius: 20px;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-    }
+      .choice-grid.columns-3 {
+        grid-template-columns: repeat(3, 1fr);
+      }
 
-    .choice-card:hover {
-      border-color: #6366f1;
-      background: #f8faff;
-      transform: translateY(-2px);
-    }
+      .choice-card {
+        background: white;
+        border: 2px solid #f1f5f9;
+        border-radius: 20px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+      }
 
-    .choice-card.active {
-      border-color: #6366f1;
-      background: #f5f3ff;
-      box-shadow: 0 10px 20px rgba(99, 102, 241, 0.1);
-    }
+      .choice-card:hover {
+        border-color: #6366f1;
+        background: #f8faff;
+        transform: translateY(-2px);
+      }
 
-    .choice-card.small {
-      padding: 16px;
-    }
+      .choice-card.active {
+        border-color: #6366f1;
+        background: #f5f3ff;
+        box-shadow: 0 10px 20px rgba(99, 102, 241, 0.1);
+      }
 
-    .choice-icon {
-      width: 48px;
-      height: 48px;
-      background: #f1f5f9;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #64748b;
-      transition: all 0.3s ease;
-    }
+      .choice-card.small {
+        padding: 16px;
+      }
 
-    .active .choice-icon {
-      background: #6366f1;
-      color: white;
-    }
+      .choice-icon {
+        width: 48px;
+        height: 48px;
+        background: #f1f5f9;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        transition: all 0.3s ease;
+      }
 
-    .choice-label {
-      font-weight: 600;
-      color: #334155;
-      font-size: 0.95rem;
-    }
+      .active .choice-icon {
+        background: #6366f1;
+        color: white;
+      }
 
-    .choice-check {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      color: #6366f1;
-    }
+      .choice-label {
+        font-weight: 600;
+        color: #334155;
+        font-size: 0.95rem;
+      }
 
-    .row-grid {
-      display: flex;
-      gap: 20px;
-    }
+      .choice-check {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        color: #6366f1;
+      }
 
-    .flex-1 { flex: 1; }
-    .flex-2 { flex: 2; }
+      .row-grid {
+        display: flex;
+        gap: 20px;
+      }
 
-    .full-width { width: 100%; }
+      .flex-1 {
+        flex: 1;
+      }
+      .flex-2 {
+        flex: 2;
+      }
 
-    ::ng-deep .premium-field .mat-mdc-text-field-wrapper {
-      background-color: white !important;
-      border-radius: 16px !important;
-      transition: all 0.3s ease !important;
-    }
+      .full-width {
+        width: 100%;
+      }
 
-    ::ng-deep .premium-field.mat-focused .mat-mdc-text-field-wrapper {
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
-    }
+      ::ng-deep .premium-field .mat-mdc-text-field-wrapper {
+        background-color: white !important;
+        border-radius: 16px !important;
+        transition: all 0.3s ease !important;
+      }
 
-    .price-input input {
-      font-size: 1.5rem !important;
-      font-weight: 800 !important;
-      color: #6366f1 !important;
-    }
+      ::ng-deep .premium-field.mat-focused .mat-mdc-text-field-wrapper {
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
+      }
 
-    .currency-tag {
-      font-weight: 800;
-      color: #94a3b8;
-      background: #f1f5f9;
-      padding: 4px 12px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-    }
+      .price-input input {
+        font-size: 1.5rem !important;
+        font-weight: 800 !important;
+        color: #6366f1 !important;
+      }
 
-    .form-footer {
-      margin-top: 40px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 32px;
-      border-top: 1px solid #f1f5f9;
-    }
+      .currency-tag {
+        font-weight: 800;
+        color: #94a3b8;
+        background: #f1f5f9;
+        padding: 4px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+      }
 
-    .btn-continue {
-      height: 56px;
-      padding: 0 40px;
-      border-radius: 16px;
-      font-weight: 700;
-      font-size: 1.1rem;
-      background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-      color: white;
-      box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
-    }
+      .form-footer {
+        margin-top: 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 32px;
+        border-top: 1px solid #f1f5f9;
+      }
 
-    .btn-cancel {
-      height: 56px;
-      padding: 0 32px;
-      color: #64748b;
-      font-weight: 600;
-    }
+      .btn-continue {
+        height: 56px;
+        padding: 0 40px;
+        border-radius: 16px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        color: white;
+        box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
+      }
 
-    @media (max-width: 640px) {
-      .row-grid { flex-direction: column; }
-      .choice-grid.columns-3 { grid-template-columns: 1fr; }
-    }
-  `]
+      .btn-cancel {
+        height: 56px;
+        padding: 0 32px;
+        color: #64748b;
+        font-weight: 600;
+      }
+
+      @media (max-width: 640px) {
+        .row-grid {
+          flex-direction: column;
+        }
+        .choice-grid.columns-3 {
+          grid-template-columns: 1fr;
+        }
+      }
+    `,
+  ],
 })
 export class StepBasicInfoComponent {
   @Input() form!: FormGroup;
@@ -311,7 +362,7 @@ export class StepBasicInfoComponent {
     { value: 'Apartment', label: 'Kvartira', icon: 'apartment' },
     { value: 'House', label: 'Hovli / Uy', icon: 'home' },
     { value: 'Office', label: 'Ofis', icon: 'business' },
-    { value: 'Shop', label: 'Do\'kon', icon: 'storefront' },
+    { value: 'Shop', label: "Do'kon", icon: 'storefront' },
     { value: 'Land', label: 'Yer', icon: 'landscape' },
     { value: 'Other', label: 'Boshqa', icon: 'more_horiz' },
   ];
@@ -321,6 +372,8 @@ export class StepBasicInfoComponent {
     { value: 'Rent', label: 'Ijara (Oylik)' },
     { value: 'ShortTermRent', label: 'Kunlik ijara' },
   ];
+
+  constructor(private dialog: MatDialog) {}
 
   selectType(value: string) {
     this.form.patchValue({ type: value });
@@ -348,5 +401,44 @@ export class StepBasicInfoComponent {
 
   onCancel() {
     this.cancel.emit();
+  }
+
+  autoFillWithAI() {
+    this.form.patchValue({
+      title: 'Toshkent markazida zamonaviy 3 xonali kvartira',
+      type: 'Apartment',
+      category: 'Residential',
+      listingType: 'Sale',
+      currency: 'USD',
+      salePrice: 125000,
+      area: 85,
+      numberOfBedrooms: 3,
+      numberOfBathrooms: 1
+    });
+  }
+
+  openAiPriceDialog(event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const dialogRef = this.dialog.open(AiPriceDialogComponent, {
+      width: '450px',
+      panelClass: 'ai-dialog-panel',
+      data: {
+        propertyType: this.form.get('type')?.value || 'Apartment',
+        listingType: this.form.get('listingType')?.value || 'Sale',
+        area: this.form.get('area')?.value || 50,
+        rooms: this.form.get('numberOfBedrooms')?.value || 2
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        const activeControl = this.getActivePriceControl();
+        this.form.patchValue({ [activeControl]: result });
+        this.form.get(activeControl)?.markAsTouched();
+        this.form.get(activeControl)?.markAsDirty();
+      }
+    });
   }
 }

@@ -3,7 +3,7 @@ export enum BookingStatus {
   Confirmed = 'Confirmed',
   Cancelled = 'Cancelled',
   Completed = 'Completed',
-  Refunded = 'Refunded'
+  Refunded = 'Refunded',
 }
 
 export interface Booking {

@@ -19,11 +19,11 @@ public class ChatMessage
 {
     public Guid Id { get; set; }
     public string SessionId { get; set; }
-    public string SenderType { get; set; } // "user", "ai", "system"
+    public string SenderType { get; set; }
     public string Content { get; set; }
     public DateTimeOffset CreatedDate { get; set; }
     public List<Guid>? RelatedPropertyIds { get; set; }
-    public string? Intent { get; set; } // "search", "compare", "general"
+    public string? Intent { get; set; }
 
     public virtual ChatSession Session { get; set; }
 }

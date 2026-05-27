@@ -63,7 +63,7 @@ namespace Mulkchi.Api.Controllers
 
                 IQueryable<SavedSearch> query = this.savedSearchService.RetrieveAllSavedSearches()
                     .Where(s => s.UserId == currentUserId);
-                    
+
                 int totalCount = query.Count();
 
                 var items = query
@@ -102,8 +102,7 @@ namespace Mulkchi.Api.Controllers
                     return Unauthorized();
 
                 SavedSearch savedSearch = await this.savedSearchService.RetrieveSavedSearchByIdAsync(id);
-                
-                // Check if user owns this saved search
+
                 if (savedSearch.UserId != currentUserId)
                     return Unauthorized();
 
@@ -142,7 +141,6 @@ namespace Mulkchi.Api.Controllers
                 if (userIdClaim == null || !Guid.TryParse(userIdClaim, out Guid currentUserId))
                     return Unauthorized();
 
-                // Check if user owns this saved search when entity is available
                 SavedSearch existingSearch = await this.savedSearchService.RetrieveSavedSearchByIdAsync(savedSearch.Id);
                 if (existingSearch is not null && existingSearch.UserId != currentUserId)
                     return Unauthorized();
@@ -185,8 +183,7 @@ namespace Mulkchi.Api.Controllers
                     return Unauthorized();
 
                 SavedSearch savedSearch = await this.savedSearchService.RetrieveSavedSearchByIdAsync(id);
-                
-                // Check if user owns this saved search
+
                 if (savedSearch.UserId != currentUserId)
                     return Unauthorized();
 
@@ -229,7 +226,6 @@ namespace Mulkchi.Api.Controllers
 
                 SavedSearch savedSearch = await this.savedSearchService.RetrieveSavedSearchByIdAsync(id);
 
-                // Check if user owns this saved search when entity is available
                 if (savedSearch is not null && savedSearch.UserId != currentUserId)
                     return Unauthorized();
 

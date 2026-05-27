@@ -73,7 +73,10 @@ interface AiPricePredictionView {
     trigger('slideUp', [
       transition(':enter', [
         style({ transform: 'translateY(20px)', opacity: 0 }),
-        animate('500ms cubic-bezier(0.35, 0, 0.25, 1)', style({ transform: 'translateY(0)', opacity: 1 })),
+        animate(
+          '500ms cubic-bezier(0.35, 0, 0.25, 1)',
+          style({ transform: 'translateY(0)', opacity: 1 }),
+        ),
       ]),
     ]),
   ],
@@ -93,7 +96,6 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
   similarRealProperties: Property[] = [];
   isLoadingSimilar = false;
 
-  // Form options
   regions = Object.values(UzbekistanRegion);
 
   propertyTypes = [
@@ -105,7 +107,6 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
 
   roomOptions = Array.from({ length: 10 }, (_, i) => i + 1);
 
-  // Reactive Form
   priceForm = this.fb.group({
     region: ['', Validators.required],
     propertyType: ['', Validators.required],
@@ -137,12 +138,18 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
     const viewModel = result as AiPricePredictionView;
     const area = Number(this.priceForm.value.area || 0) || 1;
     const price = viewModel.recommendedPrice || 0;
-    
-    // Fallbacks for missing fields in backend response
+
     const pricePerSqm = viewModel.pricePerSqm ?? Math.round(price / area);
-    const estimatedRent = viewModel.estimatedRent ?? (this.priceForm.value.listingType === 'Sale' ? Math.round(price * 0.007) : 0);
-    const roi = viewModel.roi ?? (this.priceForm.value.listingType === 'Sale' ? Number((((estimatedRent * 12) / Math.max(price, 1)) * 100).toFixed(1)) : 0);
-    const marketScore = viewModel.marketScore ?? Math.round(Math.min(95, 40 + (viewModel.confidence || 0) * 50));
+    const estimatedRent =
+      viewModel.estimatedRent ??
+      (this.priceForm.value.listingType === 'Sale' ? Math.round(price * 0.007) : 0);
+    const roi =
+      viewModel.roi ??
+      (this.priceForm.value.listingType === 'Sale'
+        ? Number((((estimatedRent * 12) / Math.max(price, 1)) * 100).toFixed(1))
+        : 0);
+    const marketScore =
+      viewModel.marketScore ?? Math.round(Math.min(95, 40 + (viewModel.confidence || 0) * 50));
 
     return {
       ...viewModel,
@@ -158,7 +165,6 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
-    // Clear any previous results
     this.aiService.clearResult();
   }
 
@@ -182,28 +188,29 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
         this.fetchSimilarProperties(request);
       },
       error: () => {
-        // Error is already shown in UI
       },
     });
   }
 
   fetchSimilarProperties(request: AIPriceRequest): void {
     this.isLoadingSimilar = true;
-    this.propertyService.searchProperties({
-      listingType: request.listingType as any,
-      propertyType: request.propertyType as any,
-      region: request.region as any,
-      location: request.region,
-      pageSize: 3
-    }).subscribe({
-      next: (res: any) => {
-        this.similarRealProperties = res.items || [];
-        this.isLoadingSimilar = false;
-      },
-      error: () => {
-        this.isLoadingSimilar = false;
-      }
-    });
+    this.propertyService
+      .searchProperties({
+        listingType: request.listingType as any,
+        propertyType: request.propertyType as any,
+        region: request.region as any,
+        location: request.region,
+        pageSize: 3,
+      })
+      .subscribe({
+        next: (res: any) => {
+          this.similarRealProperties = res.items || [];
+          this.isLoadingSimilar = false;
+        },
+        error: () => {
+          this.isLoadingSimilar = false;
+        },
+      });
   }
 
   navigateToProperty(id: string) {
@@ -215,7 +222,7 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
     if (rawUrl) {
       return this.imageOptimizationService.getOptimizedImage(rawUrl, 600, 400);
     }
-    return `https://placehold.co/600x400/0f172a/c9a84c?text=Mulkchi`;
+    return 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop';
   }
 
   formatPrice(price: number | undefined): string {
@@ -223,15 +230,13 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
     return price.toLocaleString('uz-UZ');
   }
 
-  // Gauge helper methods
   getGaugeColor(confidence: number): string {
-    if (confidence >= 0.8) return '#10b981'; // Green
-    if (confidence >= 0.6) return '#f59e0b'; // Yellow
-    return '#ef4444'; // Red
+    if (confidence >= 0.8) return '#10b981';
+    if (confidence >= 0.6) return '#f59e0b';
+    return '#ef4444';
   }
 
   getGaugeOffset(confidence: number): number {
-    // 251.2 is the length of the arc (π * 80)
     return 251.2 - 251.2 * confidence;
   }
 
@@ -256,7 +261,6 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
     return "Bozor o'rtachasidan past narxda — juda qulay!";
   }
 
-  // Comparison methods
   getComparisonPercentage(): number {
     const result = this.prediction;
     if (!result) return 0;
@@ -265,7 +269,6 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
 
   getComparisonBarValue(): number {
     const percentage = this.getComparisonPercentage();
-    // Normalize to 0-100 range, where 50 is market average
     return Math.max(0, Math.min(100, 50 + percentage));
   }
 
@@ -275,7 +278,6 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
       : "⚠ Bozor o'rtachasidan yuqori narxdasiz";
   }
 
-  // Price per sqm calculation
   getPricePerSqm(): number {
     const result = this.prediction;
     const area = this.priceForm.value.area;
@@ -283,7 +285,6 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
     return Math.round((result.recommendedPrice || 0) / area);
   }
 
-  // Factor breakdown helpers
   getFactorKeys(): string[] {
     const result = this.prediction;
     if (!result?.factorBreakdown) return [];
@@ -306,7 +307,6 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
     const regionalData = this.aiService.priceResult()?.regionalData;
     if (!regionalData || regionalData.length === 0) return;
 
-    // Destroy existing chart
     if (this.chart) {
       this.chart.destroy();
     }
@@ -320,7 +320,7 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
         labels: regionalData.map((d) => d.region),
         datasets: [
           {
-            label: "O'rtacha narx (UZS)",
+            label: "O'rtacha narx",
             data: regionalData.map((d) => d.averagePrice),
             backgroundColor: 'rgba(102, 126, 234, 0.8)',
             borderColor: 'rgba(102, 126, 234, 1)',
@@ -339,7 +339,7 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
           tooltip: {
             callbacks: {
               label: (context) => {
-                return this.formatPrice(context.raw as number) + ' UZS';
+                return this.formatPrice(context.raw as number) + ' ' + (this.prediction?.currency || 'USD');
               },
             },
           },

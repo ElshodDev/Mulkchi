@@ -15,7 +15,6 @@ public class TelegramAuthService : ITelegramAuthService
     private readonly IConfiguration _configuration;
     private readonly ILogger<TelegramAuthService> _logger;
 
-    // In-memory session storage (Redis yo'q bo'lsa)
     private static readonly ConcurrentDictionary<string, TelegramSession> _sessions = new();
 
     public TelegramAuthService(
@@ -32,15 +31,12 @@ public class TelegramAuthService : ITelegramAuthService
         _logger = logger;
     }
 
-    /// <summary>
-    /// Telegram login ni boshlash - deep link va session yaratish
-    /// </summary>
     public Task<TelegramInitResponse> InitiateLoginAsync()
     {
         var sessionId = GenerateSessionId();
         var code = GenerateOtpCode();
         var botUsername = _configuration["TelegramAuth:BotUsername"];
-        
+
         if (string.IsNullOrWhiteSpace(botUsername))
         {
             _logger.LogError("TelegramAuth:BotUsername konfiguratsiyada topilmadi");
@@ -58,7 +54,6 @@ public class TelegramAuthService : ITelegramAuthService
 
         _sessions.TryAdd(sessionId, session);
 
-        // 10 daqiqadan keyin session ni o'chirish
         _ = Task.Run(async () =>
         {
             await Task.Delay(TimeSpan.FromMinutes(10));
@@ -78,9 +73,6 @@ public class TelegramAuthService : ITelegramAuthService
         });
     }
 
-    /// <summary>
-    /// Session status ni tekshirish (frontend polling uchun)
-    /// </summary>
     public Task<TelegramSessionStatus> CheckSessionStatusAsync(string sessionId)
     {
         if (!_sessions.TryGetValue(sessionId, out var session))
@@ -102,7 +94,6 @@ public class TelegramAuthService : ITelegramAuthService
 
         if (session.IsVerified && session.TelegramChatId.HasValue)
         {
-            // User allaqachon tasdiqlangan - tokenlarni qaytarish
             var user = session.User;
             if (user != null)
             {
@@ -131,9 +122,6 @@ public class TelegramAuthService : ITelegramAuthService
         });
     }
 
-    /// <summary>
-    /// Telegram bot dan kelgan update ni qayta ishlash
-    /// </summary>
     public async Task HandleBotUpdateAsync(TelegramUpdate update)
     {
         if (update?.Message?.Text == null)
@@ -143,7 +131,6 @@ public class TelegramAuthService : ITelegramAuthService
         var chatId = update.Message.Chat.Id;
         var telegramUser = update.Message.From;
 
-        // /start command with session ID
         if (text.StartsWith("/start ", StringComparison.OrdinalIgnoreCase))
         {
             var sessionId = text.Substring(7).Trim();
@@ -151,14 +138,12 @@ public class TelegramAuthService : ITelegramAuthService
         }
         else if (text.Equals("/start", StringComparison.OrdinalIgnoreCase))
         {
-            // Oddiy /start - bot haqida ma'lumot
             await _telegramBroker.SendMessageAsync(chatId,
                 "👋 <b>Mulkchi</b> ga xush kelibsiz!\n\n" +
                 "🔑 Ro'yxatdan o'tish uchun saytdagi Telegram login tugmasini bosing.");
         }
         else
         {
-            // Kodni tekshirish (6 xonali OTP)
             if (text.Length == 6 && text.All(char.IsDigit))
             {
                 await HandleOtpCodeAsync(text, chatId);
@@ -175,12 +160,10 @@ public class TelegramAuthService : ITelegramAuthService
             return;
         }
 
-        // Avval bu Telegram ID bilan user borligini tekshirish
         var existingUser = await _storageBroker.SelectUserByTelegramIdAsync(telegramUser.Id);
 
         if (existingUser != null)
         {
-            // User allaqachon mavjud - faqat TelegramId ni yangilash va kiritish
             session.TelegramChatId = chatId;
             session.IsVerified = true;
             session.User = existingUser;
@@ -194,7 +177,6 @@ public class TelegramAuthService : ITelegramAuthService
         }
         else
         {
-            // Yangi user - OTP kod yuborish
             session.TelegramChatId = chatId;
 
             await _telegramBroker.SendOtpCodeAsync(chatId, session.Code);
@@ -206,7 +188,6 @@ public class TelegramAuthService : ITelegramAuthService
 
     private async Task HandleOtpCodeAsync(string code, long chatId)
     {
-        // Session ni topish (telegramChatId bo'yicha)
         var session = _sessions.Values.FirstOrDefault(s =>
             s.TelegramChatId == chatId && s.Code == code && !s.IsVerified);
 
@@ -217,10 +198,9 @@ public class TelegramAuthService : ITelegramAuthService
             return;
         }
 
-        // Kod to'g'ri - user yaratish
         var telegramUser = new TelegramUser
         {
-            Id = chatId, // Simplified - real implementation would store more info
+            Id = chatId,
             FirstName = "Telegram",
             LastName = "User"
         };
@@ -230,13 +210,13 @@ public class TelegramAuthService : ITelegramAuthService
             Id = Guid.NewGuid(),
             FirstName = telegramUser.FirstName,
             LastName = telegramUser.LastName,
-            Email = $"tg_{chatId}@mulkchi.uz", // Temporary email
+            Email = $"tg_{chatId}@mulkchi.uz",
             TelegramId = chatId,
             Role = UserRole.Guest,
             CurrentMode = UserRole.Guest,
             CreatedDate = DateTimeOffset.UtcNow,
             UpdatedDate = DateTimeOffset.UtcNow,
-            EmailConfirmed = true // Telegram orqali avtomatik tasdiqlangan
+            EmailConfirmed = true
         };
 
         await _storageBroker.InsertUserAsync(user);
@@ -251,9 +231,6 @@ public class TelegramAuthService : ITelegramAuthService
         _logger.LogInformation("Telegram orqali yangi user yaratildi. UserId: {UserId}", user.Id);
     }
 
-    /// <summary>
-    /// OTP kod yuborish (bot orqali)
-    /// </summary>
     public Task SendOtpCodeAsync(long chatId, string code)
     {
         return _telegramBroker.SendOtpCodeAsync(chatId, code);
@@ -261,14 +238,12 @@ public class TelegramAuthService : ITelegramAuthService
 
     private static string GenerateSessionId()
     {
-        // 32 ta hexadecimal belgi (128 bit)
         var bytes = RandomNumberGenerator.GetBytes(16);
         return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 
     private static string GenerateOtpCode()
     {
-        // 6 xonali tasodifiy kod
         return RandomNumberGenerator.GetInt32(100000, 999999).ToString();
     }
 }

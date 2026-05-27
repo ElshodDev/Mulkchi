@@ -63,7 +63,12 @@ import { ToastService } from '../../../core/services/toast.service';
               </div>
             }
 
-            <button mat-flat-button type="submit" class="submit-button" [disabled]="submitDisabled()">
+            <button
+              mat-flat-button
+              type="submit"
+              class="submit-button"
+              [disabled]="submitDisabled()"
+            >
               @if (isLoading()) {
                 <mat-progress-spinner diameter="18" mode="indeterminate"></mat-progress-spinner>
                 <span>Yuborilyapti...</span>
@@ -78,7 +83,9 @@ import { ToastService } from '../../../core/services/toast.service';
               <mat-icon>mark_email_read</mat-icon>
             </div>
             <h2>Email yuborildi</h2>
-            <p>Spam papkasini ham tekshirib ko‘ring. Havola odatda bir necha soniyada yetib boradi.</p>
+            <p>
+              Spam papkasini ham tekshirib ko‘ring. Havola odatda bir necha soniyada yetib boradi.
+            </p>
             <a mat-flat-button routerLink="/auth/login">Kirish sahifasiga qaytish</a>
           </div>
         }
@@ -193,9 +200,7 @@ export class ForgotPasswordComponent {
   protected readonly isLoading = signal(false);
   protected readonly isSuccess = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
-  protected readonly submitDisabled = computed(
-    () => this.forgotForm.invalid || this.isLoading(),
-  );
+  protected readonly submitDisabled = computed(() => this.forgotForm.invalid || this.isLoading());
 
   protected async onSubmit(): Promise<void> {
     if (this.forgotForm.invalid) {

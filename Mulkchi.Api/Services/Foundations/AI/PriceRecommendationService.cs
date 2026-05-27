@@ -74,23 +74,22 @@ public class PriceRecommendationService : IPriceRecommendationService
         try
         {
             var properties = await GetTrainingDataAsync();
-            
+
             if (properties.Count < MIN_TRAINING_DATA)
             {
-                return; // Not enough data for training
+                return;
             }
 
             var trainingData = ConvertToTrainingData(properties);
             var pipeline = BuildTrainingPipeline();
-            
+
             model = pipeline.Fit(trainingData);
             predictionEngine = mlContext.Model.CreatePredictionEngine<PropertyPriceInput, PropertyPricePrediction>(model);
-            
+
             lastTrainedAt = DateTime.UtcNow;
         }
         catch (Exception ex)
         {
-            // Log error but don't throw - service should still work with rule-based predictions
             this.logger.LogWarning(ex, "Error training ML model");
         }
     }
@@ -101,15 +100,15 @@ public class PriceRecommendationService : IPriceRecommendationService
         {
             await TrainModelAsync();
         }
-        
+
         return model != null && predictionEngine != null;
     }
 
     public async Task<int> GetTrainingDataCountAsync()
     {
         var properties = await storageBroker.Properties
-            .Where(p => !p.DeletedDate.HasValue && 
-                       p.SalePrice.HasValue && 
+            .Where(p => !p.DeletedDate.HasValue &&
+                       p.SalePrice.HasValue &&
                        p.SalePrice > 0 &&
                        p.Area > 0)
             .ToListAsync();
@@ -120,8 +119,8 @@ public class PriceRecommendationService : IPriceRecommendationService
     private async Task<List<Property>> GetTrainingDataAsync()
     {
         return await storageBroker.Properties
-            .Where(p => !p.DeletedDate.HasValue && 
-                       p.SalePrice.HasValue && 
+            .Where(p => !p.DeletedDate.HasValue &&
+                       p.SalePrice.HasValue &&
                        p.SalePrice > 0 &&
                        p.Area > 0 &&
                        p.NumberOfBedrooms > 0 &&
@@ -152,7 +151,7 @@ public class PriceRecommendationService : IPriceRecommendationService
     private IEstimator<ITransformer> BuildTrainingPipeline()
     {
         var pipeline = mlContext.Transforms.Concatenate(
-            "Features", 
+            "Features",
             nameof(PropertyPriceInput.Area),
             nameof(PropertyPriceInput.Bedrooms),
             nameof(PropertyPriceInput.Bathrooms),
@@ -175,35 +174,28 @@ public class PriceRecommendationService : IPriceRecommendationService
 
     private PriceRecommendationResponse GetRuleBasedPrediction(PriceRecommendationRequest request)
     {
-        // Base price by region (USD per square meter)
         var basePricePerSqm = GetBasePriceByRegion(request.Region);
-        
-        // Calculate base price
+
         var basePrice = (decimal)request.Area * basePricePerSqm;
-        
-        // Apply multipliers
+
         var multiplier = 1.0m;
-        
-        // Bedroom adjustment
+
         if (request.Bedrooms >= 3) multiplier *= 1.1m;
         else if (request.Bedrooms == 1) multiplier *= 0.9m;
-        
-        // Bathroom adjustment
+
         if (request.Bathrooms >= 2) multiplier *= 1.05m;
-        
-        // Feature adjustments
+
         if (request.HasWifi) multiplier *= 1.02m;
         if (request.HasParking) multiplier *= 1.08m;
         if (request.HasPool) multiplier *= 1.15m;
         if (request.IsRenovated) multiplier *= 1.12m;
         if (request.HasElevator) multiplier *= 1.03m;
-        
-        // Distance adjustment (closer to city center is more expensive)
+
         if (request.DistanceToCityCenter < 2) multiplier *= 1.1m;
         else if (request.DistanceToCityCenter > 10) multiplier *= 0.95m;
-        
+
         var predictedPrice = basePrice * multiplier;
-        
+
         return new PriceRecommendationResponse
         {
             PredictedPrice = Math.Round(predictedPrice, 2),
@@ -220,13 +212,13 @@ public class PriceRecommendationService : IPriceRecommendationService
     {
         return region switch
         {
-            0 => 800m, // Tashkent
-            1 => 600m, // Samarkand
-            2 => 550m, // Bukhara
-            3 => 500m, // Fergana
-            4 => 450m, // Andijan
-            5 => 400m, // Namangan
-            6 => 350m, // Other regions
+            0 => 800m,
+            1 => 600m,
+            2 => 550m,
+            3 => 500m,
+            4 => 450m,
+            5 => 400m,
+            6 => 350m,
             _ => 500m
         };
     }
@@ -260,7 +252,7 @@ public class PriceRecommendationService : IPriceRecommendationService
     private string GenerateRecommendation(decimal predictedPrice, string confidence)
     {
         var priceRange = CalculatePriceRange(predictedPrice, confidence);
-        
+
         return confidence switch
         {
             "Low" => $"Bu hudud uchun taxminiy narx ${priceRange.Min:N0} - ${priceRange.Max:N0} oralig'ida (kam ma'lumot asosida)",

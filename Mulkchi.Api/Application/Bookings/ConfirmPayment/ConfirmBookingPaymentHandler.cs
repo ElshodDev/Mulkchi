@@ -76,7 +76,6 @@ public sealed class ConfirmBookingPaymentHandler : IConfirmBookingPaymentHandler
 
         try
         {
-            // Re-read inside serializable tx to block phantom reads and close race window.
             hold = await this.storageBroker.SelectBookingHoldByIdAsync(command.HoldId);
             if (hold is null || hold.ExpiresAt <= DateTimeOffset.UtcNow)
                 throw new InvalidOperationException("Hold is missing or expired.");

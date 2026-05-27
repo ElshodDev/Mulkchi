@@ -2,9 +2,6 @@ using System.Diagnostics;
 
 namespace Mulkchi.Api.Middleware;
 
-/// <summary>
-/// Middleware for logging HTTP requests and responses
-/// </summary>
 public class RequestLoggingMiddleware
 {
     private readonly RequestDelegate _next;

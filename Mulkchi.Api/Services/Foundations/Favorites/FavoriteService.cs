@@ -44,8 +44,7 @@ public partial class FavoriteService : IFavoriteService
             favorite.UpdatedDate = now;
 
             var addedFavorite = await this.storageBroker.InsertFavoriteAsync(favorite);
-            
-            // Increment FavoritesCount for the property
+
             try
             {
                 var property = await this.storageBroker.SelectPropertyByIdAsync(favorite.PropertyId);
@@ -75,8 +74,7 @@ public partial class FavoriteService : IFavoriteService
 
             if (maybeFavorite is null)
                 throw new NotFoundFavoriteException(favoriteId);
-            
-            // Check authorization: only user can access their own favorites
+
             var currentUserId = this.currentUserService.GetCurrentUserId();
             if (!currentUserId.HasValue || (!this.currentUserService.IsInRole("Admin") && maybeFavorite.UserId != currentUserId.Value))
             {
@@ -90,19 +88,17 @@ public partial class FavoriteService : IFavoriteService
         TryCatch(async () =>
         {
             ValidateFavoriteOnModify(favorite);
-            
-            // Get existing favorite to check ownership
+
             Favorite existingFavorite = await this.storageBroker.SelectFavoriteByIdAsync(favorite.Id);
             if (existingFavorite == null)
                 throw new NotFoundFavoriteException(favorite.Id);
-            
-            // Check authorization: only user can modify their own favorites
+
             var currentUserId = this.currentUserService.GetCurrentUserId();
             if (!currentUserId.HasValue || (!this.currentUserService.IsInRole("Admin") && existingFavorite.UserId != currentUserId.Value))
             {
                 throw new UnauthorizedAccessException("You can only modify your own favorites.");
             }
-            
+
             favorite.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
             return await this.storageBroker.UpdateFavoriteAsync(favorite);
         });
@@ -111,22 +107,19 @@ public partial class FavoriteService : IFavoriteService
         TryCatch(async () =>
         {
             ValidateFavoriteId(favoriteId);
-            
-            // Get existing favorite to check ownership
+
             Favorite existingFavorite = await this.storageBroker.SelectFavoriteByIdAsync(favoriteId);
             if (existingFavorite == null)
                 throw new NotFoundFavoriteException(favoriteId);
-            
-            // Check authorization: only user can delete their own favorites
+
             var currentUserId = this.currentUserService.GetCurrentUserId();
             if (!currentUserId.HasValue || (!this.currentUserService.IsInRole("Admin") && existingFavorite.UserId != currentUserId.Value))
             {
                 throw new UnauthorizedAccessException("You can only delete your own favorites.");
             }
-            
+
             var deletedFavorite = await this.storageBroker.DeleteFavoriteByIdAsync(favoriteId);
-            
-            // Decrement FavoritesCount for the property
+
             try
             {
                 var property = await this.storageBroker.SelectPropertyByIdAsync(existingFavorite.PropertyId);
@@ -142,7 +135,7 @@ public partial class FavoriteService : IFavoriteService
             {
                 this.loggingBroker.LogError(ex);
             }
-            
+
             return deletedFavorite;
         });
 }

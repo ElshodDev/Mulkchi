@@ -32,7 +32,7 @@ export interface User {
   isVerified: boolean;
   emailConfirmed: boolean;
   role: UserRole;
-  currentMode?: UserRole; // For Single Identity: Guest/Host switch
+  currentMode?: UserRole;
   badge: HostBadge;
   rating: number;
   responseRate: number;
@@ -55,7 +55,7 @@ export interface AuthResponse {
   lastName: string;
   avatarUrl?: string;
   role: UserRole;
-  currentMode?: UserRole; // Current active mode for Single Identity
+  currentMode?: UserRole;
 }
 
 export interface LoginRequest {
@@ -67,10 +67,10 @@ export interface RegisterRequest {
   firstName: string;
   lastName: string;
   email: string;
-  phone: string; // Required for backend
+  phone: string;
   password: string;
-  confirmPassword: string; // Frontend validation only
-  role?: UserRole; // Optional - defaults to Guest on backend
+  confirmPassword: string;
+  role?: UserRole;
 }
 
 export interface SwitchModeRequest {

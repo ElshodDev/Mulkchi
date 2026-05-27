@@ -21,7 +21,7 @@ namespace Mulkchi.Api.Migrations
                 table: "Users",
                 column: "TelegramId",
                 unique: true,
-                filter: "[TelegramId] IS NOT NULL");
+                filter: "\"TelegramId\" IS NOT NULL");
         }
 
         /// <inheritdoc />

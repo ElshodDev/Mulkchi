@@ -3,14 +3,14 @@ namespace Mulkchi.Api.Models.Foundations.Subscriptions;
 public class SubscriptionPlan
 {
     public Guid Id { get; set; }
-    public string Name { get; set; } // Free, Standard, Premium, Agent
+    public string Name { get; set; }
     public string NameUz { get; set; }
     public string NameRu { get; set; }
     public string Description { get; set; }
     public string DescriptionUz { get; set; }
     public string DescriptionRu { get; set; }
     public decimal MonthlyPrice { get; set; }
-    public int MaxListings { get; set; } // -1 = unlimited
+    public int MaxListings { get; set; }
     public int MonthlyBoosts { get; set; }
     public bool HasAnalytics { get; set; }
     public bool HasFeaturedPlacement { get; set; }

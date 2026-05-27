@@ -12,7 +12,7 @@ namespace Mulkchi.Api.Models.Foundations.Properties
         public ListingType? ListingType { get; set; }
         public Currency? Currency { get; set; }
         public PropertyType? PropertyType { get; set; }
-        
+
         public string? SearchQuery { get; set; }
         public string? SortBy { get; set; }
         public bool SortDescending { get; set; } = true;
@@ -25,7 +25,7 @@ namespace Mulkchi.Api.Models.Foundations.Properties
         public double? MinArea { get; set; }
         public double? MaxArea { get; set; }
         public int? MaxGuests { get; set; }
-        
+
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 10;
     }

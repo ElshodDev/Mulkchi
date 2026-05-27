@@ -31,7 +31,6 @@ public sealed class ExpiredBookingHoldCleanupService : BackgroundService
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
-                // graceful shutdown
             }
             catch (Exception ex)
             {

@@ -1,4 +1,14 @@
-import { AfterViewChecked, Component, DestroyRef, ElementRef, OnInit, inject, signal, viewChild, computed } from '@angular/core';
+import {
+  AfterViewChecked,
+  Component,
+  DestroyRef,
+  ElementRef,
+  OnInit,
+  inject,
+  signal,
+  viewChild,
+  computed,
+} from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatMenuModule } from '@angular/material/menu';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -37,7 +47,7 @@ import { ConversationCardComponent } from './components/conversation-card/conver
     MatTooltipModule,
     MatSnackBarModule,
     MatMenuModule,
-    ConversationCardComponent
+    ConversationCardComponent,
   ],
   templateUrl: './messages.component.html',
   styleUrl: './messages.component.css',
@@ -45,31 +55,37 @@ import { ConversationCardComponent } from './components/conversation-card/conver
     trigger('fadeIn', [
       transition(':enter', [
         style({ opacity: 0, transform: 'translateY(10px)' }),
-        animate('400ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
-      ])
+        animate(
+          '400ms cubic-bezier(0.4, 0, 0.2, 1)',
+          style({ opacity: 1, transform: 'translateY(0)' }),
+        ),
+      ]),
     ]),
     trigger('slideIn', [
       transition(':enter', [
         style({ transform: 'translateY(-100%)', opacity: 0 }),
-        animate('300ms ease-out', style({ transform: 'translateY(0)', opacity: 1 }))
+        animate('300ms ease-out', style({ transform: 'translateY(0)', opacity: 1 })),
       ]),
       transition(':leave', [
-        animate('200ms ease-in', style({ transform: 'translateY(-100%)', opacity: 0 }))
-      ])
+        animate('200ms ease-in', style({ transform: 'translateY(-100%)', opacity: 0 })),
+      ]),
     ]),
     trigger('messageAppear', [
       transition(':enter', [
         style({ opacity: 0, transform: 'scale(0.95) translateY(10px)' }),
-        animate('250ms cubic-bezier(0.175, 0.885, 0.32, 1.275)', style({ opacity: 1, transform: 'scale(1) translateY(0)' }))
-      ])
+        animate(
+          '250ms cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+          style({ opacity: 1, transform: 'scale(1) translateY(0)' }),
+        ),
+      ]),
     ]),
     trigger('listAnimation', [
       transition(':enter', [
         style({ opacity: 0, transform: 'translateX(-10px)' }),
-        animate('200ms ease-out', style({ opacity: 1, transform: 'translateX(0)' }))
-      ])
-    ])
-  ]
+        animate('200ms ease-out', style({ opacity: 1, transform: 'translateX(0)' })),
+      ]),
+    ]),
+  ],
 })
 export class MessagesComponent implements OnInit, AfterViewChecked {
   chatService = inject(ChatService);
@@ -78,7 +94,7 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private snackBar = inject(MatSnackBar);
-  
+
   messagesContainer = viewChild<ElementRef>('messagesContainer');
   messageInput = viewChild<ElementRef>('messageInput');
 
@@ -86,20 +102,31 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
   searchQuery = '';
   isSending = signal(false);
   shouldScroll = signal(false);
-  propertyContext = signal<{id: string, title: string, image: string} | null>(null);
+  propertyContext = signal<{ id: string; title: string; image: string } | null>(null);
 
   conversations = this.chatService.conversations;
   activeConversation = this.chatService.activeConversation;
   currentMessages = this.chatService.currentMessages;
+  typingUsers = this.chatService.typingUsers;
+
+  quickReplies = [
+    "Ushbu mulk hali ham bo'shmi?",
+    "Narxini kelishsak bo'ladimi?",
+    "Qachon borib ko'rsam bo'ladi?",
+    "Qo'shimcha rasmlari bormi?"
+  ];
+  
+  private typingTimeout: any;
 
   filteredConversations = computed(() => {
     const query = this.searchQuery.toLowerCase().trim();
     if (!query) return this.conversations();
-    
-    return this.conversations().filter(c => 
-      c.otherUser.firstName.toLowerCase().includes(query) || 
-      c.otherUser.lastName.toLowerCase().includes(query) ||
-      (c.lastMessage && c.lastMessage.toLowerCase().includes(query))
+
+    return this.conversations().filter(
+      (c) =>
+        c.otherUser.firstName.toLowerCase().includes(query) ||
+        c.otherUser.lastName.toLowerCase().includes(query) ||
+        (c.lastMessage && c.lastMessage.toLowerCase().includes(query)),
     );
   });
 
@@ -112,18 +139,23 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
     this.chatService.tryConnect();
     this.chatService.getConversations();
 
-    this.route.queryParams
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(params => {
-        const userId = params['userId'];
-        const userName = params['userName'];
-        const userAvatar = params['userAvatar'];
-        const propertyId = params['propertyId'];
-        
-        if (userId) {
-          this.startConversationWithUser(userId, userName, userAvatar, propertyId, params['propertyTitle'], params['propertyImage']);
-        }
-      });
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const userId = params['userId'];
+      const userName = params['userName'];
+      const userAvatar = params['userAvatar'];
+      const propertyId = params['propertyId'];
+
+      if (userId) {
+        this.startConversationWithUser(
+          userId,
+          userName,
+          userAvatar,
+          propertyId,
+          params['propertyTitle'],
+          params['propertyImage'],
+        );
+      }
+    });
   }
 
   ngAfterViewChecked(): void {
@@ -140,9 +172,18 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
     }
   }
 
-  private startConversationWithUser(userId: string, userName?: string, userAvatar?: string, propertyId?: string, propertyTitle?: string, propertyImage?: string): void {
-    const existing = this.conversations().find(c => c.otherUserId === userId && c.propertyId === propertyId);
-    
+  private startConversationWithUser(
+    userId: string,
+    userName?: string,
+    userAvatar?: string,
+    propertyId?: string,
+    propertyTitle?: string,
+    propertyImage?: string,
+  ): void {
+    const existing = this.conversations().find(
+      (c) => c.otherUserId === userId && c.propertyId === propertyId,
+    );
+
     if (existing) {
       this.selectConversation(existing);
     } else {
@@ -156,19 +197,33 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
           firstName: userName?.split(' ')[0] || 'Foydalanuvchi',
           lastName: userName?.split(' ').slice(1).join(' ') || '',
           avatarUrl: userAvatar,
-          isOnline: false
+          isOnline: false,
         },
         lastMessage: '',
         lastMessageDate: new Date(),
-        unreadCount: 0
+        unreadCount: 0,
       };
-      
+
       this.chatService.setActiveConversation(tempConv);
+      if (propertyId && propertyTitle) {
+        this.propertyContext.set({ id: propertyId, title: propertyTitle, image: propertyImage || '' });
+      } else {
+        this.propertyContext.set(null);
+      }
     }
   }
 
   selectConversation(conversation: Conversation): void {
     this.chatService.setActiveConversation(conversation);
+    if (conversation.propertyId && conversation.propertyTitle) {
+      this.propertyContext.set({ 
+        id: conversation.propertyId, 
+        title: conversation.propertyTitle, 
+        image: conversation.propertyImage || '' 
+      });
+    } else {
+      this.propertyContext.set(null);
+    }
     this.shouldScroll.set(true);
     setTimeout(() => this.resetInputHeight(), 0);
   }
@@ -196,20 +251,29 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
       await this.chatService.sendMessage(
         this.activeConversation()!.otherUserId,
         text,
-        this.activeConversation()?.propertyId
+        this.activeConversation()?.propertyId,
       );
-      
+
       this.newMessageText = '';
       this.resetInputHeight();
       this.shouldScroll.set(true);
     } catch (error: any) {
-      this.snackBar.open('Xabar yuborishda xatolik yuz berdi. Iltimos qayta urinib ko\'ring.', 'Yopish', {
-        duration: 5000,
-        panelClass: ['error-snackbar']
-      });
+      this.snackBar.open(
+        "Xabar yuborishda xatolik yuz berdi. Iltimos qayta urinib ko'ring.",
+        'Yopish',
+        {
+          duration: 5000,
+          panelClass: ['error-snackbar'],
+        },
+      );
     } finally {
       this.isSending.set(false);
     }
+  }
+
+  sendQuickReply(text: string): void {
+    this.newMessageText = text;
+    this.sendMessage();
   }
 
   handleEnter(event: Event): void {
@@ -234,15 +298,25 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
   }
 
   formatTime(date: Date | string): string {
-    return ChatUtils.formatTime(date);
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  onImgError(event: any): void {
+    event.target.src = 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop';
+  }
+
+  onAvatarError(event: any): void {
+    event.target.style.display = 'none';
   }
 
   shouldShowDateDivider(index: number): boolean {
     if (index === 0) return true;
-    
+
     const current = new Date(this.currentMessages()[index].createdDate).toDateString();
     const prev = new Date(this.currentMessages()[index - 1].createdDate).toDateString();
-    
+
     return current !== prev;
   }
 
@@ -273,11 +347,52 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
   }
 
   onTyping(): void {
-    // typing logic
+    const activeConv = this.activeConversation();
+    if (!activeConv) return;
+    
+    this.chatService.sendTypingIndicator(activeConv.otherUserId, true);
+    
+    if (this.typingTimeout) {
+      clearTimeout(this.typingTimeout);
+    }
+    
+    this.typingTimeout = setTimeout(() => {
+      this.chatService.sendTypingIndicator(activeConv.otherUserId, false);
+    }, 2000);
   }
 
   attachFile(): void {
-    this.snackBar.open('Fayl biriktirish funksiyasi tez kunda!', 'OK', { duration: 2000 });
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*,.pdf,.doc,.docx';
+    
+    fileInput.onchange = async (e: any) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const activeConv = this.activeConversation();
+      if (!activeConv) return;
+
+      this.isSending.set(true);
+      try {
+        const response = await this.chatService.uploadAttachment(file).toPromise();
+        if (response) {
+          await this.chatService.sendFileMessage(
+            activeConv.otherUserId,
+            response.fileUrl,
+            response.fileName,
+            activeConv.propertyId
+          );
+          this.shouldScroll.set(true);
+        }
+      } catch (error) {
+        this.snackBar.open("Fayl yuklashda xatolik yuz berdi.", 'Yopish', { duration: 3000 });
+      } finally {
+        this.isSending.set(false);
+      }
+    };
+    
+    fileInput.click();
   }
 
   viewPropertyById(id: string | undefined): void {

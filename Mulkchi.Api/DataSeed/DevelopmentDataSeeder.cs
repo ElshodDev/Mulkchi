@@ -178,9 +178,8 @@ public static class DevelopmentDataSeeder
 
     private static List<Property> CreatePropertiesToAdd(int existingCount, IReadOnlyList<User> hosts, DateTimeOffset now)
     {
-        // BMI: Himoya uchun bazani boyitish - TargetPropertyCount ni 50 ga ko'taramiz
-        const int NewTargetPropertyCount = 50;
-        
+        const int NewTargetPropertyCount = 70;
+
         if (existingCount >= NewTargetPropertyCount)
         {
             return new List<Property>();
@@ -188,28 +187,27 @@ public static class DevelopmentDataSeeder
 
         var cityTemplates = new[]
         {
-            // BMI: Real bozor narxlari (UZS da)
-            // Toshkent: Sotish ~1 mlrd, Ijara ~8 mln
             new { Region = UzbekistanRegion.ToshkentShahar, City = "Toshkent", District = "Chilonzor", Latitude = 41.2850, Longitude = 69.2030, BaseRent = 8000000m, BaseSale = 1100000000m, Metro = true },
             new { Region = UzbekistanRegion.ToshkentShahar, City = "Toshkent", District = "Yunusobod", Latitude = 41.3645, Longitude = 69.2861, BaseRent = 9000000m, BaseSale = 1300000000m, Metro = true },
             
-            // Samarqand: Sotish ~800 mln, Ijara ~6 mln
             new { Region = UzbekistanRegion.Samarqand, City = "Samarqand", District = "Markaz", Latitude = 39.6542, Longitude = 66.9597, BaseRent = 6000000m, BaseSale = 850000000m, Metro = false },
             new { Region = UzbekistanRegion.Samarqand, City = "Samarqand", District = "Siyob", Latitude = 39.6642, Longitude = 66.9797, BaseRent = 5500000m, BaseSale = 750000000m, Metro = false },
             
-            // Buxoro: Sotish ~700 mln, Ijara ~5 mln
             new { Region = UzbekistanRegion.Buxoro, City = "Buxoro", District = "Kogon", Latitude = 39.7670, Longitude = 64.4550, BaseRent = 5000000m, BaseSale = 700000000m, Metro = false },
             
-            // Farg'ona vodiysi: Sotish ~600 mln, Ijara ~4.5 mln
             new { Region = UzbekistanRegion.Fargona, City = "Farg'ona", District = "Yangi", Latitude = 40.3894, Longitude = 71.7870, BaseRent = 4500000m, BaseSale = 600000000m, Metro = false },
             new { Region = UzbekistanRegion.Namangan, City = "Namangan", District = "Davlatobod", Latitude = 41.0011, Longitude = 71.6673, BaseRent = 4500000m, BaseSale = 620000000m, Metro = false },
             new { Region = UzbekistanRegion.Andijon, City = "Andijon", District = "Bobur", Latitude = 40.7821, Longitude = 72.3442, BaseRent = 4500000m, BaseSale = 580000000m, Metro = false },
             
-            // Boshqa hududlar
             new { Region = UzbekistanRegion.ToshkentViloyat, City = "Chirchiq", District = "Markaz", Latitude = 41.4689, Longitude = 69.5822, BaseRent = 5000000m, BaseSale = 650000000m, Metro = false },
             new { Region = UzbekistanRegion.Qashqadaryo, City = "Qarshi", District = "Nasaf", Latitude = 38.8606, Longitude = 65.7888, BaseRent = 4000000m, BaseSale = 550000000m, Metro = false },
             new { Region = UzbekistanRegion.Xorazm, City = "Urganch", District = "Al-Xorazmiy", Latitude = 41.5500, Longitude = 60.6333, BaseRent = 4000000m, BaseSale = 550000000m, Metro = false },
-            new { Region = UzbekistanRegion.Navoiy, City = "Navoiy", District = "Karmana", Latitude = 40.0844, Longitude = 65.3792, BaseRent = 4500000m, BaseSale = 600000000m, Metro = false }
+            new { Region = UzbekistanRegion.Navoiy, City = "Navoiy", District = "Karmana", Latitude = 40.0844, Longitude = 65.3792, BaseRent = 4500000m, BaseSale = 600000000m, Metro = false },
+            
+            new { Region = UzbekistanRegion.Jizzax, City = "Jizzax", District = "Sharof Rashidov", Latitude = 40.1158, Longitude = 67.8422, BaseRent = 3500000m, BaseSale = 450000000m, Metro = false },
+            new { Region = UzbekistanRegion.Sirdaryo, City = "Guliston", District = "Sayxunobod", Latitude = 40.4897, Longitude = 68.7842, BaseRent = 3000000m, BaseSale = 400000000m, Metro = false },
+            new { Region = UzbekistanRegion.Surxondaryo, City = "Termiz", District = "Markaz", Latitude = 37.2242, Longitude = 67.2783, BaseRent = 3500000m, BaseSale = 500000000m, Metro = false },
+            new { Region = UzbekistanRegion.Qoraqalpogiston, City = "Nukus", District = "Xo'jayli", Latitude = 42.4619, Longitude = 59.6166, BaseRent = 3000000m, BaseSale = 450000000m, Metro = false }
         };
 
         var properties = new List<Property>();
@@ -221,8 +219,14 @@ public static class DevelopmentDataSeeder
             bool isCommercial = type == PropertyType.Office;
             Guid propertyId = Guid.NewGuid();
 
-            // BMI: Har bir uy uchun chiroyli demo rasmlar qo'shamiz
-            string demoImgUrl = $"https://images.unsplash.com/photo-{(1560000000000 + i * 1234567).ToString().Substring(0, 10)}?auto=format&fit=crop&w=800&q=80";
+            string[] validUnsplashIds = new[] 
+            {
+                "1600596542815-ffad4c1539a9", "1512917774080-9991f1c4c750", "1600607686527-6fb886090705",
+                "1580587771525-78b9dba3b914", "1564013799919-ab600027ffc6", "1449844908441-8829872d2607",
+                "1600585154340-be6161a56a0c", "1600566752355-325b9021d0b0", "1600210491369-eaea3650bc23"
+            };
+            string photoId = validUnsplashIds[i % validUnsplashIds.Length];
+            string demoImgUrl = $"https://images.unsplash.com/photo-{photoId}?auto=format&fit=crop&w=800&q=80";
 
             decimal? monthlyRent = listingType == ListingType.Rent ? city.BaseRent + (i * 200000) : null;
             decimal? salePrice = listingType == ListingType.Sale ? city.BaseSale + (i * 15000000) : null;

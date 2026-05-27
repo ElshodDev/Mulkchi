@@ -7,7 +7,6 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
 
-/** API paths where 404 should NOT navigate to /not-found page */
 const SKIP_404_NAVIGATION_PATHS = [
   '/properties/',
   '/users/',
@@ -20,8 +19,7 @@ const SKIP_404_NAVIGATION_PATHS = [
 
 function shouldRetryRequest(req: HttpRequest<unknown>, error: HttpErrorResponse): boolean {
   return (
-    (req.method === 'GET' || req.method === 'HEAD') &&
-    (error.status === 0 || error.status >= 500)
+    (req.method === 'GET' || req.method === 'HEAD') && (error.status === 0 || error.status >= 500)
   );
 }
 
@@ -81,10 +79,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       if (error.status === 400) {
         const validationErrors = error.error?.errors as Record<string, string[]> | undefined;
         const validationMessage =
-          (validationErrors &&
-            Object.values(validationErrors)
-              .flat()
-              .join(' ')) ||
+          (validationErrors && Object.values(validationErrors).flat().join(' ')) ||
           error.error?.error?.message ||
           error.error?.message ||
           "So'rovni qayta tekshirib ko'ring.";
@@ -98,7 +93,6 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       } else if (error.status === 403) {
         void router.navigate(['/forbidden']);
       } else if (error.status === 404 && isApiRequest && !isDataEndpoint404(req.url)) {
-        // Only navigate to not-found for page-level 404s, not API data errors
         void router.navigate(['/not-found']);
       } else if (error.status >= 500) {
         toastService.error("Kutilmagan xatolik yuz berdi. Bir ozdan keyin qayta urinib ko'ring.");

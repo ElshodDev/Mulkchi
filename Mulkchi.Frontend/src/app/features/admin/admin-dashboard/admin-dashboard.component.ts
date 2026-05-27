@@ -619,9 +619,15 @@ import { PropertyService } from '../../../core/services/property.service';
         font-weight: 700;
       }
 
-      .stat-item.error .value { color: #f44336; }
-      .stat-item.warning .value { color: #ff9800; }
-      .stat-item.info .value { color: #2196f3; }
+      .stat-item.error .value {
+        color: #f44336;
+      }
+      .stat-item.warning .value {
+        color: #ff9800;
+      }
+      .stat-item.info .value {
+        color: #2196f3;
+      }
 
       .logs-viewer {
         background: #1e1e1e;
@@ -641,9 +647,15 @@ import { PropertyService } from '../../../core/services/property.service';
         border-bottom: 1px solid #2a2a2a;
       }
 
-      .log-line.err { color: #f48771; }
-      .log-line.wrn { color: #cca700; }
-      .log-line.inf { color: #75beff; }
+      .log-line.err {
+        color: #f48771;
+      }
+      .log-line.wrn {
+        color: #cca700;
+      }
+      .log-line.inf {
+        color: #75beff;
+      }
 
       .no-logs {
         text-align: center;
@@ -688,7 +700,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadDashboardData();
-    this.loadLogs(); // Loads mock logs only - no API calls
+    this.loadLogs();
   }
 
   ngOnDestroy(): void {
@@ -699,7 +711,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   loadDashboardData(): void {
     this.loading.set(true);
 
-    // Analytics overview
     this.analyticsService
       .getMarketOverview()
       .pipe(takeUntil(this.destroy$))
@@ -710,7 +721,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         error: () => {},
       });
 
-    // Properties list
     this.http
       .get<any>(`${environment.apiUrl}/properties?page=1&pageSize=100`)
       .pipe(takeUntil(this.destroy$))
@@ -723,7 +733,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         },
       });
 
-    // Users list (admin endpoint)
     this.http
       .get<any>(`${environment.apiUrl}/users?page=1&pageSize=100`)
       .pipe(takeUntil(this.destroy$))
@@ -740,7 +749,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         },
       });
 
-    // Bookings count
     this.http
       .get<any>(`${environment.apiUrl}/bookings?page=1&pageSize=1`)
       .pipe(takeUntil(this.destroy$))
@@ -754,7 +762,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   loadLogs(): void {
     this.logsLoading.set(true);
-    // Mock logs for now - Backend endpoint not implemented yet
     const mockLogs = [
       '[2026-05-21 08:30:00] INF - Admin panel accessed',
       '[2026-05-21 08:25:00] INF - User logged in',

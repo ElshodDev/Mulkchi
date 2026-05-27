@@ -90,7 +90,8 @@ export class GoogleLoginComponent {
 
   protected readonly googleClientId = environment.googleClientId;
   protected readonly isLoading = signal(true);
-  private readonly googleButtonContainer = viewChild.required<ElementRef<HTMLElement>>('googleButtonContainer');
+  private readonly googleButtonContainer =
+    viewChild.required<ElementRef<HTMLElement>>('googleButtonContainer');
 
   constructor() {
     afterNextRender(() => {

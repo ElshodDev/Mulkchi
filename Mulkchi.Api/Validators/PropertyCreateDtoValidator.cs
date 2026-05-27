@@ -51,7 +51,6 @@ public class PropertyCreateDtoValidator : AbstractValidator<PropertyCreateDto>
             .NotEmpty().WithMessage("Manzil kiritilishi shart")
             .MaximumLength(500).WithMessage("Manzil 500 ta belgidan oshmasligi kerak");
 
-        // Price validation based on listing type
         When(x => x.ListingType == ListingType.Sale, () =>
         {
             RuleFor(x => x.SalePrice)
@@ -73,7 +72,6 @@ public class PropertyCreateDtoValidator : AbstractValidator<PropertyCreateDto>
                 .GreaterThan(0).WithMessage("Narx 0 dan katta bo'lishi kerak");
         });
 
-        // Location validation (optional but must be valid if provided)
         When(x => x.Latitude != 0, () =>
         {
             RuleFor(x => x.Latitude)

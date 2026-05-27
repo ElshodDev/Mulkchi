@@ -28,7 +28,7 @@ public class PropertiesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize] // Any authenticated user can create listings - auto-upgraded to Host role
+    [Authorize]
     public async Task<ActionResult<PropertyCreateResponse>> PostPropertyAsync([FromBody] PropertyCreateDto dto)
     {
         try
@@ -64,14 +64,12 @@ public class PropertiesController : ControllerBase
     {
         try
         {
-            // Ensure queryParams is not null with defaults
             queryParams ??= new PropertyQueryParams { Page = 1, PageSize = 20 };
-            
-            // Validate page parameters
+
             if (queryParams.Page < 1) queryParams.Page = 1;
             if (queryParams.PageSize < 1) queryParams.PageSize = 20;
-            if (queryParams.PageSize > 100) queryParams.PageSize = 100; // Max limit
-            
+            if (queryParams.PageSize > 100) queryParams.PageSize = 100;
+
             var (items, total) = await this.propertyService.RetrieveAllPropertiesAsync(queryParams);
 
             var result = new PagedResult<PropertyResponse>
@@ -180,7 +178,7 @@ public class PropertiesController : ControllerBase
                 Items = items,
                 TotalCount = total,
                 Page = 1,
-                PageSize = 50 // Fixed size since no pagination fields
+                PageSize = 50
             };
 
             return Ok(result);
@@ -192,7 +190,7 @@ public class PropertiesController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async ValueTask<ActionResult<Property>> PutPropertyAsync(Guid id, [FromBody] Property property)
     {
         try
@@ -224,7 +222,7 @@ public class PropertiesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async ValueTask<ActionResult<Property>> DeletePropertyAsync(Guid id)
     {
         try
@@ -254,9 +252,35 @@ public class PropertiesController : ControllerBase
         }
     }
 
-    // Publish/Unpublish endpoints
+    [HttpPatch("{id:guid}/verify")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public async ValueTask<ActionResult<Property>> PatchPropertyVerifyAsync(Guid id)
+    {
+        try
+        {
+            Property verifiedProperty = await this.propertyService.VerifyPropertyAsync(id);
+            return Ok(verifiedProperty);
+        }
+        catch (PropertyValidationException propertyValidationException)
+        {
+            return BadRequest(new { message = propertyValidationException.InnerException?.Message ?? "An error occurred." });
+        }
+        catch (PropertyDependencyValidationException propertyDependencyValidationException)
+        {
+            return BadRequest(new { message = propertyDependencyValidationException.InnerException?.Message ?? "An error occurred." });
+        }
+        catch (PropertyDependencyException)
+        {
+            return StatusCode(500, new { message = "Internal server error." });
+        }
+        catch (PropertyServiceException)
+        {
+            return StatusCode(500, new { message = "Internal server error." });
+        }
+    }
+
     [HttpPut("{id:guid}/publish")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async ValueTask<ActionResult<PropertyResponse>> PublishPropertyAsync(Guid id)
     {
         try
@@ -275,7 +299,7 @@ public class PropertiesController : ControllerBase
     }
 
     [HttpPut("{id:guid}/unpublish")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async ValueTask<ActionResult<PropertyResponse>> UnpublishPropertyAsync(Guid id)
     {
         try
@@ -294,16 +318,15 @@ public class PropertiesController : ControllerBase
     }
 
     [HttpGet("my/listings")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async Task<ActionResult<PagedResult<PropertyResponse>>> GetMyListings([FromQuery] PropertyQueryParams queryParams)
     {
         try
         {
-            // Check if user is in Guest role and provide helpful error message
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
             if (userRole == "Guest")
             {
-                return Forbid(); // Returns 403 with clear indication that role upgrade is needed
+                return Forbid();
             }
 
             var (items, total) = await this.propertyService.RetrieveMyPropertiesAsync(queryParams);
@@ -344,26 +367,24 @@ public class PropertiesController : ControllerBase
     }
 
     [HttpPost("{id:guid}/bump")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async Task<ActionResult<object>> BumpPropertyAsync(Guid id)
     {
         try
         {
-            // Verify that current user owns this property
             var property = await this.propertyService.RetrievePropertyByIdAsync(id);
-            
+
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (property is null || string.IsNullOrEmpty(userIdClaim) || property.HostId.ToString() != userIdClaim)
             {
                 return Unauthorized(new { message = "You can only bump your own properties." });
             }
 
-            // Update property's listing bump timestamp
             property.BumpedAt = DateTimeOffset.UtcNow;
             await this.propertyService.ModifyPropertyAsync(property);
 
-            return Ok(new 
-            { 
+            return Ok(new
+            {
                 message = "Property bumped successfully. It will now appear higher in search results for 24 hours.",
                 propertyId = id,
                 bumpedAt = property.BumpedAt

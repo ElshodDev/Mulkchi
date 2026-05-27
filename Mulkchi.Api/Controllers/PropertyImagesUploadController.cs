@@ -39,7 +39,7 @@ public class PropertyImagesUploadController : ControllerBase
     }
 
     [HttpPost("upload")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async Task<ActionResult<PropertyImage>> UploadPropertyImage([FromForm] PropertyImageUploadRequest request)
     {
         try
@@ -57,14 +57,12 @@ public class PropertyImagesUploadController : ControllerBase
             if (ownershipResult is not OkResult)
                 return ownershipResult;
 
-            // Enforce 20-image limit per property
             var existingImages = this.propertyImageService.RetrieveAllPropertyImages()
                 .Where(img => img.PropertyId == request.PropertyId);
             int currentCount = existingImages.Count();
             if (currentCount >= MaxImagesPerProperty)
                 return BadRequest(new { message = $"Har bir mulk uchun maksimal {MaxImagesPerProperty} ta rasm yuklab olish mumkin." });
 
-            // Upload file and create WebP variants after ownership is verified
             ImageVariants variants = await fileStorageBroker.UploadImageVariantsAsync(request.File, "property-images");
 
             bool isFirst = currentCount == 0;
@@ -76,7 +74,7 @@ public class PropertyImagesUploadController : ControllerBase
                 Url = variants.Full,
                 MediumUrl = variants.Medium,
                 ThumbnailUrl = variants.Thumbnail,
-                IsPrimary = isFirst, // first image becomes primary automatically
+                IsPrimary = isFirst,
                 SortOrder = currentCount,
                 CreatedDate = DateTimeOffset.UtcNow,
                 UpdatedDate = DateTimeOffset.UtcNow
@@ -109,7 +107,7 @@ public class PropertyImagesUploadController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async Task<ActionResult> DeletePropertyImage(Guid id)
     {
         try
@@ -126,10 +124,8 @@ public class PropertyImagesUploadController : ControllerBase
             if (ownershipResult is not OkResult)
                 return ownershipResult;
 
-            // Delete all size variants from storage
             await fileStorageBroker.DeleteImageAsync(propertyImage.Url);
 
-            // Delete record from database
             await propertyImageService.RemovePropertyImageByIdAsync(id);
 
             this.logger.LogInformation("Successfully deleted property image {ImageId}", id);

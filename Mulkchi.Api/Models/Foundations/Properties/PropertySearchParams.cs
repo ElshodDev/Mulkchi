@@ -14,7 +14,7 @@ public class PropertySearchParams
     public bool? HasParking { get; set; }
     public bool? HasPool { get; set; }
     public bool? IsVerified { get; set; }
-    public string? SortBy { get; set; } // "price_asc", "price_desc", "newest", "rating"
+    public string? SortBy { get; set; }
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
     public double? RadiusKm { get; set; }

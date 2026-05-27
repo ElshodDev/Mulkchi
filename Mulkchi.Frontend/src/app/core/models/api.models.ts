@@ -1,5 +1,3 @@
-// Backend API modeliga mos interfeysler
-// C# modeli: PascalCase, majburiy maydonlar
 
 export interface ApiRegisterRequest {
   FirstName: string;
@@ -15,11 +13,10 @@ export interface ApiLoginRequest {
   Password: string;
 }
 
-// Backend response (camelCase - actual format from API)
 export interface ApiAuthResponse {
   token: string;
   refreshToken?: string;
-  expiresAt: string; // ISO date string
+  expiresAt: string;
   userId: string;
   email: string;
   firstName: string;

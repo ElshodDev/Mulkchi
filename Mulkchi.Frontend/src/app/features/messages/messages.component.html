@@ -1,5 +1,5 @@
 <div class="chat-wrapper">
-  <!-- Connection Status Banner -->
+  
   @if (!chatService.isConnected()) {
     <div class="connection-banner" [@slideIn]>
       <mat-icon>sync</mat-icon>
@@ -8,7 +8,7 @@
   }
 
   <div class="chat-container">
-    <!-- Sidebar: Conversations List -->
+    
     <aside class="sidebar" [class.hidden-mobile]="activeConversation()">
       <div class="sidebar-header">
         <div class="title-group">
@@ -27,19 +27,19 @@
           </button>
         </mat-menu>
       </div>
-      
+
       <div class="search-box">
         <div class="search-input-wrapper">
           <mat-icon>search</mat-icon>
-          <input type="text" placeholder="Ism yoki xabarni qidirish..." [(ngModel)]="searchQuery">
+          <input type="text" placeholder="Ism yoki xabarni qidirish..." [(ngModel)]="searchQuery" />
         </div>
       </div>
 
       <div class="conversations-scroll">
         @if (chatService.isLoading() && conversations().length === 0) {
-          <!-- Skeleton Loaders -->
+          
           <div class="skeleton-list">
-            @for (i of [1,2,3,4,5]; track i) {
+            @for (i of [1, 2, 3, 4, 5]; track i) {
               <div class="skeleton-card">
                 <div class="skeleton-avatar"></div>
                 <div class="skeleton-info">
@@ -68,7 +68,8 @@
                 [conversation]="conv"
                 [isActive]="isActiveConversation(conv)"
                 (select)="selectConversation($event)"
-                [@listAnimation]>
+                [@listAnimation]
+              >
               </app-conversation-card>
             }
           </div>
@@ -76,30 +77,44 @@
       </div>
     </aside>
 
-    <!-- Main: Chat Window -->
+    
     <main class="chat-window" [class.active-mobile]="activeConversation()">
       @if (activeConversation()) {
-        <!-- Chat Header -->
+        
         <header class="chat-header" [@fadeIn]>
           <div class="header-left">
             <button mat-icon-button class="back-btn-mobile" (click)="closeConversation()">
               <mat-icon>arrow_back</mat-icon>
             </button>
-            
+
             <div class="user-meta" (click)="viewProfile()">
               <div class="avatar-wrapper small">
                 @if (activeConversation()?.otherUser?.avatarUrl) {
-                  <img [src]="activeConversation()?.otherUser?.avatarUrl" 
-                       [alt]="activeConversation()?.otherUser?.firstName">
+                    <img
+                      [src]="activeConversation()?.otherUser?.avatarUrl"
+                      [alt]="activeConversation()?.otherUser?.firstName"
+                      (error)="onAvatarError($event)"
+                    />
                 } @else {
-                  <div class="avatar-placeholder small" [style.background]="getAvatarColor(activeConversation()?.otherUser?.firstName || '')">
+                  <div
+                    class="avatar-placeholder small"
+                    [style.background]="
+                      getAvatarColor(activeConversation()?.otherUser?.firstName || '')
+                    "
+                  >
                     {{ activeConversation()?.otherUser?.firstName?.charAt(0) }}
                   </div>
                 }
-                <span class="status-indicator" [class.online]="activeConversation()?.otherUser?.isOnline"></span>
+                <span
+                  class="status-indicator"
+                  [class.online]="activeConversation()?.otherUser?.isOnline"
+                ></span>
               </div>
               <div class="meta-text">
-                <h3>{{ activeConversation()?.otherUser?.firstName }} {{ activeConversation()?.otherUser?.lastName }}</h3>
+                <h3>
+                  {{ activeConversation()?.otherUser?.firstName }}
+                  {{ activeConversation()?.otherUser?.lastName }}
+                </h3>
                 <span class="status" [class.online]="activeConversation()?.otherUser?.isOnline">
                   {{ activeConversation()?.otherUser?.isOnline ? 'Onlayn' : 'Oflayn' }}
                 </span>
@@ -108,7 +123,12 @@
           </div>
 
           <div class="header-actions">
-            <button mat-icon-button matTooltip="Mulkni ko'rish" *ngIf="activeConversation()?.propertyId" (click)="viewProperty()">
+            <button
+              mat-icon-button
+              matTooltip="Mulkni ko'rish"
+              *ngIf="activeConversation()?.propertyId"
+              (click)="viewProperty()"
+            >
               <mat-icon>home</mat-icon>
             </button>
             <button mat-icon-button [matMenuTriggerFor]="chatMenu">
@@ -127,12 +147,16 @@
           </div>
         </header>
 
-        <!-- Messages List -->
+        
         <div class="messages-area" #messagesContainer>
-          <!-- Property Context Bar (Modern) -->
+          
           <div class="property-context-bar" *ngIf="propertyContext()" [@slideIn]>
             <div class="context-img">
-              <img [src]="propertyContext()?.image || 'https://placehold.co/100x100/0f172a/c9a84c?text=Mulk'" alt="Property">
+                <img
+                  [src]="propertyContext()?.image || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop'"
+                  alt="Property"
+                  (error)="onImgError($event)"
+                />
             </div>
             <div class="context-info">
               <span class="label">Suhbat mavzusi</span>
@@ -150,7 +174,7 @@
 
           <div class="messages-list">
             @for (msg of currentMessages(); track msg.id) {
-              <!-- Date Divider -->
+              
               @if (shouldShowDateDivider($index)) {
                 <div class="date-divider">
                   <span>{{ getDateLabel(msg.createdDate) }}</span>
@@ -158,10 +182,35 @@
               }
 
               <div class="message-row" [class.own]="isOwnMessage(msg)" [@messageAppear]>
-                <div class="message-bubble" 
-                     [class.first-in-group]="isFirstInGroup($index)"
-                     [class.last-in-group]="isLastInGroup($index)">
-                  <p class="text">{{ msg.content }}</p>
+                <div
+                  class="message-bubble"
+                  [class.first-in-group]="isFirstInGroup($index)"
+                  [class.last-in-group]="isLastInGroup($index)"
+                >
+                  
+                  @if (msg.type === 1 || msg.type === 2) {
+                    <div class="message-attachment">
+                      @if (msg.content.includes('|')) {
+                        @if (msg.content.split('|')[1].match('\\.(jpeg|jpg|gif|png)$')) {
+                          <a [href]="msg.content.split('|')[1]" target="_blank">
+                            <img [src]="msg.content.split('|')[1]" [alt]="msg.content.split('|')[0]" class="attachment-img" />
+                          </a>
+                        } @else {
+                          <a [href]="msg.content.split('|')[1]" target="_blank" class="attachment-file">
+                            <mat-icon>insert_drive_file</mat-icon>
+                            <span>{{ msg.content.split('|')[0] }}</span>
+                          </a>
+                        }
+                      } @else {
+                        <a [href]="msg.content" target="_blank">
+                          <img [src]="msg.content" alt="Attachment" class="attachment-img" />
+                        </a>
+                      }
+                    </div>
+                  } @else {
+                    <p class="text">{{ msg.content }}</p>
+                  }
+                  
                   <div class="message-meta">
                     <span class="time">{{ formatTime(msg.createdDate) }}</span>
                     @if (isOwnMessage(msg)) {
@@ -173,8 +222,8 @@
                 </div>
               </div>
             }
-            
-            @if (activeConversation()?.isTyping) {
+
+            @if (typingUsers().has(activeConversation()!.otherUserId)) {
               <div class="typing-indicator" [@fadeIn]>
                 <div class="dot"></div>
                 <div class="dot"></div>
@@ -184,22 +233,34 @@
           </div>
         </div>
 
-        <!-- Chat Footer -->
+        
         <footer class="chat-footer">
+          
+          @if (propertyContext() && currentMessages().length < 5) {
+            <div class="quick-replies-container" [@fadeIn]>
+              @for (reply of quickReplies; track $index) {
+                <button class="quick-reply-btn" (click)="sendQuickReply(reply)">
+                  {{ reply }}
+                </button>
+              }
+            </div>
+          }
+
           <div class="input-container">
             <button mat-icon-button class="attach-btn" (click)="attachFile()">
               <mat-icon>add</mat-icon>
             </button>
-            
+
             <div class="input-wrapper">
-              <textarea 
+              <textarea
                 #messageInput
-                [(ngModel)]="newMessageText" 
+                [(ngModel)]="newMessageText"
                 placeholder="Xabar yozing..."
                 (keydown.enter)="handleEnter($event)"
                 (input)="onTyping(); adjustHeight($event)"
                 [attr.disabled]="isSending() ? true : null"
-                rows="1"></textarea>
+                rows="1"
+              ></textarea>
             </div>
 
             <div class="action-group">
@@ -207,14 +268,19 @@
                 <mat-icon>sentiment_satisfied</mat-icon>
               </button>
 
-              <button 
-                class="send-btn" 
+              <button
+                class="send-btn"
                 [class.active]="newMessageText.trim()"
                 [class.sending]="isSending()"
                 (click)="sendMessage()"
-                [disabled]="!newMessageText.trim() || isSending()">
+                [disabled]="!newMessageText.trim() || isSending()"
+              >
                 @if (isSending()) {
-                  <mat-progress-spinner diameter="24" mode="indeterminate" strokeWidth="3"></mat-progress-spinner>
+                  <mat-progress-spinner
+                    diameter="24"
+                    mode="indeterminate"
+                    strokeWidth="3"
+                  ></mat-progress-spinner>
                 } @else {
                   <mat-icon>send</mat-icon>
                 }
@@ -231,8 +297,11 @@
                 <mat-icon>business</mat-icon>
               </div>
               <h2>Xush kelibsiz!</h2>
-              <p>Mulkchi chat orqali barcha savollaringizga javob oling va bitimlarni amalga oshiring.</p>
-              
+              <p>
+                Mulkchi chat orqali barcha savollaringizga javob oling va bitimlarni amalga
+                oshiring.
+              </p>
+
               <div class="welcome-stats">
                 <div class="stat-item">
                   <span class="val">100%</span>

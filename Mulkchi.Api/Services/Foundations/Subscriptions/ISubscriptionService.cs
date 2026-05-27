@@ -4,12 +4,10 @@ namespace Mulkchi.Api.Services.Foundations.Subscriptions;
 
 public interface ISubscriptionService
 {
-    // Plans (public)
     IEnumerable<SubscriptionPlan> GetAllPlans();
     SubscriptionPlan? GetPlanById(Guid id);
     SubscriptionPlan? GetPlanByType(SubscriptionPlanType type);
 
-    // User Subscriptions
     ValueTask<SubscriptionResponse?> GetMySubscriptionAsync(Guid userId);
     ValueTask<SubscriptionResponse> SubscribeAsync(SubscriptionCreateDto dto, Guid userId);
     ValueTask<SubscriptionResponse?> CancelSubscriptionAsync(Guid userId);

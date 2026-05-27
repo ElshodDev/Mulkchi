@@ -30,9 +30,6 @@ public class PaymentsController : ControllerBase
             if (userIdClaim is null || !Guid.TryParse(userIdClaim, out Guid currentUserId))
                 return Unauthorized();
 
-            // Idempotency: if the client supplies X-Idempotency-Key and we already
-            // processed a payment with that key, return the original result instead of
-            // charging twice (safe to replay on network retries).
             var idempotencyKey = Request.Headers["X-Idempotency-Key"].FirstOrDefault();
             if (!string.IsNullOrWhiteSpace(idempotencyKey))
             {
@@ -187,8 +184,6 @@ public class PaymentsController : ControllerBase
     {
         try
         {
-            // Payment model currently does not have explicit BookingId.
-            // For compatibility, try to resolve by related IDs and fallback to direct payment Id match.
             Payment? payment = this.paymentService
                 .RetrieveAllPayments()
                 .FirstOrDefault(p => p.Id == bookingId || p.ContractId == bookingId || p.HomeRequestId == bookingId);

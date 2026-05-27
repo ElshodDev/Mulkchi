@@ -26,13 +26,13 @@ export interface UserSubscription {
   plan?: SubscriptionPlan;
   startDate: string;
   endDate: string;
-  status: number; // 1: Active, 2: Expired, etc.
+  status: number;
   autoRenew: boolean;
   remainingBoosts: number;
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SubscriptionService {
   private http = inject(HttpClient);
@@ -49,42 +49,42 @@ export class SubscriptionService {
   getPlans(): Observable<SubscriptionPlan[]> {
     this._loading.set(true);
     return this.http.get<SubscriptionPlan[]>(`${this.apiUrl}/plans`).pipe(
-      tap(plans => {
+      tap((plans) => {
         this._plans.set(plans);
         this._loading.set(false);
       }),
-      catchError(err => {
+      catchError((err) => {
         this._loading.set(false);
         return throwError(() => err);
-      })
+      }),
     );
   }
 
   getMySubscription(): Observable<UserSubscription> {
     this._loading.set(true);
     return this.http.get<UserSubscription>(`${this.apiUrl}/my`).pipe(
-      tap(sub => {
+      tap((sub) => {
         this._mySubscription.set(sub);
         this._loading.set(false);
       }),
-      catchError(err => {
+      catchError((err) => {
         this._loading.set(false);
         return throwError(() => err);
-      })
+      }),
     );
   }
 
   subscribe(planId: string): Observable<UserSubscription> {
     this._loading.set(true);
     return this.http.post<UserSubscription>(this.apiUrl, { planId }).pipe(
-      tap(sub => {
+      tap((sub) => {
         this._mySubscription.set(sub);
         this._loading.set(false);
       }),
-      catchError(err => {
+      catchError((err) => {
         this._loading.set(false);
         return throwError(() => err);
-      })
+      }),
     );
   }
 

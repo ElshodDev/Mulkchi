@@ -9,23 +9,16 @@ using System.Threading.Tasks;
 
 namespace Mulkchi.Api.Brokers.Storages;
 
-/// <summary>
-/// Stores uploaded images locally, converting them to WebP and producing
-/// three size variants: thumbnail (300×200), medium (800×600), full (original
-/// dimensions at quality 85).  Falls back to the raw file for non-image uploads.
-/// </summary>
 public class LocalFileStorageBroker : IFileStorageBroker
 {
     private readonly IWebHostEnvironment environment;
     private readonly string[] allowedExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
-    private const long maxFileSize = 10 * 1024 * 1024; // 10 MB
+    private const long maxFileSize = 10 * 1024 * 1024;
 
-    // WebP encode quality levels
     private const int QualityFull = 85;
     private const int QualityMedium = 80;
     private const int QualityThumbnail = 75;
 
-    // Thumbnail / medium dimensions
     private const int ThumbWidth = 300;
     private const int ThumbHeight = 200;
     private const int MediumWidth = 800;
@@ -38,9 +31,7 @@ public class LocalFileStorageBroker : IFileStorageBroker
 
     private string WebRootPath => this.environment.WebRootPath ?? Path.Combine(this.environment.ContentRootPath, "wwwroot");
 
-    // ─── IFileStorageBroker ───────────────────────────────────────────────
 
-    /// <inheritdoc />
     public async Task<string> UploadImageAsync(IFormFile file, string folder)
     {
         ValidateFile(file);
@@ -48,7 +39,6 @@ public class LocalFileStorageBroker : IFileStorageBroker
         return variants.Full;
     }
 
-    /// <inheritdoc />
     public async Task<ImageVariants> UploadImageVariantsAsync(IFormFile file, string folder)
     {
         ValidateFile(file);
@@ -60,7 +50,6 @@ public class LocalFileStorageBroker : IFileStorageBroker
         if (string.IsNullOrEmpty(imageUrl))
             return Task.CompletedTask;
 
-        // Delete all three variants if they exist
         foreach (var suffix in new[] { "", "-medium", "-thumb" })
         {
             var candidate = AppendSuffix(imageUrl, suffix);
@@ -99,7 +88,6 @@ public class LocalFileStorageBroker : IFileStorageBroker
         return ValueTask.CompletedTask;
     }
 
-    // ─── Private helpers ──────────────────────────────────────────────────
 
     private async Task<ImageVariants> SaveImageVariantsAsync(IFormFile file, string folder)
     {
@@ -108,9 +96,9 @@ public class LocalFileStorageBroker : IFileStorageBroker
 
         string baseName = System.Guid.NewGuid().ToString();
 
-        string fullUrl      = await SaveVariantAsync(file, uploadsFolder, baseName, "full",   null, null, QualityFull);
-        string mediumUrl    = await SaveVariantAsync(file, uploadsFolder, baseName, "medium",  MediumWidth, MediumHeight, QualityMedium);
-        string thumbnailUrl = await SaveVariantAsync(file, uploadsFolder, baseName, "thumb",   ThumbWidth,  ThumbHeight,  QualityThumbnail);
+        string fullUrl = await SaveVariantAsync(file, uploadsFolder, baseName, "full", null, null, QualityFull);
+        string mediumUrl = await SaveVariantAsync(file, uploadsFolder, baseName, "medium", MediumWidth, MediumHeight, QualityMedium);
+        string thumbnailUrl = await SaveVariantAsync(file, uploadsFolder, baseName, "thumb", ThumbWidth, ThumbHeight, QualityThumbnail);
 
         return new ImageVariants(Thumbnail: thumbnailUrl, Medium: mediumUrl, Full: fullUrl);
     }
@@ -128,11 +116,10 @@ public class LocalFileStorageBroker : IFileStorageBroker
         string filePath = Path.Combine(uploadsFolder, fileName);
 
         using var stream = file.OpenReadStream();
-        using var image  = await Image.LoadAsync(stream);
+        using var image = await Image.LoadAsync(stream);
 
         if (targetWidth.HasValue && targetHeight.HasValue)
         {
-            // Resize while preserving aspect ratio, then crop to exact target
             image.Mutate(x => x.Resize(new ResizeOptions
             {
                 Size = new Size(targetWidth.Value, targetHeight.Value),
@@ -143,21 +130,16 @@ public class LocalFileStorageBroker : IFileStorageBroker
         var encoder = new WebpEncoder { Quality = quality };
         await image.SaveAsync(filePath, encoder);
 
-        // Derive the folder name from the full path to keep it relative
         string relativeFolder = Path.GetRelativePath(WebRootPath, uploadsFolder).Replace('\\', '/');
 
         return $"/{relativeFolder}/{fileName}";
     }
 
-    /// <summary>
-    /// Inserts <paramref name="suffix"/> before the file extension in <paramref name="url"/>.
-    /// Used when trying to locate variant files during deletion.
-    /// </summary>
     private static string AppendSuffix(string url, string suffix)
     {
         if (string.IsNullOrEmpty(suffix)) return url;
 
-        var ext  = Path.GetExtension(url);
+        var ext = Path.GetExtension(url);
         var base_ = url[..^ext.Length];
         return $"{base_}{suffix}{ext}";
     }
@@ -168,7 +150,9 @@ public class LocalFileStorageBroker : IFileStorageBroker
             throw new ArgumentException("Fayl talab qilinadi.");
 
         if (file.Length > maxFileSize)
-            throw new ArgumentException($"Fayl hajmi {maxFileSize / (1024 * 1024)} MB dan oshmasligi kerak.");
+            throw new BadHttpRequestException(
+                $"Fayl hajmi {maxFileSize / (1024 * 1024)} MB dan oshmasligi kerak.",
+                StatusCodes.Status413RequestEntityTooLarge);
 
         string fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
 

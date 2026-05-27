@@ -541,7 +541,6 @@ export class BookingListComponent implements OnInit {
   private snackBar = inject(MatSnackBar);
   private confirmationService = inject(ConfirmationService);
 
-  // Expose enum to template
   readonly BookingStatus = BookingStatus;
 
   bookings = this.bookingService.bookings;

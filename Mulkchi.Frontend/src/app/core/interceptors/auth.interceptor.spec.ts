@@ -1,14 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
-import {
-  HttpClient,
-  HttpRequest,
-  provideHttpClient,
-  withInterceptors,
-} from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpClient, HttpRequest, provideHttpClient, withInterceptors } from '@angular/common/http';
 
 import { authInterceptor } from './auth.interceptor';
 import { AuthService } from '../services/auth.service';
@@ -40,7 +32,6 @@ describe('authInterceptor', () => {
     httpMock.verify();
   });
 
-  // ─── Token qo'shish ───────────────────────────────────────────────────────
 
   it('should attach Authorization header for API requests when token exists', () => {
     authServiceSpy.getAccessToken.and.returnValue('valid-token');
@@ -62,7 +53,6 @@ describe('authInterceptor', () => {
     req.flush([]);
   });
 
-  // ─── Auth-free paths ─────────────────────────────────────────────────────
 
   it('should NOT attach token for /auth/login path', () => {
     authServiceSpy.getAccessToken.and.returnValue('valid-token');
@@ -94,7 +84,6 @@ describe('authInterceptor', () => {
     req.flush({});
   });
 
-  // ─── Tashqi URL ───────────────────────────────────────────────────────────
 
   it('should NOT attach token for external URLs', () => {
     authServiceSpy.getAccessToken.and.returnValue('valid-token');
@@ -106,7 +95,6 @@ describe('authInterceptor', () => {
     req.flush([]);
   });
 
-  // ─── withCredentials ─────────────────────────────────────────────────────
 
   it('should always set withCredentials for API requests', () => {
     authServiceSpy.getAccessToken.and.returnValue(null);

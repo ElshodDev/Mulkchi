@@ -97,53 +97,79 @@ export interface AIDescriptionResponse {
   confidence: number;
 }
 
+export interface SmartSearchRequest {
+  query: string;
+}
+
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AIService {
   private readonly apiUrl = `${environment.apiUrl}/airecommendations`;
 
-  // Signals for state management
   private readonly _priceResult = signal<AIPriceResponse | null>(null);
   private readonly _recommendations = signal<Property[]>([]);
   private readonly _similarProperties = signal<Property[]>([]);
+  private readonly _smartSearchResults = signal<Property[]>([]);
   private readonly _loading = signal<boolean>(false);
   private readonly _error = signal<string | null>(null);
 
-  // Public readonly signals
   readonly priceResult = () => this._priceResult();
   readonly recommendations = () => this._recommendations();
   readonly similarProperties = () => this._similarProperties();
+  readonly smartSearchResults = () => this._smartSearchResults();
   readonly loading = () => this._loading();
   readonly error = () => this._error();
 
-  // Computed signals
   readonly hasRecommendations = computed(() => this._recommendations().length > 0);
   readonly hasSimilarProperties = computed(() => this._similarProperties().length > 0);
 
   constructor(private http: HttpClient) {}
+
+  chat(message: string, history: string[] = []): Observable<{ reply: string; properties?: Property[] }> {
+    return this.http.post<{ reply: string; properties?: Property[] }>(`${this.apiUrl}/chat`, { message, history });
+  }
+
+  smartSearch(query: string): Observable<Property[]> {
+    this._loading.set(true);
+    this._error.set(null);
+
+    const request: SmartSearchRequest = { query };
+
+    return this.http.post<Property[]>(`${this.apiUrl}/smart-search`, request).pipe(
+      tap((properties) => {
+        this._smartSearchResults.set(properties);
+        this._loading.set(false);
+      }),
+      catchError((error) => {
+        this._loading.set(false);
+        this._error.set('Aqlli qidiruvda xatolik yuz berdi');
+        this._smartSearchResults.set([]);
+        return throwError(() => error);
+      })
+    );
+  }
 
   predictPrice(request: AIPriceRequest): Observable<AIPriceResponse> {
     this._loading.set(true);
     this._error.set(null);
 
     return this.http.post<AIPriceResponse>(`${this.apiUrl}/predict-price`, request).pipe(
-      tap(result => {
+      tap((result) => {
         this._priceResult.set(result);
         this._loading.set(false);
       }),
-      catchError(error => {
+      catchError((error) => {
         this._loading.set(false);
-        // Specific error messages based on HTTP status
         if (error.status === 404) {
           this._error.set('AI xizmati hozircha mavjud emas, tez orada ishga tushiriladi');
         } else if (error.status === 401) {
           this._error.set('Iltimos, tizimga kiring');
         } else {
-          this._error.set('Xatolik yuz berdi, qayta urinib ko\'ring');
+          this._error.set("Xatolik yuz berdi, qayta urinib ko'ring");
         }
         return throwError(() => error);
-      })
+      }),
     );
   }
 
@@ -151,26 +177,24 @@ export class AIService {
     this._loading.set(true);
     this._error.set(null);
 
-    // Use hybrid endpoint which auto-generates recommendations
     const request = { limit: count };
 
     return this.http.post<HybridRecommendationResponse[]>(`${this.apiUrl}/hybrid`, request).pipe(
-      map(responses => responses.map(r => this.mapHybridToProperty(r.property))),
-      tap(properties => {
+      map((responses) => responses.map((r) => this.mapHybridToProperty(r.property))),
+      tap((properties) => {
         this._recommendations.set(properties);
         this._loading.set(false);
       }),
-      catchError(error => {
+      catchError((error) => {
         this._loading.set(false);
         this._error.set('Tavsiyalarni yuklashda xatolik yuz berdi');
         this._recommendations.set([]);
         return throwError(() => error);
-      })
+      }),
     );
   }
 
   private mapHybridToProperty(hybrid: HybridRecommendationProperty): Property {
-     
     return {
       id: hybrid.id,
       title: hybrid.title || 'Mulk',
@@ -196,24 +220,27 @@ export class AIService {
       averageRating: hybrid.rating,
       viewsCount: hybrid.viewsCount,
       favoritesCount: 0,
-      images: hybrid.images?.map((imgUrl, index) => ({
-        id: `${hybrid.id}-img-${index}`,
-        propertyId: hybrid.id,
-        url: imgUrl,
-        imageUrl: imgUrl,
-        mediumUrl: imgUrl,
-        thumbnailUrl: imgUrl,
-        isPrimary: index === 0,
-        sortOrder: index,
-        createdDate: new Date()
-      } as any)) || [],
+      images:
+        hybrid.images?.map(
+          (imgUrl, index) =>
+            ({
+              id: `${hybrid.id}-img-${index}`,
+              propertyId: hybrid.id,
+              url: imgUrl,
+              imageUrl: imgUrl,
+              mediumUrl: imgUrl,
+              thumbnailUrl: imgUrl,
+              isPrimary: index === 0,
+              sortOrder: index,
+              createdDate: new Date(),
+            }) as any,
+        ) || [],
       hostId: hybrid.hostId,
       hostName: hybrid.hostName || '',
       currency: 'UZS' as any,
       exchangeRate: 1,
       createdDate: new Date(),
       updatedDate: new Date(),
-      // Default amenities
       hasWifi: false,
       hasParking: false,
       hasPool: false,
@@ -239,9 +266,8 @@ export class AIService {
       hasWorkspace: false,
       isSelfCheckIn: false,
       isChildFriendly: false,
-      isAccessible: false
+      isAccessible: false,
     } as Property;
-     
   }
 
   getSimilarProperties(propertyId: string, count = 5): Observable<Property[]> {
@@ -251,16 +277,16 @@ export class AIService {
     const params = new HttpParams().set('count', count.toString());
 
     return this.http.get<Property[]>(`${this.apiUrl}/similar/${propertyId}`, { params }).pipe(
-      tap(properties => {
+      tap((properties) => {
         this._similarProperties.set(properties);
         this._loading.set(false);
       }),
-      catchError(error => {
+      catchError((error) => {
         this._loading.set(false);
-        this._error.set('O\'xshash mulklarni yuklashda xatolik yuz berdi');
+        this._error.set("O'xshash mulklarni yuklashda xatolik yuz berdi");
         this._similarProperties.set([]);
         return throwError(() => error);
-      })
+      }),
     );
   }
 

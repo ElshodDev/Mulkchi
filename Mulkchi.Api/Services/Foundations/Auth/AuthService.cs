@@ -17,7 +17,6 @@ namespace Mulkchi.Api.Services.Foundations.Auth;
 
 public partial class AuthService : IAuthService
 {
-    /// <summary>Number of days the refresh token (and its httpOnly cookie) remain valid.</summary>
     public const int RefreshTokenExpiryDays = 30;
 
     private readonly IStorageBroker storageBroker;
@@ -30,7 +29,6 @@ public partial class AuthService : IAuthService
     private readonly IHttpClientFactory httpClientFactory;
     private readonly IRefreshTokenGuard refreshTokenGuard;
 
-    // In-memory session storage for Email OTPs
     private static readonly ConcurrentDictionary<string, EmailAuthSession> _emailSessions = new();
 
     public AuthService(
@@ -110,7 +108,6 @@ public partial class AuthService : IAuthService
 
             User addedUser = await this.storageBroker.InsertUserAsync(user);
 
-            // Do not block account creation when SMTP is misconfigured in development.
             try
             {
                 await SendEmailVerificationAsync(addedUser);
@@ -211,7 +208,6 @@ public partial class AuthService : IAuthService
 
     private async Task<AuthResponse> GenerateAndSaveAuthResponseAsync(User user)
     {
-        // Safety Net for SuperAdmin Account ( Graduation Defense )
         if (user.Email.Equals("elshodibadullayev28@gmail.com", StringComparison.OrdinalIgnoreCase))
         {
             if (user.Role != UserRole.SuperAdmin)
@@ -265,12 +261,10 @@ public partial class AuthService : IAuthService
             ValidateEmail(email);
 
             User? user = await this.storageBroker.SelectUserByEmailAsync(email);
-            
-            // Always return success to prevent email enumeration
+
             if (user is null)
                 return;
 
-            // Generate secure token
             string rawToken = GenerateSecureResetToken();
             string hashedToken = HashToken(rawToken);
             DateTimeOffset now = this.dateTimeBroker.GetCurrentDateTimeOffset();
@@ -288,7 +282,6 @@ public partial class AuthService : IAuthService
 
             await this.storageBroker.InsertPasswordResetTokenAsync(passwordResetToken);
 
-            // Send email with raw token (never the hash)
             await SendPasswordResetEmailAsync(user.Email, rawToken);
         });
 
@@ -312,13 +305,11 @@ public partial class AuthService : IAuthService
                 throw new NotFoundUserByEmailException(
                     message: $"User with ID '{resetToken.UserId}' was not found.");
 
-            // Update password
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
             user.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
 
             await this.storageBroker.UpdateUserAsync(user);
 
-            // Mark token as used
             resetToken.IsUsed = true;
             await this.storageBroker.UpdatePasswordResetTokenAsync(resetToken);
         });
@@ -330,10 +321,6 @@ public partial class AuthService : IAuthService
         return Convert.ToBase64String(randomBytes).Replace("+", "-").Replace("/", "_").Trim('=');
     }
 
-    /// <summary>
-    /// Computes a SHA-256 hex digest of a raw token value.
-    /// Store only the hash in the database; compare hashes on lookup.
-    /// </summary>
     private static string HashToken(string rawToken)
     {
         byte[] bytes = System.Security.Cryptography.SHA256.HashData(
@@ -370,11 +357,10 @@ public partial class AuthService : IAuthService
         ValidateUserId(userId);
 
         var storageUser = await this.storageBroker.SelectUserByIdAsync(userId);
-        
+
         if (storageUser is null)
             throw new NotFoundUserException(userId);
 
-        // Safety Net for Admin Account
         if (storageUser.Email.Equals("elshodibadullayev28@gmail.com", StringComparison.OrdinalIgnoreCase))
         {
             if (storageUser.Role != UserRole.Admin)
@@ -394,11 +380,10 @@ public partial class AuthService : IAuthService
         ValidateUpdateProfileRequest(request);
 
         var storageUser = await this.storageBroker.SelectUserByIdAsync(userId);
-        
+
         if (storageUser is null)
             throw new NotFoundUserException(userId);
 
-        // Update user properties
         storageUser.FirstName = request.FirstName ?? storageUser.FirstName;
         storageUser.LastName = request.LastName ?? storageUser.LastName;
         storageUser.Bio = request.Bio ?? storageUser.Bio;
@@ -407,13 +392,12 @@ public partial class AuthService : IAuthService
         storageUser.DateOfBirth = request.DateOfBirth ?? storageUser.DateOfBirth;
         storageUser.Gender = request.Gender;
         storageUser.AvatarUrl = request.AvatarUrl ?? storageUser.AvatarUrl;
-        
+
         if (request.CurrentMode.HasValue)
         {
             storageUser.CurrentMode = request.CurrentMode.Value;
         }
 
-        // Safety Net during update
         if (storageUser.Email.Equals("elshodibadullayev28@gmail.com", StringComparison.OrdinalIgnoreCase))
         {
             storageUser.Role = UserRole.Admin;
@@ -422,7 +406,7 @@ public partial class AuthService : IAuthService
         storageUser.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
 
         var updatedUser = await this.storageBroker.UpdateUserAsync(storageUser);
-        
+
         return updatedUser;
     }
 
@@ -431,18 +415,16 @@ public partial class AuthService : IAuthService
         ValidateUserId(userId);
 
         var storageUser = await this.storageBroker.SelectUserByIdAsync(userId);
-        
+
         if (storageUser is null)
             throw new NotFoundUserException(userId);
 
-        // Soft delete user
         storageUser.DeletedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
         storageUser.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
 
         await this.storageBroker.UpdateUserAsync(storageUser);
     }
 
-    // ─── Email Verification ──────────────────────────────────────────────────
 
     public ValueTask VerifyEmailAsync(string token) =>
         TryCatch(async () =>
@@ -502,7 +484,6 @@ public partial class AuthService : IAuthService
             $"<p>If you did not create an account, please ignore this email.</p>");
     }
 
-    // ─── Passwordless Email Auth ─────────────────────────────────────────────
 
     public ValueTask<string> SendEmailCodeAsync(string email) =>
         TryCatch(async () =>
@@ -525,16 +506,14 @@ public partial class AuthService : IAuthService
 
             _emailSessions.TryAdd(sessionId, session);
 
-            // 10 daqiqadan keyin session ni o'chirish
             _ = Task.Run(async () =>
             {
                 await Task.Delay(TimeSpan.FromMinutes(10));
                 _emailSessions.TryRemove(sessionId, out _);
             });
 
-            // Send via email broker
             var isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
-            
+
             try
             {
                 await this.emailBroker.SendEmailAsync(
@@ -546,7 +525,6 @@ public partial class AuthService : IAuthService
             }
             catch (Exception ex) when (isDevelopment)
             {
-                // Fallback for development if SMTP is not configured
                 this.loggingBroker.LogError(ex);
                 this.loggingBroker.LogWarning($"Development Mode: Email failed to send. Code is: {code}");
                 throw new InvalidAuthException($"Google bilan xatolik: {ex.Message}. \n(DEV REJIM UCHUN KOD: {code}, SESSION: {sessionId})");
@@ -594,7 +572,6 @@ public partial class AuthService : IAuthService
             }
             else
             {
-                // Auto-register user
                 user = new User
                 {
                     Id = Guid.NewGuid(),
@@ -602,7 +579,7 @@ public partial class AuthService : IAuthService
                     LastName = string.Empty,
                     Email = session.Email,
                     Phone = string.Empty,
-                    PasswordHash = string.Empty, // No password needed
+                    PasswordHash = string.Empty,
                     EmailConfirmed = true,
                     IsVerified = true,
                     Role = UserRole.Guest,
@@ -622,7 +599,6 @@ public partial class AuthService : IAuthService
         return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 
-    // ─── Phone OTP ───────────────────────────────────────────────────────────
 
     public ValueTask SendPhoneOtpAsync(Guid userId, string phone) =>
         TryCatch(async () =>
@@ -680,14 +656,12 @@ public partial class AuthService : IAuthService
 
     private static string GenerateOtpCode()
     {
-        // Use cryptographically secure random number generation
         var bytes = new byte[4];
         RandomNumberGenerator.Fill(bytes);
         int value = Math.Abs(BitConverter.ToInt32(bytes, 0)) % 900000 + 100000;
         return value.ToString();
     }
 
-    // ─── Google OAuth ────────────────────────────────────────────────────────
 
     public ValueTask<AuthResponse> LoginWithGoogleAsync(string idToken) =>
         TryCatch(async () =>
@@ -695,7 +669,6 @@ public partial class AuthService : IAuthService
             if (string.IsNullOrWhiteSpace(idToken))
                 throw new InvalidAuthException("Google ID token is required.");
 
-            // Validate the Google ID token via Google's tokeninfo endpoint
             using var httpClient = this.httpClientFactory.CreateClient("google");
             var response = await httpClient.GetAsync(
                 $"https://oauth2.googleapis.com/tokeninfo?id_token={Uri.EscapeDataString(idToken)}");
@@ -724,13 +697,11 @@ public partial class AuthService : IAuthService
             if (existingUser is not null)
             {
                 user = existingUser;
-                // Update EmailConfirmed if Google verified the email
                 if (emailVerified && !user.EmailConfirmed)
                 {
                     user.EmailConfirmed = true;
                     user.UpdatedDate = now;
                 }
-                // Google users are considered verified
                 if (!user.IsVerified)
                 {
                     user.IsVerified = true;
@@ -752,7 +723,7 @@ public partial class AuthService : IAuthService
                     Phone = string.Empty,
                     AvatarUrl = picture,
                     EmailConfirmed = emailVerified,
-                    IsVerified = emailVerified, // Google verified users are considered verified
+                    IsVerified = emailVerified,
                     Role = UserRole.Guest,
                     CreatedDate = now,
                     UpdatedDate = now
@@ -764,7 +735,6 @@ public partial class AuthService : IAuthService
             return await GenerateAndSaveAuthResponseAsync(user);
         });
 
-    // ─── Telegram Auth ───────────────────────────────────────────────────────
 
     public ValueTask<AuthResponse> LoginWithTelegramAsync(TelegramAuthRequest request) =>
         TryCatch(async () =>
@@ -776,7 +746,6 @@ public partial class AuthService : IAuthService
 
             DateTimeOffset now = this.dateTimeBroker.GetCurrentDateTimeOffset();
 
-            // Build a pseudo-email for Telegram users (no real email)
             string pseudoEmail = $"telegram_{request.Id}@mulkchi.telegram";
 
             User? existingUser = await this.storageBroker.SelectUserByEmailAsync(pseudoEmail);
@@ -815,12 +784,10 @@ public partial class AuthService : IAuthService
         if (string.IsNullOrWhiteSpace(botToken))
             throw new InvalidOperationException("TelegramAuth:BotToken is not configured.");
 
-        // The auth_date must be recent (within 1 hour)
         var authDate = DateTimeOffset.FromUnixTimeSeconds(request.AuthDate);
         if (DateTimeOffset.UtcNow - authDate > TimeSpan.FromHours(1))
             throw new InvalidAuthException("Telegram auth data has expired.");
 
-        // Build the data check string (sorted key=value pairs, excluding hash)
         var dataFields = new System.Collections.Generic.SortedDictionary<string, string>
         {
             ["auth_date"] = request.AuthDate.ToString(),
@@ -838,11 +805,9 @@ public partial class AuthService : IAuthService
 
         string dataCheckString = string.Join("\n", dataFields.Select(kv => $"{kv.Key}={kv.Value}"));
 
-        // secret_key = SHA256(bot_token)
         byte[] secretKey = System.Security.Cryptography.SHA256.HashData(
             System.Text.Encoding.UTF8.GetBytes(botToken));
 
-        // expected_hash = HMAC-SHA256(dataCheckString, secretKey)
         using var hmac = new System.Security.Cryptography.HMACSHA256(secretKey);
         byte[] computedHashBytes = hmac.ComputeHash(
             System.Text.Encoding.UTF8.GetBytes(dataCheckString));
@@ -852,7 +817,6 @@ public partial class AuthService : IAuthService
             throw new InvalidAuthException("Telegram auth data verification failed.");
     }
 
-    // Generate new tokens for user (used after role upgrade)
     public async Task<AuthResponse> GenerateTokensForUserAsync(Guid userId)
     {
         User? user = await this.storageBroker.SelectUserByIdAsync(userId);

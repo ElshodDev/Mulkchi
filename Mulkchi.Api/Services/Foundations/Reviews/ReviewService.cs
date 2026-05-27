@@ -68,19 +68,17 @@ public partial class ReviewService : IReviewService
         TryCatch(async () =>
         {
             ValidateReviewOnModify(review);
-            
-            // Get existing review to check ownership
+
             Review existingReview = await this.storageBroker.SelectReviewByIdAsync(review.Id);
             if (existingReview == null)
                 throw new NotFoundReviewException(review.Id);
-            
-            // Check ownership: only reviewer can modify
+
             var currentUserId = this.currentUserService.GetCurrentUserId();
             if (!currentUserId.HasValue || (!this.currentUserService.IsInRole("Admin") && existingReview.ReviewerId != currentUserId.Value))
             {
                 throw new UnauthorizedAccessException("You can only modify your own reviews.");
             }
-            
+
             Review modifiedReview = await this.storageBroker.UpdateReviewAsync(review);
             await UpdatePropertyAverageRatingAsync(modifiedReview.PropertyId);
             return modifiedReview;
@@ -90,19 +88,17 @@ public partial class ReviewService : IReviewService
         TryCatch(async () =>
         {
             ValidateReviewId(reviewId);
-            
-            // Get existing review to check ownership
+
             Review existingReview = await this.storageBroker.SelectReviewByIdAsync(reviewId);
             if (existingReview == null)
                 throw new NotFoundReviewException(reviewId);
-            
-            // Check ownership: only reviewer can delete
+
             var currentUserId = this.currentUserService.GetCurrentUserId();
             if (!currentUserId.HasValue || (!this.currentUserService.IsInRole("Admin") && existingReview.ReviewerId != currentUserId.Value))
             {
                 throw new UnauthorizedAccessException("You can only delete your own reviews.");
             }
-            
+
             Review deletedReview = await this.storageBroker.DeleteReviewByIdAsync(reviewId);
             await UpdatePropertyAverageRatingAsync(deletedReview.PropertyId);
             return deletedReview;

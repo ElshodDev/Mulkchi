@@ -360,14 +360,13 @@ export class FavoritesComponent implements OnInit {
     }
   }
 
-  // Get image URL from property and resolve to backend URL
   getFullImageUrl(property: unknown): string {
     const prop = property as {
       images?: { isPrimary?: boolean; thumbnailUrl?: string; url?: string; imageUrl?: string }[];
       thumbnailUrl?: string;
       imageUrl?: string;
     };
-    
+
     let path = '';
 
     if (prop.images && Array.isArray(prop.images) && prop.images.length > 0) {
@@ -379,19 +378,18 @@ export class FavoritesComponent implements OnInit {
       path = prop.imageUrl;
     }
 
-    if (!path) return 'https://placehold.co/600x400/0f172a/c9a84c?text=Mulkchi';
-    
+    if (!path) return 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop';
+
     path = path.replace(/\\/g, '/');
     if (path.startsWith('/')) path = path.substring(1);
-    
+
     if (path.startsWith('http')) return path;
     return environment.apiUrl.replace('/api', '') + '/' + path;
   }
 
-  // Handle image load error
   onImgError(event: Event): void {
     const img = event.target as HTMLImageElement;
-    img.src = 'https://placehold.co/600x400/0f172a/c9a84c?text=Mulkchi';
+    img.src = 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop';
   }
 
   navigateToProperty(id: string): void {

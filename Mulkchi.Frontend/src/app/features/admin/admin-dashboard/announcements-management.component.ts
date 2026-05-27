@@ -503,7 +503,6 @@ export class AnnouncementsManagementComponent implements OnInit, OnDestroy {
         this.toast.success(message);
         this.resetForm();
         this.loadAnnouncements();
-        // Scroll to announcements table after successful save to show updated list
         setTimeout(() => {
           if (this.announcementsTable) {
             this.announcementsTable.nativeElement.scrollIntoView({

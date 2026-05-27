@@ -47,7 +47,6 @@ public partial class StorageBroker
         return user;
     }
 
-    // Admin methods to bypass soft delete filters
     public IQueryable<User> SelectAllUsersIncludingDeleted()
         => this.Users.IgnoreQueryFilters().AsQueryable();
 

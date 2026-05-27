@@ -1,11 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Mulkchi.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class AddTelegramIdToUsers : Migration
+    public partial class UpdateAnalyticsIndices : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,12 +17,6 @@ namespace Mulkchi.Api.Migrations
             migrationBuilder.DropIndex(
                 name: "IX_MarketTrends_YearMonth",
                 table: "MarketTrends");
-
-            migrationBuilder.AddColumn<long>(
-                name: "TelegramId",
-                table: "Users",
-                type: "bigint",
-                nullable: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_PriceHistories_PropertyId",
@@ -45,10 +39,6 @@ namespace Mulkchi.Api.Migrations
             migrationBuilder.DropIndex(
                 name: "IX_MarketTrends_CalculatedAt",
                 table: "MarketTrends");
-
-            migrationBuilder.DropColumn(
-                name: "TelegramId",
-                table: "Users");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PriceHistories_PropertyId_RecordedDate",

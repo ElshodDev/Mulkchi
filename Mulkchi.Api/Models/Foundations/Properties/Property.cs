@@ -23,8 +23,7 @@ public class Property
     public double Area { get; set; }
     public int NumberOfBedrooms { get; set; }
     public int NumberOfBathrooms { get; set; }
-    
-    // Alias properties for compatibility
+
     public int Rooms { get => NumberOfBedrooms; set => NumberOfBedrooms = value; }
     public int Bathrooms { get => NumberOfBathrooms; set => NumberOfBathrooms = value; }
     public int ViewCount { get => ViewsCount; set => ViewsCount = value; }
@@ -49,7 +48,6 @@ public class Property
     public bool IsFeatured { get; set; }
     public bool IsVerified { get; set; }
 
-    // Infrastructure (Uzbekistan-specific)
     public bool HasMetroNearby { get; set; }
     public bool HasBusStop { get; set; }
     public bool HasMarketNearby { get; set; }
@@ -57,7 +55,6 @@ public class Property
     public bool HasHospitalNearby { get; set; }
     public double DistanceToCityCenter { get; set; }
 
-    // Comfort
     public bool HasElevator { get; set; }
     public bool HasSecurity { get; set; }
     public bool HasGenerator { get; set; }
@@ -65,7 +62,6 @@ public class Property
     public bool HasFurniture { get; set; }
     public bool IsRenovated { get; set; }
 
-    // International standard (Airbnb/Booking)
     public bool HasAirConditioning { get; set; }
     public bool HasHeating { get; set; }
     public bool HasWasher { get; set; }
@@ -80,12 +76,14 @@ public class Property
     public int FavoritesCount { get; set; }
     public Guid HostId { get; set; }
     public DateTimeOffset? BumpedAt { get; set; }
-    
+
     [System.ComponentModel.DataAnnotations.Schema.NotMapped]
     public string HostName { get; set; }
-    
+
     [System.ComponentModel.DataAnnotations.Schema.NotMapped]
     public string HostAvatarUrl { get; set; }
+
+    public string VirtualTourUrl { get; set; }
 
     public ICollection<PropertyImage> Images { get; set; }
     public Currency Currency { get; set; } = Currency.UZS;

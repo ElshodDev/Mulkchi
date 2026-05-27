@@ -44,11 +44,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(
-      routes,
-      withPreloading(SelectivePreloadingStrategy),
-      withViewTransitions(),
-    ),
+    provideRouter(routes, withPreloading(SelectivePreloadingStrategy), withViewTransitions()),
     provideHttpClient(
       withInterceptors([authInterceptor, cacheInterceptor, loadingInterceptor, errorInterceptor]),
     ),

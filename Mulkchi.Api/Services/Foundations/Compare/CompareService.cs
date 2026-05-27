@@ -23,20 +23,19 @@ public class CompareService : ICompareService
         if (properties.Count < 2)
             throw new ArgumentException("Solishtirish uchun kamida 2 ta mulk kerak.");
 
-        // Calculate average price per square meter in the dataset to act as a benchmark
         decimal avgPricePerSqm = 0;
         var validProperties = properties.Where(p => p.Area > 0 && (p.MonthlyRent ?? p.SalePrice ?? p.PricePerNight).HasValue).ToList();
-        
+
         if (validProperties.Any())
         {
             avgPricePerSqm = validProperties.Average(p => (p.MonthlyRent ?? p.SalePrice ?? p.PricePerNight)!.Value / (decimal)p.Area);
         }
 
-        var details = properties.Select(p => 
+        var details = properties.Select(p =>
         {
             decimal price = p.MonthlyRent ?? p.SalePrice ?? p.PricePerNight ?? 0;
             decimal thisPricePerSqm = p.Area > 0 ? price / (decimal)p.Area : 0;
-            
+
             return new PropertyComparisonDetail
             {
                 PropertyId = p.Id,
@@ -108,7 +107,7 @@ public class CompareService : ICompareService
 
     private int CalculatePropertyScore(Property p)
     {
-        int score = 50; 
+        int score = 50;
         score += p.NumberOfBedrooms * 5;
         score += (int)(p.Area / 10);
         if (p.HasWifi) score += 5;
@@ -118,8 +117,8 @@ public class CompareService : ICompareService
         if (p.HasElevator) score += 5;
         if (p.HasFurniture) score += 10;
         if (p.IsRenovated) score += 10;
-        
-        return Math.Min(score, 100); // Maksimal 100 ball
+
+        return Math.Min(score, 100);
     }
 
     private string GenerateComparisonSummary(List<PropertyComparisonDetail> details)
@@ -133,7 +132,7 @@ public class CompareService : ICompareService
 
         if (bestValue != null)
             sb.AppendLine($"**Eng manfaatli (Arzon va keng)**: {bestValue.Title} ({bestValue.Area}m² - {bestValue.Price:N0} so'm)");
-        
+
         sb.AppendLine($"**Eng ko'p qulayliklarga ega**: {highestScore.Title} (Reyting: {highestScore.Score}/100)");
         sb.AppendLine();
 

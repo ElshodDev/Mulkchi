@@ -171,7 +171,6 @@ export class SavedSearchesComponent implements OnInit {
   }
 
   private loadSavedSearches(): void {
-    // Load from localStorage
     const stored = localStorage.getItem('mulkchi_saved_searches');
     if (stored) {
       try {
@@ -187,8 +186,6 @@ export class SavedSearchesComponent implements OnInit {
   }
 
   editSearch(search: SavedSearch): void {
-    // Trigger edit dialog/modal
-    console.log('Edit search:', search);
   }
 
   deleteSearch(id: string): void {

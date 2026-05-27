@@ -140,7 +140,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public ActionResult<PagedResult<UserResponse>> GetAllUsersAsync([FromQuery] PaginationParams pagination, [FromQuery] string? role = null, [FromQuery] string? status = null)
     {
         try
@@ -199,7 +199,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("search")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public ActionResult<PagedResult<UserResponse>> SearchUsers([FromQuery] string q, [FromQuery] PaginationParams pagination)
     {
         try
@@ -248,7 +248,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("statistics")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public ActionResult<object> GetUserStatistics()
     {
         try
@@ -286,7 +286,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<ActionResult<User>> CreateUserAsync([FromBody] CreateUserRequest request)
     {
         try
@@ -327,7 +327,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPut]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<ActionResult<User>> UpdateUserAsync([FromBody] UpdateUserRequest request)
     {
         try
@@ -365,7 +365,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<ActionResult> DeleteUserAsync(Guid id)
     {
         try

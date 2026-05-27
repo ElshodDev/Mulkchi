@@ -3,7 +3,7 @@ namespace Mulkchi.Api.Models.Foundations.Geo;
 public class NearbyPlaceDto
 {
     public string Name { get; set; }
-    public string Type { get; set; } // metro, park, school, shop, restaurant
+    public string Type { get; set; }
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public double DistanceKm { get; set; }

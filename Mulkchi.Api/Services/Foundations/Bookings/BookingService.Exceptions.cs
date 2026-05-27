@@ -17,9 +17,9 @@ namespace Mulkchi.Api.Services.Foundations.Bookings
 
         private async ValueTask<Booking> TryCatch(ReturningBookingFunction returningBookingFunction)
         {
-            try 
-            { 
-                return await returningBookingFunction(); 
+            try
+            {
+                return await returningBookingFunction();
             }
             catch (NullBookingException ex) { throw new BookingValidationException(ex); }
             catch (InvalidBookingException ex) { throw new BookingValidationException(ex); }
@@ -45,7 +45,7 @@ namespace Mulkchi.Api.Services.Foundations.Bookings
                 var failedStorage = new FailedBookingStorageException(dbUpdateException);
                 throw new BookingDependencyException(failedStorage);
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 var failedService = new FailedBookingServiceException(ex);
                 throw new BookingServiceException(failedService);

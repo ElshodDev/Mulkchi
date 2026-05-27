@@ -3,9 +3,6 @@ using System.Threading.Tasks;
 
 namespace Mulkchi.Api.Middleware;
 
-/// <summary>
-/// Adds security-related HTTP response headers to every response.
-/// </summary>
 public class SecurityHeadersMiddleware
 {
     private readonly RequestDelegate _next;
@@ -19,16 +16,12 @@ public class SecurityHeadersMiddleware
     {
         var headers = context.Response.Headers;
 
-        // Prevent the page from being embedded in an iframe (clickjacking protection)
         headers["X-Frame-Options"] = "DENY";
 
-        // Prevent MIME-type sniffing
         headers["X-Content-Type-Options"] = "nosniff";
 
-        // Control referrer information sent with requests
         headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
 
-        // Content Security Policy — restrictive baseline; tighten per environment as needed
         headers["Content-Security-Policy"] =
             "default-src 'self'; " +
             "script-src 'self'; " +
@@ -38,12 +31,9 @@ public class SecurityHeadersMiddleware
             "connect-src 'self' wss:; " +
             "frame-ancestors 'none';";
 
-        // Permissions policy — disable unused browser features
         headers["Permissions-Policy"] =
             "camera=(), microphone=(), geolocation=(), payment=()";
 
-        // HTTP Strict Transport Security (HSTS) — browsers must use HTTPS for 1 year.
-        // Only set over HTTPS; do NOT set on plain HTTP responses.
         if (context.Request.IsHttps)
         {
             headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";

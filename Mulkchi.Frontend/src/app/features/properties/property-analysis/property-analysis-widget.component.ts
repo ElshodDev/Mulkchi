@@ -7,12 +7,12 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
-import { 
-  AnalyticsService, 
-  PropertyAnalysisResult, 
+import {
+  AnalyticsService,
+  PropertyAnalysisResult,
   PricePrediction,
   PriceHistoryItem,
-  PriceStatus
+  PriceStatus,
 } from '../../../core/services/analytics.service';
 
 @Component({
@@ -26,7 +26,7 @@ import {
     MatProgressBarModule,
     MatChipsModule,
     MatTooltipModule,
-    MatDividerModule
+    MatDividerModule,
   ],
   template: `
     @if (loading()) {
@@ -56,7 +56,7 @@ import {
             </div>
             <div class="confidence-badge" matTooltip="Ishonchlilik darajasi">
               <mat-icon>verified</mat-icon>
-              <span>{{ analysis()?.confidence | number:'1.0-0' }}% ishonch</span>
+              <span>{{ analysis()?.confidence | number: '1.0-0' }}% ishonch</span>
             </div>
           </div>
 
@@ -79,13 +79,16 @@ import {
 
           <!-- Price Difference -->
           <div class="difference-section">
-            <div class="difference-bar" [class.positive]="(analysis()?.priceDifference || 0) < 0" 
-                 [class.negative]="(analysis()?.priceDifference || 0) > 0">
+            <div
+              class="difference-bar"
+              [class.positive]="(analysis()?.priceDifference || 0) < 0"
+              [class.negative]="(analysis()?.priceDifference || 0) > 0"
+            >
               <div class="bar-fill" [style.width.%]="getDifferencePercent()"></div>
               <span class="difference-text">
                 {{ (analysis()?.priceDifference || 0) > 0 ? '+' : '' }}
                 {{ formatPrice(analysis()?.priceDifference || 0) }}
-                ({{ analysis()?.priceDifferencePercent | number:'1.1-1' }}%)
+                ({{ analysis()?.priceDifferencePercent | number: '1.1-1' }}%)
               </span>
             </div>
           </div>
@@ -94,14 +97,17 @@ import {
           <div class="value-score-section">
             <div class="score-header">
               <span>Qiymat bahosi</span>
-              <span class="score-value">{{ analysis()?.valueScore | number:'1.0-0' }}/100</span>
+              <span class="score-value">{{ analysis()?.valueScore | number: '1.0-0' }}/100</span>
             </div>
-            <mat-progress-bar 
-              mode="determinate" 
+            <mat-progress-bar
+              mode="determinate"
               [value]="analysis()?.valueScore"
               [class.high-score]="(analysis()?.valueScore || 0) >= 70"
-              [class.medium-score]="(analysis()?.valueScore || 0) >= 40 && (analysis()?.valueScore || 0) < 70"
-              [class.low-score]="(analysis()?.valueScore || 0) < 40">
+              [class.medium-score]="
+                (analysis()?.valueScore || 0) >= 40 && (analysis()?.valueScore || 0) < 70
+              "
+              [class.low-score]="(analysis()?.valueScore || 0) < 40"
+            >
             </mat-progress-bar>
           </div>
 
@@ -167,20 +173,29 @@ import {
           <mat-card-content>
             <div class="prediction-summary">
               <div class="prediction-main">
-                <span class="current">Hozir: {{ formatPrice(pricePrediction()?.currentPrice || 0) }}</span>
+                <span class="current"
+                  >Hozir: {{ formatPrice(pricePrediction()?.currentPrice || 0) }}</span
+                >
                 <mat-icon>arrow_forward</mat-icon>
-                <span class="predicted" [class.up]="(pricePrediction()?.predictedChangePercent || 0) > 0"
-                      [class.down]="(pricePrediction()?.predictedChangePercent || 0) < 0">
+                <span
+                  class="predicted"
+                  [class.up]="(pricePrediction()?.predictedChangePercent || 0) > 0"
+                  [class.down]="(pricePrediction()?.predictedChangePercent || 0) < 0"
+                >
                   {{ formatPrice(pricePrediction()?.predictedPrice || 0) }}
                 </span>
               </div>
               <div class="prediction-change">
-                <span [class.up]="(pricePrediction()?.predictedChangePercent || 0) > 0"
-                      [class.down]="(pricePrediction()?.predictedChangePercent || 0) < 0">
+                <span
+                  [class.up]="(pricePrediction()?.predictedChangePercent || 0) > 0"
+                  [class.down]="(pricePrediction()?.predictedChangePercent || 0) < 0"
+                >
                   {{ (pricePrediction()?.predictedChangePercent || 0) > 0 ? '+' : '' }}
-                  {{ pricePrediction()?.predictedChangePercent | number:'1.1-1' }}%
+                  {{ pricePrediction()?.predictedChangePercent | number: '1.1-1' }}%
                 </span>
-                <span class="confidence">Ishonch: {{ pricePrediction()?.confidence | number:'1.0-0' }}%</span>
+                <span class="confidence"
+                  >Ishonch: {{ pricePrediction()?.confidence | number: '1.0-0' }}%</span
+                >
               </div>
             </div>
 
@@ -190,7 +205,13 @@ import {
                 <div class="factors-list">
                   @for (factor of pricePrediction()?.factors; track factor.name) {
                     <div class="factor-item" [class]="factor.impact">
-                      <mat-icon>{{ factor.impact === 'positive' ? 'trending_up' : factor.impact === 'negative' ? 'trending_down' : 'remove' }}</mat-icon>
+                      <mat-icon>{{
+                        factor.impact === 'positive'
+                          ? 'trending_up'
+                          : factor.impact === 'negative'
+                            ? 'trending_down'
+                            : 'remove'
+                      }}</mat-icon>
                       <div class="factor-info">
                         <span class="name">{{ factor.name }}</span>
                         <span class="description">{{ factor.description }}</span>
@@ -218,7 +239,11 @@ import {
                 <div class="history-item">
                   <span class="date">{{ formatDate(item.date) }}</span>
                   <span class="price">{{ formatPrice(item.price) }}</span>
-                  <span class="type" [class.sale]="item.type === 'sale'" [class.rent]="item.type === 'rent'">
+                  <span
+                    class="type"
+                    [class.sale]="item.type === 'sale'"
+                    [class.rent]="item.type === 'rent'"
+                  >
                     {{ item.type === 'sale' ? 'Sotuv' : 'Ijara' }}
                   </span>
                 </div>
@@ -239,517 +264,521 @@ import {
       </mat-card>
     }
   `,
-  styles: [`
-    .property-analysis-card {
-      margin-bottom: 16px;
-      transition: all 0.3s ease;
+  styles: [
+    `
+      .property-analysis-card {
+        margin-bottom: 16px;
+        transition: all 0.3s ease;
 
-      &.underpriced {
-        border-left: 4px solid #4caf50;
-      }
-
-      &.fair {
-        border-left: 4px solid #ff9800;
-      }
-
-      &.overpriced {
-        border-left: 4px solid #f44336;
-      }
-    }
-
-    .analysis-icon {
-      color: #7c4dff;
-      font-size: 32px;
-      width: 32px;
-      height: 32px;
-    }
-
-    .status-section {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .status-badge {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      border-radius: 24px;
-      font-weight: 600;
-      font-size: 0.9rem;
-
-      &.underpriced {
-        background: #e8f5e9;
-        color: #2e7d32;
-      }
-
-      &.fair {
-        background: #fff3e0;
-        color: #ef6c00;
-      }
-
-      &.overpriced {
-        background: #ffebee;
-        color: #c62828;
-      }
-
-      mat-icon {
-        font-size: 20px;
-      }
-    }
-
-    .confidence-badge {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 0.85rem;
-      color: #666;
-
-      mat-icon {
-        font-size: 18px;
-        color: #4caf50;
-      }
-    }
-
-    .price-comparison {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-      padding: 16px;
-      background: #f8f9fa;
-      border-radius: 12px;
-
-      .price-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-
-        .label {
-          font-size: 0.85rem;
-          color: #666;
-          margin-bottom: 4px;
+        &.underpriced {
+          border-left: 4px solid #4caf50;
         }
 
-        .value {
-          font-size: 1.3rem;
-          font-weight: 700;
-          color: #333;
+        &.fair {
+          border-left: 4px solid #ff9800;
         }
 
-        &.market .value {
-          color: #2196f3;
+        &.overpriced {
+          border-left: 4px solid #f44336;
         }
       }
 
-      .price-arrow {
-        mat-icon {
-          font-size: 32px;
-          color: #9e9e9e;
-        }
+      .analysis-icon {
+        color: #7c4dff;
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
       }
-    }
 
-    .difference-section {
-      margin-bottom: 20px;
-
-      .difference-bar {
-        position: relative;
-        height: 40px;
-        background: #e0e0e0;
-        border-radius: 20px;
-        overflow: hidden;
-
-        .bar-fill {
-          position: absolute;
-          height: 100%;
-          background: #ff9800;
-          transition: width 0.5s ease;
-
-          &.positive {
-            background: #4caf50;
-          }
-
-          &.negative {
-            background: #f44336;
-          }
-        }
-
-        .difference-text {
-          position: absolute;
-          width: 100%;
-          text-align: center;
-          line-height: 40px;
-          font-weight: 600;
-          color: #333;
-          z-index: 1;
-        }
-
-        &.positive .bar-fill {
-          background: #4caf50;
-        }
-
-        &.negative .bar-fill {
-          background: #f44336;
-        }
-      }
-    }
-
-    .value-score-section {
-      margin-bottom: 20px;
-
-      .score-header {
+      .status-section {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 8px;
+        margin-bottom: 20px;
+      }
 
-        .score-value {
-          font-weight: 700;
-          color: #333;
+      .status-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 24px;
+        font-weight: 600;
+        font-size: 0.9rem;
+
+        &.underpriced {
+          background: #e8f5e9;
+          color: #2e7d32;
+        }
+
+        &.fair {
+          background: #fff3e0;
+          color: #ef6c00;
+        }
+
+        &.overpriced {
+          background: #ffebee;
+          color: #c62828;
+        }
+
+        mat-icon {
+          font-size: 20px;
         }
       }
 
-      ::ng-deep {
-        .high-score .mdc-linear-progress__bar-inner {
-          background-color: #4caf50 !important;
-        }
+      .confidence-badge {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.85rem;
+        color: #666;
 
-        .medium-score .mdc-linear-progress__bar-inner {
-          background-color: #ff9800 !important;
-        }
-
-        .low-score .mdc-linear-progress__bar-inner {
-          background-color: #f44336 !important;
+        mat-icon {
+          font-size: 18px;
+          color: #4caf50;
         }
       }
-    }
 
-    .section-divider {
-      margin: 20px 0;
-    }
+      .price-comparison {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        padding: 16px;
+        background: #f8f9fa;
+        border-radius: 12px;
 
-    .price-per-sqm {
-      margin-bottom: 20px;
-
-      .sqm-comparison {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-
-        .sqm-item {
+        .price-item {
           display: flex;
           flex-direction: column;
-          padding: 12px;
-          background: #f5f5f5;
-          border-radius: 8px;
+          align-items: center;
 
           .label {
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: #666;
             margin-bottom: 4px;
           }
 
           .value {
-            font-weight: 600;
+            font-size: 1.3rem;
+            font-weight: 700;
             color: #333;
           }
 
-          &.market {
-            background: #e3f2fd;
+          &.market .value {
+            color: #2196f3;
+          }
+        }
+
+        .price-arrow {
+          mat-icon {
+            font-size: 32px;
+            color: #9e9e9e;
           }
         }
       }
-    }
 
-    .reasoning-section {
-      margin-bottom: 20px;
-
-      h4 {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 12px;
-        color: #333;
-
-        mat-icon {
-          color: #ffc107;
-        }
-      }
-
-      ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-
-        li {
-          padding: 8px 0;
-          padding-left: 24px;
-          position: relative;
-          color: #555;
-          line-height: 1.5;
-
-          &::before {
-            content: '•';
-            position: absolute;
-            left: 8px;
-            color: #7c4dff;
-            font-weight: bold;
-          }
-        }
-      }
-    }
-
-    .recommendation-section {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 16px;
-      border-radius: 12px;
-      margin-bottom: 16px;
-
-      &.buy {
-        background: #e8f5e9;
-        color: #2e7d32;
-      }
-
-      &.consider {
-        background: #fff3e0;
-        color: #ef6c00;
-      }
-
-      &.avoid {
-        background: #ffebee;
-        color: #c62828;
-      }
-
-      mat-icon {
-        font-size: 24px;
-      }
-
-      p {
-        margin: 0;
-        line-height: 1.5;
-        font-weight: 500;
-      }
-    }
-
-    .comparable-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.85rem;
-      color: #666;
-
-      mat-icon {
-        font-size: 18px;
-      }
-    }
-
-    .prediction-card {
-      margin-top: 16px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-
-      mat-card-subtitle {
-        color: rgba(255,255,255,0.8);
-      }
-
-      .prediction-summary {
-        text-align: center;
+      .difference-section {
         margin-bottom: 20px;
 
-        .prediction-main {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 16px;
-          margin-bottom: 12px;
+        .difference-bar {
+          position: relative;
+          height: 40px;
+          background: #e0e0e0;
+          border-radius: 20px;
+          overflow: hidden;
 
-          .current, .predicted {
-            font-size: 1.3rem;
-            font-weight: 600;
-          }
-
-          .predicted {
-            &.up {
-              color: #a5d6a7;
-            }
-
-            &.down {
-              color: #ffcc80;
-            }
-          }
-
-          mat-icon {
-            color: rgba(255,255,255,0.6);
-          }
-        }
-
-        .prediction-change {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 16px;
-
-          .up {
-            color: #a5d6a7;
-            font-weight: 700;
-          }
-
-          .down {
-            color: #ffcc80;
-            font-weight: 700;
-          }
-
-          .confidence {
-            background: rgba(255,255,255,0.2);
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 0.85rem;
-          }
-        }
-      }
-
-      .factors-section {
-        h4 {
-          margin-bottom: 12px;
-          font-size: 1rem;
-        }
-
-        .factors-list {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-
-          .factor-item {
-            display: grid;
-            grid-template-columns: 32px 1fr 50px;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 8px;
+          .bar-fill {
+            position: absolute;
+            height: 100%;
+            background: #ff9800;
+            transition: width 0.5s ease;
 
             &.positive {
-              border-left: 3px solid #a5d6a7;
+              background: #4caf50;
             }
 
             &.negative {
-              border-left: 3px solid #ffcc80;
-            }
-
-            &.neutral {
-              border-left: 3px solid rgba(255,255,255,0.3);
-            }
-
-            mat-icon {
-              font-size: 20px;
-            }
-
-            .factor-info {
-              display: flex;
-              flex-direction: column;
-
-              .name {
-                font-weight: 600;
-                font-size: 0.9rem;
-              }
-
-              .description {
-                font-size: 0.8rem;
-                opacity: 0.8;
-              }
-            }
-
-            .weight {
-              text-align: right;
-              font-weight: 600;
-              font-size: 0.9rem;
+              background: #f44336;
             }
           }
-        }
-      }
-    }
 
-    .history-card {
-      margin-top: 16px;
-
-      .history-list {
-        .history-item {
-          display: grid;
-          grid-template-columns: 1fr 1fr auto;
-          align-items: center;
-          padding: 12px;
-          border-bottom: 1px solid #eee;
-
-          &:last-child {
-            border-bottom: none;
-          }
-
-          .date {
-            color: #666;
-            font-size: 0.9rem;
-          }
-
-          .price {
+          .difference-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            line-height: 40px;
             font-weight: 600;
             color: #333;
+            z-index: 1;
           }
 
-          .type {
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
+          &.positive .bar-fill {
+            background: #4caf50;
+          }
 
-            &.sale {
-              background: #e3f2fd;
-              color: #1976d2;
+          &.negative .bar-fill {
+            background: #f44336;
+          }
+        }
+      }
+
+      .value-score-section {
+        margin-bottom: 20px;
+
+        .score-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+
+          .score-value {
+            font-weight: 700;
+            color: #333;
+          }
+        }
+
+        ::ng-deep {
+          .high-score .mdc-linear-progress__bar-inner {
+            background-color: #4caf50 !important;
+          }
+
+          .medium-score .mdc-linear-progress__bar-inner {
+            background-color: #ff9800 !important;
+          }
+
+          .low-score .mdc-linear-progress__bar-inner {
+            background-color: #f44336 !important;
+          }
+        }
+      }
+
+      .section-divider {
+        margin: 20px 0;
+      }
+
+      .price-per-sqm {
+        margin-bottom: 20px;
+
+        .sqm-comparison {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+
+          .sqm-item {
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 8px;
+
+            .label {
+              font-size: 0.8rem;
+              color: #666;
+              margin-bottom: 4px;
             }
 
-            &.rent {
-              background: #f3e5f5;
-              color: #7b1fa2;
+            .value {
+              font-weight: 600;
+              color: #333;
+            }
+
+            &.market {
+              background: #e3f2fd;
             }
           }
         }
       }
-    }
 
-    .analysis-loading, .analysis-error {
-      text-align: center;
-      padding: 40px;
+      .reasoning-section {
+        margin-bottom: 20px;
 
-      .loading-text {
+        h4 {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 12px;
+          color: #333;
+
+          mat-icon {
+            color: #ffc107;
+          }
+        }
+
+        ul {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+
+          li {
+            padding: 8px 0;
+            padding-left: 24px;
+            position: relative;
+            color: #555;
+            line-height: 1.5;
+
+            &::before {
+              content: '•';
+              position: absolute;
+              left: 8px;
+              color: #7c4dff;
+              font-weight: bold;
+            }
+          }
+        }
+      }
+
+      .recommendation-section {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+
+        &.buy {
+          background: #e8f5e9;
+          color: #2e7d32;
+        }
+
+        &.consider {
+          background: #fff3e0;
+          color: #ef6c00;
+        }
+
+        &.avoid {
+          background: #ffebee;
+          color: #c62828;
+        }
+
+        mat-icon {
+          font-size: 24px;
+        }
+
+        p {
+          margin: 0;
+          line-height: 1.5;
+          font-weight: 500;
+        }
+      }
+
+      .comparable-info {
         display: flex;
         align-items: center;
-        justify-content: center;
         gap: 8px;
-        margin-top: 16px;
+        font-size: 0.85rem;
         color: #666;
 
         mat-icon {
-          color: #7c4dff;
+          font-size: 18px;
         }
       }
-    }
 
-    .analysis-error {
-      mat-icon {
-        font-size: 48px;
-        color: #f44336;
-        margin-bottom: 16px;
+      .prediction-card {
+        margin-top: 16px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+
+        mat-card-subtitle {
+          color: rgba(255, 255, 255, 0.8);
+        }
+
+        .prediction-summary {
+          text-align: center;
+          margin-bottom: 20px;
+
+          .prediction-main {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 12px;
+
+            .current,
+            .predicted {
+              font-size: 1.3rem;
+              font-weight: 600;
+            }
+
+            .predicted {
+              &.up {
+                color: #a5d6a7;
+              }
+
+              &.down {
+                color: #ffcc80;
+              }
+            }
+
+            mat-icon {
+              color: rgba(255, 255, 255, 0.6);
+            }
+          }
+
+          .prediction-change {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+
+            .up {
+              color: #a5d6a7;
+              font-weight: 700;
+            }
+
+            .down {
+              color: #ffcc80;
+              font-weight: 700;
+            }
+
+            .confidence {
+              background: rgba(255, 255, 255, 0.2);
+              padding: 4px 12px;
+              border-radius: 16px;
+              font-size: 0.85rem;
+            }
+          }
+        }
+
+        .factors-section {
+          h4 {
+            margin-bottom: 12px;
+            font-size: 1rem;
+          }
+
+          .factors-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+
+            .factor-item {
+              display: grid;
+              grid-template-columns: 32px 1fr 50px;
+              align-items: center;
+              gap: 12px;
+              padding: 12px;
+              background: rgba(255, 255, 255, 0.1);
+              border-radius: 8px;
+
+              &.positive {
+                border-left: 3px solid #a5d6a7;
+              }
+
+              &.negative {
+                border-left: 3px solid #ffcc80;
+              }
+
+              &.neutral {
+                border-left: 3px solid rgba(255, 255, 255, 0.3);
+              }
+
+              mat-icon {
+                font-size: 20px;
+              }
+
+              .factor-info {
+                display: flex;
+                flex-direction: column;
+
+                .name {
+                  font-weight: 600;
+                  font-size: 0.9rem;
+                }
+
+                .description {
+                  font-size: 0.8rem;
+                  opacity: 0.8;
+                }
+              }
+
+              .weight {
+                text-align: right;
+                font-weight: 600;
+                font-size: 0.9rem;
+              }
+            }
+          }
+        }
       }
 
-      p {
-        color: #666;
-        margin-bottom: 16px;
+      .history-card {
+        margin-top: 16px;
+
+        .history-list {
+          .history-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+
+            &:last-child {
+              border-bottom: none;
+            }
+
+            .date {
+              color: #666;
+              font-size: 0.9rem;
+            }
+
+            .price {
+              font-weight: 600;
+              color: #333;
+            }
+
+            .type {
+              padding: 4px 12px;
+              border-radius: 12px;
+              font-size: 0.75rem;
+              font-weight: 600;
+
+              &.sale {
+                background: #e3f2fd;
+                color: #1976d2;
+              }
+
+              &.rent {
+                background: #f3e5f5;
+                color: #7b1fa2;
+              }
+            }
+          }
+        }
       }
-    }
-  `]
+
+      .analysis-loading,
+      .analysis-error {
+        text-align: center;
+        padding: 40px;
+
+        .loading-text {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          margin-top: 16px;
+          color: #666;
+
+          mat-icon {
+            color: #7c4dff;
+          }
+        }
+      }
+
+      .analysis-error {
+        mat-icon {
+          font-size: 48px;
+          color: #f44336;
+          margin-bottom: 16px;
+        }
+
+        p {
+          color: #666;
+          margin-bottom: 16px;
+        }
+      }
+    `,
+  ],
 })
 export class PropertyAnalysisWidgetComponent implements OnInit {
   private analyticsService = inject(AnalyticsService);
@@ -758,7 +787,6 @@ export class PropertyAnalysisWidgetComponent implements OnInit {
   @Input() showPrediction = true;
   @Input() showHistory = false;
 
-  // Signals
   analysis = signal<PropertyAnalysisResult | null>(null);
   pricePrediction = signal<PricePrediction | null>(null);
   priceHistory = signal<PriceHistoryItem[]>([]);
@@ -775,7 +803,7 @@ export class PropertyAnalysisWidgetComponent implements OnInit {
   loadAnalysis() {
     this.analyticsService.analyzeProperty(this.propertyId).subscribe({
       next: (result) => this.analysis.set(result),
-      error: () => this.analysis.set(null)
+      error: () => this.analysis.set(null),
     });
   }
 
@@ -783,14 +811,14 @@ export class PropertyAnalysisWidgetComponent implements OnInit {
     this.predictionVisible.set(true);
     this.analyticsService.getPricePrediction(this.propertyId).subscribe({
       next: (result) => this.pricePrediction.set(result),
-      error: () => this.pricePrediction.set(null)
+      error: () => this.pricePrediction.set(null),
     });
   }
 
   loadPriceHistory() {
     this.analyticsService.getPriceHistory(this.propertyId).subscribe({
       next: (result) => this.priceHistory.set(result),
-      error: () => this.priceHistory.set([])
+      error: () => this.priceHistory.set([]),
     });
   }
 
@@ -801,43 +829,58 @@ export class PropertyAnalysisWidgetComponent implements OnInit {
 
   getStatusText(status: PriceStatus | undefined): string {
     switch (status) {
-      case 'Underpriced': return 'Arzon';
-      case 'Fair': return 'O\'rtacha';
-      case 'Overpriced': return 'Qimmat';
-      default: return 'Noma\'lum';
+      case 'Underpriced':
+        return 'Arzon';
+      case 'Fair':
+        return "O'rtacha";
+      case 'Overpriced':
+        return 'Qimmat';
+      default:
+        return "Noma'lum";
     }
   }
 
   getStatusIcon(status: PriceStatus | undefined): string {
     switch (status) {
-      case 'Underpriced': return 'trending_down';
-      case 'Fair': return 'remove';
-      case 'Overpriced': return 'trending_up';
-      default: return 'help';
+      case 'Underpriced':
+        return 'trending_down';
+      case 'Fair':
+        return 'remove';
+      case 'Overpriced':
+        return 'trending_up';
+      default:
+        return 'help';
     }
   }
 
   getRecommendationClass(status: PriceStatus | undefined): string {
     switch (status) {
-      case 'Underpriced': return 'buy';
-      case 'Fair': return 'consider';
-      case 'Overpriced': return 'avoid';
-      default: return '';
+      case 'Underpriced':
+        return 'buy';
+      case 'Fair':
+        return 'consider';
+      case 'Overpriced':
+        return 'avoid';
+      default:
+        return '';
     }
   }
 
   getRecommendationIcon(status: PriceStatus | undefined): string {
     switch (status) {
-      case 'Underpriced': return 'check_circle';
-      case 'Fair': return 'help';
-      case 'Overpriced': return 'warning';
-      default: return 'help';
+      case 'Underpriced':
+        return 'check_circle';
+      case 'Fair':
+        return 'help';
+      case 'Overpriced':
+        return 'warning';
+      default:
+        return 'help';
     }
   }
 
   getDifferencePercent(): number {
     const diff = this.analysis()?.priceDifferencePercent || 0;
-    // Normalize to 0-100 range for display
     return Math.min(Math.abs(diff) * 2, 100);
   }
 

@@ -61,12 +61,10 @@ export class NotificationsService implements OnDestroy {
   private readonly hubUrl = `${environment.apiUrl.replace('/api', '')}/hubs/notifications`;
   private readonly apiUrl = `${environment.apiUrl}/notifications`;
 
-  // Signals for reactive state
   notifications = signal<Notification[]>([]);
   unreadCount = signal<number>(0);
   isConnected = signal<boolean>(false);
 
-  // Subjects for real-time events
   private notificationReceived = new Subject<Notification>();
   notificationReceived$ = this.notificationReceived.asObservable();
 
@@ -93,9 +91,6 @@ export class NotificationsService implements OnDestroy {
     this.stopConnection();
   }
 
-  // ==========================================
-  // SignalR Connection Management
-  // ==========================================
 
   async tryConnect(): Promise<void> {
     if (!this.authService.isAuthenticated()) {
@@ -144,7 +139,6 @@ export class NotificationsService implements OnDestroy {
         this.hubConnection = null;
       });
 
-    // Handle reconnection events
     this.hubConnection.onreconnecting(() => {
       this.isConnected.set(false);
     });
@@ -168,7 +162,6 @@ export class NotificationsService implements OnDestroy {
       try {
         await this.hubConnection.stop();
       } catch {
-        /* Ignore shutdown errors */
       }
 
       this.hubConnection = null;
@@ -179,7 +172,6 @@ export class NotificationsService implements OnDestroy {
   private registerEventHandlers(): void {
     if (!this.hubConnection) return;
 
-    // New notification received
     this.hubConnection.on('ReceiveNotification', (notification: Notification) => {
       notification.createdAt = new Date(notification.createdAt);
       if (notification.readAt) {
@@ -190,11 +182,9 @@ export class NotificationsService implements OnDestroy {
       this.unreadCount.update((count) => count + 1);
       this.notificationReceived.next(notification);
 
-      // Show browser notification if allowed
       this.showBrowserNotification(notification);
     });
 
-    // Notification marked as read (by another device/session)
     this.hubConnection.on('NotificationRead', (notificationId: string) => {
       this.notifications.update((notifs) =>
         notifs.map((n) =>
@@ -205,7 +195,6 @@ export class NotificationsService implements OnDestroy {
       this.notificationRead.next(notificationId);
     });
 
-    // All notifications marked as read
     this.hubConnection.on('AllNotificationsRead', () => {
       this.notifications.update((notifs) =>
         notifs.map((n) => ({ ...n, isRead: true, readAt: new Date() })),
@@ -213,7 +202,6 @@ export class NotificationsService implements OnDestroy {
       this.unreadCount.set(0);
     });
 
-    // Notification deleted
     this.hubConnection.on('NotificationDeleted', (notificationId: string) => {
       const notif = this.notifications().find((n) => n.id === notificationId);
       this.notifications.update((notifs) => notifs.filter((n) => n.id !== notificationId));
@@ -223,9 +211,6 @@ export class NotificationsService implements OnDestroy {
     });
   }
 
-  // ==========================================
-  // HTTP API Methods
-  // ==========================================
 
   loadNotifications(): Observable<Notification[]> {
     return this.http.get<Notification[]>(`${this.apiUrl}`).pipe(
@@ -303,9 +288,6 @@ export class NotificationsService implements OnDestroy {
     return this.http.put<NotificationPreferences>(`${this.apiUrl}/preferences`, preferences);
   }
 
-  // ==========================================
-  // Helper Methods
-  // ==========================================
 
   getUnreadNotifications(): Notification[] {
     return this.notifications().filter((n) => !n.isRead);
@@ -380,9 +362,6 @@ export class NotificationsService implements OnDestroy {
     }
   }
 
-  // ==========================================
-  // Browser Notifications
-  // ==========================================
 
   async requestBrowserNotificationPermission(): Promise<boolean> {
     if (!('Notification' in window)) {
@@ -408,9 +387,6 @@ export class NotificationsService implements OnDestroy {
     });
   }
 
-  // ==========================================
-  // Send Notification (Admin only)
-  // ==========================================
 
   sendNotificationToUser(
     userId: string,

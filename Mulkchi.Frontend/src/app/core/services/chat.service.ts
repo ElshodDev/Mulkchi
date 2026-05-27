@@ -24,23 +24,22 @@ export class ChatService {
   private readonly apiUrl = `${environment.apiUrl}/messages`;
   private readonly hubUrl = `${environment.apiUrl.replace('/api', '')}/hubs/chat`;
 
-  // Signals for state management
   private readonly _conversations = signal<Conversation[]>([]);
   private readonly _currentMessages = signal<Message[]>([]);
   private readonly _activeConversation = signal<Conversation | null>(null);
   private readonly _unreadCount = signal<number>(0);
   private readonly _isConnected = signal<boolean>(false);
   private readonly _isLoading = signal<boolean>(false);
+  private readonly _typingUsers = signal<Set<string>>(new Set());
 
-  // Public readonly signals
   readonly conversations = () => this._conversations();
   readonly currentMessages = () => this._currentMessages();
   readonly activeConversation = () => this._activeConversation();
   readonly unreadCount = () => this._unreadCount();
   readonly isConnected = () => this._isConnected();
   readonly isLoading = () => this._isLoading();
+  readonly typingUsers = () => this._typingUsers();
 
-  // Get total unread count
   readonly totalUnreadCount = computed(() => {
     return this._conversations().reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
   });
@@ -95,55 +94,59 @@ export class ChatService {
       .withUrl(this.hubUrl, {
         accessTokenFactory: () => this.getAccessToken() ?? '',
       })
-      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000, 60000]) // Progressive backoff: 0s, 2s, 5s, 10s, 30s, 60s
+      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000, 60000])
       .withHubProtocol(new signalR.JsonHubProtocol())
-      .withServerTimeout(60000) // Keep alive timeout
-      .withKeepAliveInterval(30000) // Send heartbeat every 30s
-      .configureLogging(signalR.LogLevel.Warning) // Reduce noise (Information -> Warning)
+      .withServerTimeout(60000)
+      .withKeepAliveInterval(30000)
+      .configureLogging(signalR.LogLevel.Warning)
       .build();
 
-    // Set timeout to 60 seconds (default is 30)
     this.hubConnection.serverTimeoutInMilliseconds = 60000;
 
-    // Handle incoming messages
     this.hubConnection.on('ReceiveMessage', (message: Message) => {
       this.handleIncomingMessage(message);
     });
 
-    // Handle message sent confirmation
     this.hubConnection.on('MessageSent', (message: Message) => {
       this.handleIncomingMessage(message);
     });
 
-    // Handle message read status
-    this.hubConnection.on('MessageRead', (data: { messageId: string, readAt: string }) => {
-      this._currentMessages.update(msgs => 
-        msgs.map(m => m.id === data.messageId ? { ...m, isRead: true, readAt: data.readAt } : m)
+    this.hubConnection.on('MessageRead', (data: { messageId: string; readAt: string }) => {
+      this._currentMessages.update((msgs) =>
+        msgs.map((m) =>
+          m.id === data.messageId ? { ...m, isRead: true, readAt: new Date(data.readAt) } : m,
+        ),
       );
     });
 
-    // Handle typing indicator
     this.hubConnection.on('UserTyping', (userId: string, isTyping: boolean) => {
-      // Logic for typing indicator can be added here
+      this._typingUsers.update(set => {
+        const newSet = new Set(set);
+        if (isTyping) {
+          newSet.add(userId);
+        } else {
+          newSet.delete(userId);
+        }
+        return newSet;
+      });
+      
+      this._conversations.update(convs => 
+        convs.map(c => c.otherUserId === userId ? { ...c, isTyping } : c)
+      );
     });
 
-    // Handle reconnecting
     this.hubConnection.onreconnecting((error) => {
       console.warn('[Chat] Reconnecting...', error?.message);
       this._isConnected.set(false);
     });
 
-    // Handle reconnected
     this.hubConnection.onreconnected((connectionId) => {
-      console.log('[Chat] Reconnected successfully', connectionId);
       this._isConnected.set(true);
     });
 
-    // Handle close (final disconnection)
     this.hubConnection.onclose((error) => {
       console.warn('[Chat] Connection closed', error?.message);
       this._isConnected.set(false);
-      // Try to reconnect after delay if we're still authenticated
       setTimeout(() => {
         if (this.isAuthenticated() && !this.hubConnection) {
           void this.tryConnect();
@@ -154,12 +157,10 @@ export class ChatService {
     try {
       await this.hubConnection.start();
       this._isConnected.set(true);
-      console.log('[Chat] Connected successfully');
     } catch (error) {
       console.error('[Chat] Failed to start connection', error);
       this._isConnected.set(false);
       this.hubConnection = null;
-      // Retry after delay
       setTimeout(() => {
         if (this.isAuthenticated() && !this.hubConnection) {
           void this.tryConnect();
@@ -169,20 +170,19 @@ export class ChatService {
   }
 
   private handleIncomingMessage(message: Message): void {
-    // If we're in the active conversation, add the message
     const activeConv = this._activeConversation();
-    const isCurrentThread = activeConv &&
-      (message.senderId === activeConv.otherUserId || message.receiverId === activeConv.otherUserId) &&
+    const isCurrentThread =
+      activeConv &&
+      (message.senderId === activeConv.otherUserId ||
+        message.receiverId === activeConv.otherUserId) &&
       message.propertyId === activeConv.propertyId;
 
     if (isCurrentThread) {
       this._currentMessages.update((msgs) => [...msgs, message]);
     }
 
-    // Update conversations list
     this.updateConversationWithMessage(message);
 
-    // Show notification only if not from current user AND not in the current active thread
     if (message.senderId !== this.getCurrentUserId() && !isCurrentThread) {
       this._unreadCount.update((count) => count + 1);
       this.showNotification(message);
@@ -196,28 +196,26 @@ export class ChatService {
     const propertyId = message.propertyId;
 
     const existingIndex = this._conversations().findIndex(
-      (c) => c.otherUserId === otherUserId && c.propertyId === propertyId
+      (c) => c.otherUserId === otherUserId && c.propertyId === propertyId,
     );
 
     if (existingIndex >= 0) {
       this._conversations.update((convs) => {
         const updated = [...convs];
         const isMine = senderId === this.getCurrentUserId();
-        
+
         updated[existingIndex] = {
           ...updated[existingIndex],
           lastMessage: message.content,
           lastMessageDate: message.createdDate,
           unreadCount: isMine
-              ? updated[existingIndex].unreadCount
-              : (updated[existingIndex].unreadCount || 0) + 1,
+            ? updated[existingIndex].unreadCount
+            : (updated[existingIndex].unreadCount || 0) + 1,
         };
-        // Move to top
         const [conv] = updated.splice(existingIndex, 1);
         return [conv, ...updated];
       });
     } else {
-      // New conversation - create a placeholder and also refresh from server
       const isMine = senderId === this.getCurrentUserId();
       const newConv: Conversation = {
         otherUserId: otherUserId,
@@ -227,16 +225,15 @@ export class ChatService {
           firstName: message.senderName?.split(' ')[0] || 'Foydalanuvchi',
           lastName: message.senderName?.split(' ').slice(1).join(' ') || '',
           avatarUrl: message.senderAvatar,
-          isOnline: true
+          isOnline: true,
         },
         lastMessage: message.content,
         lastMessageDate: message.createdDate,
-        unreadCount: isMine ? 0 : 1
+        unreadCount: isMine ? 0 : 1,
       };
-      
-      this._conversations.update(convs => [newConv, ...convs]);
-      
-      // Still fetch to get full details (like property title/image)
+
+      this._conversations.update((convs) => [newConv, ...convs]);
+
       this.getConversations();
     }
   }
@@ -264,7 +261,6 @@ export class ChatService {
     return this.authService.currentUser()?.id ?? null;
   }
 
-  // Send message via SignalR
   async sendMessage(receiverId: string, content: string, propertyId?: string): Promise<void> {
     if (!this.hubConnection || !this._isConnected()) {
       await this.tryConnect();
@@ -275,7 +271,6 @@ export class ChatService {
     }
 
     try {
-      // Backend now expects 3 parameters: receiverId, content, propertyId
       await this.hubConnection.invoke('SendMessage', receiverId, content, propertyId || null);
     } catch (err) {
       console.error('[Chat] Error sending message:', err);
@@ -283,42 +278,92 @@ export class ChatService {
     }
   }
 
-  // Get all conversations
+  async sendFileMessage(receiverId: string, fileUrl: string, fileName: string, propertyId?: string): Promise<void> {
+    if (!this.hubConnection || !this._isConnected()) {
+      await this.tryConnect();
+    }
+
+    if (!this.hubConnection || !this._isConnected()) {
+      throw new Error('SignalR connection not established');
+    }
+
+    try {
+      await this.hubConnection.invoke('SendFileMessage', receiverId, fileUrl, fileName, propertyId || null);
+    } catch (err) {
+      console.error('[Chat] Error sending file message:', err);
+      throw new Error('Failed to send file message');
+    }
+  }
+
+  async sendTypingIndicator(receiverId: string, isTyping: boolean): Promise<void> {
+    if (this.hubConnection && this._isConnected()) {
+      try {
+        await this.hubConnection.invoke('SendTypingIndicator', receiverId, isTyping);
+      } catch (err) {
+      }
+    }
+  }
+
+  uploadAttachment(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ fileUrl: string; fileName: string; fileSize: number; contentType: string }>(
+      `${this.apiUrl}/upload-attachment`,
+      formData
+    );
+  }
+
   getConversations(): void {
     this._isLoading.set(true);
 
-    this.http.get<Conversation[]>(this.apiUrl).subscribe({
+    this.http.get<Conversation[]>(`${this.apiUrl}/conversations`).subscribe({
       next: (response) => {
-        const serverConvs = Array.isArray(response) ? response : [];
-        
-        // Merge server data with local data
-        this._conversations.update(localConvs => {
+        const serverConvsData: any[] = Array.isArray(response) ? response : [];
+        const mappedConvs: Conversation[] = serverConvsData.map(s => ({
+            otherUserId: s.otherUserId,
+            propertyId: s.propertyId,
+            propertyTitle: s.propertyTitle,
+            propertyImage: s.propertyImage,
+            otherUser: {
+                id: s.otherUserId,
+                firstName: s.otherUserName?.split(' ')[0] || 'Foydalanuvchi',
+                lastName: s.otherUserName?.split(' ').slice(1).join(' ') || '',
+                avatarUrl: s.otherUserAvatar,
+                isOnline: false
+            },
+            lastMessage: s.lastMessage,
+            lastMessageDate: s.lastMessageDate,
+            unreadCount: s.unreadCount,
+            isTyping: false
+        }));
+
+        this._conversations.update((localConvs) => {
           const merged = [...localConvs];
-          
-          serverConvs.forEach(serverConv => {
-            const index = merged.findIndex(c => 
-              c.otherUserId === serverConv.otherUserId && c.propertyId === serverConv.propertyId
+
+          mappedConvs.forEach((mappedConv) => {
+            const index = merged.findIndex(
+              (c) =>
+                c.otherUserId === mappedConv.otherUserId && c.propertyId === mappedConv.propertyId,
             );
-            
+
             if (index >= 0) {
-              // Preserve unread count if it's higher locally (real-time message arrived)
               merged[index] = {
-                ...serverConv,
-                unreadCount: Math.max(merged[index].unreadCount, serverConv.unreadCount)
+                ...mappedConv,
+                unreadCount: Math.max(merged[index].unreadCount, mappedConv.unreadCount),
+                isTyping: merged[index].isTyping
               };
             } else {
-              merged.push(serverConv);
+              merged.push(mappedConv);
             }
           });
 
-          return merged.sort((a, b) => 
-            new Date(b.lastMessageDate).getTime() - new Date(a.lastMessageDate).getTime()
+          return merged.sort(
+            (a, b) => new Date(b.lastMessageDate).getTime() - new Date(a.lastMessageDate).getTime(),
           );
         });
 
         this._isLoading.set(false);
 
-        // Calculate total unread from the merged list
         const total = this._conversations().reduce((sum, c) => sum + (c.unreadCount || 0), 0);
         this._unreadCount.set(total);
       },
@@ -328,11 +373,10 @@ export class ChatService {
     });
   }
 
-  // Get messages with specific user and property
   getMessages(otherUserId: string, propertyId?: string): void {
     this._isLoading.set(true);
 
-    const url = propertyId 
+    const url = propertyId
       ? `${this.apiUrl}/conversation/${otherUserId}?propertyId=${propertyId}`
       : `${this.apiUrl}/conversation/${otherUserId}`;
 
@@ -341,7 +385,6 @@ export class ChatService {
         this._currentMessages.set(messages);
         this._isLoading.set(false);
 
-        // Mark conversation as read
         this.markAsRead(otherUserId, propertyId);
       },
       error: () => {
@@ -350,7 +393,6 @@ export class ChatService {
     });
   }
 
-  // Mark messages as read for specific thread
   markAsRead(otherUserId: string, propertyId?: string): void {
     const url = propertyId
       ? `${this.apiUrl}/conversations/${otherUserId}/read-all?propertyId=${propertyId}`
@@ -358,52 +400,49 @@ export class ChatService {
 
     this.http.put(url, {}).subscribe({
       next: () => {
-        // Update unread count in specific conversation
         this._conversations.update((convs) =>
-          convs.map((c) => (c.otherUserId === otherUserId && c.propertyId === propertyId ? { ...c, unreadCount: 0 } : c)),
+          convs.map((c) =>
+            c.otherUserId === otherUserId && c.propertyId === propertyId
+              ? { ...c, unreadCount: 0 }
+              : c,
+          ),
         );
 
-        // Recalculate total unread
         const total = this._conversations().reduce((sum, c) => sum + (c.unreadCount || 0), 0);
         this._unreadCount.set(total);
       },
       error: () => {
-        /* Silently handle error */
       },
     });
   }
 
-  // Set active conversation
   setActiveConversation(conversation: Conversation | null): void {
     this._activeConversation.set(conversation);
     if (conversation) {
-      // Ensure it's in the list (unique by user + property)
       const exists = this._conversations().some(
-        c => c.otherUserId === conversation.otherUserId && c.propertyId === conversation.propertyId
+        (c) =>
+          c.otherUserId === conversation.otherUserId && c.propertyId === conversation.propertyId,
       );
-      
+
       if (!exists) {
-        this._conversations.update(convs => [conversation, ...convs]);
+        this._conversations.update((convs) => [conversation, ...convs]);
       }
-      
+
       this.getMessages(conversation.otherUserId, conversation.propertyId);
     }
   }
 
-  // Reconnect - called after login
   reconnect(): void {
     if (this.getAccessToken() && this.hubConnection?.state !== 'Connected') {
       void this.startConnection();
     }
   }
 
-  // Disconnect
   async disconnect(): Promise<void> {
     if (this.hubConnection) {
       try {
         await this.hubConnection.stop();
       } catch {
-        /* Ignore shutdown errors */
       }
 
       this.hubConnection = null;

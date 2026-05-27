@@ -94,9 +94,8 @@ public class GlobalExceptionMiddleware
             return "So'rov bajarilmadi.";
         }
 
-        // If it's a validation error or specific auth error, return the actual message
         var innermostException = GetInnermostException(exception);
-        if (exception.GetType().Name.EndsWith("ValidationException") || 
+        if (exception.GetType().Name.EndsWith("ValidationException") ||
             innermostException.GetType().Name.StartsWith("Invalid"))
         {
             return innermostException.Message;
@@ -118,7 +117,6 @@ public class GlobalExceptionMiddleware
     private static string? GetExceptionDetails(Exception exception)
     {
         var statusCode = GetStatusCode(exception);
-        // Never expose exception details to client
         return null;
     }
 

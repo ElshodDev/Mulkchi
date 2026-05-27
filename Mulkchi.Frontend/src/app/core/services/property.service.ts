@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { catchError, map, Observable, tap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -20,22 +20,18 @@ export class PropertyService {
   private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
 
-  // Signals for state management
   private readonly _properties = signal<Property[]>([]);
   private readonly _featuredProperties = signal<Property[]>([]);
   private readonly _currentProperty = signal<Property | null>(null);
   private readonly _totalCount = signal<number>(0);
   private readonly _loading = signal<boolean>(false);
 
-  // Public readonly signals for consumer access
   readonly properties = this._properties.asReadonly();
   readonly featuredProperties = this._featuredProperties.asReadonly();
   readonly currentProperty = this._currentProperty.asReadonly();
   readonly totalCount = this._totalCount.asReadonly();
   readonly loading = this._loading.asReadonly();
 
-
-  // Get all properties with pagination
   getAllProperties(
     page = 1,
     pageSize = 20,
@@ -49,7 +45,6 @@ export class PropertyService {
     return this.searchProperties(searchParams);
   }
 
-  // Search properties
   searchProperties(searchParams: PropertySearchParams): Observable<PagedResult<Property>> {
     this._loading.set(true);
     const params = this.buildHttpParams(searchParams);
@@ -67,9 +62,6 @@ export class PropertyService {
     );
   }
 
-  /**
-   * Helper to build HttpParams from search params object
-   */
   private buildHttpParams(searchParams: PropertySearchParams): HttpParams {
     let params = new HttpParams();
 
@@ -110,7 +102,6 @@ export class PropertyService {
     return error.error?.message || "Mulk ma'lumotlarini olishda xatolik yuz berdi";
   }
 
-  // Get property by ID
   getPropertyById(id: string): Observable<Property> {
     this._loading.set(true);
 
@@ -126,7 +117,6 @@ export class PropertyService {
     );
   }
 
-  // Get featured properties
   getFeaturedProperties(count = 8): Observable<Property[]> {
     return this.http
       .get<Property[]>(`${this.apiUrl}/featured`, {
@@ -138,7 +128,6 @@ export class PropertyService {
       );
   }
 
-  // Get similar properties
   getSimilarProperties(propertyId: string, count = 6): Observable<Property[]> {
     return this.http
       .get<Property[]>(`${this.apiUrl}/${propertyId}/similar`, {
@@ -147,7 +136,6 @@ export class PropertyService {
       .pipe(catchError((error) => throwError(() => error)));
   }
 
-  // Autocomplete locations
   autocompleteLocations(query: string): Observable<string[]> {
     return this.http
       .get<string[]>(`${this.apiUrl}/autocomplete`, {
@@ -156,13 +144,11 @@ export class PropertyService {
       .pipe(catchError((error) => throwError(() => error)));
   }
 
-  // Create property (any authenticated user - auto-upgraded to Host)
   createProperty(request: PropertyCreateRequest): Observable<Property> {
     return this.http.post<PropertyCreateResponse>(this.apiUrl, request).pipe(
       tap((response) => {
         this._currentProperty.set(response.property);
 
-        // If new tokens are provided (user was upgraded to Host), update stored tokens
         if (response.tokens) {
           const mappedTokens = this.authService.mapApiAuthResponse(response.tokens);
           this.authService.handleAuthResponse(mappedTokens);
@@ -173,7 +159,6 @@ export class PropertyService {
     );
   }
 
-  // Update property (Host only)
   updateProperty(id: string, request: Partial<PropertyCreateRequest>): Observable<Property> {
     return this.http.put<Property>(`${this.apiUrl}/${id}`, request).pipe(
       tap((property) => this._currentProperty.set(property)),
@@ -181,25 +166,30 @@ export class PropertyService {
     );
   }
 
-  // Upload property image
   uploadPropertyImage(file: File, propertyId: string): Observable<PropertyImage> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('propertyId', propertyId);
 
-    return this.http.post<PropertyImage>(`${environment.apiUrl}/PropertyImagesUpload/upload`, formData).pipe(
-      catchError((error) => throwError(() => error)),
-    );
+    return this.http
+      .post<PropertyImage>(`${environment.apiUrl}/PropertyImagesUpload/upload`, formData)
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          if (error.status === 413) {
+            return throwError(() => new Error('Fayl hajmi 10MB dan oshmasligi kerak'));
+          }
+
+          return throwError(() => error);
+        }),
+      );
   }
 
-  // Delete property (Host only)
   deleteProperty(id: string): Observable<void> {
     return this.http
       .delete<void>(`${this.apiUrl}/${id}`)
       .pipe(catchError((error) => throwError(() => error)));
   }
 
-  // Get host properties
   getHostProperties(page = 1, pageSize = 20): Observable<PagedResult<Property>> {
     const params = new HttpParams()
       .set('page', page.toString())
@@ -210,7 +200,6 @@ export class PropertyService {
       .pipe(catchError((error) => throwError(() => error)));
   }
 
-  // Bump property to top (Monetization feature)
   bumpProperty(id: string): Observable<void> {
     return this.http
       .post<void>(`${this.apiUrl}/${id}/bump`, {})

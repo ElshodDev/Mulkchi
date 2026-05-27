@@ -45,13 +45,7 @@ export class SeoService {
   private readonly siteName = 'Mulkchi';
   private readonly twitterHandle = '@mulkchi';
 
-  // ==========================================
-  // Main SEO Methods
-  // ==========================================
 
-  /**
-   * Update all SEO meta tags for a page
-   */
   updateMetaTags(data: Partial<SeoMetaData>): void {
     const metaData: SeoMetaData = {
       title: data.title || this.defaultTitle,
@@ -69,68 +63,46 @@ export class SeoService {
       locale: data.locale || this.getLocaleFromLanguage(this.uiStore.language()),
     };
 
-    // Set title
     this.setTitle(metaData.title);
 
-    // Set basic meta tags
     this.setBasicMeta(metaData);
 
-    // Set Open Graph tags
     this.setOpenGraphMeta(metaData);
 
-    // Set Twitter Card tags
     this.setTwitterCardMeta(metaData);
 
-    // Set robots meta
     this.setRobotsMeta(metaData.noIndex, metaData.noFollow);
 
-    // Set canonical URL
     if (metaData.canonicalUrl) {
       this.setCanonicalUrl(metaData.canonicalUrl);
     }
 
-    // Set language
     this.setLanguage(metaData.locale);
   }
 
-  /**
-   * Set page title
-   */
   setTitle(title: string): void {
     const fullTitle = title === this.defaultTitle ? title : `${title} | ${this.siteName}`;
     this.title.setTitle(fullTitle);
     this.meta.updateTag({ name: 'title', content: title });
   }
 
-  /**
-   * Set basic meta tags
-   */
   private setBasicMeta(data: SeoMetaData): void {
-    // Description
     this.meta.updateTag({ name: 'description', content: data.description });
 
-    // Keywords
     if (data.keywords && data.keywords.length > 0) {
       this.meta.updateTag({ name: 'keywords', content: data.keywords.join(', ') });
     }
 
-    // Author
     if (data.author) {
       this.meta.updateTag({ name: 'author', content: data.author });
     }
 
-    // Viewport (should already be set in index.html)
     this.meta.updateTag({ name: 'viewport', content: 'width=device-width, initial-scale=1' });
 
-    // Theme color
     this.meta.updateTag({ name: 'theme-color', content: '#667eea' });
   }
 
-  /**
-   * Set Open Graph meta tags
-   */
   private setOpenGraphMeta(data: SeoMetaData): void {
-    // Basic OG tags
     this.meta.updateTag({ property: 'og:title', content: data.title });
     this.meta.updateTag({ property: 'og:description', content: data.description });
     this.meta.updateTag({ property: 'og:type', content: data.type || 'website' });
@@ -141,14 +113,12 @@ export class SeoService {
       content: data.locale?.replace('_', '-') || 'uz_UZ',
     });
 
-    // Image
     if (data.image) {
       this.meta.updateTag({ property: 'og:image', content: data.image });
       this.meta.updateTag({ property: 'og:image:width', content: '1200' });
       this.meta.updateTag({ property: 'og:image:height', content: '630' });
     }
 
-    // Article specific tags
     if (data.type === 'article') {
       if (data.publishedAt) {
         this.meta.updateTag({ property: 'article:published_time', content: data.publishedAt });
@@ -162,31 +132,21 @@ export class SeoService {
     }
   }
 
-  /**
-   * Set Twitter Card meta tags
-   */
   private setTwitterCardMeta(data: SeoMetaData): void {
-    // Card type
     this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
 
-    // Site
     this.meta.updateTag({ name: 'twitter:site', content: this.twitterHandle });
     this.meta.updateTag({ name: 'twitter:creator', content: data.author || this.twitterHandle });
 
-    // Content
     this.meta.updateTag({ name: 'twitter:title', content: data.title });
     this.meta.updateTag({ name: 'twitter:description', content: data.description });
 
-    // Image
     if (data.image) {
       this.meta.updateTag({ name: 'twitter:image', content: data.image });
       this.meta.updateTag({ name: 'twitter:image:alt', content: data.title });
     }
   }
 
-  /**
-   * Set robots meta tag
-   */
   setRobotsMeta(noIndex = false, noFollow = false): void {
     let content = 'index, follow';
 
@@ -201,26 +161,18 @@ export class SeoService {
     this.meta.updateTag({ name: 'robots', content });
   }
 
-  /**
-   * Set canonical URL
-   */
   setCanonicalUrl(url: string): void {
-    // Remove existing canonical link if any
     const existing = document.querySelector('link[rel="canonical"]');
     if (existing) {
       existing.remove();
     }
 
-    // Create and add new canonical link
     const link = document.createElement('link');
     link.setAttribute('rel', 'canonical');
     link.setAttribute('href', url);
     document.head.appendChild(link);
   }
 
-  /**
-   * Set page language
-   */
   setLanguage(locale = 'uz_UZ'): void {
     const lang = locale.split('_')[0] || 'uz';
     document.documentElement.lang = lang;
@@ -229,13 +181,7 @@ export class SeoService {
     }
   }
 
-  // ==========================================
-  // Helper Methods
-  // ==========================================
 
-  /**
-   * Get current full URL
-   */
   private getCurrentUrl(): string {
     return `${this.siteUrl}${this.router.url}`;
   }
@@ -244,9 +190,6 @@ export class SeoService {
     return `${language}_${language === 'uz' ? 'UZ' : language.toUpperCase()}`;
   }
 
-  /**
-   * Reset all meta tags to default
-   */
   resetMetaTags(): void {
     this.updateMetaTags({
       title: this.defaultTitle,
@@ -257,13 +200,7 @@ export class SeoService {
     });
   }
 
-  // ==========================================
-  // Page-Specific SEO Methods
-  // ==========================================
 
-  /**
-   * SEO for property detail page
-   */
   setPropertyMeta(property: {
     title: string;
     description?: string;
@@ -292,9 +229,6 @@ export class SeoService {
     });
   }
 
-  /**
-   * SEO for search results page
-   */
   setSearchMeta(query: string, location?: string): void {
     const locationText = location ? `${location}da` : '';
     const title = `"${query}" ${locationText} qidiruv natijalari`;
@@ -304,13 +238,10 @@ export class SeoService {
       title,
       description,
       keywords: [query, location || '', 'qidiruv', 'mulk', 'uy-joy'],
-      noIndex: true, // Search results should not be indexed
+      noIndex: true,
     });
   }
 
-  /**
-   * SEO for user profile page
-   */
   setProfileMeta(user: { firstName: string; lastName: string; role: string }): void {
     const roleText = user.role === 'Host' ? 'Host' : 'Foydalanuvchi';
     const title = `${user.firstName} ${user.lastName} - ${roleText} profili`;
@@ -320,13 +251,10 @@ export class SeoService {
       title,
       description,
       type: 'profile',
-      noIndex: true, // User profiles should not be indexed
+      noIndex: true,
     });
   }
 
-  /**
-   * SEO for static pages
-   */
   setStaticPageMeta(page: 'home' | 'about' | 'contact' | 'privacy' | 'terms' | 'help'): void {
     const pages: Record<string, SeoMetaData> = {
       home: {
@@ -378,26 +306,18 @@ export class SeoService {
     }
   }
 
-  /**
-   * Add structured data (JSON-LD)
-   */
   addStructuredData(data: object): void {
-    // Remove existing structured data if any
     const existing = document.querySelector('script[type="application/ld+json"]');
     if (existing) {
       existing.remove();
     }
 
-    // Create and add new structured data
     const script = document.createElement('script');
     script.setAttribute('type', 'application/ld+json');
     script.textContent = JSON.stringify(data);
     document.head.appendChild(script);
   }
 
-  /**
-   * Add breadcrumb structured data
-   */
   addBreadcrumbStructuredData(items: { name: string; url: string }[]): void {
     const data = {
       '@context': 'https://schema.org',
@@ -413,9 +333,6 @@ export class SeoService {
     this.addStructuredData(data);
   }
 
-  /**
-   * Add organization structured data
-   */
   addOrganizationStructuredData(): void {
     const data = {
       '@context': 'https://schema.org',

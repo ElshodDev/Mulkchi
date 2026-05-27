@@ -28,7 +28,6 @@ export class TelegramAuthService {
   private readonly baseUrl = `${environment.apiUrl}/auth/telegram`;
   private readonly authService = inject(AuthService);
 
-  // Polling holati
   isPolling = signal(false);
   pollingStatus = signal<'idle' | 'pending' | 'verified' | 'expired'>('idle');
   qrDeepLink = signal<string | null>(null);
@@ -40,7 +39,6 @@ export class TelegramAuthService {
     private router: Router,
   ) {}
 
-  // 1-QADAM: Deep link olish va polling boshlash
   async initLogin(): Promise<TelegramInitResponse> {
     const response = await this.http
       .post<TelegramInitResponse>(`${this.baseUrl}/init`, {})
@@ -51,14 +49,12 @@ export class TelegramAuthService {
     return response!;
   }
 
-  // 2-QADAM: Har 2 soniyada status tekshirish
   private startPolling(sessionId: string): void {
     this.isPolling.set(true);
     this.pollingStatus.set('pending');
 
-    // Maksimal 10 daqiqa polling
     let attempts = 0;
-    const maxAttempts = 150; // 150 * 4 soniya = 10 daqiqa
+    const maxAttempts = 150;
 
     this.pollingInterval = setInterval(async () => {
       attempts++;
@@ -100,7 +96,6 @@ export class TelegramAuthService {
     this.router.navigate(['/']);
   }
 
-  // Telegramni yangi tabda ochish
   openTelegram(deepLink: string): void {
     window.open(deepLink, '_blank');
   }

@@ -7,7 +7,7 @@ import { Subject } from 'rxjs';
 export class VoiceSearchService {
   private recognition: any;
   private isListeningSignal = signal(false);
-  
+
   public textResult$ = new Subject<string>();
   public isListening = this.isListeningSignal.asReadonly();
 
@@ -16,7 +16,7 @@ export class VoiceSearchService {
     if (webkitSpeechRecognition) {
       this.recognition = new webkitSpeechRecognition();
       this.recognition.continuous = false;
-      this.recognition.lang = 'uz-UZ'; // Supporting Uzbek
+      this.recognition.lang = 'uz-UZ';
       this.recognition.interimResults = false;
 
       this.recognition.onstart = () => {

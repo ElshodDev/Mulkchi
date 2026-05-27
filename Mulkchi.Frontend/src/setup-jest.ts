@@ -1,23 +1,22 @@
 import 'jest-preset-angular/setup-jest';
 
-// Mock global objects
 Object.defineProperty(window, 'CSS', { value: null });
 Object.defineProperty(window, 'getComputedStyle', {
   value: () => {
     return {
       display: 'none',
-      appearance: ['-webkit-appearance']
+      appearance: ['-webkit-appearance'],
     };
-  }
+  },
 });
 
 Object.defineProperty(document, 'doctype', {
-  value: '<!DOCTYPE html>'
+  value: '<!DOCTYPE html>',
 });
 
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: jest.fn().mockImplementation(query => ({
+  value: jest.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -29,7 +28,6 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
-// Mock IntersectionObserver
 class MockIntersectionObserver {
   observe = jest.fn();
   disconnect = jest.fn();
@@ -38,10 +36,9 @@ class MockIntersectionObserver {
 
 Object.defineProperty(window, 'IntersectionObserver', {
   writable: true,
-  value: MockIntersectionObserver
+  value: MockIntersectionObserver,
 });
 
-// Mock ResizeObserver
 class MockResizeObserver {
   observe = jest.fn();
   disconnect = jest.fn();
@@ -50,22 +47,20 @@ class MockResizeObserver {
 
 Object.defineProperty(window, 'ResizeObserver', {
   writable: true,
-  value: MockResizeObserver
+  value: MockResizeObserver,
 });
 
-// Mock localStorage
 const localStorageMock = {
   getItem: jest.fn(),
   setItem: jest.fn(),
   removeItem: jest.fn(),
-  clear: jest.fn()
+  clear: jest.fn(),
 };
 
 Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock
+  value: localStorageMock,
 });
 
-// Suppress console warnings during tests
 const originalWarn = console.warn;
 const originalError = console.error;
 

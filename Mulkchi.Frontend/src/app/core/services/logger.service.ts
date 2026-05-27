@@ -37,12 +37,9 @@ export class LoggerService {
     const timestamp = new Date().toISOString();
     const prefix = `[${timestamp}] [${LogLevel[level]}]`;
 
-    // In production, send to external logging service (e.g., Sentry)
     if (this.isProduction && level >= LogLevel.ERROR) {
-      // Note: External logging integration (e.g., Sentry) should be configured in main.ts
     }
 
-    // Development: safe logging (no sensitive data)
     if (!this.isProduction) {
       const sanitizedData = data.map((d) => this.sanitizeForLogging(d));
 

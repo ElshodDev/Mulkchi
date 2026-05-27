@@ -25,10 +25,6 @@ public class TelegramAuthController : ControllerBase
         _logger = logger;
     }
 
-    // ──────────────────────────────────────────────
-    // POST /api/auth/telegram/init
-    // Frontend bu endpoint ga murojaat qilib deep link oladi
-    // ──────────────────────────────────────────────
     [HttpPost("init")]
     public async Task<ActionResult<TelegramInitResponse>> InitiateLogin()
     {
@@ -44,10 +40,6 @@ public class TelegramAuthController : ControllerBase
         }
     }
 
-    // ──────────────────────────────────────────────
-    // GET /api/auth/telegram/status/{sessionId}
-    // Frontend 2 soniyada bir bu endpoint polling qiladi
-    // ──────────────────────────────────────────────
     [HttpGet("status/{sessionId}")]
     public async Task<ActionResult<TelegramSessionStatus>> CheckStatus(string sessionId)
     {
@@ -77,17 +69,11 @@ public class TelegramAuthController : ControllerBase
         }
     }
 
-    // ──────────────────────────────────────────────
-    // POST /api/auth/telegram/webhook
-    // Telegram serverdan keladigan update (bot /start bosdi)
-    // Bu URL ni Telegram ga ro'yxatdan o'tkazish kerak
-    // ──────────────────────────────────────────────
     [HttpPost("webhook")]
     public async Task<IActionResult> Webhook(
         [FromBody] TelegramUpdate update,
         [FromHeader(Name = "X-Telegram-Bot-Api-Secret-Token")] string secretToken)
     {
-        // Webhook xavfsizlik tekshiruvi
         var expectedToken = _configuration["TelegramAuth:WebhookSecretToken"];
         if (!string.IsNullOrEmpty(expectedToken) && secretToken != expectedToken)
         {
@@ -103,7 +89,6 @@ public class TelegramAuthController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Webhook xatosi. UpdateId: {UpdateId}", update?.UpdateId);
-            // Telegram 200 javob kutadi, aks holda qayta yuboradi
             return Ok();
         }
     }

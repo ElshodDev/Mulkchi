@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Mulkchi.Api.Migrations
 {
     [DbContext(typeof(StorageBroker))]
-    [Migration("20260508171215_AddTelegramIdToUsers")]
-    partial class AddTelegramIdToUsers
+    [Migration("20260527075011_DropReportsTable")]
+    partial class DropReportsTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -334,9 +334,9 @@ namespace Mulkchi.Api.Migrations
                     b.HasIndex("CalculatedAt")
                         .HasDatabaseName("IX_MarketTrends_CalculatedAt");
 
-                    b.HasIndex("Region", "District", "YearMonth")
+                    b.HasIndex("Region", "District", "PropertyType", "YearMonth")
                         .IsUnique()
-                        .HasDatabaseName("IX_MarketTrends_Region_District_YearMonth");
+                        .HasDatabaseName("IX_MarketTrends_Region_District_PropertyType_YearMonth");
 
                     b.ToTable("MarketTrends");
                 });
@@ -1186,6 +1186,9 @@ namespace Mulkchi.Api.Migrations
                     b.Property<int>("Bathrooms")
                         .HasColumnType("integer");
 
+                    b.Property<DateTimeOffset?>("BumpedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("Category")
                         .HasColumnType("integer");
 
@@ -1385,6 +1388,9 @@ namespace Mulkchi.Api.Migrations
 
                     b.Property<int>("ViewsCount")
                         .HasColumnType("integer");
+
+                    b.Property<string>("VirtualTourUrl")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 

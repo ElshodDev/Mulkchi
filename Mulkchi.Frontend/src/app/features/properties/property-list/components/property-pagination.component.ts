@@ -65,116 +65,160 @@ import { MatFormFieldModule } from '@angular/material/form-field';
       </div>
     </div>
   `,
-  styles: [`
-    :host {
-      --navy: #0f172a;
-      --gold: #c9a84c;
-      --white: #ffffff;
-      --border: #e2e8f0;
-      --bg-soft: #f8fafc;
-      display: block;
-      margin-top: 40px;
-    }
+  styles: [
+    `
+      :host {
+        --navy: #0f172a;
+        --gold: #c9a84c;
+        --white: #ffffff;
+        --border: #e2e8f0;
+        --bg-soft: #f8fafc;
+        display: block;
+        margin-top: 40px;
+      }
 
-    .pagination-wrapper-premium {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 32px;
-      background: var(--white);
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-      border: 1px solid var(--border);
-      flex-wrap: wrap;
-      gap: 20px;
-    }
+      .pagination-wrapper-premium {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 32px;
+        background: var(--white);
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+        border: 1px solid var(--border);
+        flex-wrap: wrap;
+        gap: 20px;
+      }
 
-    /* --- LEFT SECTION --- */
-    .pagination-left { display: flex; align-items: center; gap: 16px; }
-    .pagination-status { font-size: 0.95rem; color: #475569; }
-    .pagination-status strong { color: var(--navy); font-weight: 800; }
-    .divider { width: 1px; height: 20px; background: var(--border); }
-    .total-meta { font-size: 0.85rem; color: #64748b; font-weight: 500; }
+      .pagination-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .pagination-status {
+        font-size: 0.95rem;
+        color: #475569;
+      }
+      .pagination-status strong {
+        color: var(--navy);
+        font-weight: 800;
+      }
+      .divider {
+        width: 1px;
+        height: 20px;
+        background: var(--border);
+      }
+      .total-meta {
+        font-size: 0.85rem;
+        color: #64748b;
+        font-weight: 500;
+      }
 
-    /* --- CENTER SECTION --- */
-    .pagination-center { display: flex; align-items: center; gap: 12px; }
-    .btn-nav {
-      background: var(--bg-soft) !important;
-      color: var(--navy) !important;
-      border: 1px solid var(--border) !important;
-      transition: all 0.3s;
-    }
-    .btn-nav:hover:not([disabled]) {
-      background: var(--navy) !important;
-      color: var(--white) !important;
-      transform: scale(1.05);
-    }
+      .pagination-center {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .btn-nav {
+        background: var(--bg-soft) !important;
+        color: var(--navy) !important;
+        border: 1px solid var(--border) !important;
+        transition: all 0.3s;
+      }
+      .btn-nav:hover:not([disabled]) {
+        background: var(--navy) !important;
+        color: var(--white) !important;
+        transform: scale(1.05);
+      }
 
-    .page-list { display: flex; gap: 8px; }
-    .page-circle {
-      width: 42px;
-      height: 42px;
-      border: 1px solid var(--border);
-      background: var(--white);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      color: var(--navy);
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      font-size: 0.9rem;
-    }
+      .page-list {
+        display: flex;
+        gap: 8px;
+      }
+      .page-circle {
+        width: 42px;
+        height: 42px;
+        border: 1px solid var(--border);
+        background: var(--white);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: var(--navy);
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        font-size: 0.9rem;
+      }
 
-    .page-circle:hover:not(.active) {
-      border-color: var(--gold);
-      color: var(--gold);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 15px rgba(201, 168, 76, 0.1);
-    }
+      .page-circle:hover:not(.active) {
+        border-color: var(--gold);
+        color: var(--gold);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 15px rgba(201, 168, 76, 0.1);
+      }
 
-    .page-circle.active {
-      background: var(--navy);
-      color: var(--white);
-      border-color: var(--navy);
-      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
-    }
+      .page-circle.active {
+        background: var(--navy);
+        color: var(--white);
+        border-color: var(--navy);
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
+      }
 
-    /* --- RIGHT SECTION --- */
-    .pagination-right { display: flex; align-items: center; }
-    .size-picker-modern {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 0.9rem;
-      color: #64748b;
-      background: var(--bg-soft);
-      padding: 6px 16px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-    }
-    .size-picker-modern select {
-      background: transparent;
-      border: none;
-      font-weight: 700;
-      color: var(--navy);
-      cursor: pointer;
-      outline: none;
-    }
+      .pagination-right {
+        display: flex;
+        align-items: center;
+      }
+      .size-picker-modern {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 0.9rem;
+        color: #64748b;
+        background: var(--bg-soft);
+        padding: 6px 16px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+      }
+      .size-picker-modern select {
+        background: transparent;
+        border: none;
+        font-weight: 700;
+        color: var(--navy);
+        cursor: pointer;
+        outline: none;
+      }
 
-    /* --- ANIMATION --- */
-    .animate-fade-in {
-      animation: fadeIn 0.6s ease-out;
-    }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      .animate-fade-in {
+        animation: fadeIn 0.6s ease-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
 
-    @media (max-width: 900px) {
-      .pagination-wrapper-premium { justify-content: center; padding: 20px; }
-      .pagination-left { width: 100%; justify-content: center; }
-      .pagination-right { width: 100%; justify-content: center; }
-    }
-  `]
+      @media (max-width: 900px) {
+        .pagination-wrapper-premium {
+          justify-content: center;
+          padding: 20px;
+        }
+        .pagination-left {
+          width: 100%;
+          justify-content: center;
+        }
+        .pagination-right {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    `,
+  ],
 })
 export class PropertyPaginationComponent {
   @Input() currentPage = 1;

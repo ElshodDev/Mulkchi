@@ -18,8 +18,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 
       <form [formGroup]="form" class="premium-form">
         <div class="amenities-grid">
-          <div 
-            *ngFor="let item of amenityList" 
+          <div
+            *ngFor="let item of amenityList"
             class="amenity-item"
             [class.active]="form.get(item.key)?.value"
             (click)="toggleAmenity(item.key)"
@@ -44,101 +44,125 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
       </form>
     </div>
   `,
-  styles: [`
-    .step-wrapper { max-width: 900px; margin: 0 auto; }
-    .section-header { margin-bottom: 40px; }
-    .section-header h1 { font-size: 2rem; font-weight: 800; color: #1e293b; margin: 0; letter-spacing: -0.5px; }
-    .section-header p { color: #64748b; font-size: 1.1rem; margin-top: 8px; }
+  styles: [
+    `
+      .step-wrapper {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      .section-header {
+        margin-bottom: 40px;
+      }
+      .section-header h1 {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin: 0;
+        letter-spacing: -0.5px;
+      }
+      .section-header p {
+        color: #64748b;
+        font-size: 1.1rem;
+        margin-top: 8px;
+      }
 
-    .amenities-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-      gap: 16px;
-    }
+      .amenities-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 16px;
+      }
 
-    .amenity-item {
-      background: white;
-      border: 2px solid #f1f5f9;
-      border-radius: 20px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-    }
+      .amenity-item {
+        background: white;
+        border: 2px solid #f1f5f9;
+        border-radius: 20px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+      }
 
-    .amenity-item:hover {
-      border-color: #6366f1;
-      background: #f8faff;
-      transform: translateY(-2px);
-    }
+      .amenity-item:hover {
+        border-color: #6366f1;
+        background: #f8faff;
+        transform: translateY(-2px);
+      }
 
-    .amenity-item.active {
-      border-color: #6366f1;
-      background: #f5f3ff;
-      box-shadow: 0 10px 20px rgba(99, 102, 241, 0.05);
-    }
+      .amenity-item.active {
+        border-color: #6366f1;
+        background: #f5f3ff;
+        box-shadow: 0 10px 20px rgba(99, 102, 241, 0.05);
+      }
 
-    .amenity-icon-box {
-      width: 44px;
-      height: 44px;
-      background: #f1f5f9;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #64748b;
-      transition: all 0.3s ease;
-    }
+      .amenity-icon-box {
+        width: 44px;
+        height: 44px;
+        background: #f1f5f9;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        transition: all 0.3s ease;
+      }
 
-    .active .amenity-icon-box {
-      background: #6366f1;
-      color: white;
-    }
+      .active .amenity-icon-box {
+        background: #6366f1;
+        color: white;
+      }
 
-    .amenity-label {
-      font-weight: 600;
-      color: #334155;
-      font-size: 0.9rem;
-      text-align: center;
-    }
+      .amenity-label {
+        font-weight: 600;
+        color: #334155;
+        font-size: 0.9rem;
+        text-align: center;
+      }
 
-    .amenity-check {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      color: #6366f1;
-    }
+      .amenity-check {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: #6366f1;
+      }
 
-    .form-footer {
-      margin-top: 48px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 32px;
-      border-top: 1px solid #f1f5f9;
-    }
+      .form-footer {
+        margin-top: 48px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 32px;
+        border-top: 1px solid #f1f5f9;
+      }
 
-    .btn-continue {
-      height: 56px;
-      padding: 0 40px;
-      border-radius: 16px;
-      font-weight: 700;
-      font-size: 1.1rem;
-      background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-      color: white;
-      box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
-    }
+      .btn-continue {
+        height: 56px;
+        padding: 0 40px;
+        border-radius: 16px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        color: white;
+        box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
+      }
 
-    .btn-cancel { height: 56px; padding: 0 32px; color: #64748b; font-weight: 600; }
+      .btn-cancel {
+        height: 56px;
+        padding: 0 32px;
+        color: #64748b;
+        font-weight: 600;
+      }
 
-    @media (max-width: 640px) {
-      .amenities-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-  `]
+      @media (max-width: 640px) {
+        .amenities-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+    `,
+  ],
 })
 export class StepAmenitiesComponent {
   @Input() form!: FormGroup;

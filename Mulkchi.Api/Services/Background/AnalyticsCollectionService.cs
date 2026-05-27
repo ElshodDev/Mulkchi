@@ -5,10 +5,6 @@ using Mulkchi.Api.Models.Foundations.Properties;
 
 namespace Mulkchi.Api.Services.Background;
 
-/// <summary>
-/// Background service for collecting and updating analytics data
-/// Runs periodically to pre-calculate statistics
-/// </summary>
 public class AnalyticsCollectionService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
@@ -33,13 +29,10 @@ public class AnalyticsCollectionService : BackgroundService
                 using var scope = _serviceProvider.CreateScope();
                 var broker = scope.ServiceProvider.GetRequiredService<StorageBroker>();
 
-                // Collect price history for properties that changed price
                 await CollectPriceHistoryAsync(broker, stoppingToken);
 
-                // Update market trends for current month
                 await UpdateMarketTrendsAsync(broker, stoppingToken);
 
-                // Update district statistics
                 await UpdateDistrictStatsAsync(broker, stoppingToken);
 
                 _logger.LogInformation("Analytics data collection completed at {Time}", DateTimeOffset.UtcNow);
@@ -49,14 +42,10 @@ public class AnalyticsCollectionService : BackgroundService
                 _logger.LogError(ex, "Error in analytics collection");
             }
 
-            // Run every 6 hours
             await Task.Delay(TimeSpan.FromHours(6), stoppingToken);
         }
     }
 
-    /// <summary>
-    /// Record price changes in history table
-    /// </summary>
     private async Task CollectPriceHistoryAsync(StorageBroker broker, CancellationToken ct)
     {
         try
@@ -72,9 +61,8 @@ public class AnalyticsCollectionService : BackgroundService
             {
                 try
                 {
-                    // Check if we already recorded this price today
                     var existing = await broker.PriceHistories
-                        .IgnoreQueryFilters() // Ignore soft delete filters for check
+                        .IgnoreQueryFilters()
                         .Where(ph => ph.PropertyId == property.Id)
                         .Where(ph => ph.RecordedDate >= DateTimeOffset.UtcNow.Date)
                         .FirstOrDefaultAsync(ct);
@@ -109,7 +97,7 @@ public class AnalyticsCollectionService : BackgroundService
             {
                 await broker.SaveChangesAsync(ct);
             }
-            
+
             _logger.LogInformation("Collected price history for {Count} properties (added {Added})", recentProperties.Count, addedCount);
         }
         catch (Exception ex)
@@ -118,14 +106,10 @@ public class AnalyticsCollectionService : BackgroundService
         }
     }
 
-    /// <summary>
-    /// Calculate and update market trends by district
-    /// </summary>
     private async Task UpdateMarketTrendsAsync(StorageBroker broker, CancellationToken ct)
     {
         var currentMonth = DateTimeOffset.UtcNow.ToString("yyyy-MM");
-        
-        // Get all regions and districts
+
         var locations = await broker.Properties
             .Where(p => !p.DeletedDate.HasValue)
             .Where(p => !string.IsNullOrEmpty(p.District))
@@ -139,7 +123,6 @@ public class AnalyticsCollectionService : BackgroundService
             var district = location.District;
             var propertyType = location.Type.ToString();
 
-            // Calculate stats for this location
             var properties = broker.Properties
                 .Where(p => !p.DeletedDate.HasValue)
                 .Where(p => p.Region == location.Region && p.District == district)
@@ -160,7 +143,6 @@ public class AnalyticsCollectionService : BackgroundService
                 .Select(p => p.SalePrice.GetValueOrDefault() / (decimal)p.Area)
                 .AverageAsync(p => (decimal?)p) ?? 0, 2);
 
-            // Calculate price change from previous month
             var prevMonth = DateTimeOffset.UtcNow.AddMonths(-1).ToString("yyyy-MM");
             var prevTrend = await broker.MarketTrends
                 .Where(mt => mt.Region == regionString && mt.District == district)
@@ -172,7 +154,6 @@ public class AnalyticsCollectionService : BackgroundService
                 ? (double)((avgSale - prevTrend.AverageSalePrice) / prevTrend.AverageSalePrice * 100)
                 : 0, 2);
 
-            // Determine market sentiment
             var sentiment = priceChange switch
             {
                 > 10 => "Hot",
@@ -182,7 +163,6 @@ public class AnalyticsCollectionService : BackgroundService
                 _ => "Stable"
             };
 
-            // Upsert market trend
             var existing = await broker.MarketTrends
                 .Where(mt => mt.Region == regionString && mt.District == district)
                 .Where(mt => mt.PropertyType == propertyType)
@@ -229,7 +209,6 @@ public class AnalyticsCollectionService : BackgroundService
         catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("duplicate key") == true)
         {
             _logger.LogWarning("Duplicate key conflict in MarketTrends, skipping: {Message}", ex.InnerException?.Message);
-            // Entry ni detach qilish
             foreach (var entry in broker.ChangeTracker.Entries().ToList())
             {
                 entry.State = EntityState.Detached;
@@ -237,9 +216,6 @@ public class AnalyticsCollectionService : BackgroundService
         }
     }
 
-    /// <summary>
-    /// Calculate and update district statistics
-    /// </summary>
     private async Task UpdateDistrictStatsAsync(StorageBroker broker, CancellationToken ct)
     {
         var districts = await broker.Properties
@@ -261,7 +237,6 @@ public class AnalyticsCollectionService : BackgroundService
 
             if (!properties.Any()) continue;
 
-            // Price statistics
             var salePrices = properties.Where(p => p.SalePrice.HasValue && p.SalePrice > 0)
                 .Select(p => p.SalePrice.GetValueOrDefault())
                 .OrderBy(p => p)
@@ -286,13 +261,11 @@ public class AnalyticsCollectionService : BackgroundService
                 ? salePrices.Sum() / properties.Where(p => p.Area > 0).Sum(p => (decimal)p.Area)
                 : 0, 2);
 
-            // Count by type
             var apartmentCount = properties.Count(p => p.Type == PropertyType.Apartment);
             var houseCount = properties.Count(p => p.Type == PropertyType.House);
             var commercialCount = properties.Count(p => p.Type == PropertyType.Commercial);
             var landCount = properties.Count(p => p.Type == PropertyType.Land);
 
-            // Amenities coverage
             var wifiPct = Math.Round((double)properties.Count(p => p.HasWifi) / properties.Count * 100, 2);
             var parkingPct = Math.Round((double)properties.Count(p => p.HasParking) / properties.Count * 100, 2);
             var metroPct = Math.Round((double)properties.Count(p => p.HasMetroNearby) / properties.Count * 100, 2);
@@ -300,7 +273,6 @@ public class AnalyticsCollectionService : BackgroundService
             var marketPct = Math.Round((double)properties.Count(p => p.HasMarketNearby) / properties.Count * 100, 2);
             var hospitalPct = Math.Round((double)properties.Count(p => p.HasHospitalNearby) / properties.Count * 100, 2);
 
-            // Calculate scores
             var avgRating = properties.Average(p => p.AverageRating);
             var affordabilityScore = Math.Round(Math.Clamp((decimal)(100 - (double)(avgPrice / 10000000m)), 0m, 100m), 2);
             var infrastructureScore = Math.Round(Math.Clamp((decimal)((wifiPct + parkingPct) / 2), 0m, 100m), 2);
@@ -313,7 +285,6 @@ public class AnalyticsCollectionService : BackgroundService
             var overallScore = Math.Round(Math.Clamp((affordabilityScore + infrastructureScore + connectivityScore +
                                amenitiesScore + safetyScore + growthScore) / 6, 0m, 100m), 2);
 
-            // Upsert district stat
             var existing = await broker.DistrictStats
                 .Where(ds => ds.Region == regionString && ds.District == district)
                 .FirstOrDefaultAsync(ct);

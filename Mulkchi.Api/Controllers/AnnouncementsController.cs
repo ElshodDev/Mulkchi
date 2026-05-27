@@ -19,7 +19,7 @@ public class AnnouncementsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async ValueTask<ActionResult<Announcement>> PostAnnouncementAsync(Announcement announcement)
     {
         try
@@ -113,7 +113,7 @@ public class AnnouncementsController : ControllerBase
     }
 
     [HttpPut]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async ValueTask<ActionResult<Announcement>> PutAnnouncementAsync(Announcement announcement)
     {
         try
@@ -145,7 +145,7 @@ public class AnnouncementsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async ValueTask<ActionResult<Announcement>> DeleteAnnouncementByIdAsync(Guid id)
     {
         try

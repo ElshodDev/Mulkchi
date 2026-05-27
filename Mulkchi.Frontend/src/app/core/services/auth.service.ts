@@ -66,9 +66,11 @@ export class AuthService {
       );
   }
 
-  // Passwordless Email OTP
-  sendEmailCode(email: string): Observable<{ sessionId: string }> {
-    return this.http.post<{ sessionId: string }>(`${this.apiUrl}/email/send-code`, { email });
+  sendEmailCode(email: string): Observable<{ sessionId: string; devCode?: string }> {
+    return this.http.post<{ sessionId: string; devCode?: string }>(
+      `${this.apiUrl}/email/send-code`,
+      { email },
+    );
   }
 
   verifyEmailCode(email: string, sessionId: string, code: string): Observable<AuthResponse> {
@@ -125,6 +127,10 @@ export class AuthService {
       return;
     }
 
+    if (!this.hasReadableCookie('XSRF-TOKEN')) {
+      return;
+    }
+
     this._isRestoringSession.set(true);
 
     this.refreshToken()
@@ -136,6 +142,14 @@ export class AuthService {
       .subscribe({
         error: () => this.clearAuth(false),
       });
+  }
+
+  private hasReadableCookie(cookieName: string): boolean {
+    if (typeof document === 'undefined') {
+      return false;
+    }
+
+    return document.cookie.split('; ').some((entry) => entry.startsWith(`${cookieName}=`));
   }
 
   private getAbsoluteUrl(url: string | undefined): string | undefined {
@@ -257,13 +271,11 @@ export class AuthService {
     } as User);
 
     if (fetchProfile) {
-      // Refresh user profile from server to get latest role and permissions
       this.getCurrentUser()
         .pipe(take(1))
         .subscribe({
           error: (err) => {
             console.warn('Failed to fetch current user profile:', err);
-            // Continue anyway - don't block on profile fetch
           },
         });
     }

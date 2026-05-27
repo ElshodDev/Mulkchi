@@ -18,7 +18,7 @@ public class BoostsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async ValueTask<ActionResult<BoostResponse>> CreateBoostAsync([FromBody] BoostCreateDto dto)
     {
         try
@@ -45,7 +45,7 @@ public class BoostsController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public ActionResult<IEnumerable<Boost>> GetAllBoosts()
     {
         try
@@ -60,7 +60,7 @@ public class BoostsController : ControllerBase
     }
 
     [HttpGet("my")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async ValueTask<ActionResult<IEnumerable<BoostResponse>>> GetMyBoostsAsync()
     {
         try
@@ -109,7 +109,7 @@ public class BoostsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async ValueTask<ActionResult<BoostResponse>> GetBoostByIdAsync(Guid id)
     {
         try
@@ -128,7 +128,7 @@ public class BoostsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Host,Admin")]
+    [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async ValueTask<ActionResult<Boost>> CancelBoostAsync(Guid id)
     {
         try
@@ -151,7 +151,7 @@ public class BoostsController : ControllerBase
     }
 
     [HttpPost("expire")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async ValueTask<ActionResult> ExpireBoostsAsync()
     {
         try

@@ -2,13 +2,7 @@ import { computed, inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
-import {
-  AuthResponse,
-  LoginRequest,
-  RegisterRequest,
-  SwitchModeRequest,
-  User,
-} from '../models';
+import { AuthResponse, LoginRequest, RegisterRequest, SwitchModeRequest, User } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
@@ -24,7 +18,7 @@ export class AuthStore {
     return this.authService.login(request);
   }
 
-  sendEmailCode(email: string): Observable<{ sessionId: string }> {
+  sendEmailCode(email: string): Observable<{ sessionId: string; devCode?: string }> {
     return this.authService.sendEmailCode(email);
   }
 

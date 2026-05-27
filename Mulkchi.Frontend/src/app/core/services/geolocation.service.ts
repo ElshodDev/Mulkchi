@@ -21,10 +21,6 @@ export class GeolocationService {
 
   constructor() {}
 
-  /**
-   * Get current user location using browser geolocation API
-   * Returns coordinates and stores in signal
-   */
   getCurrentLocation(): Observable<GeolocationCoordinates> {
     return new Observable((observer) => {
       this.isLoadingLocation.set(true);
@@ -90,37 +86,22 @@ export class GeolocationService {
     });
   }
 
-  /**
-   * Get stored current location signal
-   */
   getLocation(): GeolocationCoordinates | null {
     return this.currentLocation();
   }
 
-  /**
-   * Get location as signal
-   */
   getLocationSignal() {
     return this.currentLocation;
   }
 
-  /**
-   * Get error message signal
-   */
   getErrorSignal() {
     return this.locationError;
   }
 
-  /**
-   * Get loading state signal
-   */
   getLoadingSignal() {
     return this.isLoadingLocation;
   }
 
-  /**
-   * Clear stored location
-   */
   clearLocation(): void {
     this.currentLocation.set(null);
     this.currentLocation$.next(null);
@@ -128,18 +109,11 @@ export class GeolocationService {
     this.locationError$.next(null);
   }
 
-  /**
-   * Set location manually (useful for map selection)
-   */
   setLocation(coords: GeolocationCoordinates): void {
     this.currentLocation.set(coords);
     this.currentLocation$.next(coords);
   }
 
-  /**
-   * Reverse geocoding - get location name from coordinates
-   * Using OpenStreetMap's Nominatim service (free, no API key required)
-   */
   async getReverseGeocode(
     latitude: number,
     longitude: number,
@@ -156,7 +130,6 @@ export class GeolocationService {
 
       const data = await response.json();
 
-      // Extract city and district from OSM address structure
       const address = data.address || {};
       const city = address.city || address.town || address.county || '';
       const district = address.suburb || address.district || '';
@@ -168,16 +141,13 @@ export class GeolocationService {
     }
   }
 
-  /**
-   * Get Uzbekistan bounds for map
-   */
   getUzbekistanBounds() {
     return {
       north: 45.594,
       south: 37.184,
       east: 73.606,
       west: 55.45,
-      center: { latitude: 41.38, longitude: 64.58 }, // Center of Uzbekistan
+      center: { latitude: 41.38, longitude: 64.58 },
     };
   }
 }

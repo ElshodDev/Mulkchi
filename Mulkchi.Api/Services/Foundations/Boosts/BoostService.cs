@@ -35,7 +35,6 @@ public partial class BoostService : IBoostService
             throw new UnauthorizedAccessException("Foydalanuvchi aniqlanmadi.");
         }
 
-        // Check if property exists and belongs to user
         var property = await this.storageBroker.SelectPropertyByIdAsync(dto.PropertyId);
         if (property is null)
         {
@@ -47,13 +46,11 @@ public partial class BoostService : IBoostService
             throw new UnauthorizedAccessException("Faqat o'zingizning uy-joylaringizni ko'tarishingiz mumkin.");
         }
 
-        // Check if property is active
         if (property.Status != PropertyStatus.Active)
         {
             throw new InvalidOperationException("Faqat faol uy-joylarni ko'tarish mumkin.");
         }
 
-        // Check for existing active boost on this property
         var existingBoost = await this.storageBroker.SelectAllBoosts()
             .FirstOrDefaultAsync(b => b.PropertyId == dto.PropertyId && b.Status == BoostStatus.Active);
 
@@ -137,7 +134,6 @@ public partial class BoostService : IBoostService
                 throw new UnauthorizedAccessException("Siz faqat o'zingizning boostlaringizni o'chirishingiz mumkin.");
             }
 
-            // Soft delete - mark as cancelled
             boost.Status = BoostStatus.Cancelled;
             boost.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
             boost.DeletedDate = boost.UpdatedDate;
@@ -170,7 +166,7 @@ public partial class BoostService : IBoostService
         var now = this.dateTimeBroker.GetCurrentDateTimeOffset();
         var boosts = await this.storageBroker.SelectAllBoosts()
             .Where(b => b.Status == BoostStatus.Active && b.EndDate > now)
-            .OrderByDescending(b => b.Plan) // Gold first, then Silver, then Bronze
+            .OrderByDescending(b => b.Plan)
             .ThenByDescending(b => b.StartDate)
             .ToListAsync();
 

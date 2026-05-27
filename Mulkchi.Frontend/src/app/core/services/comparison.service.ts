@@ -25,7 +25,7 @@ export interface ComparisonResult {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ComparisonService {
   private http = inject(HttpClient);
@@ -38,7 +38,6 @@ export class ComparisonService {
     this.loadFromStorage();
   }
 
-  // Computed signals
   selectedProperties = computed(() => this.properties());
   count = computed(() => this.properties().length);
   isEmpty = computed(() => this.properties().length === 0);
@@ -67,14 +66,14 @@ export class ComparisonService {
 
   addToCompare(property: PropertyResponse): boolean {
     if (this.properties().length >= 4) {
-      return false; // Maksimal 4 ta mulkni solishtirish mumkin
+      return false;
     }
 
-    if (this.properties().some(p => p.id === property.id)) {
-      return false; // Allaqachon bor
+    if (this.properties().some((p) => p.id === property.id)) {
+      return false;
     }
 
-    this.properties.update(prev => {
+    this.properties.update((prev) => {
       const updated = [...prev, property];
       this.saveToStorage(updated);
       return updated;
@@ -83,8 +82,8 @@ export class ComparisonService {
   }
 
   removeFromCompare(propertyId: string): void {
-    this.properties.update(prev => {
-      const updated = prev.filter(p => p.id !== propertyId);
+    this.properties.update((prev) => {
+      const updated = prev.filter((p) => p.id !== propertyId);
       this.saveToStorage(updated);
       return updated;
     });
@@ -100,11 +99,11 @@ export class ComparisonService {
   }
 
   isInComparison(propertyId: string): boolean {
-    return this.properties().some(p => p.id === propertyId);
+    return this.properties().some((p) => p.id === propertyId);
   }
 
   getSmartComparison(): Observable<ComparisonResult> {
-    const ids = this.properties().map(p => p.id);
+    const ids = this.properties().map((p) => p.id);
     return this.http.post<ComparisonResult>(this.apiUrl, ids);
   }
 }

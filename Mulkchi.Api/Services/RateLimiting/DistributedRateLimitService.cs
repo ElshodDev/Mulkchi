@@ -4,10 +4,6 @@ using Mulkchi.Api.Brokers.DateTimes;
 
 namespace Mulkchi.Api.Services.RateLimiting;
 
-/// <summary>
-/// Distributed rate limiter backed by IDistributedCache (Redis).
-/// Implements a fixed-window counter approach which is suitable for distributed scale-out.
-/// </summary>
 public class DistributedRateLimitService : IRateLimitService
 {
     private readonly IDistributedCache _distributedCache;
@@ -21,17 +17,12 @@ public class DistributedRateLimitService : IRateLimitService
 
     public async Task<bool> IsRateLimitedAsync(string key, int windowSeconds, int maxRequests)
     {
-        // Compute fixed window key based on current time
         var now = _dateTimeBroker.GetCurrentDateTimeOffset().ToUnixTimeSeconds();
-        var windowStart = now / windowSeconds; // Integer division creates fixed time buckets
-        
+        var windowStart = now / windowSeconds;
+
         var cacheKey = $"rate_limit:{key}:{windowStart}";
 
-        // Attempt to increment the counter
-        // Note: IDistributedCache doesn't have an atomic IncrementAsync.
-        // For strict exact rate limiting, IConnectionMultiplexer + Lua is better,
-        // but this approximation works well for most use cases using IDistributedCache.
-        
+
         string? currentCountStr = await _distributedCache.GetStringAsync(cacheKey);
         int currentCount = string.IsNullOrEmpty(currentCountStr) ? 0 : int.Parse(currentCountStr);
 
@@ -41,10 +32,10 @@ public class DistributedRateLimitService : IRateLimitService
         }
 
         currentCount++;
-        
+
         await _distributedCache.SetStringAsync(cacheKey, currentCount.ToString(), new DistributedCacheEntryOptions
         {
-            AbsoluteExpirationRelativeToNow = System.TimeSpan.FromSeconds(windowSeconds * 2) // keep slightly longer than window
+            AbsoluteExpirationRelativeToNow = System.TimeSpan.FromSeconds(windowSeconds * 2)
         });
 
         return false;

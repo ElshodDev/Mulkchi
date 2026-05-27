@@ -19,13 +19,11 @@ export class AnnouncementService {
   private readonly http = inject(HttpClient);
   private readonly uiStore = inject(UIStore);
 
-  // Signals for state management
   private readonly _rawAnnouncements = signal<Announcement[]>([]);
   private readonly _announcements = signal<AnnouncementDisplay[]>([]);
   private readonly _loading = signal<boolean>(false);
   private readonly _error = signal<string | null>(null);
 
-  // Public readonly signals
   readonly announcements = this._announcements.asReadonly();
   readonly loading = () => this._loading();
   readonly error = () => this._error();
@@ -42,9 +40,6 @@ export class AnnouncementService {
     this.loadAnnouncements();
   }
 
-  /**
-   * Barcha faol e'lonlarni yuklash (paginated)
-   */
   getAnnouncements(page = 1, pageSize = 10): Observable<PagedResult<Announcement>> {
     const params = new HttpParams()
       .set('page', page.toString())
@@ -63,9 +58,6 @@ export class AnnouncementService {
     );
   }
 
-  /**
-   * ID bo'yicha aniq e'lon olish
-   */
   getAnnouncementById(id: string): Observable<Announcement> {
     return this.http.get<Announcement>(`${this.apiUrl}/${id}`).pipe(
       catchError((error) => {
@@ -76,9 +68,6 @@ export class AnnouncementService {
     );
   }
 
-  /**
-   * Yangi e'lon yaratish (faqat Admin)
-   */
   createAnnouncement(announcement: CreateAnnouncementRequest): Observable<Announcement> {
     this._loading.set(true);
     return this.http.post<Announcement>(this.apiUrl, announcement).pipe(
@@ -95,9 +84,6 @@ export class AnnouncementService {
     );
   }
 
-  /**
-   * E'lonni yangilash (faqat Admin)
-   */
   updateAnnouncement(
     id: string,
     announcement: UpdateAnnouncementRequest,
@@ -117,9 +103,6 @@ export class AnnouncementService {
     );
   }
 
-  /**
-   * E'lonni o'chirish (faqat Admin)
-   */
   deleteAnnouncement(id: string): Observable<void> {
     this._loading.set(true);
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
@@ -136,9 +119,6 @@ export class AnnouncementService {
     );
   }
 
-  /**
-   * Foydaxonangning til tilida e'lonni olish
-   */
   private mapToDisplayModel(announcement: Announcement, language: string): AnnouncementDisplay {
     let title = announcement.titleUz;
     let content = announcement.contentUz;
@@ -166,9 +146,6 @@ export class AnnouncementService {
     };
   }
 
-  /**
-   * E'lonlarni avvaldan yuklash
-   */
   private loadAnnouncements(): void {
     this._loading.set(true);
     this.getAnnouncements(1, 100).subscribe();

@@ -1386,6 +1386,9 @@ namespace Mulkchi.Api.Migrations
                     b.Property<int>("ViewsCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("VirtualTourUrl")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedDate");
