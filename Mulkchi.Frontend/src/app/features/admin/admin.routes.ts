@@ -16,5 +16,5 @@ export const ADMIN_ROUTES: Routes = [
         (module) => module.AnnouncementsManagementComponent,
       ),
     title: "E'lonlarni boshqarish",
-
+  }
 ];
