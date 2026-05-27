@@ -76,7 +76,6 @@ export interface Property {
   latitude?: number;
   longitude?: number;
 
-  // Amenities
   hasWifi: boolean;
   hasParking: boolean;
   hasPool: boolean;
@@ -86,7 +85,6 @@ export interface Property {
   isFeatured: boolean;
   isVerified: boolean;
 
-  // Infrastructure
   hasMetroNearby: boolean;
   hasBusStop: boolean;
   hasMarketNearby: boolean;
@@ -94,7 +92,6 @@ export interface Property {
   hasHospitalNearby: boolean;
   distanceToCityCenter: number;
 
-  // Comfort
   hasElevator: boolean;
   hasSecurity: boolean;
   hasGenerator: boolean;
@@ -102,7 +99,6 @@ export interface Property {
   hasFurniture: boolean;
   isRenovated: boolean;
 
-  // International standards
   hasAirConditioning: boolean;
   hasHeating: boolean;
   hasWasher: boolean;
@@ -113,15 +109,14 @@ export interface Property {
   isChildFriendly: boolean;
   isAccessible: boolean;
 
-  // Stats
   averageRating: number;
   viewsCount: number;
   favoritesCount: number;
 
-  // Relations
   hostId: string;
   hostName?: string;
   hostAvatarUrl?: string;
+  virtualTourUrl?: string;
   currency: Currency;
   exchangeRate: number;
 
@@ -129,17 +124,14 @@ export interface Property {
   updatedDate: Date;
   deletedDate?: Date;
 
-  // Navigation
   images?: PropertyImage[];
 
-  // Additional image properties for API responses
   imageUrl?: string;
   mainImageUrl?: string;
   thumbnailUrl?: string;
 }
 
 export interface PropertyResponse extends Property {
-  // Additional properties specific to responses if any
   floor?: number;
   totalFloors?: number;
 }
@@ -147,17 +139,15 @@ export interface PropertyResponse extends Property {
 export interface PropertyImage {
   id: string;
   propertyId: string;
-  // Backend format (from LocalFileStorageBroker)
-  url: string; // Full-size WebP URL
-  mediumUrl: string; // Medium variant (800x600)
-  thumbnailUrl: string; // Thumbnail variant (300x200)
+  url: string;
+  mediumUrl: string;
+  thumbnailUrl: string;
   caption?: string;
   sortOrder: number;
-  isPrimary: boolean; // Backend uses IsPrimary
+  isPrimary: boolean;
   createdDate: Date;
-  // Legacy support
-  imageUrl?: string; // For backwards compatibility
-  isMain?: boolean; // For backwards compatibility
+  imageUrl?: string;
+  isMain?: boolean;
 }
 
 export interface PropertyCreateRequest {
@@ -181,14 +171,12 @@ export interface PropertyCreateRequest {
   latitude?: number;
   longitude?: number;
 
-  // Amenities
   hasWifi?: boolean;
   hasParking?: boolean;
   hasPool?: boolean;
   petsAllowed?: boolean;
   isInstantBook?: boolean;
 
-  // Infrastructure
   hasMetroNearby?: boolean;
   hasBusStop?: boolean;
   hasMarketNearby?: boolean;
@@ -196,7 +184,6 @@ export interface PropertyCreateRequest {
   hasHospitalNearby?: boolean;
   distanceToCityCenter?: number;
 
-  // Comfort
   hasElevator?: boolean;
   hasSecurity?: boolean;
   hasGenerator?: boolean;
@@ -204,7 +191,6 @@ export interface PropertyCreateRequest {
   hasFurniture?: boolean;
   isRenovated?: boolean;
 
-  // International standards
   hasAirConditioning?: boolean;
   hasHeating?: boolean;
   hasWasher?: boolean;
@@ -241,16 +227,7 @@ export interface PropertySearchParams {
 
 import { ApiAuthResponse } from './api.models';
 
-/**
- * Response returned when creating a new property listing.
- * Includes the created property and new authentication tokens (if user was upgraded to Host).
- */
 export interface PropertyCreateResponse {
-  /** The newly created property listing */
   property: Property;
-  /**
-   * New authentication tokens (only present if user was upgraded from Guest to Host).
-   * When present, frontend should update stored tokens to access Host-only endpoints.
-   */
   tokens?: ApiAuthResponse;
 }

@@ -48,7 +48,6 @@ public partial class MessageService : IMessageService
             if (maybeMessage is null)
                 throw new NotFoundMessageException(messageId);
 
-            // Check authorization: only sender or receiver can access
             var currentUserId = this.currentUserService.GetCurrentUserId();
             if (!currentUserId.HasValue || (!this.currentUserService.IsInRole("Admin") &&
                 maybeMessage.SenderId != currentUserId.Value && maybeMessage.ReceiverId != currentUserId.Value))
@@ -64,12 +63,10 @@ public partial class MessageService : IMessageService
         {
             ValidateMessageOnModify(message);
 
-            // Get existing message to check ownership
             Message existingMessage = await this.storageBroker.SelectMessageByIdAsync(message.Id);
             if (existingMessage == null)
                 throw new NotFoundMessageException(message.Id);
 
-            // Check authorization: only sender can modify
             var currentUserId = this.currentUserService.GetCurrentUserId();
             if (!currentUserId.HasValue || (!this.currentUserService.IsInRole("Admin") && existingMessage.SenderId != currentUserId.Value))
             {
@@ -85,12 +82,10 @@ public partial class MessageService : IMessageService
         {
             ValidateMessageId(messageId);
 
-            // Get existing message to check ownership
             Message existingMessage = await this.storageBroker.SelectMessageByIdAsync(messageId);
             if (existingMessage == null)
                 throw new NotFoundMessageException(messageId);
 
-            // Check authorization: only sender can delete
             var currentUserId = this.currentUserService.GetCurrentUserId();
             if (!currentUserId.HasValue || (!this.currentUserService.IsInRole("Admin") && existingMessage.SenderId != currentUserId.Value))
             {

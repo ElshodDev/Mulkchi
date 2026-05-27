@@ -23,7 +23,6 @@ public class CompareService : ICompareService
         if (properties.Count < 2)
             throw new ArgumentException("Solishtirish uchun kamida 2 ta mulk kerak.");
 
-        // Calculate average price per square meter in the dataset to act as a benchmark
         decimal avgPricePerSqm = 0;
         var validProperties = properties.Where(p => p.Area > 0 && (p.MonthlyRent ?? p.SalePrice ?? p.PricePerNight).HasValue).ToList();
 
@@ -119,7 +118,7 @@ public class CompareService : ICompareService
         if (p.HasFurniture) score += 10;
         if (p.IsRenovated) score += 10;
 
-        return Math.Min(score, 100); // Maksimal 100 ball
+        return Math.Min(score, 100);
     }
 
     private string GenerateComparisonSummary(List<PropertyComparisonDetail> details)

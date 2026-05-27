@@ -11,5 +11,5 @@ public class PropertyComparisonDetail
     public List<string> Pros { get; set; }
     public List<string> Cons { get; set; }
     public int Score { get; set; }
-    public string ValueRating { get; set; } // e.g. "Zo'r tanlov", "Qimmatroq", "O'rtacha"
+    public string ValueRating { get; set; }
 }

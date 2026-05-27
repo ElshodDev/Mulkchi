@@ -66,7 +66,6 @@ export class AuthService {
       );
   }
 
-  // Passwordless Email OTP
   sendEmailCode(email: string): Observable<{ sessionId: string; devCode?: string }> {
     return this.http.post<{ sessionId: string; devCode?: string }>(
       `${this.apiUrl}/email/send-code`,
@@ -272,13 +271,11 @@ export class AuthService {
     } as User);
 
     if (fetchProfile) {
-      // Refresh user profile from server to get latest role and permissions
       this.getCurrentUser()
         .pipe(take(1))
         .subscribe({
           error: (err) => {
             console.warn('Failed to fetch current user profile:', err);
-            // Continue anyway - don't block on profile fetch
           },
         });
     }

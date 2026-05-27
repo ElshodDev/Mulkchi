@@ -787,7 +787,6 @@ export class PropertyAnalysisWidgetComponent implements OnInit {
   @Input() showPrediction = true;
   @Input() showHistory = false;
 
-  // Signals
   analysis = signal<PropertyAnalysisResult | null>(null);
   pricePrediction = signal<PricePrediction | null>(null);
   priceHistory = signal<PriceHistoryItem[]>([]);
@@ -882,7 +881,6 @@ export class PropertyAnalysisWidgetComponent implements OnInit {
 
   getDifferencePercent(): number {
     const diff = this.analysis()?.priceDifferencePercent || 0;
-    // Normalize to 0-100 range for display
     return Math.min(Math.abs(diff) * 2, 100);
   }
 

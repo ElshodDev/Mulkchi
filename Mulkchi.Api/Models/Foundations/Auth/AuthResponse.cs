@@ -16,5 +16,5 @@ public class AuthResponse
     public string LastName { get; set; }
     public string AvatarUrl { get; set; }
     public UserRole Role { get; set; }
-    public UserRole CurrentMode { get; set; }  // Current active mode (Guest/Host)
+    public UserRole CurrentMode { get; set; } 
 }

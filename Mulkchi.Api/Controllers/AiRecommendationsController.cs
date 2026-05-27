@@ -217,7 +217,6 @@ public class AiRecommendationsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AiRecommendationsController), nameof(GetHybridRecommendationsAsync));
-            // Return empty array instead of 500 error
             return Ok(Array.Empty<HybridRecommendationResponse>());
         }
     }
@@ -228,11 +227,8 @@ public class AiRecommendationsController : ControllerBase
     {
         try
         {
-            // Get the property to find similar ones
             var property = await this.aiRecommendationService.RetrieveAiRecommendationByIdAsync(propertyId);
 
-            // In a real app, this would use a vector database or complex SQL query
-            // Here we'll simulate by getting some random properties with same type and region
             var query = this.storageBroker.SelectAllProperties()
                 .Include(p => p.Images)
                 .Where(p => p.Id != propertyId)
@@ -291,8 +287,6 @@ public class AiRecommendationsController : ControllerBase
             if (userIdClaim is null || !Guid.TryParse(userIdClaim, out Guid currentUserId))
                 return Unauthorized();
 
-            // Get user interaction history and preferences
-            // In a real app, this would use ML.NET or an external AI service
             var userRecommendations = await this.aiRecommendationService.RetrieveAllAiRecommendations()
                 .Where(r => r.UserId == currentUserId)
                 .OrderByDescending(r => r.Score)
@@ -301,7 +295,6 @@ public class AiRecommendationsController : ControllerBase
 
             if (!userRecommendations.Any())
             {
-                // Return some featured properties if no personalized recommendations exist
                 var featured = await this.storageBroker.SelectAllProperties()
                     .Include(p => p.Images)
                     .OrderByDescending(p => p.ViewsCount)
@@ -366,7 +359,6 @@ public class AiRecommendationsController : ControllerBase
         if (request == null || request.Area <= 0)
             return BadRequest("Noto'g'ri ma'lumotlar kiritildi");
 
-        // === VILOYAT BO'YICHA BAZAVIY NARX (USD/m²) ===
         decimal basePricePerSqm = request.Region switch
         {
             "Toshkent" => 1280m,
@@ -386,7 +378,6 @@ public class AiRecommendationsController : ControllerBase
             _ => 480m
         };
 
-        // Mulk turiga qarab mantiqiy o'zgarishlar
         decimal typeMultiplier = request.PropertyType switch
         {
             "Apartment" => 1.00m,
@@ -398,7 +389,6 @@ public class AiRecommendationsController : ControllerBase
             _ => 1.00m
         };
 
-        // === XONALAR SONI KOEFFITSIENTI ===
         decimal roomMultiplier = request.Rooms switch
         {
             1 => 1.22m,
@@ -409,7 +399,6 @@ public class AiRecommendationsController : ControllerBase
             _ => 0.85m
         };
 
-        // === QAVAT KOEFFITSIENTI ===
         decimal floorMultiplier = 1.0m;
         if (request.TotalFloors > 0)
         {
@@ -418,17 +407,15 @@ public class AiRecommendationsController : ControllerBase
             else floorMultiplier = 1.04m;
         }
 
-        // === BINO YOSHI KOEFFITSIENTI ===
         decimal ageMultiplier = request.BuildingAge switch
         {
-            <= 0 => 1.18m, // Yangi qurilish
+            <= 0 => 1.18m,
             <= 3 => 1.12m,
             <= 10 => 1.05m,
             <= 25 => 0.95m,
             _ => 0.85m
         };
 
-        // === QULAYLIKLAR BONUSLARI ===
         var factors = new Dictionary<string, decimal>();
         if (request.IsRenovated) { factors["Ta'mirlangan"] = 0.15m; }
         if (request.HasMetroNearby) { factors["Metro yaqin"] = 0.12m; }
@@ -442,7 +429,6 @@ public class AiRecommendationsController : ControllerBase
 
         decimal totalBonus = factors.Values.Sum();
 
-        // === ASOSIY NARX HISOBLASH ===
         decimal pricePerSqm = basePricePerSqm
             * typeMultiplier
             * roomMultiplier
@@ -452,23 +438,20 @@ public class AiRecommendationsController : ControllerBase
 
         decimal recommendedPrice = pricePerSqm * request.Area;
 
-        // Ijara yoki sotishga qarab narxni sozlash
         if (request.ListingType == "Rent")
         {
-            recommendedPrice = recommendedPrice * 0.007m; // 0.7% of value
+            recommendedPrice = recommendedPrice * 0.007m;
             pricePerSqm = recommendedPrice / request.Area;
         }
         else if (request.ListingType == "ShortTermRent")
         {
-            recommendedPrice = (recommendedPrice * 0.007m) * 0.05m; // 5% of monthly
+            recommendedPrice = (recommendedPrice * 0.007m) * 0.05m;
             pricePerSqm = recommendedPrice / request.Area;
         }
 
-        // Bozor o'rtachasi (simulyatsiya)
         decimal marketAverage = recommendedPrice * 0.98m;
         decimal comparisonPercentage = ((recommendedPrice - marketAverage) / marketAverage) * 100;
 
-        // Ishonch darajasi (confidence)
         double confidence = 0.85;
         if (request.BuildingAge > 40) confidence -= 0.1;
         if (string.IsNullOrEmpty(request.Region)) confidence -= 0.2;
@@ -492,7 +475,6 @@ public class AiRecommendationsController : ControllerBase
     [HttpPost("generate-description")]
     public async Task<ActionResult<AIDescriptionResponse>> GenerateDescriptionAsync([FromBody] AIDescriptionRequest request)
     {
-        // Simulate AI processing delay
         await Task.Delay(800);
 
         var amenitiesList = request.Amenities?.Any() == true
@@ -537,9 +519,363 @@ public class AiRecommendationsController : ControllerBase
             Confidence = 0.95
         });
     }
+
+    [HttpPost("smart-search")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<PropertyResponse>>> SmartSearchAsync([FromBody] SmartSearchRequest request)
+    {
+        try
+        {
+            await Task.Delay(1500);
+
+            string q = request.Query.ToLower();
+            var allProperties = await storageBroker.SelectAllProperties().ToListAsync();
+            
+            var query = allProperties.AsQueryable();
+
+            if (q.Contains("ijara"))
+            {
+                query = query.Where(p => p.ListingType == ListingType.Rent || p.ListingType == ListingType.ShortTermRent);
+            }
+            else if (q.Contains("sotuv") || q.Contains("sotib") || q.Contains("sotiladigan"))
+            {
+                query = query.Where(p => p.ListingType == ListingType.Sale);
+            }
+
+            if (q.Contains("kvartira"))
+            {
+                query = query.Where(p => p.Type == PropertyType.Apartment);
+            }
+            else if (q.Contains("hovli"))
+            {
+                query = query.Where(p => p.Type == PropertyType.House || p.Type == PropertyType.Villa);
+            }
+            else if (q.Contains("do'kon") || q.Contains("dokon") || q.Contains("tijorat"))
+            {
+                query = query.Where(p => p.Type == PropertyType.Commercial);
+            }
+
+            foreach (UzbekistanRegion region in Enum.GetValues(typeof(UzbekistanRegion)))
+            {
+                string regionName = region.ToString().ToLower();
+                
+                if (regionName == "toshkentshahar" && q.Contains("toshkent") && !q.Contains("viloyat"))
+                {
+                    query = query.Where(p => p.Region == UzbekistanRegion.ToshkentShahar);
+                    break;
+                }
+                else if (regionName == "toshkentviloyat" && q.Contains("toshkent viloyat"))
+                {
+                    query = query.Where(p => p.Region == UzbekistanRegion.ToshkentViloyat);
+                    break;
+                }
+                else if (q.Contains(regionName) || q.Contains(regionName.Replace("o", "o'").Replace("g", "g'")))
+                {
+                    query = query.Where(p => p.Region == region);
+                    break;
+                }
+            }
+
+            for (int i = 1; i <= 10; i++)
+            {
+                if (q.Contains($"{i} xona") || q.Contains($"{i}-xona"))
+                {
+                    query = query.Where(p => p.NumberOfBedrooms == i);
+                    break;
+                }
+            }
+
+            var results = query.Take(10).Select(p => new PropertyResponse
+            {
+                Id = p.Id,
+                Title = p.Title,
+                Description = p.Description,
+                Type = p.Type,
+                ListingType = p.ListingType,
+                Category = p.Category,
+                Status = p.Status,
+                MonthlyRent = p.MonthlyRent,
+                SalePrice = p.SalePrice,
+                PricePerNight = p.PricePerNight,
+                Area = p.Area,
+                NumberOfBedrooms = p.NumberOfBedrooms,
+                NumberOfBathrooms = p.NumberOfBathrooms,
+                Region = p.Region,
+                City = p.City,
+                Address = p.Address,
+                HostId = p.HostId,
+                Currency = p.Currency,
+                CreatedDate = p.CreatedDate,
+                UpdatedDate = p.UpdatedDate
+            }).ToList();
+
+            return Ok(results);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in SmartSearch");
+            return BadRequest(new { message = "Aqlli qidiruv vaqtida xatolik yuz berdi" });
+        }
+    }
+
+    [HttpPost("chat")]
+    [AllowAnonymous]
+    public async Task<ActionResult<ChatResponse>> ChatAsync([FromBody] ChatRequest request)
+    {
+        try
+        {
+            await Task.Delay(1500);
+
+            string fullQuery = "";
+            if (request.History != null && request.History.Any())
+            {
+                fullQuery = string.Join(" ", request.History).ToLower() + " ";
+            }
+            fullQuery += request.Message.ToLower();
+            
+            string currentMessage = request.Message.ToLower();
+
+            var allProperties = await storageBroker.SelectAllProperties().ToListAsync();
+            
+            var query = allProperties.AsQueryable();
+
+            bool hasFilters = false;
+
+            if (fullQuery.Contains("ijara"))
+            {
+                query = query.Where(p => p.ListingType == ListingType.Rent || p.ListingType == ListingType.ShortTermRent);
+                hasFilters = true;
+            }
+            else if (fullQuery.Contains("sotuv") || fullQuery.Contains("sotib") || fullQuery.Contains("sotiladigan") || fullQuery.Contains("sotiladgan"))
+            {
+                query = query.Where(p => p.ListingType == ListingType.Sale);
+                hasFilters = true;
+            }
+
+            if (fullQuery.Contains("kvartira"))
+            {
+                query = query.Where(p => p.Type == PropertyType.Apartment);
+                hasFilters = true;
+            }
+            else if (fullQuery.Contains("hovli"))
+            {
+                query = query.Where(p => p.Type == PropertyType.House || p.Type == PropertyType.Villa);
+                hasFilters = true;
+            }
+            else if (fullQuery.Contains("do'kon") || fullQuery.Contains("dokon") || fullQuery.Contains("tijorat"))
+            {
+                query = query.Where(p => p.Type == PropertyType.Commercial);
+                hasFilters = true;
+            }
+
+            bool hasRegion = false;
+            foreach (UzbekistanRegion region in Enum.GetValues(typeof(UzbekistanRegion)))
+            {
+                string regionName = region.ToString().ToLower();
+                
+                if (regionName == "toshkentshahar" && fullQuery.Contains("toshkent") && !fullQuery.Contains("viloyat"))
+                {
+                    query = query.Where(p => p.Region == UzbekistanRegion.ToshkentShahar);
+                    hasFilters = true;
+                    hasRegion = true;
+                    break;
+                }
+                else if (regionName == "toshkentviloyat" && fullQuery.Contains("toshkent viloyat"))
+                {
+                    query = query.Where(p => p.Region == UzbekistanRegion.ToshkentViloyat);
+                    hasFilters = true;
+                    hasRegion = true;
+                    break;
+                }
+                else if (fullQuery.Contains(regionName) || fullQuery.Contains(regionName.Replace("o", "o'").Replace("g", "g'")))
+                {
+                    query = query.Where(p => p.Region == region);
+                    hasFilters = true;
+                    hasRegion = true;
+                    break;
+                }
+            }
+
+            bool hasRooms = false;
+            for (int i = 1; i <= 10; i++)
+            {
+                if (fullQuery.Contains($"{i} xona") || fullQuery.Contains($"{i}-xona"))
+                {
+                    query = query.Where(p => p.NumberOfBedrooms == i);
+                    hasFilters = true;
+                    hasRooms = true;
+                    break;
+                }
+            }
+
+            string replyMessage = "";
+
+            if (currentMessage.Contains("salom") || currentMessage.Contains("assalom"))
+            {
+                return Ok(new ChatResponse { Reply = "Vaalaykum assalom! Men Mulkchi AI yordamchisiman. Sizga qanday mulk kerak yoki ko'chmas mulk bo'yicha qanday savollaringiz bor?" });
+            }
+            else if (currentMessage.Contains("rahmat"))
+            {
+                return Ok(new ChatResponse { Reply = "Sizga ham rahmat! Yana qandaydir savollaringiz bo'lsa, so'rashingiz mumkin." });
+            }
+            else if (currentMessage.Contains("shartnoma") || currentMessage.Contains("qanday tuziladi") || currentMessage.Contains("hujjat"))
+            {
+                return Ok(new ChatResponse { Reply = "Ijara shartnomasini tuzish uchun ikkala tomonning pasporti va uyning kadastr hujjatlari kerak. Shartnomada ijara muddati, oylik to'lov va shartlar ko'rsatilishi hamda soliq tizimida (E-ijara.uz) ro'yxatdan o'tkazilishi qonunan majburiydir." });
+            }
+            else if (currentMessage.Contains("bahola") || currentMessage.Contains("narxi qanday") || currentMessage.Contains("narxini aniqla"))
+            {
+                return Ok(new ChatResponse { Reply = "Uyingizni baholash uchun asosiy menyudan 'AI Narx Bashorati' xizmatimizga kiring. U yerda sun'iy intellekt bozor ma'lumotlari asosida uyingizning eng aniq bozor narxini hisoblab beradi." });
+            }
+            else if (currentMessage.Contains("nima qilishim kerak") || currentMessage.Contains("nima qilshim kerak") || currentMessage.Contains("qanday foydalan") || currentMessage.Contains("tushunmadim") || currentMessage.Contains("yordam bering"))
+            {
+                return Ok(new ChatResponse { Reply = "Sizga qanday yordam kerak? Saytdan uylarni qidirishingiz, ijara yoki sotuvga e'lon berishingiz yoxud uyingizning narxini sun'iy intellekt orqali baholashingiz mumkin." });
+            }
+
+            if (currentMessage.Contains("tavsiya") || currentMessage.Contains("maslahat") || currentMessage.Contains("yordam"))
+            {
+                var count = query.Count();
+                if (hasFilters && count > 0) 
+                {
+                    var results = query.OrderByDescending(p => p.CreatedDate).Take(2).ToList();
+                    replyMessage = $"Albatta! Sizning oldingi qidiruvlaringizga asoslanib shularni tavsiya qilaman:";
+                    var propertyResponses = results.Select(p => new PropertyResponse
+                    {
+                        Id = p.Id,
+                        Title = p.Title,
+                        Description = p.Description,
+                        Type = p.Type,
+                        ListingType = p.ListingType,
+                        Category = p.Category,
+                        Status = p.Status,
+                        MonthlyRent = p.MonthlyRent,
+                        SalePrice = p.SalePrice,
+                        PricePerNight = p.PricePerNight,
+                        Area = p.Area,
+                        NumberOfBedrooms = p.NumberOfBedrooms,
+                        NumberOfBathrooms = p.NumberOfBathrooms,
+                        Region = p.Region,
+                        City = p.City,
+                        Address = p.Address,
+                        HostId = p.HostId,
+                        Currency = p.Currency,
+                        CreatedDate = p.CreatedDate,
+                        UpdatedDate = p.UpdatedDate
+                    }).ToList();
+                    
+                    return Ok(new ChatResponse { Reply = replyMessage, Properties = propertyResponses });
+                }
+                else
+                {
+                    var results = allProperties.OrderByDescending(p => p.CreatedDate).Take(2).ToList();
+                    replyMessage = $"Hozirgi kunda platformamizdagi eng mashhur va yangi uylarni tavsiya qila olaman:";
+                    var propertyResponses = results.Select(p => new PropertyResponse
+                    {
+                        Id = p.Id,
+                        Title = p.Title,
+                        Description = p.Description,
+                        Type = p.Type,
+                        ListingType = p.ListingType,
+                        Category = p.Category,
+                        Status = p.Status,
+                        MonthlyRent = p.MonthlyRent,
+                        SalePrice = p.SalePrice,
+                        PricePerNight = p.PricePerNight,
+                        Area = p.Area,
+                        NumberOfBedrooms = p.NumberOfBedrooms,
+                        NumberOfBathrooms = p.NumberOfBathrooms,
+                        Region = p.Region,
+                        City = p.City,
+                        Address = p.Address,
+                        HostId = p.HostId,
+                        Currency = p.Currency,
+                        CreatedDate = p.CreatedDate,
+                        UpdatedDate = p.UpdatedDate
+                    }).ToList();
+
+                    return Ok(new ChatResponse { Reply = replyMessage, Properties = propertyResponses });
+                }
+            }
+            else if (hasFilters)
+            {
+                if (!hasRegion)
+                {
+                    replyMessage = "Tushunarli! Lekin aniq qaysi viloyatdan yoki shahardan izlayotganingizni yozmadingiz. Qayerdan qidiraylik?";
+                }
+                else if (!hasRooms && fullQuery.Contains("kvartira"))
+                {
+                    replyMessage = "Yaxshi! Qidiruvni aniqlashtirish uchun necha xonali uy kerakligini yozib yuboring (Masalan: 2 xonali).";
+                }
+                else 
+                {
+                    var count = query.Count();
+                    if (count == 0)
+                    {
+                        replyMessage = "Kechirasiz, aynan ushbu shartlaringizga mos tushadigan e'lonlar hozircha bazamizda yo'q. Boshqa shartlar bo'yicha qidirib ko'rasizmi?";
+                    }
+                    else
+                    {
+                        var results = query.Take(3).ToList();
+                        replyMessage = $"Men sizga barcha talablaringiz bo'yicha {count} ta e'lon topdim. Ular bilan tanishib chiqing:";
+                        var propertyResponses = results.Select(p => new PropertyResponse
+                        {
+                            Id = p.Id,
+                            Title = p.Title,
+                            Description = p.Description,
+                            Type = p.Type,
+                            ListingType = p.ListingType,
+                            Category = p.Category,
+                            Status = p.Status,
+                            MonthlyRent = p.MonthlyRent,
+                            SalePrice = p.SalePrice,
+                            PricePerNight = p.PricePerNight,
+                            Area = p.Area,
+                            NumberOfBedrooms = p.NumberOfBedrooms,
+                            NumberOfBathrooms = p.NumberOfBathrooms,
+                            Region = p.Region,
+                            City = p.City,
+                            Address = p.Address,
+                            HostId = p.HostId,
+                            Currency = p.Currency,
+                            CreatedDate = p.CreatedDate,
+                            UpdatedDate = p.UpdatedDate
+                        }).ToList();
+
+                        return Ok(new ChatResponse { Reply = replyMessage, Properties = propertyResponses });
+                    }
+                }
+            }
+            else
+            {
+                replyMessage = "Sizga qanday uy kerakligini aniqlashim uchun yordam bering: qaysi viloyatdan va necha xonali uy qidiryapsiz? Yoki sizga eng yaxshi uylarni 'tavsiya' qilaymi?";
+            }
+
+            return Ok(new ChatResponse { Reply = replyMessage });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in Chat");
+            return BadRequest(new { message = "Xatolik yuz berdi" });
+        }
+    }
 }
 
-// AI Models for API
+public class ChatRequest
+{
+    public string Message { get; set; } = string.Empty;
+    public List<string> History { get; set; } = new();
+}
+
+public class ChatResponse
+{
+    public string Reply { get; set; } = string.Empty;
+    public List<PropertyResponse>? Properties { get; set; }
+}
+
+public class SmartSearchRequest
+{
+    public string Query { get; set; } = string.Empty;
+}
+
 public class AIPricePredictionRequest
 {
     public string Region { get; set; } = string.Empty;

@@ -187,7 +187,6 @@ interface NominatimResult {
       gap: 32px;
     }
 
-    /* ── HEADER ────────────────────────────────── */
     .section-header {
       display: flex;
       justify-content: space-between;
@@ -220,7 +219,6 @@ interface NominatimResult {
     }
     .btn-gps mat-icon { font-size: 20px; width: 20px; height: 20px; }
 
-    /* ── MAP CARD ──────────────────────────────── */
     .map-card {
       background: white;
       border-radius: 24px;
@@ -242,7 +240,6 @@ interface NominatimResult {
       z-index: 1;
     }
 
-    /* Overlays */
     .map-overlay {
       position: absolute;
       inset: 0;
@@ -303,7 +300,6 @@ interface NominatimResult {
     }
     .map-success-badge mat-icon { font-size: 18px; width: 18px; height: 18px; }
 
-    /* Address preview strip */
     .address-preview {
       display: flex;
       align-items: center;
@@ -317,7 +313,6 @@ interface NominatimResult {
     .preview-label { font-size: 0.75rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
     .preview-value { font-size: 0.95rem; color: #1e293b; font-weight: 600; }
 
-    /* ── FORM FIELDS ───────────────────────────── */
     .address-form {
       background: white;
       border-radius: 24px;
@@ -360,7 +355,6 @@ interface NominatimResult {
       box-shadow: 0 0 0 3px rgba(99,102,241,0.1) !important;
     }
 
-    /* Coordinates strip */
     .coords-strip {
       display: flex;
       align-items: center;
@@ -374,7 +368,6 @@ interface NominatimResult {
     }
     .coords-strip mat-icon { font-size: 16px; width: 16px; height: 16px; color: #6366f1; }
 
-    /* ── FOOTER ────────────────────────────────── */
     .form-footer {
       display: flex;
       justify-content: space-between;
@@ -424,7 +417,6 @@ export class StepLocationComponent implements OnInit, AfterViewInit, OnDestroy {
   hasPickedLocation = signal(false);
   detectedAddress = signal('');
 
-  // All Uzbekistan regions with map center coordinates
   regions = [
     { value: 'Toshkent',        label: 'Toshkent shahri',    coords: [41.2995, 69.2401] as [number, number] },
     { value: 'ToshkentViloyati',label: 'Toshkent viloyati',  coords: [41.1143, 69.5542] as [number, number] },
@@ -449,7 +441,6 @@ export class StepLocationComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    // slight delay to ensure DOM is ready
     setTimeout(() => this.initMap(), 150);
   }
 
@@ -457,9 +448,6 @@ export class StepLocationComponent implements OnInit, AfterViewInit, OnDestroy {
     this.map?.remove();
   }
 
-  // ──────────────────────────────────────────────
-  // Map Initialization
-  // ──────────────────────────────────────────────
   private initMap(): void {
     const lat = this.form.get('latitude')?.value ?? 41.2995;
     const lng = this.form.get('longitude')?.value ?? 69.2401;
@@ -470,7 +458,6 @@ export class StepLocationComponent implements OnInit, AfterViewInit, OnDestroy {
       zoomControl: false,
     });
 
-    // Tile layer – OpenStreetMap (FREE, no API key)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
       maxZoom: 19,
@@ -478,7 +465,6 @@ export class StepLocationComponent implements OnInit, AfterViewInit, OnDestroy {
 
     L.control.zoom({ position: 'topright' }).addTo(this.map);
 
-    // Custom red pin icon
     const pinIcon = L.divIcon({
       className: '',
       html: `
@@ -504,31 +490,24 @@ export class StepLocationComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.marker = L.marker([lat, lng], { draggable: true, icon: pinIcon }).addTo(this.map);
 
-    // Drag marker → reverse geocode
     this.marker.on('dragend', () => {
       const pos = this.marker!.getLatLng();
       this.zone.run(() => this.onLocationPicked(pos.lat, pos.lng));
     });
 
-    // Click on map → move marker & reverse geocode
     this.map.on('click', (e: L.LeafletMouseEvent) => {
       this.marker!.setLatLng(e.latlng);
       this.zone.run(() => this.onLocationPicked(e.latlng.lat, e.latlng.lng));
     });
 
-    // Fix Leaflet sizing bug
     setTimeout(() => this.map?.invalidateSize(), 300);
   }
 
-  // ──────────────────────────────────────────────
-  // Called every time user picks a point
-  // ──────────────────────────────────────────────
   private onLocationPicked(lat: number, lng: number): void {
     this.form.patchValue({ latitude: lat, longitude: lng });
     this.geocoding.set(true);
     this.hasPickedLocation.set(false);
 
-    // Nominatim reverse geocoding – FREE, no API key
     const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=uz,ru`;
 
     this.http.get<NominatimResult>(url).subscribe({
@@ -545,9 +524,6 @@ export class StepLocationComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  // ──────────────────────────────────────────────
-  // Fill form with geocoded data
-  // ──────────────────────────────────────────────
   private fillFormFromNominatim(result: NominatimResult, lat: number, lng: number): void {
     const a = result.address;
 
@@ -557,16 +533,12 @@ export class StepLocationComponent implements OnInit, AfterViewInit, OnDestroy {
     const city        = a.city || a.town || a.village || a.county || '';
     const state       = a.state || '';
 
-    // Match state name to our region list
     const regionMatch = this.matchRegion(state, city);
 
-    // Build full address line
     const addressLine = [street + houseNumber, suburb].filter(Boolean).join(', ');
 
-    // Full display string for preview
     const fullDisplay = result.display_name;
 
-    // Patch all form fields at once
     this.form.patchValue({
       latitude:  lat,
       longitude: lng,
@@ -583,18 +555,13 @@ export class StepLocationComponent implements OnInit, AfterViewInit, OnDestroy {
     this.geocoding.set(false);
     this.hasPickedLocation.set(true);
 
-    // If region changed → pan map
     const reg = this.regions.find(r => r.value === regionMatch);
     if (reg && this.map) {
-      // just keep current view, user already sees the pin
     }
 
     this.snackBar.open('✅ Manzil avtomatik aniqlandi!', '', { duration: 2000 });
   }
 
-  // ──────────────────────────────────────────────
-  // Map Nominatim state name → our region values
-  // ──────────────────────────────────────────────
   private matchRegion(state: string, city: string): string {
     const s = (state + ' ' + city).toLowerCase();
 
@@ -616,9 +583,6 @@ export class StepLocationComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.form.get('region')?.value || 'Toshkent';
   }
 
-  // ──────────────────────────────────────────────
-  // GPS: use browser geolocation
-  // ──────────────────────────────────────────────
   useMyLocation(): void {
     if (!navigator.geolocation) {
       this.snackBar.open("Brauzer geolokatsiyani qo'llab-quvvatlamaydi", 'OK', { duration: 3000 });
@@ -646,9 +610,6 @@ export class StepLocationComponent implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
-  // ──────────────────────────────────────────────
-  // Dropdown region change → pan map
-  // ──────────────────────────────────────────────
   onRegionChange(regionValue: string): void {
     const region = this.regions.find(r => r.value === regionValue);
     if (region && this.map) {

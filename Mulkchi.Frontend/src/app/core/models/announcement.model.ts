@@ -1,4 +1,3 @@
-// Announcement model va DTOs
 
 export interface Announcement {
   id: string;
@@ -51,7 +50,6 @@ export enum AnnouncementTarget {
   Admins = 'Admins',
 }
 
-// Display model - frontend da foydalanish uchun
 export interface AnnouncementDisplay {
   id: string;
   title: string;

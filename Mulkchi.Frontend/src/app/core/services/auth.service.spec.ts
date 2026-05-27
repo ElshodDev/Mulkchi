@@ -53,14 +53,12 @@ describe('AuthService', () => {
     httpMock.verify();
   });
 
-  // ─── isAuthenticated ───────────────────────────────────────────────────────
 
   it('should initially be unauthenticated', () => {
     expect(service.isAuthenticated()).toBe(false);
     expect(service.currentUser()).toBeNull();
   });
 
-  // ─── login ────────────────────────────────────────────────────────────────
 
   it('login() — should authenticate user on success', () => {
     service.login({ email: 'test@example.com', password: 'P@ssw0rd!' }).subscribe((response) => {
@@ -73,14 +71,12 @@ describe('AuthService', () => {
     expect(req.request.method).toBe('POST');
     req.flush(mockApiResponse);
 
-    // /auth/me is fetched after login for full profile
     const meReq = httpMock.expectOne(`${apiUrl}/me`);
     meReq.flush({ ...mockApiResponse, isVerified: true });
 
     expect(sessionServiceSpy.emitLogin).toHaveBeenCalled();
   });
 
-  // ─── getAccessToken ───────────────────────────────────────────────────────
 
   it('getAccessToken() — should return null when not authenticated', () => {
     expect(service.getAccessToken()).toBeNull();
@@ -98,10 +94,8 @@ describe('AuthService', () => {
     expect(service.getAccessToken()).toBe('mock-access-token');
   });
 
-  // ─── clearAuth ────────────────────────────────────────────────────────────
 
   it('clearAuth() — should clear user and token', () => {
-    // Prime the service with a fake token/user
     service.handleAuthResponse(
       {
         token: 'tok',
@@ -126,7 +120,6 @@ describe('AuthService', () => {
     expect(sessionServiceSpy.emitLogout).toHaveBeenCalled();
   });
 
-  // ─── isHost / isAdmin ─────────────────────────────────────────────────────
 
   it('isHost() — should return false for Guest role', () => {
     service.handleAuthResponse(
@@ -167,7 +160,6 @@ describe('AuthService', () => {
     expect(service.isAdmin()).toBe(false);
   });
 
-  // ─── mapApiAuthResponse ───────────────────────────────────────────────────
 
   it('mapApiAuthResponse() — should handle both camelCase and PascalCase fields', () => {
     const mockPagedResult = {
@@ -210,7 +202,6 @@ describe('AuthService', () => {
     expect(pascalResult.email).toBe('e2@e.com');
   });
 
-  // ─── forgotPassword ───────────────────────────────────────────────────────
 
   it('forgotPassword() — should POST to forgot-password endpoint', () => {
     service.forgotPassword('test@example.com').subscribe();

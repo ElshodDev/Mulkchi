@@ -69,12 +69,10 @@ public partial class ReviewService : IReviewService
         {
             ValidateReviewOnModify(review);
 
-            // Get existing review to check ownership
             Review existingReview = await this.storageBroker.SelectReviewByIdAsync(review.Id);
             if (existingReview == null)
                 throw new NotFoundReviewException(review.Id);
 
-            // Check ownership: only reviewer can modify
             var currentUserId = this.currentUserService.GetCurrentUserId();
             if (!currentUserId.HasValue || (!this.currentUserService.IsInRole("Admin") && existingReview.ReviewerId != currentUserId.Value))
             {
@@ -91,12 +89,10 @@ public partial class ReviewService : IReviewService
         {
             ValidateReviewId(reviewId);
 
-            // Get existing review to check ownership
             Review existingReview = await this.storageBroker.SelectReviewByIdAsync(reviewId);
             if (existingReview == null)
                 throw new NotFoundReviewException(reviewId);
 
-            // Check ownership: only reviewer can delete
             var currentUserId = this.currentUserService.GetCurrentUserId();
             if (!currentUserId.HasValue || (!this.currentUserService.IsInRole("Admin") && existingReview.ReviewerId != currentUserId.Value))
             {

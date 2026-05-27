@@ -700,7 +700,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadDashboardData();
-    this.loadLogs(); // Loads mock logs only - no API calls
+    this.loadLogs();
   }
 
   ngOnDestroy(): void {
@@ -711,7 +711,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   loadDashboardData(): void {
     this.loading.set(true);
 
-    // Analytics overview
     this.analyticsService
       .getMarketOverview()
       .pipe(takeUntil(this.destroy$))
@@ -722,7 +721,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         error: () => {},
       });
 
-    // Properties list
     this.http
       .get<any>(`${environment.apiUrl}/properties?page=1&pageSize=100`)
       .pipe(takeUntil(this.destroy$))
@@ -735,7 +733,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         },
       });
 
-    // Users list (admin endpoint)
     this.http
       .get<any>(`${environment.apiUrl}/users?page=1&pageSize=100`)
       .pipe(takeUntil(this.destroy$))
@@ -752,7 +749,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         },
       });
 
-    // Bookings count
     this.http
       .get<any>(`${environment.apiUrl}/bookings?page=1&pageSize=1`)
       .pipe(takeUntil(this.destroy$))
@@ -766,7 +762,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   loadLogs(): void {
     this.logsLoading.set(true);
-    // Mock logs for now - Backend endpoint not implemented yet
     const mockLogs = [
       '[2026-05-21 08:30:00] INF - Admin panel accessed',
       '[2026-05-21 08:25:00] INF - User logged in',

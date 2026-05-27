@@ -28,7 +28,7 @@ public class PropertiesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize] // Any authenticated user can create listings - auto-upgraded to Host role
+    [Authorize]
     public async Task<ActionResult<PropertyCreateResponse>> PostPropertyAsync([FromBody] PropertyCreateDto dto)
     {
         try
@@ -64,13 +64,11 @@ public class PropertiesController : ControllerBase
     {
         try
         {
-            // Ensure queryParams is not null with defaults
             queryParams ??= new PropertyQueryParams { Page = 1, PageSize = 20 };
 
-            // Validate page parameters
             if (queryParams.Page < 1) queryParams.Page = 1;
             if (queryParams.PageSize < 1) queryParams.PageSize = 20;
-            if (queryParams.PageSize > 100) queryParams.PageSize = 100; // Max limit
+            if (queryParams.PageSize > 100) queryParams.PageSize = 100;
 
             var (items, total) = await this.propertyService.RetrieveAllPropertiesAsync(queryParams);
 
@@ -180,7 +178,7 @@ public class PropertiesController : ControllerBase
                 Items = items,
                 TotalCount = total,
                 Page = 1,
-                PageSize = 50 // Fixed size since no pagination fields
+                PageSize = 50
             };
 
             return Ok(result);
@@ -281,7 +279,6 @@ public class PropertiesController : ControllerBase
         }
     }
 
-    // Publish/Unpublish endpoints
     [HttpPut("{id:guid}/publish")]
     [Authorize(Roles = "Host,Admin,SuperAdmin")]
     public async ValueTask<ActionResult<PropertyResponse>> PublishPropertyAsync(Guid id)
@@ -326,11 +323,10 @@ public class PropertiesController : ControllerBase
     {
         try
         {
-            // Check if user is in Guest role and provide helpful error message
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
             if (userRole == "Guest")
             {
-                return Forbid(); // Returns 403 with clear indication that role upgrade is needed
+                return Forbid();
             }
 
             var (items, total) = await this.propertyService.RetrieveMyPropertiesAsync(queryParams);
@@ -376,7 +372,6 @@ public class PropertiesController : ControllerBase
     {
         try
         {
-            // Verify that current user owns this property
             var property = await this.propertyService.RetrievePropertyByIdAsync(id);
 
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -385,7 +380,6 @@ public class PropertiesController : ControllerBase
                 return Unauthorized(new { message = "You can only bump your own properties." });
             }
 
-            // Update property's listing bump timestamp
             property.BumpedAt = DateTimeOffset.UtcNow;
             await this.propertyService.ModifyPropertyAsync(property);
 

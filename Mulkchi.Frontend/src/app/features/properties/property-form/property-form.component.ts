@@ -419,6 +419,7 @@ export class PropertyFormComponent implements OnInit {
 
   descriptionForm = this.fb.group({
     description: ['', [Validators.required, Validators.minLength(20)]],
+    virtualTourUrl: [''],
     maxGuests: [1, [Validators.required, Validators.min(1)]],
     isInstantBook: [false],
   });
@@ -428,12 +429,10 @@ export class PropertyFormComponent implements OnInit {
     const monthlyRent = this.basicInfoForm.get('monthlyRent');
     const pricePerNight = this.basicInfoForm.get('pricePerNight');
 
-    // Clear all price validators first
     salePrice?.clearValidators();
     monthlyRent?.clearValidators();
     pricePerNight?.clearValidators();
 
-    // Add validators based on listing type
     if (type === 'Sale' || type === ListingType.Sale) {
       salePrice?.setValidators([Validators.required, Validators.min(1)]);
     } else if (type === 'Rent' || type === ListingType.Rent) {
@@ -442,17 +441,14 @@ export class PropertyFormComponent implements OnInit {
       pricePerNight?.setValidators([Validators.required, Validators.min(1)]);
     }
 
-    // Force update status
     salePrice?.updateValueAndValidity({ emitEvent: false });
     monthlyRent?.updateValueAndValidity({ emitEvent: false });
     pricePerNight?.updateValueAndValidity({ emitEvent: false });
   }
 
   ngOnInit(): void {
-    // Initial validator setup
     this.updatePriceValidators(this.basicInfoForm.get('listingType')?.value || 'Sale');
 
-    // Listen for listingType changes
     this.basicInfoForm.get('listingType')?.valueChanges.subscribe((type) => {
       if (type) this.updatePriceValidators(type);
     });
@@ -460,7 +456,6 @@ export class PropertyFormComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('id');
     const typeParam = this.route.snapshot.paramMap.get('type');
 
-    // Pre-select listing type from route parameter (/elon-berish/:type)
     if (typeParam) {
       const typeMap: Record<string, ListingType> = {
         sale: ListingType.Sale,
@@ -556,6 +551,7 @@ export class PropertyFormComponent implements OnInit {
 
     this.descriptionForm.patchValue({
       description: property.description,
+      virtualTourUrl: (property as any).virtualTourUrl || '',
       maxGuests: property.maxGuests,
       isInstantBook: property.isInstantBook,
     });
@@ -571,7 +567,6 @@ export class PropertyFormComponent implements OnInit {
       return;
     }
 
-    // Ensure conditional price fields required by listing type are provided
     const listingType = this.basicInfoForm.value.listingType;
     if (listingType === 'Sale') {
       const salePrice = this.basicInfoForm.value.salePrice;
@@ -599,11 +594,10 @@ export class PropertyFormComponent implements OnInit {
 
     this.isSubmitting.set(true);
 
-    // Map frontend region string values to backend UzbekistanRegion enum integer values
     const selectedRegion: string = this.locationForm.value.region ?? '';
     const regionMap: Record<string, number> = {
-      Toshkent: 0, // ToshkentShahar
-      ToshkentViloyati: 1, // ToshkentViloyat
+      Toshkent: 0,
+      ToshkentViloyati: 1,
       Samarqand: 2,
       Buxoro: 3,
       Andijon: 4,
@@ -611,12 +605,12 @@ export class PropertyFormComponent implements OnInit {
       Namangan: 6,
       Qashqadaryo: 7,
       Surxondaryo: 8,
-      Xiva: 9, // maps to Xorazm
+      Xiva: 9,
       Navoi: 10,
       Jizzax: 11,
       Sirdaryo: 12,
-      Guliston: 12, // frontend uses Guliston for Sirdaryo
-      Nukus: 13, // Qoraqalpogiston
+      Guliston: 12,
+      Nukus: 13,
       Qoraqalpogiston: 13,
     };
 
@@ -629,8 +623,8 @@ export class PropertyFormComponent implements OnInit {
       Office: 4,
       Land: 5,
       Commercial: 6,
-      Shop: 6, // Map Shop to Commercial
-      Other: 6, // Map Other to Commercial
+      Shop: 6,
+      Other: 6,
     };
     const categoryMap: Record<string, number> = {
       Residential: 0,
@@ -654,7 +648,7 @@ export class PropertyFormComponent implements OnInit {
       type: propertyTypeMap[this.basicInfoForm.value.type!] ?? 0,
       category: categoryMap[this.basicInfoForm.value.category!] ?? 0,
       listingType: listingTypeMap[this.basicInfoForm.value.listingType!] ?? 0,
-      status: 0, // Active
+      status: 0,
       monthlyRent: this.basicInfoForm.value.monthlyRent ?? null,
       salePrice: this.basicInfoForm.value.salePrice ?? null,
       pricePerNight: this.basicInfoForm.value.pricePerNight ?? null,
@@ -675,7 +669,6 @@ export class PropertyFormComponent implements OnInit {
       isVacant: true,
       distanceToCityCenter: 0,
 
-      // Amenities
       hasWifi: !!amenities.hasWifi,
       hasParking: !!amenities.hasParking,
       hasPool: !!amenities.hasPool,
@@ -690,14 +683,12 @@ export class PropertyFormComponent implements OnInit {
       isChildFriendly: !!amenities.isChildFriendly,
       isAccessible: !!amenities.isAccessible,
 
-      // Infrastructure
       hasMetroNearby: !!amenities.hasMetroNearby,
       hasBusStop: !!amenities.hasBusStop,
       hasMarketNearby: !!amenities.hasMarketNearby,
       hasSchoolNearby: !!amenities.hasSchoolNearby,
       hasHospitalNearby: !!amenities.hasHospitalNearby,
 
-      // Comfort
       hasElevator: !!amenities.hasElevator,
       hasSecurity: !!amenities.hasSecurity,
       hasGenerator: !!amenities.hasGenerator,
@@ -705,6 +696,9 @@ export class PropertyFormComponent implements OnInit {
       hasFurniture: !!amenities.hasFurniture,
       isRenovated: !!amenities.isRenovated,
     };
+
+    // attach virtual tour url if provided
+    formData['virtualTourUrl'] = this.descriptionForm.value.virtualTourUrl || null;
 
     if (this.isEditMode() && this.propertyId()) {
       this.propertyService.updateProperty(this.propertyId()!, formData as any).subscribe({
@@ -737,12 +731,10 @@ export class PropertyFormComponent implements OnInit {
     }
   }
 
-  // Image handling
   selectedFiles: File[] = [];
   selectedImages = signal<UploadedImage[]>([]);
 
   onImageUpload(image: UploadedImage): void {
-    // This is called from the step component when a new image is added
     if (image.file) {
       this.selectedFiles.push(image.file);
     }
@@ -804,7 +796,6 @@ export class PropertyFormComponent implements OnInit {
       panelClass: ['success-snackbar'],
     });
 
-    // Refresh user data to get updated Host role from backend
     this.authService.getCurrentUser().subscribe({
       next: () => this.router.navigate(['/host/properties']),
       error: () => this.router.navigate(['/host/properties']),

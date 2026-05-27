@@ -1,6 +1,5 @@
 import 'jest-preset-angular/setup-jest';
 
-// Mock global objects
 Object.defineProperty(window, 'CSS', { value: null });
 Object.defineProperty(window, 'getComputedStyle', {
   value: () => {
@@ -29,7 +28,6 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
-// Mock IntersectionObserver
 class MockIntersectionObserver {
   observe = jest.fn();
   disconnect = jest.fn();
@@ -41,7 +39,6 @@ Object.defineProperty(window, 'IntersectionObserver', {
   value: MockIntersectionObserver,
 });
 
-// Mock ResizeObserver
 class MockResizeObserver {
   observe = jest.fn();
   disconnect = jest.fn();
@@ -53,7 +50,6 @@ Object.defineProperty(window, 'ResizeObserver', {
   value: MockResizeObserver,
 });
 
-// Mock localStorage
 const localStorageMock = {
   getItem: jest.fn(),
   setItem: jest.fn(),
@@ -65,7 +61,6 @@ Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
 });
 
-// Suppress console warnings during tests
 const originalWarn = console.warn;
 const originalError = console.error;
 

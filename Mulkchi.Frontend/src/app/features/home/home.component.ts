@@ -58,45 +58,52 @@ import { ImageOptimizationService } from '../../core/services/image-optimization
         <div class="container hero-container">
           <div class="hero-content">
             <div class="badge-premium animate-fade-in">
-              <mat-icon>verified</mat-icon>
-              <span>O'zbekistondagi №1 Premium Platforma</span>
+              <mat-icon>school</mat-icon>
+              <span>Bitiruv Malakaviy Ishi (BMI) Loyihasi</span>
             </div>
 
-            <h1 class="hero-title animate-slide-up">
-              Orzuyingizdagi uyni <br />
-              <span class="text-gradient">biz bilan toping</span>
+            <h1 class="hero-title animate-slide-up" style="font-size: 3rem; line-height: 1.2;">
+              Ma'lumotlar bazasiga asoslangan <br />
+              <span class="text-gradient">uy joy savdosi va ijarasi</span>
             </h1>
 
             <p class="hero-subtitle animate-slide-up-delay">
-              Mulkchi — ko'chmas mulk bozorida sun'iy intellekt va innovatsion yondashuv uyg'unligi.
+              Zamonaviy texnologiyalar va sun'iy intellekt yordamida yaratilgan mukammal web platforma.
             </p>
 
             <!-- Search Panel -->
             <div class="search-panel-glass animate-slide-up-long">
-              <div class="search-tabs">
-                <button [class.active]="listingType === 'Sale'" (click)="listingType = 'Sale'">
-                  Sotib olish
-                </button>
-                <button [class.active]="listingType === 'Rent'" (click)="listingType = 'Rent'">
-                  Ijaraga
-                </button>
-                <button
-                  [class.active]="listingType === 'ShortTermRent'"
-                  (click)="listingType = 'ShortTermRent'"
-                >
-                  Kunlik
+              <div class="search-header">
+                <div class="search-tabs">
+                  <button [class.active]="listingType === 'Sale'" (click)="listingType = 'Sale'">
+                    Sotib olish
+                  </button>
+                  <button [class.active]="listingType === 'Rent'" (click)="listingType = 'Rent'">
+                    Ijaraga
+                  </button>
+                  <button
+                    [class.active]="listingType === 'ShortTermRent'"
+                    (click)="listingType = 'ShortTermRent'"
+                  >
+                    Kunlik
+                  </button>
+                </div>
+                
+                <button class="btn-ai-magic" (click)="onSmartSearch()">
+                  <mat-icon>auto_awesome</mat-icon>
+                  <span>AI Qidiruv</span>
                 </button>
               </div>
 
               <div class="search-main">
-                <div class="input-group">
-                  <mat-icon>location_on</mat-icon>
+                <div class="input-wrapper">
+                  <mat-icon class="search-icon">search</mat-icon>
                   <input
                     type="text"
                     [(ngModel)]="searchQuery"
                     [matAutocomplete]="auto"
                     (input)="onSearchInput($event)"
-                    placeholder="Qayerdan qidiramiz?"
+                    placeholder="O'zingizga yoqadigan hudud yoki uy turini yozing..."
                     (keyup.enter)="onSearch()"
                   />
                   <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSearch()">
@@ -107,28 +114,32 @@ import { ImageOptimizationService } from '../../core/services/image-optimization
                       </mat-option>
                     }
                   </mat-autocomplete>
+                </div>
+
+                <div class="search-tools">
                   <button
                     mat-icon-button
                     (click)="toggleVoiceSearch()"
                     [class.mic-active]="voiceService.isListening()"
                     [matTooltip]="voiceService.isListening() ? 'Eshitilmoqda...' : 'Ovozli qidiruv'"
+                    class="tool-btn"
                   >
                     <mat-icon>{{ voiceService.isListening() ? 'mic' : 'mic_none' }}</mat-icon>
                   </button>
-                </div>
-
-                <div class="search-actions">
-                  <button
-                    mat-icon-button
-                    class="map-trigger"
-                    (click)="openMapPicker()"
-                    title="Xarita orqali"
+                  
+                  <div class="divider"></div>
+                  
+                  <button 
+                    mat-icon-button 
+                    (click)="openMapPicker()" 
+                    matTooltip="Xaritadan tanlash" 
+                    class="tool-btn map-btn"
                   >
                     <mat-icon>map</mat-icon>
                   </button>
-                  <button mat-flat-button class="btn-search" (click)="onSearch()">
-                    <mat-icon>search</mat-icon>
-                    <span>Qidirish</span>
+                  
+                  <button mat-flat-button class="btn-primary-search" (click)="onSearch()">
+                    Qidirish
                   </button>
                 </div>
               </div>
@@ -161,10 +172,10 @@ import { ImageOptimizationService } from '../../core/services/image-optimization
           <div class="section-top">
             <div>
               <h2 class="section-title">
-                <mat-icon color="primary" style="vertical-align: middle; margin-right: 8px;">my_location</mat-icon>
-                Sizga yaqin mulklar
+                <mat-icon color="primary" style="vertical-align: middle; margin-right: 8px;">{{ nearbyTitle() === 'Sizga yaqin mulklar' ? 'my_location' : 'recommend' }}</mat-icon>
+                {{ nearbyTitle() }}
               </h2>
-              <p class="section-desc">Joriy joylashuvingizga eng yaqin bo'lgan mulklar ro'yxati</p>
+              <p class="section-desc">{{ nearbyTitle() === 'Sizga yaqin mulklar' ? "Joriy joylashuvingizga eng yaqin bo'lgan mulklar ro'yxati" : "O'zbekiston bo'ylab tavsiya etilgan eng yaxshi mulklar ro'yxati" }}</p>
             </div>
             <button mat-stroked-button (click)="loadNearbyProperties(true)" [disabled]="loadingNearby()">
               <mat-icon>refresh</mat-icon> Yangilash
@@ -351,7 +362,6 @@ import { ImageOptimizationService } from '../../core/services/image-optimization
         padding: 0 24px;
       }
 
-      /* --- HERO --- */
       .hero-section {
         position: relative;
         height: 90vh;
@@ -427,7 +437,6 @@ import { ImageOptimizationService } from '../../core/services/image-optimization
         line-height: 1.6;
       }
 
-      /* --- SEARCH PANEL --- */
       .search-panel-glass {
         background: rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(25px);
@@ -438,82 +447,173 @@ import { ImageOptimizationService } from '../../core/services/image-optimization
         max-width: 900px;
         margin: 0 auto 60px;
       }
+      .search-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding: 0 10px;
+      }
       .search-tabs {
         display: flex;
         gap: 8px;
-        margin-bottom: 10px;
-        padding-left: 10px;
       }
       .search-tabs button {
         background: transparent;
         border: none;
         color: var(--white);
-        padding: 8px 16px;
-        border-radius: 12px;
+        padding: 10px 20px;
+        border-radius: 20px;
         cursor: pointer;
         font-weight: 600;
-        opacity: 0.6;
-        transition: all 0.3s;
+        opacity: 0.7;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .search-tabs button:hover {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.1);
       }
       .search-tabs button.active {
-        background: var(--glass);
+        background: rgba(255, 255, 255, 0.2);
         opacity: 1;
-        color: var(--accent);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      }
+      
+      .btn-ai-magic {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+      }
+      .btn-ai-magic:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(168, 85, 247, 0.6);
+      }
+      .btn-ai-magic mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
       }
 
       .search-main {
         display: flex;
-        gap: 12px;
+        gap: 8px;
         background: var(--white);
-        padding: 8px;
-        border-radius: 18px;
+        padding: 10px;
+        border-radius: 24px;
         align-items: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        transition: box-shadow 0.3s, transform 0.3s;
       }
-      .input-group {
+      .search-main:focus-within {
+        box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        transform: translateY(-2px);
+      }
+      
+      .input-wrapper {
         flex: 1;
         display: flex;
         align-items: center;
         gap: 12px;
         padding: 0 16px;
-        color: var(--primary);
       }
-      .input-group input {
+      .search-icon {
+        color: var(--text-muted);
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+      .input-wrapper input {
         flex: 1;
         border: none;
         outline: none;
-        font-size: 1.1rem;
-        padding: 12px 0;
+        font-size: 1.15rem;
+        padding: 16px 0;
         color: var(--primary);
-        width: 100%;
+        font-weight: 500;
       }
-      .input-group mat-icon {
-        color: var(--accent);
+      .input-wrapper input::placeholder {
+        color: #94a3b8;
+        font-weight: 400;
       }
 
+      .search-tools {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-right: 8px;
+      }
+      
+      .tool-btn {
+        color: var(--text-muted);
+        transition: color 0.2s, background 0.2s;
+      }
+      .tool-btn:hover {
+        background: #f1f5f9;
+        color: var(--primary);
+      }
       .mic-active {
         color: #ef4444 !important;
-        animation: pulse 1.5s infinite;
+        position: relative;
+        z-index: 1;
+      }
+      .mic-active::before, .mic-active::after {
+        content: '';
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%; height: 100%;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #ef4444, #3b82f6, #8b5cf6, #ec4899);
+        background-size: 300% 300%;
+        z-index: -1;
+        animation: siri-wave 1.5s infinite ease-out, siri-gradient 3s infinite linear;
+      }
+      .mic-active::after {
+        animation-delay: 0.75s, 0s;
       }
 
-      .search-actions {
-        display: flex;
-        gap: 8px;
+      @keyframes siri-wave {
+        0% { width: 100%; height: 100%; opacity: 0.8; }
+        100% { width: 250%; height: 250%; opacity: 0; }
       }
-      .map-trigger {
-        background: #f1f5f9;
-        border-radius: 14px;
-        color: var(--primary);
+      @keyframes siri-gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
       }
-      .btn-search {
+      
+      .divider {
+        width: 1px;
+        height: 32px;
+        background: #e2e8f0;
+        margin: 0 8px;
+      }
+
+      .btn-primary-search {
         background: var(--primary) !important;
         color: var(--white) !important;
         padding: 0 32px !important;
-        border-radius: 14px !important;
+        border-radius: 16px !important;
         font-weight: 700 !important;
-        height: 54px !important;
+        height: 56px !important;
+        font-size: 1.05rem !important;
+        letter-spacing: 0.5px;
+        transition: background 0.3s !important;
+      }
+      .btn-primary-search:hover {
+        background: #0f172a !important;
       }
 
-      /* --- STATS --- */
       .hero-stats {
         display: flex;
         justify-content: center;
@@ -542,7 +642,6 @@ import { ImageOptimizationService } from '../../core/services/image-optimization
         align-self: center;
       }
 
-      /* --- REGIONS & NEARBY --- */
       .regions-section, .nearby-section {
         padding: 80px 0;
         background: #fff;
@@ -567,7 +666,6 @@ import { ImageOptimizationService } from '../../core/services/image-optimization
       .region-overlay h3 { font-size: 1.5rem; font-weight: 800; margin: 0; }
       .region-overlay span { font-size: 0.9rem; opacity: 0.7; }
 
-      /* --- AI SECTION --- */
       .ai-section {
         padding: 120px 0;
         background: var(--primary);
@@ -675,7 +773,6 @@ import { ImageOptimizationService } from '../../core/services/image-optimization
         color: var(--primary);
       }
 
-      /* --- CTA --- */
       .cta-banner {
         padding: 80px 0;
       }
@@ -719,7 +816,6 @@ import { ImageOptimizationService } from '../../core/services/image-optimization
         font-weight: 700 !important;
       }
 
-      /* --- FOOTER --- */
       .footer-premium {
         background: #020617;
         padding: 100px 0 40px;
@@ -791,7 +887,6 @@ import { ImageOptimizationService } from '../../core/services/image-optimization
         color: var(--accent);
       }
 
-      /* --- ANIMATIONS --- */
       @keyframes fadeIn {
         from {
           opacity: 0;
@@ -912,6 +1007,7 @@ export class HomeComponent implements OnInit {
 
   nearbyProperties = signal<any[]>([]);
   loadingNearby = signal(false);
+  nearbyTitle = signal('Sizga yaqin mulklar');
 
   topRegions = [
     {
@@ -919,7 +1015,7 @@ export class HomeComponent implements OnInit {
       name: 'Toshkent',
       enumValue: 'ToshkentShahar',
       count: "1,200+ e'lon",
-      img: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,tashkent,architecture,apartment',
+      img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80',
       delay: '0s',
     },
     {
@@ -927,7 +1023,7 @@ export class HomeComponent implements OnInit {
       name: 'Samarqand',
       enumValue: 'Samarqand',
       count: "450+ e'lon",
-      img: 'https://images.unsplash.com/photo-1528154291023-a6525fabe5b4?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,samarkand,architecture',
+      img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
       delay: '0.1s',
     },
     {
@@ -935,7 +1031,7 @@ export class HomeComponent implements OnInit {
       name: 'Buxoro',
       enumValue: 'Buxoro',
       count: "280+ e'lon",
-      img: 'https://images.unsplash.com/photo-1580191947416-62d35a55e71d?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,bukhara,architecture,mosque',
+      img: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80',
       delay: '0.2s',
     },
     {
@@ -943,7 +1039,7 @@ export class HomeComponent implements OnInit {
       name: 'Namangan',
       enumValue: 'Namangan',
       count: "150+ e'lon",
-      img: 'https://images.unsplash.com/photo-1493246507139-91e8bef99c02?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,namangan,modern,apartment',
+      img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
       delay: '0.3s',
     },
     {
@@ -951,7 +1047,7 @@ export class HomeComponent implements OnInit {
       name: 'Andijon',
       enumValue: 'Andijon',
       count: "210+ e'lon",
-      img: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,andijan,house,residential',
+      img: 'https://images.unsplash.com/photo-1600573472591-ee6b68d14c68?auto=format&fit=crop&w=800&q=80',
       delay: '0.4s',
     },
     {
@@ -959,7 +1055,7 @@ export class HomeComponent implements OnInit {
       name: "Farg'ona",
       enumValue: 'Fargona',
       count: "190+ e'lon",
-      img: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,fergana,nature,building',
+      img: 'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?auto=format&fit=crop&w=800&q=80',
       delay: '0.5s',
     },
     {
@@ -967,7 +1063,7 @@ export class HomeComponent implements OnInit {
       name: 'Xorazm',
       enumValue: 'Xorazm',
       count: "120+ e'lon",
-      img: 'https://images.unsplash.com/photo-1505761671935-60b3a7427bad?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,khiva,architecture',
+      img: 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=800&q=80',
       delay: '0.6s',
     },
     {
@@ -975,7 +1071,7 @@ export class HomeComponent implements OnInit {
       name: 'Navoiy',
       enumValue: 'Navoiy',
       count: "90+ e'lon",
-      img: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,navoi,industrial,modern',
+      img: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=800&q=80',
       delay: '0.7s',
     },
     {
@@ -983,7 +1079,7 @@ export class HomeComponent implements OnInit {
       name: 'Qashqadaryo',
       enumValue: 'Qashqadaryo',
       count: "110+ e'lon",
-      img: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,kashkadarya,building',
+      img: 'https://images.unsplash.com/photo-1572120360610-d971b9d7767c?auto=format&fit=crop&w=800&q=80',
       delay: '0.8s',
     },
     {
@@ -991,7 +1087,7 @@ export class HomeComponent implements OnInit {
       name: 'Surxondaryo',
       enumValue: 'Surxondaryo',
       count: "85+ e'lon",
-      img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,surkhandarya,mountain,house',
+      img: 'https://images.unsplash.com/photo-1560185016-3398910ebc25?auto=format&fit=crop&w=800&q=80',
       delay: '0.9s',
     },
     {
@@ -999,7 +1095,7 @@ export class HomeComponent implements OnInit {
       name: 'Jizzax',
       enumValue: 'Jizzax',
       count: "70+ e'lon",
-      img: 'https://images.unsplash.com/photo-1500382017468-9049fee74a62?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,jizzakh,city,apartment',
+      img: 'https://images.unsplash.com/photo-1448630360428-65456885c650?auto=format&fit=crop&w=800&q=80',
       delay: '1.0s',
     },
     {
@@ -1007,7 +1103,7 @@ export class HomeComponent implements OnInit {
       name: 'Sirdaryo',
       enumValue: 'Sirdaryo',
       count: "60+ e'lon",
-      img: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,syrdarya,river,house',
+      img: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80',
       delay: '1.1s',
     },
     {
@@ -1015,13 +1111,13 @@ export class HomeComponent implements OnInit {
       name: "Qoraqalpog'iston",
       enumValue: 'Qoraqalpogiston',
       count: "95+ e'lon",
-      img: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?q=80&w=800&auto=format&fit=crop&keywords=uzbekistan,nukus,desert,modern',
+      img: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=800&q=80',
       delay: '1.2s',
     },
   ];
 
   onRegionImgError(e: any) {
-    e.target.src = 'https://placehold.co/800x600/0f172a/c9a84c?text=Mulkchi+Hudud';
+    e.target.src = 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop';
   }
 
   ngOnInit(): void {
@@ -1037,13 +1133,13 @@ export class HomeComponent implements OnInit {
   loadNearbyProperties(forceUpdate: boolean = false) {
     this.loadingNearby.set(true);
     
-    // Automatically fallback to Tashkent Center if permission denied or timeout
-    const fallbackLocation = { latitude: 41.2995, longitude: 69.2401 };
+    const fallbackLocation = { latitude: 41.2995, longitude: 69.2401 }; // Tashkent markazi
 
-    const fetchProperties = (lat: number, lng: number) => {
-      this.propertyService.searchProperties({ latitude: lat, longitude: lng, radiusKm: 20, pageSize: 4 }).subscribe({
+    const fetchProperties = (lat: number, lng: number, isFallback: boolean = false) => {
+      this.propertyService.searchProperties({ latitude: lat, longitude: lng, radiusKm: 50, pageSize: 4 }).subscribe({
         next: (res: any) => {
           this.nearbyProperties.set(res.items || []);
+          this.nearbyTitle.set(isFallback ? 'Tavsiya etilgan mulklar' : 'Sizga yaqin mulklar');
           this.loadingNearby.set(false);
         },
         error: () => {
@@ -1055,19 +1151,20 @@ export class HomeComponent implements OnInit {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          fetchProperties(position.coords.latitude, position.coords.longitude);
+          fetchProperties(position.coords.latitude, position.coords.longitude, false);
         },
         (error) => {
           console.warn("Geolocation denied or error. Using fallback location.", error);
           if (forceUpdate) {
-            this.snackBar.open("Joylashuvni aniqlab bo'lmadi. Toshkent bo'yicha ko'rsatilmoqda", "Yopish", {duration: 3000});
+            this.snackBar.open("Joylashuvni aniqlab bo'lmadi. Ommabop mulklar ko'rsatilmoqda", "Yopish", {duration: 3000});
           }
-          fetchProperties(fallbackLocation.latitude, fallbackLocation.longitude);
+          // Agar joylashuv berilmasa, tavsiya etilganlarni yuklaymiz (isFallback = true)
+          fetchProperties(fallbackLocation.latitude, fallbackLocation.longitude, true);
         },
         { timeout: 5000, maximumAge: 60000 }
       );
     } else {
-      fetchProperties(fallbackLocation.latitude, fallbackLocation.longitude);
+      fetchProperties(fallbackLocation.latitude, fallbackLocation.longitude, true);
     }
   }
 
@@ -1110,13 +1207,19 @@ export class HomeComponent implements OnInit {
 
   searchByRegion(region: string) {
     this.router.navigate(['/properties'], {
-      queryParams: { region, listingType: this.listingType },
+      queryParams: { region },
     });
   }
 
   onSearch() {
     this.router.navigate(['/properties'], {
       queryParams: { search: this.searchQuery.trim(), listingType: this.listingType },
+    });
+  }
+
+  onSmartSearch() {
+    this.router.navigate(['/properties'], {
+      queryParams: { search: this.searchQuery.trim() || undefined, ai_search: 'true' },
     });
   }
 
@@ -1168,11 +1271,11 @@ export class HomeComponent implements OnInit {
     if (rawUrl) {
       return this.imageOptimizationService.getOptimizedImage(rawUrl, 600, 400);
     }
-    return `https://placehold.co/600x400/0f172a/c9a84c?text=Mulkchi`;
+    return 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop';
   }
 
   onImgError(e: any) {
-    e.target.src = 'https://placehold.co/600x400/0f172a/c9a84c?text=Mulk';
+    e.target.src = 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop';
   }
 
   navigateToProperty(id: string) {

@@ -1,12 +1,12 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { AIDescriptionRequest, AIService } from '../../../../core/services/ai.service';
 import { UploadedImage } from '../../../../shared/components/image-upload/image-upload.component';
-import { AIService, AIDescriptionRequest } from '../../../../core/services/ai.service';
 
 @Component({
   selector: 'app-step-images',
@@ -58,13 +58,14 @@ import { AIService, AIDescriptionRequest } from '../../../../core/services/ai.se
           </div>
           <div class="summary-item" *ngIf="getPrice()">
             <span class="s-label">Narx</span>
-            <span class="s-value price-highlight">{{ getPrice() | number }} {{ basicInfoForm.get('currency')?.value }}</span>
+            <span class="s-value price-highlight"
+              >{{ getPrice() | number }} {{ basicInfoForm.get('currency')?.value }}</span
+            >
           </div>
         </div>
       </div>
 
       <form [formGroup]="form" class="premium-form">
-
         <!-- AI DESCRIPTION HERO BLOCK -->
         <div class="ai-hero">
           <div class="ai-hero-left">
@@ -97,14 +98,33 @@ import { AIService, AIDescriptionRequest } from '../../../../core/services/ai.se
               rows="7"
               placeholder="Mulkning barcha ustunliklari haqida yozing..."
             ></textarea>
-            <mat-hint align="end">{{ form.get('description')?.value?.length || 0 }} / 2000</mat-hint>
-            <mat-error *ngIf="form.get('description')?.invalid">Tavsif kamida 20 belgidan iborat bo'lishi kerak</mat-error>
+            <mat-hint align="end"
+              >{{ form.get('description')?.value?.length || 0 }} / 2000</mat-hint
+            >
+            <mat-error *ngIf="form.get('description')?.invalid"
+              >Tavsif kamida 20 belgidan iborat bo'lishi kerak</mat-error
+            >
+          </mat-form-field>
+        </div>
+
+        <!-- Virtual tour URL -->
+        <div class="form-section">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Virtual tur URL (ixtiyoriy)</mat-label>
+            <input
+              matInput
+              formControlName="virtualTourUrl"
+              placeholder="https://example.com/virtual-tour"
+            />
+            <mat-hint>Masalan: 360 sanoqli tashqi xizmat yoki ichki iframe havolasi</mat-hint>
           </mat-form-field>
         </div>
 
         <!-- Media Upload Zone -->
         <div class="form-section">
-          <label class="section-label">📷 Rasmlar yuklash <span class="optional-tag">(ixtiyoriy, 10 tagacha)</span></label>
+          <label class="section-label"
+            >📷 Rasmlar yuklash <span class="optional-tag">(ixtiyoriy, 10 tagacha)</span></label
+          >
 
           <input
             #fileInput
@@ -199,12 +219,11 @@ import { AIService, AIDescriptionRequest } from '../../../../core/services/ai.se
         letter-spacing: 0;
       }
 
-      /* ── SUMMARY CARD ── */
       .summary-card {
         background: white;
         border-radius: 20px;
         padding: 24px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
         border: 1px solid #e2e8f0;
       }
       .summary-title {
@@ -216,7 +235,9 @@ import { AIService, AIDescriptionRequest } from '../../../../core/services/ai.se
         margin-bottom: 16px;
         font-size: 1rem;
       }
-      .summary-title mat-icon { color: #6366f1; }
+      .summary-title mat-icon {
+        color: #6366f1;
+      }
       .summary-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -242,9 +263,10 @@ import { AIService, AIDescriptionRequest } from '../../../../core/services/ai.se
         font-weight: 700;
         color: #1e293b;
       }
-      .price-highlight { color: #6366f1; }
+      .price-highlight {
+        color: #6366f1;
+      }
 
-      /* ── AI HERO BLOCK ── */
       .ai-hero {
         background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
         border: 2px solid #c4b5fd;
@@ -271,9 +293,23 @@ import { AIService, AIDescriptionRequest } from '../../../../core/services/ai.se
         justify-content: center;
         flex-shrink: 0;
       }
-      .ai-icon-wrap mat-icon { color: white; font-size: 28px; width: 28px; height: 28px; }
-      .ai-hero h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: #4c1d95; }
-      .ai-hero p  { margin: 4px 0 0; font-size: 0.9rem; color: #7c3aed; }
+      .ai-icon-wrap mat-icon {
+        color: white;
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+      }
+      .ai-hero h3 {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #4c1d95;
+      }
+      .ai-hero p {
+        margin: 4px 0 0;
+        font-size: 0.9rem;
+        color: #7c3aed;
+      }
       .btn-ai-hero {
         height: 48px;
         padding: 0 28px;
@@ -286,7 +322,11 @@ import { AIService, AIDescriptionRequest } from '../../../../core/services/ai.se
         gap: 8px;
         white-space: nowrap;
       }
-      .btn-ai-hero mat-icon { font-size: 20px; width: 20px; height: 20px; }
+      .btn-ai-hero mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
 
       .section-header-inline {
         display: flex;
@@ -476,26 +516,31 @@ export class StepImagesComponent {
   previews: { url: string; file: File }[] = [];
   isGeneratingAI = false;
 
-  /** Returns price value based on listing type */
   getPrice(): number | null {
     const type = this.basicInfoForm.get('listingType')?.value;
-    if (type === 'Sale')          return this.basicInfoForm.get('salePrice')?.value;
-    if (type === 'Rent')          return this.basicInfoForm.get('monthlyRent')?.value;
+    if (type === 'Sale') return this.basicInfoForm.get('salePrice')?.value;
+    if (type === 'Rent') return this.basicInfoForm.get('monthlyRent')?.value;
     if (type === 'ShortTermRent') return this.basicInfoForm.get('pricePerNight')?.value;
     return null;
   }
 
   typeLabel(v: string): string {
-    const m: Record<string,string> = {
-      Apartment:'Kvartira', House:"Uy/Hovli", Villa:'Villa',
-      Office:'Ofis', Commercial:'Tijorat', Land:'Yer'
+    const m: Record<string, string> = {
+      Apartment: 'Kvartira',
+      House: 'Uy/Hovli',
+      Villa: 'Villa',
+      Office: 'Ofis',
+      Commercial: 'Tijorat',
+      Land: 'Yer',
     };
     return m[v] || v;
   }
 
   listingLabel(v: string): string {
-    const m: Record<string,string> = {
-      Sale:'Sotish', Rent:'Ijara (oylik)', ShortTermRent:'Kunlik ijara'
+    const m: Record<string, string> = {
+      Sale: 'Sotish',
+      Rent: 'Ijara (oylik)',
+      ShortTermRent: 'Kunlik ijara',
     };
     return m[v] || v;
   }
@@ -565,7 +610,6 @@ export class StepImagesComponent {
         const preview = { url: e.target.result, file };
         this.previews.push(preview);
 
-        // Emit for the parent component to store
         const uploaded: UploadedImage = {
           file: file,
           previewUrl: e.target.result,

@@ -14,15 +14,10 @@ using Mulkchi.Api.Services.Foundations.Payments;
 
 namespace Mulkchi.Api.Controllers;
 
-/// <summary>
-/// Payme (Paycom) merchant API — JSON-RPC 2.0 webhook handler.
-/// Docs: https://developer.payme.uz/documentation
-/// </summary>
 [ApiController]
 [Route("api/payme")]
 public class PaymeController : ControllerBase
 {
-    // ── Payme error codes ──────────────────────────────────────────────────────
     private const int ErrInvalidAmount = -31001;
     private const int ErrTransactionNotFound = -31003;
     private const int ErrTransactionDone = -31060;
@@ -63,7 +58,6 @@ public class PaymeController : ControllerBase
         };
     }
 
-    // ── Method handlers ────────────────────────────────────────────────────────
 
     private async Task<PaymeResponse> CheckPerformTransactionAsync(PaymeRequest request)
     {
@@ -77,7 +71,6 @@ public class PaymeController : ControllerBase
         if (payment is null)
             return Error(request.Id, ErrOrderNotFound, "Order not found.");
 
-        // Amount is in tiyin (1/100 of UZS), so 1 UZS = 100 tiyin
         if (amount != (long)Math.Round(payment.Amount * 100, MidpointRounding.AwayFromZero))
             return Error(request.Id, ErrInvalidAmount, "Invalid amount.");
 
@@ -101,7 +94,6 @@ public class PaymeController : ControllerBase
         if (amount != (long)Math.Round(payment.Amount * 100, MidpointRounding.AwayFromZero))
             return Error(request.Id, ErrInvalidAmount, "Invalid amount.");
 
-        // If already linked to this transaction — return existing info
         if (payment.ExternalTransactionId == transactionId)
         {
             return Success(request.Id, new
@@ -112,11 +104,9 @@ public class PaymeController : ControllerBase
             });
         }
 
-        // Can't create if already processed
         if (payment.Status == PaymentStatus.Completed || payment.Status == PaymentStatus.Cancelled)
             return Error(request.Id, ErrTransactionDone, "Transaction already done.");
 
-        // Record the Payme transaction reference
         payment.ExternalTransactionId = transactionId;
         payment.Status = PaymentStatus.Processing;
         payment.Method = PaymentMethod.Payme;
@@ -127,7 +117,7 @@ public class PaymeController : ControllerBase
         {
             create_time = createTime,
             transaction = payment.Id.ToString(),
-            state = 1  // created/in-progress
+            state = 1 
         });
     }
 
@@ -257,7 +247,6 @@ public class PaymeController : ControllerBase
         return Success(request.Id, new { transactions });
     }
 
-    // ── Helpers ────────────────────────────────────────────────────────────────
 
     private bool IsAuthorized()
     {
@@ -275,7 +264,6 @@ public class PaymeController : ControllerBase
         {
             return false;
         }
-        // Expected format: "Paycom:{merchantKey}"
         var merchantKey = this.configuration["Payme:MerchantKey"] ?? "";
         return decoded == $"Paycom:{merchantKey}";
     }
@@ -311,7 +299,6 @@ public class PaymeController : ControllerBase
         new() { Id = id, Error = new PaymeError { Code = code, Message = message, Data = null } };
 }
 
-// ── DTOs ──────────────────────────────────────────────────────────────────────
 
 public class PaymeRequest
 {

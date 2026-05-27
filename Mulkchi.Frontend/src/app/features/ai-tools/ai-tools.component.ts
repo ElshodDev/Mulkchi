@@ -1,11 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Property } from '../../core/models';
+
+interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  properties?: Property[];
+}
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { AIService } from '../../core/services/ai.service';
@@ -15,6 +24,7 @@ import { AIService } from '../../core/services/ai.service';
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     RouterLink,
     MatCardModule,
     MatButtonModule,
@@ -117,27 +127,63 @@ import { AIService } from '../../core/services/ai.service';
             </div>
 
             <div class="chat-main">
-              <div class="chat-messages">
-                <div class="msg bot">
-                  <div class="avatar"><mat-icon>smart_toy</mat-icon></div>
-                  <div class="bubble">
-                    Assalomu alaykum! Men Mulkchi AI yordamchisiman. Sizga qanday mulk kerak yoki
-                    bozor bo'yicha qanday savolingiz bor?
+              <div class="chat-messages" #scrollMe>
+                @for (msg of messages; track msg.id) {
+                  <div class="msg" [ngClass]="msg.role === 'user' ? 'user' : 'bot'">
+                    @if (msg.role === 'assistant') {
+                      <div class="avatar"><mat-icon>smart_toy</mat-icon></div>
+                    }
+                    <div class="bubble-container">
+                      <div class="bubble">
+                        {{ msg.content }}
+                      </div>
+                      
+                      @if (msg.properties && msg.properties.length > 0) {
+                        <div class="chat-properties">
+                          @for (prop of msg.properties; track prop.id) {
+                            <div class="chat-prop-card" [routerLink]="['/properties', prop.id]">
+                              <div class="img-box">
+                                <img [src]="prop.images && prop.images.length > 0 ? prop.images[0].url : 'assets/images/placeholder-property.jpg'" alt="Property" />
+                              </div>
+                              <div class="info">
+                                <h5>{{ prop.title }}</h5>
+                                <div class="price">
+                                  @if (prop.listingType === 'Sale') {
+                                    {{ prop.salePrice | number }} {{ prop.currency === 'UZS' ? 'UZS' : 'USD' }}
+                                  } @else if (prop.listingType === 'Rent') {
+                                    {{ prop.monthlyRent | number }} {{ prop.currency === 'UZS' ? 'UZS' : 'USD' }}/oy
+                                  } @else {
+                                    {{ prop.pricePerNight | number }} {{ prop.currency === 'UZS' ? 'UZS' : 'USD' }}/kun
+                                  }
+                                </div>
+                                <span><mat-icon>location_on</mat-icon> {{ prop.city }}</span>
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
                   </div>
-                </div>
-                <div class="msg user">
-                  <div class="bubble">
-                    Chilonzor tumanidan 3 xonali, yaxshi ta'mirlangan kvartira izlayapman.
+                }
+
+                @if (isTyping) {
+                  <div class="msg bot">
+                    <div class="avatar"><mat-icon>smart_toy</mat-icon></div>
+                    <div class="bubble typing-bubble">
+                      <div class="dot-typing"></div>
+                    </div>
                   </div>
-                </div>
+                }
               </div>
 
               <div class="chat-input-box">
                 <input
                   type="text"
+                  [(ngModel)]="currentInput"
+                  (keyup.enter)="sendMessage()"
                   placeholder="AI'dan so'rang... (masalan: Toshkentda uy narxlari o'zgarishi)"
                 />
-                <button class="btn-send" (click)="startChat()">
+                <button class="btn-send" (click)="sendMessage()" [disabled]="!currentInput.trim() || isTyping">
                   <mat-icon>send</mat-icon>
                 </button>
               </div>
@@ -169,7 +215,6 @@ import { AIService } from '../../core/services/ai.service';
         overflow: hidden;
       }
 
-      /* --- ORBS --- */
       .glow-orb {
         position: absolute;
         border-radius: 50%;
@@ -218,7 +263,6 @@ import { AIService } from '../../core/services/ai.service';
         max-width: 1200px;
       }
 
-      /* --- HEADER --- */
       .ai-header {
         text-align: center;
         margin-bottom: 60px;
@@ -251,7 +295,6 @@ import { AIService } from '../../core/services/ai.service';
         line-height: 1.6;
       }
 
-      /* --- GRID --- */
       .ai-feature-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -328,7 +371,6 @@ import { AIService } from '../../core/services/ai.service';
         gap: 16px;
       }
 
-      /* --- CHAT SECTION --- */
       .chat-glass-container {
         display: flex;
         background: var(--glass-bg);
@@ -439,6 +481,34 @@ import { AIService } from '../../core/services/ai.service';
         flex-direction: row-reverse;
       }
 
+      .typing-bubble {
+        display: flex;
+        align-items: center;
+        height: 40px;
+        padding: 0 20px !important;
+      }
+      
+      .dot-typing {
+        position: relative;
+        left: -9999px;
+        width: 6px;
+        height: 6px;
+        border-radius: 5px;
+        background-color: #cbd5e1;
+        color: #cbd5e1;
+        box-shadow: 9984px 0 0 0 #cbd5e1, 9999px 0 0 0 #cbd5e1, 10014px 0 0 0 #cbd5e1;
+        animation: dot-typing 1.5s infinite linear;
+      }
+
+      @keyframes dot-typing {
+        0% { box-shadow: 9984px 0 0 0 #cbd5e1, 9999px 0 0 0 #cbd5e1, 10014px 0 0 0 #cbd5e1; }
+        16.667% { box-shadow: 9984px -6px 0 0 #cbd5e1, 9999px 0 0 0 #cbd5e1, 10014px 0 0 0 #cbd5e1; }
+        33.333% { box-shadow: 9984px 0 0 0 #cbd5e1, 9999px -6px 0 0 #cbd5e1, 10014px 0 0 0 #cbd5e1; }
+        50% { box-shadow: 9984px 0 0 0 #cbd5e1, 9999px 0 0 0 #cbd5e1, 10014px -6px 0 0 #cbd5e1; }
+        66.667% { box-shadow: 9984px 0 0 0 #cbd5e1, 9999px 0 0 0 #cbd5e1, 10014px 0 0 0 #cbd5e1; }
+        100% { box-shadow: 9984px 0 0 0 #cbd5e1, 9999px 0 0 0 #cbd5e1, 10014px 0 0 0 #cbd5e1; }
+      }
+
       .avatar {
         width: 40px;
         height: 40px;
@@ -460,10 +530,94 @@ import { AIService } from '../../core/services/ai.service';
         border-bottom-left-radius: 4px;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
       }
+      
       .msg.user .bubble {
         background: var(--indigo);
         color: white;
         border-bottom-right-radius: 4px;
+      }
+
+      .chat-properties {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 8px;
+      }
+
+      .chat-prop-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--white);
+        border: 1px solid rgba(0,0,0,0.05);
+        border-radius: 12px;
+        padding: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        color: #333;
+        text-decoration: none;
+      }
+
+      .chat-prop-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border-color: var(--violet);
+      }
+
+      .chat-prop-card .img-box {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+
+      .chat-prop-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .chat-prop-card .info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .chat-prop-card .info h5 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+      }
+
+      .chat-prop-card .info .price {
+        font-size: 13px;
+        color: var(--indigo);
+        font-weight: 700;
+      }
+
+      .chat-prop-card .info span {
+        font-size: 11px;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+
+      .chat-prop-card .info span mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+      }
+
+      .bubble-container {
+        display: flex;
+        flex-direction: column;
+        max-width: 80%;
       }
 
       .chat-input-box {
@@ -499,7 +653,6 @@ import { AIService } from '../../core/services/ai.service';
         background: var(--indigo-dark);
       }
 
-      /* --- ANIMATIONS --- */
       .animate-slide-up {
         animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
       }
@@ -551,26 +704,76 @@ import { AIService } from '../../core/services/ai.service';
     `,
   ],
 })
-export class AiToolsComponent implements OnInit {
+export class AiToolsComponent implements OnInit, AfterViewChecked {
   protected readonly aiService = inject(AIService);
   private readonly snackBar = inject(MatSnackBar);
 
+  messages: ChatMessage[] = [
+    {
+      id: '1',
+      role: 'assistant',
+      content: "Assalomu alaykum! Men Mulkchi AI yordamchisiman. Sizga qanday mulk kerak yoki bozor bo'yicha qanday savolingiz bor?"
+    }
+  ];
+  currentInput = '';
+  isTyping = false;
+
+  @ViewChild('scrollMe') private myScrollContainer!: ElementRef;
+
   ngOnInit(): void {}
 
-  onPromptClick(prompt: string): void {
-    this.startChat();
+  ngAfterViewChecked() {
+    this.scrollToBottom();
   }
 
-  startChat(): void {
-    this.snackBar.open(
-      "Ushbu funksiya hozirda test rejimida. Tez kunda to'liq ishga tushadi!",
-      'Yopish',
-      {
-        duration: 4000,
-        horizontalPosition: 'center',
-        verticalPosition: 'bottom',
-        panelClass: ['info-snackbar'],
+  onPromptClick(prompt: string): void {
+    this.currentInput = prompt;
+    this.sendMessage();
+  }
+
+  sendMessage(): void {
+    const text = this.currentInput.trim();
+    if (!text) return;
+
+    this.messages.push({
+      id: Date.now().toString(),
+      role: 'user',
+      content: text
+    });
+    
+    this.currentInput = '';
+    this.isTyping = true;
+
+    const history = this.messages
+      .filter(m => m.role === 'user' && m.content !== text)
+      .map(m => m.content);
+
+    this.aiService.chat(text, history).subscribe({
+      next: (res: any) => {
+        this.isTyping = false;
+        this.messages.push({
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: res.reply,
+          properties: res.properties
+        });
       },
-    );
+      error: (err: any) => {
+        this.isTyping = false;
+        this.messages.push({
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: "Kechirasiz, javob olishda xatolik yuz berdi."
+        });
+      }
+    });
+  }
+
+  private scrollToBottom(): void {
+    try {
+      if (this.myScrollContainer) {
+        this.myScrollContainer.nativeElement.scrollTop = this.myScrollContainer.nativeElement.scrollHeight;
+      }
+    } catch(err) { }
   }
 }

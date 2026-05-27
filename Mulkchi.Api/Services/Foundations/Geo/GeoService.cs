@@ -29,7 +29,7 @@ public class GeoService : IGeoService
 
     public double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
     {
-        const double R = 6371; // Earth radius km
+        const double R = 6371;
         var dLat = ToRadians(lat2 - lat1);
         var dLon = ToRadians(lon2 - lon1);
         var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
@@ -89,7 +89,7 @@ public class GeoService : IGeoService
         var properties = await this.storageBroker.SelectAllProperties()
             .Where(p => p.Latitude.HasValue && p.Longitude.HasValue && p.Status == PropertyStatus.Active)
             .OrderByDescending(p => p.CreatedDate)
-            .Take(500) // Limit for performance
+            .Take(500)
             .ToListAsync();
 
         return properties.Select(p => ToPropertyMapDto(p, null));
@@ -144,7 +144,6 @@ public class GeoService : IGeoService
                 }
                 else
                 {
-                    // For ways and relations, use center
                     var center = element.GetProperty("center");
                     placeLat = center.GetProperty("lat").GetDouble();
                     placeLng = center.GetProperty("lon").GetDouble();
@@ -169,7 +168,7 @@ public class GeoService : IGeoService
                 });
             }
 
-            return places.OrderBy(p => p.DistanceKm).Take(20); // Return top 20 closest
+            return places.OrderBy(p => p.DistanceKm).Take(20);
         }
         catch (Exception ex)
         {

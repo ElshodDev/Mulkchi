@@ -38,7 +38,6 @@ public sealed class FinalizePaymentWebhookHandler : IFinalizePaymentWebhookHandl
             if (payment is null)
                 return null;
 
-            // Idempotent replay handling: if already in requested state, return as-is.
             if (payment.Status == command.TargetStatus)
                 return payment;
 

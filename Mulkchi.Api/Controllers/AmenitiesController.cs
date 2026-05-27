@@ -113,7 +113,6 @@ public class AmenitiesController : ControllerBase
         }
     }
 
-    // Property Amenities endpoints
     [HttpGet("properties/{propertyId:guid}")]
     [AllowAnonymous]
     public async ValueTask<ActionResult<IEnumerable<AmenityResponse>>> GetPropertyAmenitiesAsync(Guid propertyId)

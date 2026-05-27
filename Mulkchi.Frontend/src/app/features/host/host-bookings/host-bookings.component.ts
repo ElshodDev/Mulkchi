@@ -571,7 +571,7 @@ export class HostBookingsComponent implements OnInit {
     this.pageSize.set(event.pageSize);
   }
 
-  confirmBooking(_id: string): void {
+  confirmBooking(id: string): void {
     this.confirmationService
       .confirm({
         title: 'Bronni tasdiqlash',
@@ -583,8 +583,15 @@ export class HostBookingsComponent implements OnInit {
           return;
         }
 
-        this.snackBar.open('Bron tasdiqlandi', 'Yopish', { duration: 3000 });
-        this.loadBookings();
+        this.bookingService.confirmBooking(id).subscribe({
+          next: () => {
+            this.snackBar.open('Bron tasdiqlandi', 'Yopish', { duration: 3000 });
+            this.loadBookings();
+          },
+          error: () => {
+            this.snackBar.open('Tasdiqlashda xatolik yuz berdi', 'Yopish', { duration: 3000 });
+          }
+        });
       });
   }
 
@@ -605,7 +612,7 @@ export class HostBookingsComponent implements OnInit {
       });
   }
 
-  cancelBooking(_id: string): void {
+  cancelBooking(id: string): void {
     this.confirmationService
       .confirm({
         title: 'Bronni bekor qilish',
@@ -618,8 +625,15 @@ export class HostBookingsComponent implements OnInit {
           return;
         }
 
-        this.snackBar.open('Bron bekor qilindi', 'Yopish', { duration: 3000 });
-        this.loadBookings();
+        this.bookingService.cancelBooking(id).subscribe({
+          next: () => {
+            this.snackBar.open('Bron bekor qilindi', 'Yopish', { duration: 3000 });
+            this.loadBookings();
+          },
+          error: () => {
+             this.snackBar.open('Bekor qilishda xatolik yuz berdi', 'Yopish', { duration: 3000 });
+          }
+        });
       });
   }
 }

@@ -1,17 +1,14 @@
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Property } from '../../../../core/models';
-import { OptimizedImageComponent } from '../../../../shared/components/optimized-image/optimized-image.component';
-import { FavoritesService } from '../../../../core/services/favorites.service';
 import { ComparisonService } from '../../../../core/services/comparison.service';
-import { inject } from '@angular/core';
-import { environment } from '../../../../../environments/environment';
+import { FavoritesService } from '../../../../core/services/favorites.service';
 import { ImageOptimizationService } from '../../../../core/services/image-optimization.service';
 
 @Component({
@@ -51,13 +48,13 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
                       class="main-img"
                       (error)="
                         $any($event.target).src =
-                          'https://placehold.co/600x400/0f172a/c9a84c?text=Mulkchi'
+                          'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop'
                       "
                     />
                   </ng-container>
                   <ng-template #placeholderImage>
                     <img
-                      src="https://placehold.co/600x400/0f172a/c9a84c?text=Mulkchi"
+                      src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop"
                       alt="Placeholder"
                       class="main-img"
                     />
@@ -220,7 +217,6 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
         border-color: rgba(201, 168, 76, 0.3);
       }
 
-      /* --- MEDIA --- */
       .card-media {
         position: relative;
         height: 240px;
@@ -302,7 +298,6 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
         height: 16px;
       }
 
-      /* --- BODY --- */
       .card-body {
         padding: 24px;
         display: flex;
@@ -431,7 +426,6 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
         color: #2563eb;
       }
 
-      /* --- LIST VIEW OVERRIDES --- */
       .property-grid-modern.list-view .grid-layout {
         grid-template-columns: 1fr;
       }
@@ -537,7 +531,17 @@ export class PropertyGridComponent {
   }
 
   getFullImageUrl(property: Property): string {
-    const rawUrl = property.images?.[0]?.url || property.images?.[0]?.thumbnailUrl;
-    return this.imageService.getOptimizedImage(rawUrl || '', 600, 400);
+    const rawUrl =
+      property.images?.[0]?.url ||
+      property.images?.[0]?.imageUrl ||
+      property.images?.[0]?.mediumUrl ||
+      property.images?.[0]?.thumbnailUrl ||
+      '';
+
+    if (!rawUrl) {
+      return 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop';
+    }
+
+    return this.imageService.getOptimizedImage(rawUrl, 600, 400);
   }
 }

@@ -19,7 +19,6 @@ public partial class StorageBroker
         return entry.Entity;
     }
 
-    /// <summary>Returns active (non-expired) holds for a property.</summary>
     public IQueryable<BookingHold> SelectActiveBookingHolds(Guid propertyId)
         => this.BookingHolds
                .Where(h => h.PropertyId == propertyId && h.ExpiresAt > DateTimeOffset.UtcNow);

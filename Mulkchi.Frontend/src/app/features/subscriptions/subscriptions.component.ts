@@ -171,7 +171,6 @@ import { SubscriptionPlan, SubscriptionService } from '../../core/services/subsc
         margin: 0 auto;
       }
 
-      /* --- ACTIVE SUB BANNER --- */
       .active-sub-banner {
         background: var(--navy);
         color: white;
@@ -231,7 +230,6 @@ import { SubscriptionPlan, SubscriptionService } from '../../core/services/subsc
         letter-spacing: 1px;
       }
 
-      /* --- PLANS GRID --- */
       .plans-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -391,7 +389,6 @@ import { SubscriptionPlan, SubscriptionService } from '../../core/services/subsc
         filter: brightness(1.1);
       }
 
-      /* --- ANIMATIONS --- */
       .animate-fade-in {
         animation: fadeIn 0.8s ease-out;
       }
@@ -460,7 +457,7 @@ export class SubscriptionsComponent implements OnInit {
   }
 
   isCurrentPlan(planId: string): boolean {
-    return this.mySub()?.planId === planId && this.mySub()?.status === 1; // 1 = Active
+    return this.mySub()?.planId === planId && this.mySub()?.status === 1;
   }
 
   onSubscribe(plan: SubscriptionPlan): void {

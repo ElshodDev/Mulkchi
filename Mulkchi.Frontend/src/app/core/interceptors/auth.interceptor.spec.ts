@@ -32,7 +32,6 @@ describe('authInterceptor', () => {
     httpMock.verify();
   });
 
-  // ─── Token qo'shish ───────────────────────────────────────────────────────
 
   it('should attach Authorization header for API requests when token exists', () => {
     authServiceSpy.getAccessToken.and.returnValue('valid-token');
@@ -54,7 +53,6 @@ describe('authInterceptor', () => {
     req.flush([]);
   });
 
-  // ─── Auth-free paths ─────────────────────────────────────────────────────
 
   it('should NOT attach token for /auth/login path', () => {
     authServiceSpy.getAccessToken.and.returnValue('valid-token');
@@ -86,7 +84,6 @@ describe('authInterceptor', () => {
     req.flush({});
   });
 
-  // ─── Tashqi URL ───────────────────────────────────────────────────────────
 
   it('should NOT attach token for external URLs', () => {
     authServiceSpy.getAccessToken.and.returnValue('valid-token');
@@ -98,7 +95,6 @@ describe('authInterceptor', () => {
     req.flush([]);
   });
 
-  // ─── withCredentials ─────────────────────────────────────────────────────
 
   it('should always set withCredentials for API requests', () => {
     authServiceSpy.getAccessToken.and.returnValue(null);

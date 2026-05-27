@@ -9,10 +9,6 @@ using Mulkchi.Api.Models.Foundations.Subscriptions;
 
 namespace Mulkchi.Api.Services.Background;
 
-/// <summary>
-/// Background service for automatic subscription renewal.
-/// Runs daily via Hangfire to check and renew subscriptions with AutoRenew=true
-/// </summary>
 public class SubscriptionRenewalService
 {
     private readonly IStorageBroker storageBroker;
@@ -29,20 +25,12 @@ public class SubscriptionRenewalService
         this.dateTimeBroker = dateTimeBroker;
     }
 
-    /// <summary>
-    /// Process subscription renewals for expired subscriptions with AutoRenew enabled.
-    /// Called daily via Hangfire background job.
-    /// </summary>
     public async Task RenewExpiredSubscriptionsAsync()
     {
         try
         {
             var now = this.dateTimeBroker.GetCurrentDateTimeOffset();
 
-            // Find all subscriptions that:
-            // 1. Have ended (EndDate <= now)
-            // 2. Have AutoRenew enabled
-            // 3. Are not already cancelled
             var expiredSubscriptions = await this.storageBroker
                 .SelectAllUserSubscriptions()
                 .Include(s => s.Plan)
@@ -68,7 +56,6 @@ public class SubscriptionRenewalService
             {
                 try
                 {
-                    // Check if plan still exists and is active
                     if (subscription.Plan is null || !subscription.Plan.IsActive)
                     {
                         this.loggingBroker.LogWarning(
@@ -81,7 +68,6 @@ public class SubscriptionRenewalService
                         continue;
                     }
 
-                    // Renew the subscription
                     subscription.StartDate = now;
                     subscription.EndDate = now.AddMonths(1);
                     subscription.Status = SubscriptionStatus.Active;
@@ -112,10 +98,6 @@ public class SubscriptionRenewalService
         }
     }
 
-    /// <summary>
-    /// Send expiration reminder emails to users with subscriptions expiring in 3 days.
-    /// Called daily via Hangfire.
-    /// </summary>
     public async Task SendExpirationRemindersAsync()
     {
         try
@@ -123,7 +105,6 @@ public class SubscriptionRenewalService
             var now = this.dateTimeBroker.GetCurrentDateTimeOffset();
             var reminderDate = now.AddDays(3);
 
-            // Find subscriptions expiring in 3 days (with margin of 1 day)
             var expiringSubscriptions = await this.storageBroker
                 .SelectAllUserSubscriptions()
                 .Include(s => s.Plan)
@@ -143,8 +124,6 @@ public class SubscriptionRenewalService
                 $"Found {expiringSubscriptions.Count} subscriptions expiring soon. " +
                 "Note: Email notification implementation pending.");
 
-            // TODO: Send reminder emails when EmailNotificationService is fully implemented
-            // This is a placeholder for future email notification logic
         }
         catch (Exception ex)
         {

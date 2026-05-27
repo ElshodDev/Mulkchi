@@ -41,7 +41,6 @@ public sealed class OutboxProcessorService : BackgroundService
                 {
                     try
                     {
-                        // Replace this log with actual publish to Kafka/RabbitMQ/Webhook.
                         this.logger.LogInformation(
                             "Outbox published. Type={Type} Id={Id}",
                             message.Type,
@@ -64,7 +63,6 @@ public sealed class OutboxProcessorService : BackgroundService
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
-                // graceful shutdown
             }
             catch (Exception ex)
             {

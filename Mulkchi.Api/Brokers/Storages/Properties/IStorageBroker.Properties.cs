@@ -10,7 +10,6 @@ public partial interface IStorageBroker
     ValueTask<Property> UpdatePropertyAsync(Property property);
     ValueTask<Property> DeletePropertyByIdAsync(Guid propertyId);
 
-    // Admin methods to bypass soft delete filters
     IQueryable<Property> SelectAllPropertiesIncludingDeleted();
     ValueTask<Property> SelectPropertyByIdIncludingDeletedAsync(Guid propertyId);
 }

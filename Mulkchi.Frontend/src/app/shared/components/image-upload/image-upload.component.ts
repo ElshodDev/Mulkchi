@@ -458,7 +458,6 @@ export interface UploadedImage {
         margin-bottom: 4px;
       }
 
-      // Drag and drop animations
       .cdk-drag-preview {
         box-sizing: border-box;
         border-radius: 12px;
@@ -505,7 +504,7 @@ export class ImageUploadComponent {
   private snackBar = inject(MatSnackBar);
   private confirmationService = inject(ConfirmationService);
 
-  @Input() maxFileSize = 10 * 1024 * 1024; // 10MB
+  @Input() maxFileSize = 10 * 1024 * 1024;
   @Input() maxFiles = 20;
   @Input() acceptedTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
@@ -548,7 +547,6 @@ export class ImageUploadComponent {
   }
 
   private processFiles(files: File[]): void {
-    // Check max files limit
     if (this.images().length + files.length > this.maxFiles) {
       this.snackBar.open(`Eng ko'pi bilan ${this.maxFiles} ta rasm yuklash mumkin`, 'Yopish', {
         duration: 3000,
@@ -557,7 +555,6 @@ export class ImageUploadComponent {
     }
 
     for (const file of files) {
-      // Validate file type
       if (!this.acceptedTypes.includes(file.type)) {
         this.snackBar.open(
           `Faqat ${this.acceptedTypes.join(', ')} formatlari qo'llab-quvvatlanadi`,
@@ -567,7 +564,6 @@ export class ImageUploadComponent {
         continue;
       }
 
-      // Validate file size
       if (file.size > this.maxFileSize) {
         this.snackBar.open(
           `Har bir rasm hajmi ${this.maxFileSize / (1024 * 1024)}MB dan oshmasligi kerak`,
@@ -577,13 +573,12 @@ export class ImageUploadComponent {
         continue;
       }
 
-      // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
         const newImage: UploadedImage = {
           file,
           previewUrl: e.target?.result as string,
-          isPrimary: this.images().length === 0, // First image is primary
+          isPrimary: this.images().length === 0,
           isUploading: false,
           isAnalyzing: true,
           tags: [],
@@ -601,7 +596,6 @@ export class ImageUploadComponent {
   }
 
   private analyzeImageWithAI(index: number): void {
-    // Simulate AI analysis delay
     setTimeout(() => {
       const possibleTags = [
         "Yorug' xona",
@@ -614,7 +608,6 @@ export class ImageUploadComponent {
         'Sifatli santexnika',
       ];
 
-      // Randomly pick 2-3 tags
       const count = Math.floor(Math.random() * 2) + 1;
       const tags: string[] = [];
       const shuffled = [...possibleTags].sort(() => 0.5 - Math.random());
@@ -645,7 +638,6 @@ export class ImageUploadComponent {
       const newImgs = [...imgs];
       newImgs.splice(index, 1);
 
-      // If removed image was primary and there are other images, make first one primary
       if (wasPrimary && newImgs.length > 0) {
         newImgs[0].isPrimary = true;
       }
@@ -707,17 +699,14 @@ export class ImageUploadComponent {
     }
   }
 
-  // Get primary image
   getPrimaryImage(): UploadedImage | null {
     return this.images().find((img) => img.isPrimary) || this.images()[0] || null;
   }
 
-  // Get all images as files for upload
   getFiles(): File[] {
     return this.images().map((img) => img.file);
   }
 
-  // Set upload progress for a specific image
   setUploadProgress(index: number, progress: number): void {
     this.images.update((imgs) => {
       const newImgs = [...imgs];

@@ -281,7 +281,6 @@ import { Property, PropertyStatus } from '../../../core/models';
         padding: 0 24px;
       }
 
-      /* Hero */
       .dash-hero {
         background: linear-gradient(135deg, var(--navy) 0%, #1e3a5f 100%);
         color: var(--white);
@@ -315,7 +314,6 @@ import { Property, PropertyStatus } from '../../../core/models';
         gap: 8px;
       }
 
-      /* KPI */
       .kpi-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -354,13 +352,11 @@ import { Property, PropertyStatus } from '../../../core/models';
         margin-top: 2px;
       }
 
-      /* Content */
       .content-area {
         margin-top: -60px;
         padding-bottom: 80px;
       }
 
-      /* Alert Banner */
       .alert-banner {
         display: flex;
         align-items: center;
@@ -381,7 +377,6 @@ import { Property, PropertyStatus } from '../../../core/models';
         font-weight: 700 !important;
       }
 
-      /* Skeleton */
       .skeleton-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -427,7 +422,6 @@ import { Property, PropertyStatus } from '../../../core/models';
         }
       }
 
-      /* Empty State */
       .empty-state {
         background: var(--white);
         border-radius: var(--radius);
@@ -453,14 +447,12 @@ import { Property, PropertyStatus } from '../../../core/models';
         margin: 0 0 32px;
       }
 
-      /* Listings Grid */
       .listings-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
         gap: 24px;
       }
 
-      /* Listing Card */
       .listing-card {
         background: var(--white);
         border-radius: var(--radius);
@@ -484,7 +476,6 @@ import { Property, PropertyStatus } from '../../../core/models';
         box-shadow: 0 4px 20px rgba(201, 168, 76, 0.15);
       }
 
-      /* VIP Ribbon */
       .vip-ribbon {
         position: absolute;
         top: 16px;
@@ -506,7 +497,6 @@ import { Property, PropertyStatus } from '../../../core/models';
         height: 14px;
       }
 
-      /* Card Image */
       .card-image {
         position: relative;
         height: 200px;
@@ -547,7 +537,6 @@ import { Property, PropertyStatus } from '../../../core/models';
         left: 12px;
       }
 
-      /* Status Pill */
       .status-pill {
         display: inline-flex;
         align-items: center;
@@ -584,7 +573,6 @@ import { Property, PropertyStatus } from '../../../core/models';
         opacity: 0.8;
       }
 
-      /* Card Body */
       .card-body {
         padding: 20px;
         flex: 1;
@@ -633,7 +621,6 @@ import { Property, PropertyStatus } from '../../../core/models';
         color: var(--gray-500);
       }
 
-      /* Expiry Bar */
       .expiry-bar {
         display: flex;
         align-items: center;
@@ -656,7 +643,6 @@ import { Property, PropertyStatus } from '../../../core/models';
         height: 16px;
       }
 
-      /* Card Stats */
       .card-stats {
         display: flex;
         gap: 16px;
@@ -674,7 +660,6 @@ import { Property, PropertyStatus } from '../../../core/models';
         height: 15px;
       }
 
-      /* Card Footer */
       .card-footer {
         padding: 16px 20px;
         border-top: 1px solid var(--gray-100);
@@ -684,7 +669,6 @@ import { Property, PropertyStatus } from '../../../core/models';
         gap: 12px;
       }
 
-      /* Bump Button */
       .btn-bump {
         display: flex;
         align-items: center;
@@ -726,7 +710,6 @@ import { Property, PropertyStatus } from '../../../core/models';
         }
       }
 
-      /* Action Buttons */
       .action-btns {
         display: flex;
         gap: 4px;
@@ -743,7 +726,6 @@ import { Property, PropertyStatus } from '../../../core/models';
         color: var(--red) !important;
       }
 
-      /* Pagination */
       .pagination {
         display: flex;
         justify-content: center;
@@ -756,7 +738,6 @@ import { Property, PropertyStatus } from '../../../core/models';
         color: var(--navy);
       }
 
-      /* Responsive */
       @media (max-width: 1024px) {
         .kpi-grid {
           grid-template-columns: repeat(2, 1fr);
@@ -796,7 +777,6 @@ export class HostPropertiesComponent implements OnInit {
   totalCount = signal(0);
   bumpingId = signal<string | null>(null);
 
-  // Computed stats
   totalViews = computed(() => this.properties().reduce((s, p) => s + (p.viewsCount || 0), 0));
   totalFavorites = computed(() =>
     this.properties().reduce((s, p) => s + (p.favoritesCount || 0), 0),
@@ -810,7 +790,6 @@ export class HostPropertiesComponent implements OnInit {
   );
   totalPages = computed(() => Math.ceil(this.totalCount() / this.pageSize()));
 
-  // Listing lifetime: 30 days from creation
   private readonly LISTING_DAYS = 30;
 
   ngOnInit(): void {

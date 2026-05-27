@@ -32,7 +32,6 @@ public class NotificationsController : ControllerBase
         {
             Notification addedNotification = await this.notificationService.AddNotificationAsync(notification);
 
-            // Send real-time notification to the user
             await this.notificationHub.Clients.User(notification.UserId.ToString())
                 .SendAsync("ReceiveNotification", new
                 {

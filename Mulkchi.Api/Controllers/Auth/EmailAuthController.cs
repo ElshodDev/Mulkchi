@@ -26,7 +26,6 @@ public class EmailAuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Email))
             return BadRequest(new { message = "Email address is required." });
 
-        // Basic email validation
         if (!request.Email.Contains("@") || !request.Email.Contains("."))
             return BadRequest(new { message = "Invalid email format." });
 

@@ -33,9 +33,6 @@ public static class PropertyGeoExtensions
         double longitude,
         double radiusInKm)
     {
-        // Approximate degrees for the radius
-        // 1 degree latitude is ~111km
-        // 1 degree longitude is ~111km * cos(latitude)
         double latDelta = radiusInKm / 111.0;
         double lonDelta = radiusInKm / (111.0 * Math.Cos(latitude * Math.PI / 180.0));
 
@@ -44,7 +41,6 @@ public static class PropertyGeoExtensions
         double minLon = longitude - lonDelta;
         double maxLon = longitude + lonDelta;
 
-        // Bounding box filter is translatable to SQL
         return properties.Where(p =>
             p.Latitude.HasValue && p.Longitude.HasValue &&
             p.Latitude >= minLat && p.Latitude <= maxLat &&
@@ -56,7 +52,6 @@ public static class PropertyGeoExtensions
         double latitude,
         double longitude)
     {
-        // Simple squared distance formula is translatable to SQL and good enough for sorting nearby properties
         return properties
             .Where(p => p.Latitude.HasValue && p.Longitude.HasValue)
             .OrderBy(p =>

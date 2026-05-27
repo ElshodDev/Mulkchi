@@ -1,3 +1,5 @@
+#nullable enable
+
 using Mulkchi.Api.Models.Foundations.Common;
 
 namespace Mulkchi.Api.Models.Foundations.Properties
@@ -25,8 +27,8 @@ namespace Mulkchi.Api.Models.Foundations.Properties
         public string Mahalla { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
+        public string? VirtualTourUrl { get; set; }
 
-        // Amenities
         public bool HasWifi { get; set; }
         public bool HasParking { get; set; }
         public bool HasPool { get; set; }
@@ -34,7 +36,6 @@ namespace Mulkchi.Api.Models.Foundations.Properties
         public bool IsInstantBook { get; set; }
         public bool IsVacant { get; set; }
 
-        // Location Perks
         public bool HasMetroNearby { get; set; }
         public bool HasBusStop { get; set; }
         public bool HasMarketNearby { get; set; }
@@ -42,7 +43,6 @@ namespace Mulkchi.Api.Models.Foundations.Properties
         public bool HasHospitalNearby { get; set; }
         public double? DistanceToCityCenter { get; set; }
 
-        // Property Features
         public bool HasElevator { get; set; }
         public bool HasSecurity { get; set; }
         public bool HasGenerator { get; set; }

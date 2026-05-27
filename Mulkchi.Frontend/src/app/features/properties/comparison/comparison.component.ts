@@ -282,7 +282,6 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
         padding: 40px 24px;
       }
 
-      /* --- HEADER --- */
       .compare-header {
         display: flex;
         justify-content: space-between;
@@ -323,7 +322,6 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
         font-weight: 600;
       }
 
-      /* --- AI ALERTS --- */
       .ai-summary-alert {
         background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
         border-radius: 20px;
@@ -387,7 +385,6 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
         font-weight: 600;
       }
 
-      /* --- EMPTY STATE --- */
       .empty-state {
         background: white;
         border: 2px dashed #cbd5e1;
@@ -436,7 +433,6 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
         font-weight: 700 !important;
       }
 
-      /* --- COMPARE TABLE --- */
       .compare-grid-wrapper {
         background: white;
         border-radius: 32px;
@@ -451,7 +447,6 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
         min-width: 960px;
       }
 
-      /* LABELS COLUMN */
       .labels-col {
         width: 220px;
         flex-shrink: 0;
@@ -492,7 +487,6 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
         background: #eef2ff;
       }
 
-      /* PROPERTIES CONTAINER */
       .properties-container {
         display: flex;
         flex: 1;
@@ -616,7 +610,6 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
         font-weight: 700 !important;
       }
 
-      /* ATTRIBUTE CELLS */
       .value-cell {
         height: 72px;
         padding: 0 24px;
@@ -731,7 +724,6 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
         border: 1px solid #cbd5e1;
       }
 
-      /* ADD COLUMN */
       .add-col {
         width: 310px;
         flex-shrink: 0;
@@ -839,7 +831,6 @@ export class ComparisonComponent implements OnInit {
   constructor() {
     effect(
       () => {
-        // Re-fetch API whenever the count changes (but only if > 1)
         const count = this.comparisonService.count();
         if (count > 1) {
           this.fetchSmartComparison();
@@ -852,7 +843,6 @@ export class ComparisonComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Initial fetch if we have items
     if (this.comparisonService.count() > 1) {
       this.fetchSmartComparison();
     }
@@ -894,7 +884,7 @@ export class ComparisonComponent implements OnInit {
   }
 
   onImgError(e: any): void {
-    e.target.src = 'https://placehold.co/600x400/0f172a/c9a84c?text=Mulkchi';
+    e.target.src = 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop';
   }
 
   viewProperty(id: string): void {

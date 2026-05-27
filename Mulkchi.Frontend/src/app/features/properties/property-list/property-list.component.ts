@@ -38,6 +38,7 @@ import { SavedSearch } from './components/saved-searches.component';
 import { UIFeedbackService } from '../../../core/services/ui-feedback.service';
 import { UIStore } from '../../../core/stores/ui.store';
 import { VoiceSearchService } from '../../../core/services/voice-search.service';
+import { AIService } from '../../../core/services/ai.service';
 
 @Component({
   selector: 'app-property-list',
@@ -247,7 +248,6 @@ import { VoiceSearchService } from '../../../core/services/voice-search.service'
         min-height: 100vh;
       }
 
-      /* Hero Section */
       .premium-hero-header {
         position: relative;
         background-color: #020617;
@@ -261,7 +261,6 @@ import { VoiceSearchService } from '../../../core/services/voice-search.service'
         overflow: hidden;
       }
 
-      /* Animated floating shapes in background */
       .premium-hero-header::before {
         content: '';
         position: absolute;
@@ -395,7 +394,33 @@ import { VoiceSearchService } from '../../../core/services/voice-search.service'
 
       .mic-active {
         color: #ef4444 !important;
-        animation: pulse-mic 1.5s infinite;
+        position: relative;
+        z-index: 1;
+      }
+      .mic-active::before, .mic-active::after {
+        content: '';
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%; height: 100%;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #ef4444, #3b82f6, #8b5cf6, #ec4899);
+        background-size: 300% 300%;
+        z-index: -1;
+        animation: siri-wave 1.5s infinite ease-out, siri-gradient 3s infinite linear;
+      }
+      .mic-active::after {
+        animation-delay: 0.75s, 0s;
+      }
+
+      @keyframes siri-wave {
+        0% { width: 100%; height: 100%; opacity: 0.8; }
+        100% { width: 250%; height: 250%; opacity: 0; }
+      }
+      @keyframes siri-gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
       }
       @keyframes pulse-mic {
         0% {
@@ -603,6 +628,7 @@ export class PropertyListComponent implements OnInit {
   private router = inject(Router);
   private toast = inject(ToastService);
   private uiStore = inject(UIStore);
+  private aiService = inject(AIService);
   protected voiceService = inject(VoiceSearchService);
 
   properties = signal<Property[]>([]);
@@ -716,7 +742,27 @@ export class PropertyListComponent implements OnInit {
       };
 
       this.filtersValue.set(searchParams);
-      this.loadProperties();
+      
+      if (params['ai_search'] === 'true' && params['search']) {
+        this.loadSmartSearch(params['search']);
+      } else {
+        this.loadProperties();
+      }
+    });
+  }
+
+  loadSmartSearch(query: string): void {
+    this.loading.set(true);
+    this.aiService.smartSearch(query).subscribe({
+      next: (res: any) => {
+        this.properties.set(res);
+        this.totalCount.set(res.length);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set("Aqlli qidiruv vaqtida xatolik yuz berdi.");
+        this.loading.set(false);
+      },
     });
   }
 

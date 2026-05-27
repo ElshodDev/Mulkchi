@@ -10,7 +10,6 @@ public class StorageBrokerDesignTimeFactory : IDesignTimeDbContextFactory<Storag
     {
         var optionsBuilder = new DbContextOptionsBuilder<StorageBroker>();
 
-        // Use configuration for design time - reads from appsettings.json
         var config = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false)

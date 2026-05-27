@@ -285,7 +285,6 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
         color: #0f172a;
       }
 
-      /* --- HERO --- */
       .market-hero {
         position: relative;
         background: linear-gradient(135deg, #1b3a6b 0%, #0f172a 100%);
@@ -356,7 +355,6 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
         margin: 0 auto;
       }
 
-      /* --- MAIN CONTENT --- */
       .main-content-container {
         max-width: 1280px;
         margin: 0 auto;
@@ -385,7 +383,6 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
         font-size: 1.1rem;
       }
 
-      /* --- STATS GRID --- */
       .stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -486,7 +483,6 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
         height: 16px;
       }
 
-      /* --- ANALYTICS GRID --- */
       .analytics-grid {
         display: grid;
         grid-template-columns: 2fr 1fr;
@@ -576,7 +572,6 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
         font-size: 0.95rem;
       }
 
-      /* --- INSIGHT GRID --- */
       .insight-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
@@ -707,7 +702,6 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
         color: #93c5fd;
       }
 
-      /* --- INVESTMENT PANEL --- */
       .investment-panel {
         display: flex;
         flex-direction: column;
@@ -865,13 +859,11 @@ export class MarketComponent implements OnInit {
   loadAllData(): void {
     this.isLoading.set(true);
 
-    // Parallel data loading with fallbacks
     this.analyticsService.getMarketOverview().subscribe({
       next: (data) => {
         this.overview = data;
       },
       error: () => {
-        // Mock default overview if backend endpoint is unavailable
         this.overview = {
           totalListings: 1450,
           totalForSale: 980,
@@ -1005,7 +997,7 @@ export class MarketComponent implements OnInit {
             { month: 'Iyun', averagePrice: 720000000, listingsCount: 1450 },
           ];
 
-    const actualData = trendsList.map((t) => Math.round(t.averagePrice / 1000000)); // Million so'mda
+    const actualData = trendsList.map((t) => Math.round(t.averagePrice / 1000000));
     const aiForecast = [
       null,
       null,

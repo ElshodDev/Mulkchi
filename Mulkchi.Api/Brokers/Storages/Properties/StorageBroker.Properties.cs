@@ -41,7 +41,6 @@ public partial class StorageBroker
         return property;
     }
 
-    // Admin methods to bypass soft delete filters
     public IQueryable<Property> SelectAllPropertiesIncludingDeleted()
         => this.Properties
             .IgnoreQueryFilters()

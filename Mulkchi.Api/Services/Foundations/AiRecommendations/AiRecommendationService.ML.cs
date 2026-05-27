@@ -56,7 +56,6 @@ public partial class AiRecommendationService
                 return await GetFallbackRecommendationsAsync(count);
             }
 
-            // Get predictions for all properties
             var predictionEngine = _mlContext.Model.CreatePredictionEngine<PropertyData, Prediction>(_model);
             var scoredProperties = new List<(Property Property, float Score)>();
 
@@ -81,7 +80,6 @@ public partial class AiRecommendationService
                 scoredProperties.Add((property, prediction.Score));
             }
 
-            // Return top recommendations
             var recommendations = scoredProperties
                 .OrderByDescending(x => x.Score)
                 .Take(count)
@@ -90,7 +88,6 @@ public partial class AiRecommendationService
 
             if (recommendations.Count < count)
             {
-                // Fill with fallback if needed
                 var fallback = await GetFallbackRecommendationsAsync(count - recommendations.Count);
                 recommendations.AddRange(fallback.Select(r => new Property
                 {
@@ -130,14 +127,12 @@ public partial class AiRecommendationService
         }
         catch (Exception)
         {
-            // Log error and return fallback
             return await GetFallbackRecommendationsAsync(count);
         }
     }
 
     private async Task TryTrainModelAsync()
     {
-        // Check if retraining is needed
         if (_model != null && DateTime.UtcNow - _lastTrainingTime < RetrainInterval)
         {
             return;
@@ -152,7 +147,6 @@ public partial class AiRecommendationService
 
             if (properties.Count < 5)
             {
-                // Not enough data for ML, use fallback algorithm
                 _model = null;
                 return;
             }
@@ -160,7 +154,7 @@ public partial class AiRecommendationService
             var trainingData = properties.Select(p => new PropertyData
             {
                 PropertyId = p.Id.GetHashCode(),
-                UserId = 0, // Anonymous for now
+                UserId = 0,
                 Score = CalculatePopularityScore(p),
                 Price = (float)(p.MonthlyRent ?? 0),
                 Bedrooms = (float)p.NumberOfBedrooms,
@@ -176,7 +170,6 @@ public partial class AiRecommendationService
             _mlContext = new MLContext(seed: 42);
             var dataView = _mlContext.Data.LoadFromEnumerable(trainingData);
 
-            // Build pipeline
             var pipeline = _mlContext.Transforms.Categorical.OneHotEncoding(
                     outputColumnName: "CityEncoded", inputColumnName: nameof(PropertyData.City))
                 .Append(_mlContext.Transforms.Categorical.OneHotEncoding(
@@ -201,19 +194,16 @@ public partial class AiRecommendationService
             _model = pipeline.Fit(dataView);
             _lastTrainingTime = DateTime.UtcNow;
 
-            // Save model
             await Task.Run(() => _mlContext.Model.Save(_model, dataView.Schema, ModelPath));
         }
         catch
         {
-            // ML training failed, will use fallback
             _model = null;
         }
     }
 
     private async ValueTask<IEnumerable<PropertyResponse>> GetFallbackRecommendationsAsync(int count)
     {
-        // Return top-rated and most-viewed properties as fallback
         var properties = await this.storageBroker.SelectAllProperties()
             .Where(p => p.Status == PropertyStatus.Active)
             .OrderByDescending(p => p.AverageRating)
@@ -224,7 +214,6 @@ public partial class AiRecommendationService
 
         if (properties.Count < count)
         {
-            // If not enough rated properties, fill with newest
             var additional = await this.storageBroker.SelectAllProperties()
                 .Where(p => p.Status == PropertyStatus.Active && !properties.Select(x => x.Id).Contains(p.Id))
                 .OrderByDescending(p => p.CreatedDate)
@@ -236,7 +225,6 @@ public partial class AiRecommendationService
 
         if (properties.Count < count)
         {
-            // Last resort: return any active properties
             var anyActive = await this.storageBroker.SelectAllProperties()
                 .Where(p => !properties.Select(x => x.Id).Contains(p.Id))
                 .Take(count - properties.Count)
@@ -250,13 +238,12 @@ public partial class AiRecommendationService
 
     private float CalculatePopularityScore(Property property)
     {
-        // Weighted scoring based on views, favorites, and rating
         float score = 0;
-        score += Math.Min(property.ViewsCount / 100f, 5f); // Max 5 points from views
-        score += Math.Min(property.FavoritesCount * 2, 5f); // Max 5 points from favorites
-        score += (float)property.AverageRating * 2; // Max 10 points from rating
-        score += property.IsVerified ? 2 : 0; // 2 points for verified
-        score += property.IsFeatured ? 3 : 0; // 3 points for featured
+        score += Math.Min(property.ViewsCount / 100f, 5f);
+        score += Math.Min(property.FavoritesCount * 2, 5f);
+        score += (float)property.AverageRating * 2;
+        score += property.IsVerified ? 2 : 0;
+        score += property.IsFeatured ? 3 : 0;
         return score;
     }
 

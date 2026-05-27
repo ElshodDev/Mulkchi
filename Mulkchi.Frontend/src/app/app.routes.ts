@@ -65,7 +65,6 @@ export const routes: Routes = [
           ),
         title: 'Obunalar',
       },
-      // Legacy routes - redirect to new ones
       {
         path: 'ai-recommendations',
         loadComponent: () =>

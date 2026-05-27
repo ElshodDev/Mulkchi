@@ -28,16 +28,11 @@ public class RateLimitMiddleware
         _rateLimitService = rateLimitService;
         _isEnabled = configuration.GetValue<bool>("RateLimiting:Enabled", true);
 
-        // Read configurable limits from appsettings (fallback to safe defaults)
         _authMaxRequests = configuration.GetValue<int>("RateLimiting:Auth", 20);
         _uploadMaxRequests = configuration.GetValue<int>("RateLimiting:Upload", 30);
         _generalMaxRequests = configuration.GetValue<int>("RateLimiting:General", 300);
         _windowSeconds = configuration.GetValue<int>("RateLimiting:WindowSeconds", 60);
 
-        // Load the list of IP addresses that are allowed to set X-Forwarded-For /
-        // X-Real-IP.  Only requests arriving from these addresses should have their
-        // forwarded IP trusted.  Configure via "RateLimiting:TrustedProxies" in
-        // appsettings.json or environment variables.
         var proxies = configuration.GetSection("RateLimiting:TrustedProxies").Get<string[]>();
         _trustedProxies = proxies is { Length: > 0 }
             ? new HashSet<string>(proxies)
@@ -92,12 +87,6 @@ public class RateLimitMiddleware
         await _next(context);
     }
 
-    /// <summary>
-    /// Returns the real client IP address.
-    /// X-Forwarded-For / X-Real-IP headers are only trusted when the TCP
-    /// connection originates from a known trusted proxy, preventing IP-spoofing
-    /// attacks where a client injects its own forwarded-for header.
-    /// </summary>
     private string GetClientIp(HttpContext context)
     {
         var remoteIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";

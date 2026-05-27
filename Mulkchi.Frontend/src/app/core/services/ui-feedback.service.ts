@@ -16,9 +16,6 @@ export class UIFeedbackService {
     panelClass: ['custom-snackbar'],
   };
 
-  /**
-   * Show success notification
-   */
   success(message: string, action = 'OK', config?: MatSnackBarConfig): void {
     this.snackBar.open(`✅ ${message}`, action, {
       ...this.defaultConfig,
@@ -28,9 +25,6 @@ export class UIFeedbackService {
     });
   }
 
-  /**
-   * Show error notification
-   */
   error(message: string, action = 'Yopish', config?: MatSnackBarConfig): void {
     this.snackBar.open(`❌ ${message}`, action, {
       ...this.defaultConfig,
@@ -40,9 +34,6 @@ export class UIFeedbackService {
     });
   }
 
-  /**
-   * Show info notification
-   */
   info(message: string, action = 'OK', config?: MatSnackBarConfig): void {
     this.snackBar.open(`ℹ️ ${message}`, action, {
       ...this.defaultConfig,
@@ -52,9 +43,6 @@ export class UIFeedbackService {
     });
   }
 
-  /**
-   * Show warning notification
-   */
   warning(message: string, action = 'OK', config?: MatSnackBarConfig): void {
     this.snackBar.open(`⚠️ ${message}`, action, {
       ...this.defaultConfig,
@@ -64,9 +52,6 @@ export class UIFeedbackService {
     });
   }
 
-  /**
-   * Show generic notification
-   */
   notify(
     message: string,
     type: NotificationType = 'info',
@@ -89,26 +74,20 @@ export class UIFeedbackService {
     }
   }
 
-  /**
-   * Show loading notification (persistent until closed)
-   */
   loading(message = 'Yuklanmoqda...', config?: MatSnackBarConfig): void {
     this.snackBar.open(`⏳ ${message}`, 'Yopish', {
       ...this.defaultConfig,
       ...config,
       panelClass: [...(config?.panelClass || []), 'snackbar-loading'],
-      duration: 0, // Persistent
+      duration: 0,
     });
   }
 
-  /**
-   * Show action confirmation
-   */
   confirm(message: string, action = 'Tasdiqlash'): Promise<boolean> {
     return new Promise((resolve) => {
       const snackRef = this.snackBar.open(message, action, {
         ...this.defaultConfig,
-        duration: 0, // Persistent
+        duration: 0,
         panelClass: [...(this.defaultConfig.panelClass || []), 'snackbar-confirm'],
       });
 
@@ -125,9 +104,6 @@ export class UIFeedbackService {
     });
   }
 
-  /**
-   * Clear all notifications
-   */
   clearAll(): void {
     this.snackBar.dismiss();
   }

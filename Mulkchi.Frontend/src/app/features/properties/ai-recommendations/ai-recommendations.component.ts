@@ -206,7 +206,6 @@ import { ImageOptimizationService } from '../../../core/services/image-optimizat
   `,
   styles: [
     `
-      /* ===== CSS Variables ===== */
       :host {
         --color-navy: #1b3a6b;
         --color-navy-light: #2a4a7c;
@@ -237,7 +236,6 @@ import { ImageOptimizationService } from '../../../core/services/image-optimizat
         padding: 0 24px;
       }
 
-      /* ===== Page Header ===== */
       .page-header {
         display: flex;
         justify-content: space-between;
@@ -279,7 +277,6 @@ import { ImageOptimizationService } from '../../../core/services/image-optimizat
         box-shadow: var(--shadow-lg);
       }
 
-      /* ===== Loading & Error States ===== */
       .loading-container,
       .error-container,
       .empty-container {
@@ -329,7 +326,6 @@ import { ImageOptimizationService } from '../../../core/services/image-optimizat
         gap: 8px;
       }
 
-      /* ===== Recommendations Section ===== */
       .recommendations-section {
         margin-bottom: 60px;
       }
@@ -359,7 +355,6 @@ import { ImageOptimizationService } from '../../../core/services/image-optimizat
         font-weight: 500;
       }
 
-      /* ===== Properties Grid ===== */
       .properties-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -554,7 +549,6 @@ import { ImageOptimizationService } from '../../../core/services/image-optimizat
         color: var(--color-gold);
       }
 
-      /* ===== Why AI Section ===== */
       .why-ai-section {
         margin-top: 60px;
         padding: 40px 0;
@@ -609,7 +603,6 @@ import { ImageOptimizationService } from '../../../core/services/image-optimizat
         line-height: 1.6;
       }
 
-      /* ===== Responsive Design ===== */
       @media (max-width: 1024px) {
         .features-grid {
           grid-template-columns: repeat(2, 1fr);
@@ -662,7 +655,6 @@ export class AiRecommendationsComponent implements OnInit {
   private comparisonService = inject(ComparisonService);
   private imageOptimizationService = inject(ImageOptimizationService);
 
-  // Make service available to template
   get aiService() {
     return this.aiServicePrivate;
   }
@@ -674,7 +666,6 @@ export class AiRecommendationsComponent implements OnInit {
   loadRecommendations(): void {
     this.aiServicePrivate.getRecommendations(5).subscribe({
       error: () => {
-        // Error is handled by the service, showing empty state
       },
     });
   }

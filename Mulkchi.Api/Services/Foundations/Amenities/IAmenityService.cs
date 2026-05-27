@@ -11,11 +11,9 @@ public interface IAmenityService
     ValueTask<AmenityResponse> ModifyAmenityAsync(Guid id, AmenityCreateDto dto);
     ValueTask<bool> RemoveAmenityAsync(Guid id);
 
-    // Property Amenities
     ValueTask<IEnumerable<AmenityResponse>> RetrievePropertyAmenitiesAsync(Guid propertyId);
     ValueTask UpdatePropertyAmenitiesAsync(Guid propertyId, List<Guid> amenityIds);
     ValueTask<bool> PropertyHasAmenityAsync(Guid propertyId, Guid amenityId);
 
-    // Seeding
     ValueTask SeedDefaultAmenitiesAsync();
 }

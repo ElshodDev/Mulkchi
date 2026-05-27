@@ -1,3 +1,5 @@
+#nullable enable
+
 using Mulkchi.Api.Models.Foundations.PropertyImages;
 
 namespace Mulkchi.Api.Models.Foundations.Properties;
@@ -12,13 +14,11 @@ public class PropertyResponse
     public PropertyStatus Status { get; set; }
     public ListingType ListingType { get; set; }
 
-    // Original prices in property currency
     public decimal? MonthlyRent { get; set; }
     public decimal? SalePrice { get; set; }
     public decimal? PricePerNight { get; set; }
     public decimal? SecurityDeposit { get; set; }
 
-    // Converted prices in USD
     public decimal? MonthlyRentUSD { get; set; }
     public decimal? SalePriceUSD { get; set; }
     public decimal? PricePerNightUSD { get; set; }
@@ -74,10 +74,10 @@ public class PropertyResponse
     public DateTimeOffset UpdatedDate { get; set; }
     public DateTimeOffset? DeletedDate { get; set; }
 
-    // AI Recommendations support
     public List<PropertyImage>? Images { get; set; }
     public string? HostName { get; set; }
     public string? HostAvatarUrl { get; set; }
+    public string? VirtualTourUrl { get; set; }
     public double? Score { get; set; }
     public string? RecommendationReason { get; set; }
 }

@@ -37,6 +37,7 @@ import { UIStore } from '../../stores/ui.store';
             <strong>Mulkchi</strong>
             <small>{{ text().brandTagline }}</small>
           </span>
+          <span class="bmi-badge">BMI Loyihasi</span>
         </a>
 
         <nav class="desktop-nav" aria-label="Asosiy navigatsiya">
@@ -278,6 +279,18 @@ import { UIStore } from '../../stores/ui.store';
         white-space: nowrap;
       }
 
+      .bmi-badge {
+        font-size: 0.65rem;
+        background: rgba(168, 85, 247, 0.15);
+        color: #c084fc;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        border: 1px solid rgba(168, 85, 247, 0.3);
+        margin-left: 8px;
+      }
+
       .desktop-nav {
         flex: 1;
         display: flex;
@@ -435,7 +448,6 @@ import { UIStore } from '../../stores/ui.store';
         place-items: center;
       }
 
-      /* Specific Dark Mode Enhancements */
       :host-context(.theme-dark) {
         .profile-chip {
           background: #2d3748;

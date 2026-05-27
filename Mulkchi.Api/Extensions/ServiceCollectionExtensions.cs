@@ -27,6 +27,7 @@ using Mulkchi.Api.Services.Foundations.RentalContracts;
 using Mulkchi.Api.Services.Foundations.Favorites;
 using Mulkchi.Api.Services.Foundations.SavedSearches;
 using Mulkchi.Api.Services.Foundations.PropertyImages;
+using Mulkchi.Api.Services.Foundations.Reports;
 using Mulkchi.Api.Services.Foundations.PropertyViews;
 using Mulkchi.Api.Services.Foundations.AiRecommendations;
 using Mulkchi.Api.Services.Foundations.Discounts;
@@ -228,14 +229,12 @@ public static class ServiceCollectionExtensions
         services.AddTransient<Mulkchi.Api.Brokers.Tokens.ITokenBroker, Mulkchi.Api.Brokers.Tokens.TokenBroker>();
         services.AddSingleton<IFileStorageBroker, LocalFileStorageBroker>();
 
-        // Rate limiting
         services.AddSingleton<IRateLimitService, DistributedRateLimitService>();
         return services;
     }
 
     public static IServiceCollection AddCustomFoundationServices(this IServiceCollection services, IConfiguration configuration)
     {
-        // Telegram
         services.AddSingleton<ITelegramBroker, TelegramBroker>();
         services.AddScoped<ITelegramAuthService, TelegramAuthService>();
 
@@ -253,6 +252,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IFavoriteService, FavoriteService>();
         services.AddScoped<ISavedSearchService, SavedSearchService>();
         services.AddScoped<IPropertyImageService, PropertyImageService>();
+        services.AddScoped<IReportService, ReportService>();
         services.AddScoped<IPropertyViewService, PropertyViewService>();
         services.AddScoped<IAiRecommendationService, AiRecommendationService>();
         services.AddScoped<IDiscountService, DiscountService>();
@@ -270,16 +270,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDashboardAnalyticsService, DashboardAnalyticsService>();
         services.AddScoped<IPriceRecommendationService, PriceRecommendationService>();
 
-        // Configure EmailSettings
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
 
-        // Register email broker
         services.AddTransient<IEmailBroker, SmtpEmailBroker>();
 
-        // Register SMS broker (stub — replace with real provider in production)
         services.AddTransient<ISmsBroker, StubSmsBroker>();
 
-        // Vertical-slice handlers (Bookings)
         services.AddScoped<ICreateBookingHoldHandler, CreateBookingHoldHandler>();
         services.AddScoped<IConfirmBookingPaymentHandler, ConfirmBookingPaymentHandler>();
         services.AddScoped<IFinalizePaymentWebhookHandler, FinalizePaymentWebhookHandler>();

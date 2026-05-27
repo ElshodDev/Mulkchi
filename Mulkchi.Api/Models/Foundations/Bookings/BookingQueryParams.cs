@@ -8,6 +8,6 @@ namespace Mulkchi.Api.Models.Foundations.Bookings
         public bool IsHostView { get; set; }
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 10;
-        public Guid? UserId { get; set; } // Used internally by service
+        public Guid? UserId { get; set; }
     }
 }

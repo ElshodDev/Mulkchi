@@ -4,17 +4,14 @@ namespace Mulkchi.Api.Services.Foundations.Chat;
 
 public interface IChatService
 {
-    // Chat Session Management
     ValueTask<ChatSession> StartSessionAsync(Guid? userId);
     ValueTask EndSessionAsync(string sessionId);
     ValueTask<IEnumerable<ChatSession>> GetUserSessionsAsync(Guid userId);
     ValueTask<IEnumerable<ChatMessage>> GetSessionMessagesAsync(string sessionId);
 
-    // AI Chat
     ValueTask<AIChatResponse> ProcessMessageAsync(AIChatRequest request, Guid? userId);
 
 
 
-    // Intent Detection
-    ValueTask<string> DetectIntentAsync(string message); // "search", "compare", "general", "price"
+    ValueTask<string> DetectIntentAsync(string message);
 }

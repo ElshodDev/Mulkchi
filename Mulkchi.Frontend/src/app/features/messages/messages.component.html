@@ -1,5 +1,5 @@
 <div class="chat-wrapper">
-  <!-- Connection Status Banner -->
+  
   @if (!chatService.isConnected()) {
     <div class="connection-banner" [@slideIn]>
       <mat-icon>sync</mat-icon>
@@ -8,7 +8,7 @@
   }
 
   <div class="chat-container">
-    <!-- Sidebar: Conversations List -->
+    
     <aside class="sidebar" [class.hidden-mobile]="activeConversation()">
       <div class="sidebar-header">
         <div class="title-group">
@@ -37,7 +37,7 @@
 
       <div class="conversations-scroll">
         @if (chatService.isLoading() && conversations().length === 0) {
-          <!-- Skeleton Loaders -->
+          
           <div class="skeleton-list">
             @for (i of [1, 2, 3, 4, 5]; track i) {
               <div class="skeleton-card">
@@ -77,10 +77,10 @@
       </div>
     </aside>
 
-    <!-- Main: Chat Window -->
+    
     <main class="chat-window" [class.active-mobile]="activeConversation()">
       @if (activeConversation()) {
-        <!-- Chat Header -->
+        
         <header class="chat-header" [@fadeIn]>
           <div class="header-left">
             <button mat-icon-button class="back-btn-mobile" (click)="closeConversation()">
@@ -90,10 +90,11 @@
             <div class="user-meta" (click)="viewProfile()">
               <div class="avatar-wrapper small">
                 @if (activeConversation()?.otherUser?.avatarUrl) {
-                  <img
-                    [src]="activeConversation()?.otherUser?.avatarUrl"
-                    [alt]="activeConversation()?.otherUser?.firstName"
-                  />
+                    <img
+                      [src]="activeConversation()?.otherUser?.avatarUrl"
+                      [alt]="activeConversation()?.otherUser?.firstName"
+                      (error)="onAvatarError($event)"
+                    />
                 } @else {
                   <div
                     class="avatar-placeholder small"
@@ -146,17 +147,16 @@
           </div>
         </header>
 
-        <!-- Messages List -->
+        
         <div class="messages-area" #messagesContainer>
-          <!-- Property Context Bar (Modern) -->
+          
           <div class="property-context-bar" *ngIf="propertyContext()" [@slideIn]>
             <div class="context-img">
-              <img
-                [src]="
-                  propertyContext()?.image || 'https://placehold.co/100x100/0f172a/c9a84c?text=Mulk'
-                "
-                alt="Property"
-              />
+                <img
+                  [src]="propertyContext()?.image || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop'"
+                  alt="Property"
+                  (error)="onImgError($event)"
+                />
             </div>
             <div class="context-info">
               <span class="label">Suhbat mavzusi</span>
@@ -174,7 +174,7 @@
 
           <div class="messages-list">
             @for (msg of currentMessages(); track msg.id) {
-              <!-- Date Divider -->
+              
               @if (shouldShowDateDivider($index)) {
                 <div class="date-divider">
                   <span>{{ getDateLabel(msg.createdDate) }}</span>
@@ -187,7 +187,30 @@
                   [class.first-in-group]="isFirstInGroup($index)"
                   [class.last-in-group]="isLastInGroup($index)"
                 >
-                  <p class="text">{{ msg.content }}</p>
+                  
+                  @if (msg.type === 1 || msg.type === 2) {
+                    <div class="message-attachment">
+                      @if (msg.content.includes('|')) {
+                        @if (msg.content.split('|')[1].match('\\.(jpeg|jpg|gif|png)$')) {
+                          <a [href]="msg.content.split('|')[1]" target="_blank">
+                            <img [src]="msg.content.split('|')[1]" [alt]="msg.content.split('|')[0]" class="attachment-img" />
+                          </a>
+                        } @else {
+                          <a [href]="msg.content.split('|')[1]" target="_blank" class="attachment-file">
+                            <mat-icon>insert_drive_file</mat-icon>
+                            <span>{{ msg.content.split('|')[0] }}</span>
+                          </a>
+                        }
+                      } @else {
+                        <a [href]="msg.content" target="_blank">
+                          <img [src]="msg.content" alt="Attachment" class="attachment-img" />
+                        </a>
+                      }
+                    </div>
+                  } @else {
+                    <p class="text">{{ msg.content }}</p>
+                  }
+                  
                   <div class="message-meta">
                     <span class="time">{{ formatTime(msg.createdDate) }}</span>
                     @if (isOwnMessage(msg)) {
@@ -200,7 +223,7 @@
               </div>
             }
 
-            @if (activeConversation()?.isTyping) {
+            @if (typingUsers().has(activeConversation()!.otherUserId)) {
               <div class="typing-indicator" [@fadeIn]>
                 <div class="dot"></div>
                 <div class="dot"></div>
@@ -210,8 +233,19 @@
           </div>
         </div>
 
-        <!-- Chat Footer -->
+        
         <footer class="chat-footer">
+          
+          @if (propertyContext() && currentMessages().length < 5) {
+            <div class="quick-replies-container" [@fadeIn]>
+              @for (reply of quickReplies; track $index) {
+                <button class="quick-reply-btn" (click)="sendQuickReply(reply)">
+                  {{ reply }}
+                </button>
+              }
+            </div>
+          }
+
           <div class="input-container">
             <button mat-icon-button class="attach-btn" (click)="attachFile()">
               <mat-icon>add</mat-icon>

@@ -14,7 +14,7 @@ public class PropertyPriceInput
     public float Bathrooms { get; set; }
 
     [LoadColumn(3)]
-    public float Region { get; set; } // enum as float
+    public float Region { get; set; }
 
     [LoadColumn(4)]
     public float HasWifi { get; set; }
@@ -35,7 +35,7 @@ public class PropertyPriceInput
     public float DistanceToCityCenter { get; set; }
 
     [LoadColumn(10)]
-    public float Label { get; set; } // Price to predict
+    public float Label { get; set; }
 }
 
 public class PropertyPricePrediction

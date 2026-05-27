@@ -38,7 +38,6 @@ export class ComparisonService {
     this.loadFromStorage();
   }
 
-  // Computed signals
   selectedProperties = computed(() => this.properties());
   count = computed(() => this.properties().length);
   isEmpty = computed(() => this.properties().length === 0);
@@ -67,11 +66,11 @@ export class ComparisonService {
 
   addToCompare(property: PropertyResponse): boolean {
     if (this.properties().length >= 4) {
-      return false; // Maksimal 4 ta mulkni solishtirish mumkin
+      return false;
     }
 
     if (this.properties().some((p) => p.id === property.id)) {
-      return false; // Allaqachon bor
+      return false;
     }
 
     this.properties.update((prev) => {

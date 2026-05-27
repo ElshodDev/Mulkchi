@@ -62,7 +62,6 @@ public partial class SubscriptionService : ISubscriptionService
         if (plan is null)
             throw new ArgumentException("Obuna rejasi topilmadi.");
 
-        // Check if user already has an active subscription
         var existingSub = await this.storageBroker.SelectAllUserSubscriptions()
             .FirstOrDefaultAsync(s => s.UserId == userId && s.Status == SubscriptionStatus.Active);
 
@@ -70,14 +69,12 @@ public partial class SubscriptionService : ISubscriptionService
 
         if (existingSub is not null)
         {
-            // Cancel existing subscription
             existingSub.Status = SubscriptionStatus.Cancelled;
             existingSub.UpdatedDate = now;
             existingSub.AutoRenew = false;
             await this.storageBroker.UpdateUserSubscriptionAsync(existingSub);
         }
 
-        // Create new subscription
         var newSubscription = new UserSubscription
         {
             Id = Guid.NewGuid(),
@@ -129,15 +126,12 @@ public partial class SubscriptionService : ISubscriptionService
         if (newPlan is null)
             throw new ArgumentException("Yangi obuna rejasi topilmadi.");
 
-        // Check if it's actually an upgrade
         var currentOrder = currentSub.Plan?.DisplayOrder ?? 0;
         if (newPlan.DisplayOrder <= currentOrder)
             throw new InvalidOperationException("Faqat yuqori tarifga o'tish mumkin.");
 
-        // Cancel current subscription
         await CancelSubscriptionAsync(userId);
 
-        // Subscribe to new plan
         return await SubscribeAsync(new SubscriptionCreateDto
         {
             PlanId = newPlanId,
@@ -156,7 +150,6 @@ public partial class SubscriptionService : ISubscriptionService
 
         var now = this.dateTimeBroker.GetCurrentDateTimeOffset();
 
-        // Extend by one month from end date
         subscription.EndDate = subscription.EndDate.AddMonths(1);
         subscription.Status = SubscriptionStatus.Active;
         subscription.RemainingBoosts = subscription.Plan?.MonthlyBoosts ?? 0;
@@ -176,12 +169,11 @@ public partial class SubscriptionService : ISubscriptionService
         var subscription = await GetMySubscriptionAsync(userId);
         if (subscription is null)
         {
-            // Free plan: max 3 listings
             var listingCount = await GetUserListingCountAsync(userId);
             return listingCount < 3;
         }
 
-        if (subscription.MaxListings == -1) // Unlimited
+        if (subscription.MaxListings == -1)
             return true;
 
         var count = await GetUserListingCountAsync(userId);
@@ -240,14 +232,12 @@ public partial class SubscriptionService : ISubscriptionService
         {
             if (sub.AutoRenew)
             {
-                // Try to renew
                 try
                 {
                     await RenewSubscriptionAsync(sub.UserId);
                 }
                 catch
                 {
-                    // If renewal fails, mark as expired
                     sub.Status = SubscriptionStatus.Expired;
                     sub.UpdatedDate = now;
                     await this.storageBroker.UpdateUserSubscriptionAsync(sub);

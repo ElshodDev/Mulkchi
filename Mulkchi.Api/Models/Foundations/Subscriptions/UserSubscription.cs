@@ -11,7 +11,7 @@ public class UserSubscription
     public DateTimeOffset EndDate { get; set; }
     public SubscriptionStatus Status { get; set; }
     public bool AutoRenew { get; set; }
-    public string? PaymentMethod { get; set; } // Payme, Click
+    public string? PaymentMethod { get; set; }
     public string? TransactionId { get; set; }
     public int RemainingBoosts { get; set; }
     public DateTimeOffset CreatedDate { get; set; }

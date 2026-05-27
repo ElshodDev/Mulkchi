@@ -151,17 +151,14 @@ public partial class UserService : IUserService
         if (user is null)
             throw new NotFoundUserException(userId);
 
-        // If already Host or higher role (Admin, SuperAdmin), no need to upgrade
         if (user.Role == UserRole.Host || user.Role == UserRole.Admin || user.Role == UserRole.SuperAdmin)
         {
             return user;
         }
 
-        // Upgrade to Host role
         user.Role = UserRole.Host;
         user.CurrentMode = UserRole.Host;
 
-        // Set HostSince if this is their first time becoming a host
         if (user.HostSince is null)
         {
             user.HostSince = this.dateTimeBroker.GetCurrentDateTimeOffset();

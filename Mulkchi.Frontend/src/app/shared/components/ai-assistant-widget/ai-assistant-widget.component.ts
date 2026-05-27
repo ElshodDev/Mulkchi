@@ -1,15 +1,19 @@
-import { Component, signal, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, signal, ViewChild, ElementRef, AfterViewChecked, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { trigger, state, style, animate, transition } from '@angular/animations';
+import { AIService } from '../../../core/services/ai.service';
+
+import { Property } from '../../../core/models';
 
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  properties?: Property[];
 }
 
 @Component({
@@ -56,9 +60,25 @@ interface ChatMessage {
         </div>
 
         @for (msg of messages(); track msg.id) {
-          <div class="message-bubble" [ngClass]="msg.role">
-            <div class="bubble-content">{{ msg.content }}</div>
-            <div class="bubble-time">{{ msg.timestamp | date:'HH:mm' }}</div>
+          <div class="message-wrapper" [ngClass]="msg.role">
+            <div class="message-bubble">
+              <div class="bubble-content">{{ msg.content }}</div>
+              <div class="bubble-time">{{ msg.timestamp | date:'HH:mm' }}</div>
+            </div>
+            
+            @if (msg.properties && msg.properties.length > 0) {
+              <div class="widget-properties">
+                @for (prop of msg.properties; track prop.id) {
+                  <a class="widget-prop-card" [href]="'/properties/' + prop.id" target="_blank">
+                    <img [src]="prop.images && prop.images.length > 0 ? prop.images[0].url : 'assets/images/placeholder-property.jpg'" />
+                    <div class="info">
+                      <h6>{{ prop.title }}</h6>
+                      <span>{{ prop.listingType === 'Sale' ? prop.salePrice : (prop.listingType === 'Rent' ? prop.monthlyRent : prop.pricePerNight) | number }} {{ prop.currency === 'UZS' ? 'UZS' : 'USD' }}</span>
+                    </div>
+                  </a>
+                }
+              </div>
+            }
           </div>
         }
 
@@ -221,28 +241,87 @@ interface ChatMessage {
       border-color: #6366f1;
     }
 
-    .message-bubble {
-      max-width: 80%;
-      padding: 12px 16px;
-      border-radius: 18px;
-      font-size: 0.95rem;
-      line-height: 1.4;
-      position: relative;
+    .message-wrapper {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 12px;
+    }
+    
+    .message-wrapper.user {
+      align-items: flex-end;
+    }
+    
+    .message-wrapper.assistant {
+      align-items: flex-start;
     }
 
-    .message-bubble.user {
-      align-self: flex-end;
+    .message-bubble {
+      max-width: 85%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      position: relative;
+    }
+    
+    .message-wrapper.user .message-bubble {
       background: #6366f1;
       color: white;
       border-bottom-right-radius: 4px;
     }
 
-    .message-bubble.assistant {
-      align-self: flex-start;
-      background: white;
+    .message-wrapper.assistant .message-bubble {
+      background: #f1f5f9;
       color: #334155;
-      border: 1px solid #e2e8f0;
       border-bottom-left-radius: 4px;
+    }
+
+    .widget-properties {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 6px;
+      max-width: 85%;
+    }
+
+    .widget-prop-card {
+      display: flex;
+      gap: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 6px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s;
+    }
+    .widget-prop-card:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+    .widget-prop-card img {
+      width: 40px;
+      height: 40px;
+      border-radius: 6px;
+      object-fit: cover;
+    }
+    .widget-prop-card .info {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      overflow: hidden;
+    }
+    .widget-prop-card .info h6 {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+    .widget-prop-card .info span {
+      font-size: 11px;
+      color: #6366f1;
+      font-weight: 700;
     }
 
     .bubble-time {
@@ -330,6 +409,7 @@ interface ChatMessage {
   ]
 })
 export class AiAssistantWidgetComponent implements AfterViewChecked {
+  private aiService = inject(AIService);
   isOpen = signal(false);
   isTyping = signal(false);
   messages = signal<ChatMessage[]>([]);
@@ -344,7 +424,6 @@ export class AiAssistantWidgetComponent implements AfterViewChecked {
   toggleChat() {
     this.isOpen.set(!this.isOpen());
     if (this.isOpen() && this.messages().length === 0) {
-      // First time opening
     }
   }
 
@@ -357,7 +436,6 @@ export class AiAssistantWidgetComponent implements AfterViewChecked {
     const text = this.currentInput.trim();
     if (!text) return;
 
-    // Add user message
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
@@ -369,27 +447,33 @@ export class AiAssistantWidgetComponent implements AfterViewChecked {
     this.currentInput = '';
     this.isTyping.set(true);
 
-    // Mock AI Response after delay
-    setTimeout(() => {
-      this.isTyping.set(false);
-      let responseContent = "Kechirasiz, men hozircha faqat test rejimida ishlayapman. Batafsil ma'lumot uchun tez orada to'liq AI tizimi ulanadi!";
-      
-      const lowerText = text.toLowerCase();
-      if (lowerText.includes('bahola') || lowerText.includes('narx')) {
-        responseContent = "Uyni baholash uchun 'E'lon berish' sahifasiga o'ting va 'AI bilan baholash' tugmasini bosing. Yoki menga uyning hududi, xonalar soni va maydonini yozing.";
-      } else if (lowerText.includes('shartnoma') || lowerText.includes('ijara')) {
-        responseContent = "Ijara shartnomasi E-ijara tizimi orqali ro'yxatdan o'tkaziladi. Buning uchun ijaraga beruvchi va oluvchining pasport ma'lumotlari kerak bo'ladi.";
-      }
+    const history = this.messages()
+      .filter(m => m.role === 'user' && m.id !== userMsg.id)
+      .map(m => m.content);
 
-      const aiMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: responseContent,
-        timestamp: new Date()
-      };
-      
-      this.messages.update(m => [...m, aiMsg]);
-    }, 1500);
+    this.aiService.chat(text, history).subscribe({
+      next: (res: any) => {
+        this.isTyping.set(false);
+        const aiMsg: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: res.reply,
+          timestamp: new Date(),
+          properties: res.properties
+        };
+        this.messages.update(m => [...m, aiMsg]);
+      },
+      error: (err: any) => {
+        this.isTyping.set(false);
+        const errorMsg: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: "Kechirasiz, xatolik yuz berdi. Iltimos qayta urinib ko'ring.",
+          timestamp: new Date()
+        };
+        this.messages.update(m => [...m, errorMsg]);
+      }
+    });
   }
 
   private scrollToBottom(): void {

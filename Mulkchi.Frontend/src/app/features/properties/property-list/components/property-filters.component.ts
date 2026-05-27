@@ -264,7 +264,6 @@ export interface QuickFilter {
         letter-spacing: 1.2px;
       }
 
-      /* --- QUICK CARDS --- */
       .quick-chips-column {
         display: flex;
         flex-direction: column;
@@ -321,7 +320,6 @@ export interface QuickFilter {
         color: var(--accent-color);
       }
 
-      /* --- ACCORDION --- */
       .premium-accordion {
         box-shadow: none !important;
       }
@@ -352,7 +350,6 @@ export interface QuickFilter {
         padding: 12px 4px 16px;
       }
 
-      /* --- PRICE --- */
       .price-inputs-modern {
         display: flex;
         align-items: center;
@@ -387,7 +384,6 @@ export interface QuickFilter {
         margin: 0 16px;
       }
 
-      /* --- ROOMS --- */
       .rooms-selector {
         display: flex;
         gap: 6px;
@@ -414,7 +410,6 @@ export interface QuickFilter {
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
       }
 
-      /* --- TYPE CHIPS --- */
       .type-chips {
         display: flex;
         flex-wrap: wrap;
@@ -437,7 +432,6 @@ export interface QuickFilter {
         border-color: var(--navy);
       }
 
-      /* --- AMENITIES --- */
       .amenities-grid-modern {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -472,7 +466,6 @@ export interface QuickFilter {
         color: #16a34a;
       }
 
-      /* --- FOOTER --- */
       .sticky-footer {
         margin-top: 24px;
         display: flex;
@@ -627,7 +620,6 @@ export class PropertyFiltersComponent implements OnInit, OnChanges {
       amenities: this.selectedAmenities.length > 0 ? this.selectedAmenities : undefined,
     };
 
-    // Clean up
     Object.keys(searchParams).forEach((key) => {
       if (
         (searchParams as any)[key] === null ||

@@ -26,7 +26,7 @@ export interface UserSubscription {
   plan?: SubscriptionPlan;
   startDate: string;
   endDate: string;
-  status: number; // 1: Active, 2: Expired, etc.
+  status: number;
   autoRenew: boolean;
   remainingBoosts: number;
 }

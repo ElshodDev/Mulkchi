@@ -3,7 +3,7 @@ import { Injectable, signal } from '@angular/core';
 export interface StorageData<T = any> {
   key: string;
   data: T;
-  expiresAt?: number; // Timestamp in ms
+  expiresAt?: number;
 }
 
 @Injectable({
@@ -17,9 +17,6 @@ export class LocalStorageService {
     this.loadFromLocalStorage();
   }
 
-  /**
-   * Set item in storage with optional expiration
-   */
   setItem<T>(key: string, value: T, expirationMinutes?: number): void {
     const item: StorageData<T> = {
       key,
@@ -36,9 +33,6 @@ export class LocalStorageService {
     this.saveToLocalStorage();
   }
 
-  /**
-   * Get item from storage
-   */
   getItem<T>(key: string): T | null {
     const item = this.data().get(key) as StorageData<T> | undefined;
 
@@ -46,7 +40,6 @@ export class LocalStorageService {
       return null;
     }
 
-    // Check if expired
     if (item.expiresAt && Date.now() > item.expiresAt) {
       this.removeItem(key);
       return null;
@@ -55,16 +48,10 @@ export class LocalStorageService {
     return item.data;
   }
 
-  /**
-   * Check if item exists
-   */
   hasItem(key: string): boolean {
     return this.getItem(key) !== null;
   }
 
-  /**
-   * Remove item from storage
-   */
   removeItem(key: string): void {
     const storage = this.data();
     storage.delete(key);
@@ -72,28 +59,18 @@ export class LocalStorageService {
     this.saveToLocalStorage();
   }
 
-  /**
-   * Clear all items from storage
-   */
   clear(): void {
     this.data.set(new Map());
     this.saveToLocalStorage();
   }
 
-  /**
-   * Get all keys
-   */
   keys(): string[] {
     return Array.from(this.data().keys());
   }
 
-  /**
-   * Add to array in storage
-   */
   addToArray<T>(key: string, value: T, maxItems = 20): void {
     let array = this.getItem<T[]>(key) || [];
 
-    // Remove duplicates if it's a string or object with id
     if (typeof value === 'string') {
       array = array.filter((item) => item !== value);
     } else if (typeof value === 'object' && value !== null && 'id' in value) {
@@ -102,10 +79,8 @@ export class LocalStorageService {
       });
     }
 
-    // Add to beginning
     array.unshift(value);
 
-    // Keep only max items
     if (array.length > maxItems) {
       array = array.slice(0, maxItems);
     }
@@ -113,25 +88,16 @@ export class LocalStorageService {
     this.setItem(key, array);
   }
 
-  /**
-   * Get array from storage
-   */
   getArray<T>(key: string): T[] {
     return this.getItem<T[]>(key) || [];
   }
 
-  /**
-   * Remove from array
-   */
   removeFromArray<T>(key: string, predicate: (item: T) => boolean): void {
     const array = this.getItem<T[]>(key) || [];
     const filtered = array.filter((item) => !predicate(item));
     this.setItem(key, filtered);
   }
 
-  /**
-   * Private: Save to browser localStorage
-   */
   private saveToLocalStorage(): void {
     try {
       const storage = this.data();
@@ -142,9 +108,6 @@ export class LocalStorageService {
     }
   }
 
-  /**
-   * Private: Load from browser localStorage
-   */
   private loadFromLocalStorage(): void {
     try {
       const json = localStorage.getItem(this.storageKey);

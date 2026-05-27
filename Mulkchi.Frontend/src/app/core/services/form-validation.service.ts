@@ -40,12 +40,6 @@ export class FormValidationService {
     },
   };
 
-  /**
-   * Get error message for a form field
-   * @param control - Form control
-   * @param fieldName - Field name for lookup
-   * @returns Error message or null
-   */
   getErrorMessage(control: AbstractControl | null, fieldName: string): string | null {
     if (!control || !control.errors || !control.touched) {
       return null;
@@ -54,7 +48,6 @@ export class FormValidationService {
     const errors = control.errors;
     const messages = this.errorMessages[fieldName] || {};
 
-    // Check errors in order of priority
     for (const errorKey of Object.keys(errors)) {
       if (messages[errorKey]) {
         return messages[errorKey];
@@ -64,16 +57,10 @@ export class FormValidationService {
     return "Notog'ri ma'lumot";
   }
 
-  /**
-   * Check if field has error and is touched
-   */
   hasError(control: AbstractControl | null): boolean {
     return !!(control && control.invalid && (control.dirty || control.touched));
   }
 
-  /**
-   * Get all form errors in readable format
-   */
   getFormErrorsSummary(form: any): string[] {
     const errors: string[] = [];
 
@@ -90,9 +77,6 @@ export class FormValidationService {
     return errors;
   }
 
-  /**
-   * Mark all fields as touched to show errors
-   */
   markAllAsTouched(form: any): void {
     Object.keys(form.controls).forEach((key) => {
       const control = form.get(key);
@@ -102,9 +86,6 @@ export class FormValidationService {
     });
   }
 
-  /**
-   * Get error count in form
-   */
   getErrorCount(form: any): number {
     let count = 0;
     Object.keys(form.controls).forEach((key) => {

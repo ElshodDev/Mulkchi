@@ -1,3 +1,4 @@
+import { animate, style, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -17,19 +18,21 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import * as L from 'leaflet';
 import { map } from 'rxjs';
 import { ListingType, PropertyImage, PropertyType } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
 import { FavoritesService } from '../../../core/services/favorites.service';
+import { ImageOptimizationService } from '../../../core/services/image-optimization.service';
 import { PropertyService } from '../../../core/services/property.service';
+import { ReportService } from '../../../core/services/report.service';
 import { ToastService } from '../../../core/services/toast.service';
 import {
   ConfirmationDialogComponent,
   ConfirmationDialogData,
 } from '../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { MortgageCalculatorComponent } from '../../../shared/components/mortgage-calculator/mortgage-calculator';
 import { BookingPanelComponent } from '../booking-panel/booking-panel.component';
-import { ImageOptimizationService } from '../../../core/services/image-optimization.service';
-import { animate, style, transition, trigger } from '@angular/animations';
 
 @Component({
   selector: 'app-property-detail',
@@ -45,6 +48,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
     MatProgressSpinnerModule,
     MatTooltipModule,
     BookingPanelComponent,
+    MortgageCalculatorComponent,
   ],
   animations: [
     trigger('fadeInUp', [
@@ -125,58 +129,59 @@ import { animate, style, transition, trigger } from '@angular/animations';
                 </div>
               </div>
 
-              <!-- Image Gallery -->
-              <div class="gallery-section-modern">
-                <div class="main-stage">
-                  <ng-container *ngIf="currentImage(); else noImage">
+              <!-- Airbnb Style Image Gallery -->
+              <div
+                class="airbnb-gallery-section"
+                *ngIf="property()?.images && property()!.images!.length > 0; else noImage"
+              >
+                <div class="gallery-grid" [class.has-multiple]="property()!.images!.length > 1">
+                  <div class="main-photo" (click)="openLightbox(0)">
                     <img
-                      [src]="currentImage()"
+                      [src]="getFullImageUrl(property()!.images![0])"
                       [alt]="property()?.title"
-                      class="stage-img"
                       (error)="onMainImageError()"
                     />
-                    <div class="img-overlay"></div>
-                  </ng-container>
-                  <ng-template #noImage>
-                    <div class="no-image-placeholder">
-                      <mat-icon>landscape</mat-icon>
-                      <p>Suratlar mavjud emas</p>
-                    </div>
-                  </ng-template>
+                  </div>
 
-                  <div
-                    class="gallery-controls"
-                    *ngIf="property()?.images && property()!.images!.length > 1"
-                  >
-                    <button class="nav-arrow prev" (click)="prevImage()">
-                      <mat-icon>west</mat-icon>
-                    </button>
-                    <button class="nav-arrow next" (click)="nextImage()">
-                      <mat-icon>east</mat-icon>
-                    </button>
-                    <div class="count-pill">
-                      {{ currentImageIndex() + 1 }} / {{ property()!.images!.length }}
-                    </div>
+                  <div class="side-photos" *ngIf="property()!.images!.length > 1">
+                    @for (img of property()!.images!.slice(1, 5); track $index) {
+                      <div class="side-photo" (click)="openLightbox($index + 1)">
+                        <img [src]="getFullImageUrl(img)" [alt]="'Photo ' + ($index + 2)" />
+                        <div
+                          class="show-all-btn"
+                          *ngIf="$index === 3 && property()!.images!.length > 5"
+                        >
+                          <mat-icon>apps</mat-icon>
+                          Barcha {{ property()!.images!.length }} ta
+                        </div>
+                      </div>
+                    }
                   </div>
                 </div>
+              </div>
+              <ng-template #noImage>
+                <div class="no-image-placeholder">
+                  <mat-icon>landscape</mat-icon>
+                  <p>Suratlar mavjud emas</p>
+                </div>
+              </ng-template>
 
-                <div
-                  class="thumbnail-strip"
-                  *ngIf="property()?.images && property()!.images!.length > 1"
-                >
-                  @for (image of property()!.images; track $index) {
-                    <div
-                      class="thumb-item"
-                      [class.active]="$index === currentImageIndex()"
-                      (click)="selectImage($index)"
-                    >
-                      <img
-                        [src]="getThumbnailUrl(image)"
-                        [alt]="image.caption || ''"
-                        (error)="onThumbnailError($index)"
-                      />
-                    </div>
-                  }
+              <!-- Lightbox Overlay -->
+              <div class="lightbox-overlay" *ngIf="isLightboxOpen()" @fadeInUp>
+                <button class="lightbox-close" (click)="closeLightbox()">
+                  <mat-icon>close</mat-icon>
+                </button>
+                <div class="lightbox-content">
+                  <button class="nav-arrow prev" (click)="prevImage()">
+                    <mat-icon>west</mat-icon>
+                  </button>
+                  <img [src]="currentImage()" alt="Lightbox Image" class="lightbox-img" />
+                  <button class="nav-arrow next" (click)="nextImage()">
+                    <mat-icon>east</mat-icon>
+                  </button>
+                </div>
+                <div class="count-pill lightbox-counter">
+                  {{ currentImageIndex() + 1 }} / {{ property()!.images!.length }}
                 </div>
               </div>
 
@@ -241,6 +246,125 @@ import { animate, style, transition, trigger } from '@angular/animations';
                   </div>
                 </div>
               </div>
+
+              <!-- 360 Virtual Tour -->
+              <div
+                class="tour-section content-card"
+                *ngIf="
+                  property()?.virtualTourUrl ||
+                  (property()?.images && property()!.images!.length > 1)
+                "
+              >
+                <div class="section-top">
+                  <h2 class="section-title">
+                    <mat-icon color="primary" style="vertical-align: middle; margin-right: 8px;"
+                      >360</mat-icon
+                    >
+                    360° Virtual Tur
+                  </h2>
+                  <span class="badge featured">Interaktiv</span>
+                </div>
+                <div class="virtual-tour-container" (click)="startVirtualTour()">
+                  <div class="tour-overlay">
+                    <button mat-fab color="primary" class="play-btn">
+                      <mat-icon>play_arrow</mat-icon>
+                    </button>
+                    <p>Virtual turni boshlash</p>
+                    <span class="tour-hint">
+                      {{
+                        property()?.virtualTourUrl
+                          ? 'Virtual tur mavjud'
+                          : property()!.images!.length + ' ta rasm · Sichqoncha bilan aylantiring'
+                      }}
+                    </span>
+                  </div>
+                  <img
+                    [src]="getFullImageUrl(property()!.images![0])"
+                    alt="360 Tour Preview"
+                    class="tour-bg-img"
+                  />
+                </div>
+              </div>
+
+              <!-- Immersive Tour Overlay -->
+              <div class="immersive-tour" *ngIf="isTourActive()" @fadeInUp>
+                <div class="tour-topbar">
+                  <div class="tour-topbar-left">
+                    <mat-icon>360</mat-icon>
+                    <span>360° Virtual Tur</span>
+                    <span class="tour-counter"
+                      >{{ tourCurrentIndex() + 1 }} / {{ property()!.images!.length }}</span
+                    >
+                  </div>
+                  <div class="tour-topbar-right">
+                    <button
+                      mat-icon-button
+                      (click)="toggleTourAutoplay()"
+                      [matTooltip]="isTourAutoplay() ? 'Pauza' : 'Avtomatik'"
+                    >
+                      <mat-icon>{{ isTourAutoplay() ? 'pause' : 'play_arrow' }}</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="closeTour()" matTooltip="Yopish">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  class="tour-main"
+                  (mousedown)="onTourDragStart($event)"
+                  (mousemove)="onTourDragMove($event)"
+                  (mouseup)="onTourDragEnd()"
+                  (mouseleave)="onTourDragEnd()"
+                  (touchstart)="onTourTouchStart($event)"
+                  (touchmove)="onTourTouchMove($event)"
+                  (touchend)="onTourDragEnd()"
+                >
+                  <img
+                    [src]="getFullImageUrl(property()!.images![tourCurrentIndex()])"
+                    alt="Tour Image"
+                    class="tour-main-img"
+                    [class.dragging]="isTourDragging"
+                  />
+
+                  <button class="tour-nav tour-nav-prev" (click)="tourPrev()">
+                    <mat-icon>chevron_left</mat-icon>
+                  </button>
+                  <button class="tour-nav tour-nav-next" (click)="tourNext()">
+                    <mat-icon>chevron_right</mat-icon>
+                  </button>
+
+                  <div class="tour-progress">
+                    <div
+                      class="tour-progress-bar"
+                      [style.width.%]="
+                        ((tourCurrentIndex() + 1) / property()!.images!.length) * 100
+                      "
+                    ></div>
+                  </div>
+                </div>
+
+                <div class="tour-thumbnails">
+                  @for (img of property()!.images!; track $index) {
+                    <div
+                      class="tour-thumb"
+                      [class.active]="$index === tourCurrentIndex()"
+                      (click)="tourGoTo($index)"
+                    >
+                      <img [src]="getThumbnailUrl(img)" alt="Thumb" />
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Location / Map -->
+              <div class="location-section content-card">
+                <h2 class="section-title">Joylashuv</h2>
+                <p class="location-subtitle">
+                  {{ property()?.address }}, {{ property()?.district }}, {{ property()?.city }}
+                </p>
+                <div id="property-detail-map" class="property-map"></div>
+              </div>
             </div>
 
             <!-- Right Column (Sidebar) -->
@@ -302,6 +426,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
                     <div class="action-buttons">
                       <ng-container *ngIf="isAuthenticated() && !isOwner()">
                         <button
+                          *ngIf="property()?.listingType === ListingType.Sale"
                           mat-flat-button
                           class="btn-main-action"
                           (click)="handleMainAction()"
@@ -318,6 +443,13 @@ import { animate, style, transition, trigger } from '@angular/animations';
                             [matTooltip]="getFavoriteTooltip()"
                           >
                             <mat-icon>{{ isFavorite() ? 'favorite' : 'favorite_border' }}</mat-icon>
+                          </button>
+                          <button
+                            mat-icon-button
+                            (click)="openReportDialog()"
+                            matTooltip="Shikoyat qilish"
+                          >
+                            <mat-icon>flag</mat-icon>
                           </button>
                         </div>
                       </ng-container>
@@ -379,11 +511,15 @@ import { animate, style, transition, trigger } from '@angular/animations';
                 <div class="glass-card host-card">
                   <div class="host-avatar">
                     <img
-                      *ngIf="property()?.hostAvatarUrl"
-                      [src]="property()?.hostAvatarUrl"
+                      *ngIf="property()?.hostAvatarUrl && !avatarLoadError()"
+                      [src]="getFullAvatarUrl(property()?.hostAvatarUrl)"
                       [alt]="property()?.hostName"
+                      (error)="avatarLoadError.set(true)"
                     />
-                    <div *ngIf="!property()?.hostAvatarUrl" class="avatar-placeholder">
+                    <div
+                      *ngIf="!property()?.hostAvatarUrl || avatarLoadError()"
+                      class="avatar-placeholder"
+                    >
                       <mat-icon>person</mat-icon>
                     </div>
                   </div>
@@ -401,10 +537,18 @@ import { animate, style, transition, trigger } from '@angular/animations';
                   *ngIf="
                     isAuthenticated() &&
                     !isOwner() &&
-                    property()?.listingType === ListingType.ShortTermRent
+                    (property()?.listingType === ListingType.ShortTermRent ||
+                      property()?.listingType === ListingType.Rent)
                   "
                   [property]="property()!"
                 ></app-booking-panel>
+
+                <!-- Mortgage Calculator (Only for Sale) -->
+                <app-mortgage-calculator
+                  *ngIf="property()?.listingType === ListingType.Sale && property()?.salePrice"
+                  [propertyPrice]="property()!.salePrice!"
+                  [currencyType]="property()!.currency || 'UZS'"
+                ></app-mortgage-calculator>
               </div>
             </div>
           </div>
@@ -468,7 +612,6 @@ import { animate, style, transition, trigger } from '@angular/animations';
         padding: 32px 24px;
       }
 
-      /* Breadcrumb */
       .breadcrumb {
         display: flex;
         align-items: center;
@@ -499,7 +642,6 @@ import { animate, style, transition, trigger } from '@angular/animations';
         align-items: start;
       }
 
-      /* --- HEADER --- */
       .property-header {
         margin-bottom: 24px;
       }
@@ -574,115 +716,147 @@ import { animate, style, transition, trigger } from '@angular/animations';
         color: var(--color-blue-accent);
       }
 
-      /* --- GALLERY MODERN --- */
-      .gallery-section-modern {
+      .airbnb-gallery-section {
         margin-bottom: 32px;
-      }
-      .main-stage {
-        position: relative;
-        height: 500px;
         border-radius: 24px;
         overflow: hidden;
-        background: #cbd5e1;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        position: relative;
+        background: #f1f5f9;
       }
-      .stage-img {
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        height: 500px;
+      }
+      .gallery-grid.has-multiple {
+        grid-template-columns: 1fr 1fr;
+      }
+      .main-photo {
+        height: 100%;
+        overflow: hidden;
+        cursor: pointer;
+        position: relative;
+      }
+      .main-photo img,
+      .side-photo img {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        transition:
+          transform 0.5s ease,
+          filter 0.3s ease;
       }
-      .main-stage:hover .stage-img {
+      .main-photo:hover img,
+      .side-photo:hover img {
         transform: scale(1.03);
+        filter: brightness(0.9);
       }
-      .img-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to top, rgba(15, 23, 42, 0.3) 0%, transparent 40%);
-        pointer-events: none;
+      .side-photos {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 8px;
+        height: 100%;
       }
-      .nav-arrow {
-        width: 56px;
-        height: 56px;
-        background: rgba(255, 255, 255, 0.85);
-        border: none;
-        border-radius: 16px;
-        color: var(--color-navy);
+      .side-photo {
+        height: 100%;
+        overflow: hidden;
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        backdrop-filter: blur(8px);
-        transition: all 0.3s ease;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        position: relative;
       }
-      .nav-arrow:hover {
-        background: white;
-        transform: scale(1.1);
-        color: var(--color-blue-accent);
-      }
-      .gallery-controls {
+      .show-all-btn {
         position: absolute;
-        bottom: 20px;
-        left: 20px;
-        right: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 5;
-      }
-      .count-pill {
-        background: rgba(15, 23, 42, 0.7);
-        backdrop-filter: blur(12px);
-        color: white;
+        bottom: 16px;
+        right: 16px;
+        background: white;
+        color: var(--color-navy);
         padding: 8px 16px;
         border-radius: 12px;
         font-weight: 700;
         font-size: 0.9rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-      }
-
-      .thumbnail-strip {
         display: flex;
-        gap: 12px;
-        margin-top: 16px;
-        overflow-x: auto;
-        padding: 4px 4px 16px 4px;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        border: 1px solid #e2e8f0;
+        transition: transform 0.2s;
       }
-      .thumbnail-strip::-webkit-scrollbar {
-        height: 6px;
+      .show-all-btn:hover {
+        transform: translateY(-2px);
       }
-      .thumbnail-strip::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 10px;
-      }
-      .thumb-item {
-        flex-shrink: 0;
-        width: 120px;
-        height: 85px;
-        border-radius: 16px;
-        overflow: hidden;
-        cursor: pointer;
-        position: relative;
-        transition: all 0.3s ease;
-        opacity: 0.7;
-      }
-      .thumb-item:hover {
-        opacity: 1;
-      }
-      .thumb-item.active {
-        opacity: 1;
-        border: 3px solid var(--color-blue-accent);
-        transform: translateY(-4px);
-        box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
-      }
-      .thumb-item img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+      .show-all-btn mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
       }
 
-      /* --- QUICK STATS GLASS --- */
+      .lightbox-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(10px);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .lightbox-close {
+        position: absolute;
+        top: 24px;
+        right: 24px;
+        background: white;
+        border: none;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 1001;
+      }
+      .lightbox-content {
+        position: relative;
+        width: 90%;
+        height: 90%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+      }
+      .lightbox-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 12px;
+      }
+      .nav-arrow {
+        width: 56px;
+        height: 56px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+      }
+      .nav-arrow:hover {
+        background: white;
+        color: var(--color-navy);
+      }
+      .lightbox-counter {
+        position: absolute;
+        bottom: 32px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+      }
+
       .quick-stats-glass {
         display: flex;
         justify-content: space-between;
@@ -733,7 +907,6 @@ import { animate, style, transition, trigger } from '@angular/animations';
         background: #e2e8f0;
       }
 
-      /* --- CONTENT CARDS --- */
       .content-card {
         background: white;
         padding: 32px;
@@ -757,7 +930,6 @@ import { animate, style, transition, trigger } from '@angular/animations';
         margin: 0;
       }
 
-      /* --- AMENITIES GRID --- */
       .amenities-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -801,7 +973,24 @@ import { animate, style, transition, trigger } from '@angular/animations';
         opacity: 0.6;
       }
 
-      /* --- SIDEBAR & GLASSMORPHISM --- */
+      .location-section {
+        margin-bottom: 32px;
+      }
+      .location-subtitle {
+        font-size: 1.1rem;
+        color: var(--color-text-muted);
+        margin-bottom: 20px;
+      }
+      .property-map {
+        height: 400px;
+        width: 100%;
+        border-radius: 16px;
+        background: #cbd5e1;
+        z-index: 1;
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+      }
+
       .sidebar-column {
         position: relative;
       }
@@ -951,7 +1140,6 @@ import { animate, style, transition, trigger } from '@angular/animations';
         font-weight: 700 !important;
       }
 
-      /* --- HOST CARD --- */
       .host-card {
         display: flex;
         align-items: center;
@@ -980,6 +1168,11 @@ import { animate, style, transition, trigger } from '@angular/animations';
         align-items: center;
         justify-content: center;
         color: #94a3b8;
+      }
+      .avatar-placeholder mat-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
       }
       .host-details {
         display: flex;
@@ -1013,7 +1206,6 @@ import { animate, style, transition, trigger } from '@angular/animations';
         height: 16px;
       }
 
-      /* --- RECOMMENDATIONS --- */
       .recommendations-section {
         margin-top: 60px;
         padding-top: 60px;
@@ -1110,7 +1302,247 @@ import { animate, style, transition, trigger } from '@angular/animations';
         font-size: 16px;
         width: 16px;
         height: 16px;
-        color: var(--color-blue-accent);
+      }
+      .amenity-icon.active {
+        background: #fef3c7;
+        color: #d97706;
+      }
+      .amenity-label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #334155;
+      }
+      .strike {
+        text-decoration: line-through;
+        color: #94a3b8;
+      }
+      .unavailable {
+        opacity: 0.5;
+      }
+
+      .virtual-tour-container {
+        position: relative;
+        width: 100%;
+        height: 400px;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #000;
+        cursor: pointer;
+      }
+      .tour-bg-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.6;
+        transition: opacity 0.4s;
+      }
+      .tour-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+        gap: 12px;
+      }
+      .tour-overlay p {
+        color: white;
+        font-size: 1.2rem;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        margin: 0;
+      }
+      .tour-hint {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.85rem;
+      }
+      .virtual-tour-container:hover .tour-bg-img {
+        opacity: 0.35;
+      }
+      .play-btn {
+        transform: scale(1.2);
+        transition: transform 0.3s;
+      }
+      .virtual-tour-container:hover .play-btn {
+        transform: scale(1.4);
+      }
+      .section-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+      .section-top .section-title {
+        margin: 0;
+      }
+
+      .immersive-tour {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        background: #0a0a0a;
+        display: flex;
+        flex-direction: column;
+      }
+      .tour-topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 24px;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        z-index: 2;
+      }
+      .tour-topbar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: white;
+        font-weight: 700;
+        font-size: 1rem;
+      }
+      .tour-topbar-left mat-icon {
+        color: #60a5fa;
+      }
+      .tour-counter {
+        background: rgba(255, 255, 255, 0.12);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.8);
+      }
+      .tour-topbar-right {
+        display: flex;
+        gap: 4px;
+      }
+      .tour-topbar-right button {
+        color: rgba(255, 255, 255, 0.7);
+      }
+      .tour-topbar-right button:hover {
+        color: white;
+      }
+
+      .tour-main {
+        flex: 1;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        cursor: grab;
+        user-select: none;
+      }
+      .tour-main:active {
+        cursor: grabbing;
+      }
+      .tour-main-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transition:
+          transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+          opacity 0.3s;
+      }
+      .tour-main-img.dragging {
+        transition: none;
+      }
+
+      .tour-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(8px);
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.25s;
+        z-index: 3;
+      }
+      .tour-nav:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-50%) scale(1.1);
+      }
+      .tour-nav-prev {
+        left: 24px;
+      }
+      .tour-nav-next {
+        right: 24px;
+      }
+      .tour-nav mat-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+      }
+
+      .tour-progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .tour-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #3b82f6, #60a5fa);
+        transition: width 0.4s ease;
+        border-radius: 0 2px 2px 0;
+      }
+
+      .tour-thumbnails {
+        display: flex;
+        gap: 8px;
+        padding: 12px 24px;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(12px);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        overflow-x: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+      }
+      .tour-thumb {
+        flex-shrink: 0;
+        width: 80px;
+        height: 56px;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        border: 2px solid transparent;
+        opacity: 0.5;
+        transition: all 0.25s;
+      }
+      .tour-thumb:hover {
+        opacity: 0.8;
+      }
+      .tour-thumb.active {
+        border-color: #3b82f6;
+        opacity: 1;
+      }
+      .tour-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .location-subtitle {
+        font-size: 1rem;
+        color: #64748b;
+        margin: 0 0 16px 0;
+      }
+      .property-map {
+        width: 100%;
+        height: 300px;
+        border-radius: 16px;
       }
 
       @media (max-width: 1024px) {
@@ -1161,19 +1593,28 @@ export class PropertyDetailComponent {
   private favoritesService = inject(FavoritesService);
   private dialog = inject(MatDialog);
   private toastService = inject(ToastService);
+  private reportService = inject(ReportService);
   private imageOptimizationService = inject(ImageOptimizationService);
 
   property = this.propertyService.currentProperty;
   loading = this.propertyService.loading;
   error = signal<string | null>(null);
-  currentImageIndex = signal(0);
+  currentImageIndex = signal<number>(0);
+  isLightboxOpen = signal<boolean>(false);
+  avatarLoadError = signal<boolean>(false);
+  isTourActive = signal<boolean>(false);
+  tourCurrentIndex = signal<number>(0);
+  isTourAutoplay = signal<boolean>(false);
+  isTourDragging = false;
+  private tourDragStartX = 0;
+  private tourAutoplayInterval: any = null;
   isFavorite = signal(false);
   similarProperties = signal<any[]>([]);
   isBumpingProperty = signal(false);
-  private readonly propertyId = toSignal(
-    this.route.paramMap.pipe(map((params) => params.get('id'))),
-    { initialValue: this.route.snapshot.paramMap.get('id') },
-  );
+
+  readonly propertyId = toSignal(this.route.paramMap.pipe(map((params) => params.get('id'))), {
+    initialValue: this.route.snapshot.paramMap.get('id'),
+  });
 
   getAmenityIcon(name: string): string {
     const icons: any = {
@@ -1204,11 +1645,156 @@ export class PropertyDetailComponent {
     const prop = this.property();
     if (prop?.images && prop.images.length > 0) {
       const image = prop.images[this.currentImageIndex()];
-      const url = image.url || image.imageUrl || '';
-      return this.imageOptimizationService.getOptimizedImage(url, 1200, 800);
+      return this.getFullImageUrl(image);
     }
-    return 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=1200&auto=format&fit=crop';
+    return 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop';
   });
+
+  getFullImageUrl(image: any): string {
+    const url = image?.url || image?.imageUrl || image?.mediumUrl || image?.thumbnailUrl || '';
+    if (!url) {
+      return 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1200&auto=format&fit=crop';
+    }
+
+    return this.imageOptimizationService.getOptimizedImage(url, 1200, 800);
+  }
+
+  getFullAvatarUrl(url: string | undefined): string {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return this.imageOptimizationService.getOptimizedImage(url, 200, 200);
+  }
+
+  openLightbox(index: number): void {
+    this.currentImageIndex.set(index);
+    this.isLightboxOpen.set(true);
+  }
+
+  closeLightbox(): void {
+    this.isLightboxOpen.set(false);
+  }
+
+  openReportDialog(): void {
+    if (!this.isAuthenticated()) {
+      this.toastService.info('Iltimos, shikoyat yuborish uchun tizimga kiring');
+      return;
+    }
+
+    const message = window.prompt('Iltimos shikoyat yoki muammoni qisqacha yozing:');
+    if (!message || !message.trim()) return;
+
+    const payload = { propertyId: this.property()!.id, message: message.trim() };
+    this.reportService.createReport(payload).subscribe({
+      next: () => this.toastService.success('Shikoyatingiz qabul qilindi. Rahmat!'),
+      error: () => this.toastService.error('Shikoyat yuborishda xatolik yuz berdi'),
+    });
+  }
+
+  startVirtualTour(): void {
+    const vt = this.property()?.virtualTourUrl;
+    if (vt) {
+      const url = vt.startsWith('http') ? vt : window.location.origin + vt;
+      window.open(url, '_blank');
+      return;
+    }
+
+    this.tourCurrentIndex.set(0);
+    this.isTourActive.set(true);
+    this.isTourAutoplay.set(true);
+    this.startTourAutoplay();
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeTour(): void {
+    this.isTourActive.set(false);
+    this.isTourAutoplay.set(false);
+    this.stopTourAutoplay();
+    document.body.style.overflow = '';
+  }
+
+  tourNext(): void {
+    const images = this.property()?.images;
+    if (!images) return;
+    this.tourCurrentIndex.set((this.tourCurrentIndex() + 1) % images.length);
+  }
+
+  tourPrev(): void {
+    const images = this.property()?.images;
+    if (!images) return;
+    this.tourCurrentIndex.set((this.tourCurrentIndex() - 1 + images.length) % images.length);
+  }
+
+  tourGoTo(index: number): void {
+    this.tourCurrentIndex.set(index);
+  }
+
+  toggleTourAutoplay(): void {
+    if (this.isTourAutoplay()) {
+      this.isTourAutoplay.set(false);
+      this.stopTourAutoplay();
+    } else {
+      this.isTourAutoplay.set(true);
+      this.startTourAutoplay();
+    }
+  }
+
+  private startTourAutoplay(): void {
+    this.stopTourAutoplay();
+    this.tourAutoplayInterval = setInterval(() => {
+      this.tourNext();
+    }, 3000);
+  }
+
+  private stopTourAutoplay(): void {
+    if (this.tourAutoplayInterval) {
+      clearInterval(this.tourAutoplayInterval);
+      this.tourAutoplayInterval = null;
+    }
+  }
+
+  onTourDragStart(event: MouseEvent): void {
+    this.isTourDragging = true;
+    this.tourDragStartX = event.clientX;
+    this.stopTourAutoplay();
+    this.isTourAutoplay.set(false);
+  }
+
+  onTourDragMove(event: MouseEvent): void {
+    if (!this.isTourDragging) return;
+    const diff = event.clientX - this.tourDragStartX;
+    if (Math.abs(diff) > 80) {
+      if (diff > 0) {
+        this.tourPrev();
+      } else {
+        this.tourNext();
+      }
+      this.tourDragStartX = event.clientX;
+    }
+  }
+
+  onTourDragEnd(): void {
+    this.isTourDragging = false;
+  }
+
+  onTourTouchStart(event: TouchEvent): void {
+    this.isTourDragging = true;
+    this.tourDragStartX = event.touches[0].clientX;
+    this.stopTourAutoplay();
+    this.isTourAutoplay.set(false);
+  }
+
+  onTourTouchMove(event: TouchEvent): void {
+    if (!this.isTourDragging) return;
+    const diff = event.touches[0].clientX - this.tourDragStartX;
+    if (Math.abs(diff) > 60) {
+      if (diff > 0) {
+        this.tourPrev();
+      } else {
+        this.tourNext();
+      }
+      this.tourDragStartX = event.touches[0].clientX;
+    }
+  }
 
   getThumbnailUrl(image: PropertyImage): string {
     const url = image.thumbnailUrl || image.url || image.imageUrl || '';
@@ -1297,7 +1883,9 @@ export class PropertyDetailComponent {
 
   showBathrooms(): boolean {
     const type = this.property()?.type;
-    return type !== PropertyType.Land && type !== PropertyType.Commercial && type !== PropertyType.Office;
+    return (
+      type !== PropertyType.Land && type !== PropertyType.Commercial && type !== PropertyType.Office
+    );
   }
 
   showGuests(): boolean {
@@ -1309,10 +1897,38 @@ export class PropertyDetailComponent {
     this.currentImageIndex.set(0);
 
     this.propertyService.getPropertyById(id).subscribe({
+      next: (prop) => {
+        setTimeout(() => this.initMap(prop), 500);
+      },
       error: () => {
         this.error.set("Mulk ma'lumotlarini yuklashda xatolik yuz berdi");
       },
     });
+  }
+
+  private map: L.Map | undefined;
+
+  initMap(prop: any): void {
+    const mapContainer = document.getElementById('property-detail-map');
+    if (!mapContainer || !prop.latitude || !prop.longitude) return;
+
+    if (this.map) {
+      this.map.remove();
+    }
+
+    this.map = L.map('property-detail-map').setView([prop.latitude, prop.longitude], 15);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(this.map);
+
+    const customIcon = L.divIcon({
+      className: 'custom-leaflet-marker',
+      html: `<div style="background: #2563eb; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"><i class="material-icons" style="font-size: 20px;">home</i></div>`,
+      iconSize: [40, 40],
+      iconAnchor: [20, 40],
+    });
+
+    L.marker([prop.latitude, prop.longitude], { icon: customIcon }).addTo(this.map);
   }
 
   loadSimilarProperties(id: string): void {
@@ -1358,7 +1974,7 @@ export class PropertyDetailComponent {
 
   getMainActionLabel(): string {
     const type = this.property()?.listingType;
-    if (type === ListingType.Sale) return 'Sotib olish';
+    if (type === ListingType.Sale) return "Uy egasi bilan bog'lanish";
     if (type === ListingType.Rent) return 'Ijaraga olish';
     return 'Sanani tanlash va Bron';
   }
@@ -1372,7 +1988,7 @@ export class PropertyDetailComponent {
     }
 
     const type = this.property()?.listingType;
-    if (type === ListingType.ShortTermRent) {
+    if (type === ListingType.ShortTermRent || type === ListingType.Rent) {
       const bookingPanel = document.querySelector('app-booking-panel');
       if (bookingPanel) {
         bookingPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1399,7 +2015,12 @@ export class PropertyDetailComponent {
           userAvatar: prop.hostAvatarUrl || '',
           propertyId: prop.id,
           propertyTitle: prop.title,
-          propertyImage: prop.images?.[0]?.url || '',
+          propertyImage:
+            prop.images?.[0]?.url ||
+            prop.images?.[0]?.imageUrl ||
+            prop.images?.[0]?.mediumUrl ||
+            prop.images?.[0]?.thumbnailUrl ||
+            '',
         },
       });
     } else {
@@ -1488,7 +2109,6 @@ export class PropertyDetailComponent {
   }
 
   onMainImageError(): void {
-    // If main image fails, try next image if available
     const prop = this.property();
     if (prop?.images && prop.images.length > 1) {
       this.nextImage();
@@ -1496,19 +2116,19 @@ export class PropertyDetailComponent {
   }
 
   onThumbnailError(index: number): void {
-    // Log but don't break - use fallback image
     console.warn(`Thumbnail at index ${index} failed to load`);
   }
 
   getSimilarPropertyImage(rel: any): string {
     const url =
       rel.images?.[0]?.url ||
+      rel.images?.[0]?.mediumUrl ||
       rel.images?.[0]?.thumbnailUrl ||
       rel.imageUrl ||
       rel.mainImageUrl ||
       '';
     if (!url)
-      return 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=400&auto=format&fit=crop';
+      return 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=400&auto=format&fit=crop';
     return this.imageOptimizationService.getOptimizedImage(url, 400, 300);
   }
 }

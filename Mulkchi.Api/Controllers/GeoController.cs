@@ -138,41 +138,29 @@ public class GeoController : ControllerBase
             new { name = "Yakkasaray", nameUz = "Yakkasaroy", nameRu = "Яккасарай", region = "Tashkent", lat = 41.2833, lng = 69.2500 },
             new { name = "Khamza", nameUz = "Hamza", nameRu = "Хамза", region = "Tashkent", lat = 41.2500, lng = 69.3000 },
 
-            // Samarkand districts
             new { name = "Registan", nameUz = "Registon", nameRu = "Регистан", region = "Samarkand", lat = 39.6542, lng = 66.9597 },
             new { name = "Khatunki", nameUz = "Xatunki", nameRu = "Хатунки", region = "Samarkand", lat = 39.6833, lng = 66.9833 },
 
-            // Bukhara districts
             new { name = "City Center", nameUz = "Shahar markazi", nameRu = "Центр города", region = "Bukhara", lat = 39.7686, lng = 64.4556 },
 
-            // Andijan districts
             new { name = "City Center", nameUz = "Shahar markazi", nameRu = "Центр города", region = "Andijan", lat = 40.7833, lng = 72.3500 },
 
-            // Fergana districts
             new { name = "City Center", nameUz = "Shahar markazi", nameRu = "Центр города", region = "Fergana", lat = 40.3894, lng = 71.7864 },
 
-            // Namangan districts
             new { name = "City Center", nameUz = "Shahar markazi", nameRu = "Центр города", region = "Namangan", lat = 40.9983, lng = 71.6726 },
 
-            // Kokand (Fergana region)
             new { name = "City Center", nameUz = "Shahar markazi", nameRu = "Центр города", region = "Kokand", lat = 40.5286, lng = 70.9425 },
 
-            // Nukus (Karakalpakstan)
             new { name = "City Center", nameUz = "Shahar markazi", nameRu = "Центр города", region = "Nukus", lat = 42.4531, lng = 59.6103 },
 
-            // Khiva (Khorezm)
             new { name = "City Center", nameUz = "Shahar markazi", nameRu = "Центр города", region = "Khiva", lat = 41.3783, lng = 60.3639 },
 
-            // Termez (Surkhandarya)
             new { name = "City Center", nameUz = "Shahar markazi", nameRu = "Центр города", region = "Termez", lat = 37.2242, lng = 67.2783 },
 
-            // Jizzakh
             new { name = "City Center", nameUz = "Shahar markazi", nameRu = "Центр города", region = "Jizzakh", lat = 40.1158, lng = 67.8422 },
 
-            // Navoi
             new { name = "City Center", nameUz = "Shahar markazi", nameRu = "Центр города", region = "Navoi", lat = 40.1031, lng = 65.3689 },
 
-            // Karshi (Kashkadarya)
             new { name = "City Center", nameUz = "Shahar markazi", nameRu = "Центр города", region = "Karshi", lat = 38.8606, lng = 65.7897 }
         };
     }

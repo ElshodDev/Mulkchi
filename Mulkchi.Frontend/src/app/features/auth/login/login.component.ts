@@ -188,7 +188,7 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
         gap: var(--space-5);
         min-height: 42rem;
         background:
-          linear-gradient(160deg, rgba(15, 118, 110, 0.94), rgba(15, 23, 42, 0.92)),
+          linear-gradient(160deg, rgba(126, 34, 206, 0.94), rgba(15, 23, 42, 0.95)),
           var(--color-surface-inverse);
         color: white;
       }
@@ -216,8 +216,8 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
       }
 
       .eyebrow--secondary {
-        background: rgba(15, 118, 110, 0.1);
-        color: var(--color-brand-600);
+        background: rgba(168, 85, 247, 0.1);
+        color: #c084fc;
       }
 
       h1,
@@ -394,7 +394,6 @@ export class LoginComponent {
         err.error?.error?.message || err.error?.message || 'Kod yuborishda xatolik yuz berdi.';
       this.errorMessage.set(message);
 
-      // Agar xatolik ichida kod bo'lsa (DEV rejim), "Sehrli" kirishni amalga oshiramiz
       if (message.includes('DEV REJIM UCHUN KOD:')) {
         const sessionIdMatch = message.match(/SESSION: ([\w-]+)/);
         const codeMatch = message.match(/KOD: (\d+)/);
@@ -404,7 +403,6 @@ export class LoginComponent {
           this.otpForm.patchValue({ code: codeMatch[1] });
           this.step.set(2);
 
-          // 1 soniyadan keyin avtomatik tasdiqlash (foydalanuvchi nima bo'lganini ko'rib ulgurishi uchun)
           setTimeout(() => this.onOtpSubmit(), 1000);
         }
       }

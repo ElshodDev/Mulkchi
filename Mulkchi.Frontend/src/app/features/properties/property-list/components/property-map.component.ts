@@ -172,7 +172,6 @@ export class PropertyMapComponent implements AfterViewInit, OnDestroy, OnChanges
   }
 
   ngAfterViewInit(): void {
-    // Delay initialization slightly to ensure the container is ready
     setTimeout(() => this.initializeMap(), 100);
   }
 
@@ -185,13 +184,11 @@ export class PropertyMapComponent implements AfterViewInit, OnDestroy, OnChanges
   private initializeMap(): void {
     if (this.map) return;
 
-    // Initialize map
     this.map = L.map('map', {
       scrollWheelZoom: true,
       zoomControl: true,
     }).setView(this.center, 12);
 
-    // Add OpenStreetMap tiles
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; Mulkchi Maps',
     }).addTo(this.map);
@@ -202,7 +199,6 @@ export class PropertyMapComponent implements AfterViewInit, OnDestroy, OnChanges
   private addMarkers(): void {
     if (!this.map) return;
 
-    // Clear existing markers
     this.markers.forEach((marker) => marker.remove());
     this.markers = [];
 
@@ -235,7 +231,6 @@ export class PropertyMapComponent implements AfterViewInit, OnDestroy, OnChanges
       }
     });
 
-    // Auto-fit bounds if we have markers
     if (bounds.length > 0) {
       this.map.fitBounds(L.latLngBounds(bounds).pad(0.2));
     }
@@ -246,12 +241,12 @@ export class PropertyMapComponent implements AfterViewInit, OnDestroy, OnChanges
     const imageUrl =
       property.images && property.images.length > 0
         ? property.images[0].url
-        : 'https://placehold.co/600x400/0f172a/c9a84c?text=Mulk';
+        : 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop';
 
     return `
       <div class="property-popup">
         <div class="popup-image">
-          <img src="${imageUrl}" alt="${property.title}" onerror="this.src='https://placehold.co/600x400/0f172a/c9a84c?text=Mulk'">
+          <img src="${imageUrl}" alt="${property.title}" onerror="this.src='https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop'">
         </div>
         <div class="popup-title">${property.title}</div>
         <div class="popup-price">${price}</div>

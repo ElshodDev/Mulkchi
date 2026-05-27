@@ -229,18 +229,16 @@ public partial class AuthService
             (text.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) &&
              text.Contains("dbo.Users", StringComparison.OrdinalIgnoreCase));
 
-        // Database-agnostic duplicate key check (works with SQL Server and PostgreSQL)
         if (dbUpdateException.InnerException is DbException dbEx)
         {
-            // Check for common duplicate key error indicators in the message
             string message = dbEx.Message ?? "";
             if (IsUsersEmailConstraintText(message) ||
                 message.Contains("unique constraint", StringComparison.OrdinalIgnoreCase) ||
                 message.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) ||
                 message.Contains("already exists", StringComparison.OrdinalIgnoreCase) ||
-                message.Contains("2601", StringComparison.OrdinalIgnoreCase) || // SQL Server
-                message.Contains("2627", StringComparison.OrdinalIgnoreCase) || // SQL Server
-                message.Contains("23505", StringComparison.OrdinalIgnoreCase))   // PostgreSQL
+                message.Contains("2601", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("2627", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("23505", StringComparison.OrdinalIgnoreCase))  
             {
                 return true;
             }

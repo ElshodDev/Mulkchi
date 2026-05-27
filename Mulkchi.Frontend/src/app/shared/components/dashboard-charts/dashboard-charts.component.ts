@@ -340,7 +340,6 @@ export interface TimeSeriesData {
         color: #666;
       }
 
-      // Mini Stats
       .mini-stats-grid {
         grid-column: span 3;
         display: grid;
@@ -455,7 +454,6 @@ export class DashboardChartsComponent implements OnInit {
   @Input() title = 'Umumiy statistika';
   @Input() selectedPeriod = '30';
 
-  // Stats data
   totalBookings = 128;
   bookingTrend = 12.5;
   totalRevenue = 12500000;
@@ -465,13 +463,11 @@ export class DashboardChartsComponent implements OnInit {
   conversionRate = 3.8;
   conversionTrend = -2.1;
 
-  // Chart counts
   pendingCount = 24;
   confirmedCount = 85;
   completedCount = 42;
   cancelledCount = 8;
 
-  // Line Chart Data - Bookings Trend
   lineChartData: ChartData<'line'> = {
     labels: ['Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan', 'Yak'],
     datasets: [
@@ -528,7 +524,6 @@ export class DashboardChartsComponent implements OnInit {
     },
   };
 
-  // Doughnut Chart Data - Status Distribution
   doughnutChartData: ChartData<'doughnut'> = {
     labels: ['Kutilmoqda', 'Tasdiqlangan', 'Yakunlangan', 'Bekor qilingan'],
     datasets: [
@@ -551,7 +546,6 @@ export class DashboardChartsComponent implements OnInit {
     },
   };
 
-  // Bar Chart Data - Revenue by Property
   barChartData: ChartData<'bar'> = {
     labels: ['Yunusobod', "Mirzo-Ulug'bek", 'Shayxontohur', 'Yakkasaroy', 'Chilonzor'],
     datasets: [
@@ -588,7 +582,6 @@ export class DashboardChartsComponent implements OnInit {
     },
   };
 
-  // Radar Chart - Property Ratings
   radarChartData: ChartData<'radar'> = {
     labels: ['Tozalik', 'Joylashuv', 'Xizmat', 'Narx', 'Qulaylik', 'Xavfsizlik'],
     datasets: [
@@ -625,22 +618,17 @@ export class DashboardChartsComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    // Load real data here
     this.loadChartData();
   }
 
   loadChartData(): void {
-    // In a real app, this would fetch data from an API
-    // For now, we're using the sample data defined above
   }
 
   onPeriodChange(period: any): void {
     this.selectedPeriod = period.value;
-    // Reload chart data based on selected period
     this.loadChartData();
   }
 
-  // Helper method to update chart data
   updateLineChartData(newData: number[][]): void {
     this.lineChartData.datasets[0].data = newData[0];
     this.lineChartData.datasets[1].data = newData[1];

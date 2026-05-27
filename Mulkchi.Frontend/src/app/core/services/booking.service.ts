@@ -17,14 +17,12 @@ import {
 export class BookingService {
   private readonly apiUrl = `${environment.apiUrl}/bookings`;
 
-  // Signals for state management
   private readonly _bookings = signal<Booking[]>([]);
   private readonly _currentBooking = signal<Booking | null>(null);
   private readonly _activeHold = signal<BookingHold | null>(null);
   private readonly _loading = signal<boolean>(false);
   private readonly _availabilityCalendar = signal<Record<string, boolean>>({});
 
-  // Public readonly signals
   readonly bookings = () => this._bookings();
   readonly currentBooking = () => this._currentBooking();
   readonly activeHold = () => this._activeHold();
@@ -33,7 +31,6 @@ export class BookingService {
 
   constructor(private http: HttpClient) {}
 
-  // Get my bookings (Guest)
   getMyBookings(page = 1, pageSize = 20): Observable<PagedResult<Booking>> {
     this._loading.set(true);
 
@@ -62,7 +59,6 @@ export class BookingService {
     );
   }
 
-  // Get host bookings (Host)
   getHostBookings(
     page = 1,
     pageSize = 20,
@@ -95,7 +91,6 @@ export class BookingService {
     );
   }
 
-  // Get booking by ID
   getBookingById(id: string): Observable<Booking> {
     this._loading.set(true);
 
@@ -111,19 +106,16 @@ export class BookingService {
     );
   }
 
-  // Create booking
   createBooking(request: CreateBookingRequest): Observable<Booking> {
     return this.http.post<Booking>(this.apiUrl, request).pipe(
       tap((booking) => {
         this._currentBooking.set(booking);
-        // Clear active hold after booking
         this._activeHold.set(null);
       }),
       catchError((error) => throwError(() => error)),
     );
   }
 
-  // Confirm booking (Host)
   confirmBooking(id: string): Observable<Booking> {
     return this.http.post<Booking>(`${this.apiUrl}/${id}/confirm`, {}).pipe(
       tap((booking) => this._currentBooking.set(booking)),
@@ -131,7 +123,6 @@ export class BookingService {
     );
   }
 
-  // Cancel booking
   cancelBooking(id: string, reason?: string): Observable<Booking> {
     return this.http.post<Booking>(`${this.apiUrl}/${id}/cancel`, { reason }).pipe(
       tap((booking) => this._currentBooking.set(booking)),
@@ -139,7 +130,6 @@ export class BookingService {
     );
   }
 
-  // Create booking hold (10 minutes reservation)
   createHold(request: CreateHoldRequest): Observable<BookingHold> {
     return this.http.post<BookingHold>(`${this.apiUrl}/hold`, request).pipe(
       tap((hold) => this._activeHold.set(hold)),
@@ -147,7 +137,6 @@ export class BookingService {
     );
   }
 
-  // Cancel booking hold
   cancelHold(holdId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/hold/${holdId}`).pipe(
       tap(() => this._activeHold.set(null)),
@@ -155,7 +144,6 @@ export class BookingService {
     );
   }
 
-  // Check property availability
   checkAvailability(
     propertyId: string,
     year: number,

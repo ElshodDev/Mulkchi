@@ -67,7 +67,6 @@ public class MessagesController : ControllerBase
         {
             Message addedMessage = await this.messageService.AddMessageAsync(message);
 
-            // Broadcast message via ChatHub
             await this.chatHub.Clients.User(message.ReceiverId.ToString())
                 .SendAsync("ReceiveMessage", new
                 {
@@ -340,7 +339,6 @@ public class MessagesController : ControllerBase
         }
     }
 
-    // Read status endpoints
     [HttpPut("{id:guid}/read")]
     [Authorize]
     public async ValueTask<ActionResult> MarkAsReadAsync(Guid id)
@@ -355,7 +353,6 @@ public class MessagesController : ControllerBase
             if (message is null)
                 return NotFound(new { message = "Message not found." });
 
-            // Only receiver can mark as read
             if (message.ReceiverId != userId)
                 return Forbid();
 

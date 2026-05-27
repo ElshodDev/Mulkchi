@@ -15,7 +15,6 @@ public class UserResponse
     public bool IsVerified { get; set; }
     public DateTimeOffset CreatedDate { get; set; }
 
-    // Optional metrics
     public int PropertiesCount { get; set; }
     public decimal AverageRating { get; set; }
     public string? PreferredLanguage { get; set; }

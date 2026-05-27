@@ -12,19 +12,10 @@ using Mulkchi.Api.Services.Foundations.Payments;
 
 namespace Mulkchi.Api.Controllers;
 
-/// <summary>
-/// Click (click.uz) merchant API webhook handler.
-/// Docs: https://docs.click.uz/click-api-request/
-/// 
-/// Click sends two sequential POST requests to the merchant:
-///   action=0 (Prepare)  — validate the order before taking money
-///   action=1 (Complete) — confirm or deny after the payment is made
-/// </summary>
 [ApiController]
 [Route("api/click")]
 public class ClickController : ControllerBase
 {
-    // ── Click error codes ──────────────────────────────────────────────────────
     private const int ErrOk = 0;
     private const int ErrSignatureMismatch = -1;
     private const int ErrOrderNotFound = -5;
@@ -33,7 +24,6 @@ public class ClickController : ControllerBase
     private const int ErrInvalidAmount = -2;
     private static readonly TimeSpan MaxWebhookSkew = TimeSpan.FromMinutes(5);
 
-    // Maximum allowed difference between Click-reported and stored amounts (UZS)
     private const double AmountToleranceUzs = 0.01;
 
     private readonly IPaymentService paymentService;
@@ -50,7 +40,6 @@ public class ClickController : ControllerBase
         this.finalizePaymentWebhookHandler = finalizePaymentWebhookHandler;
     }
 
-    /// <summary>Prepare: action=0 — called before deducting funds.</summary>
     [HttpPost("prepare")]
     public async Task<IActionResult> PrepareAsync([FromForm] ClickRequest request)
     {
@@ -61,7 +50,6 @@ public class ClickController : ControllerBase
             MerchantPrepareId = 0
         };
 
-        // 1. Verify signature
         if (!VerifySignature(request, isPrepare: true))
         {
             response.Error = ErrSignatureMismatch;
@@ -69,7 +57,6 @@ public class ClickController : ControllerBase
             return Ok(response);
         }
 
-        // 2. Find the order (merchant_trans_id = our Payment.Id)
         if (!Guid.TryParse(request.MerchantTransId, out var paymentId))
         {
             response.Error = ErrOrderNotFound;
@@ -85,7 +72,6 @@ public class ClickController : ControllerBase
             return Ok(response);
         }
 
-        // 3. Validate amount (Click sends in UZS, no conversion needed)
         if (Math.Abs(request.Amount - (double)payment.Amount) > AmountToleranceUzs)
         {
             response.Error = ErrInvalidAmount;
@@ -93,7 +79,6 @@ public class ClickController : ControllerBase
             return Ok(response);
         }
 
-        // 4. Already fully paid?
         if (payment.Status == PaymentStatus.Completed)
         {
             response.Error = ErrAlreadyPaid;
@@ -108,7 +93,6 @@ public class ClickController : ControllerBase
             return Ok(response);
         }
 
-        // 5. Mark as processing, store Click's transaction id
         payment.ExternalTransactionId = request.ClickTransId.ToString();
         payment.Status = PaymentStatus.Processing;
         payment.Method = PaymentMethod.Click;
@@ -121,7 +105,6 @@ public class ClickController : ControllerBase
         return Ok(response);
     }
 
-    /// <summary>Complete: action=1 — called after funds are deducted.</summary>
     [HttpPost("complete")]
     public async Task<IActionResult> CompleteAsync([FromForm] ClickRequest request)
     {
@@ -132,7 +115,6 @@ public class ClickController : ControllerBase
             MerchantConfirmId = 0
         };
 
-        // 1. Verify signature
         if (!VerifySignature(request, isPrepare: false))
         {
             response.Error = ErrSignatureMismatch;
@@ -140,7 +122,6 @@ public class ClickController : ControllerBase
             return Ok(response);
         }
 
-        // 2. Find the order
         if (!Guid.TryParse(request.MerchantTransId, out var paymentId))
         {
             response.Error = ErrOrderNotFound;
@@ -156,7 +137,6 @@ public class ClickController : ControllerBase
             return Ok(response);
         }
 
-        // 3. Cancelled by the payment system (error > 0 means user cancelled)
         if (request.Error > 0)
         {
             payment = await this.finalizePaymentWebhookHandler.HandleAsync(
@@ -170,7 +150,6 @@ public class ClickController : ControllerBase
             return Ok(response);
         }
 
-        // 4. Already done
         if (payment.Status == PaymentStatus.Completed)
         {
             response.Error = ErrAlreadyPaid;
@@ -178,7 +157,6 @@ public class ClickController : ControllerBase
             return Ok(response);
         }
 
-        // 5. Complete the payment
         payment = await this.finalizePaymentWebhookHandler.HandleAsync(
             new FinalizePaymentWebhookCommand(
                 request.ClickTransId.ToString(),
@@ -191,11 +169,7 @@ public class ClickController : ControllerBase
         return Ok(response);
     }
 
-    // ── Signature verification ─────────────────────────────────────────────────
 
-    /// <summary>
-    /// Click signs every request with MD5(click_trans_id + service_id + secret_key + merchant_trans_id + amount + action + sign_time).
-    /// </summary>
     private bool VerifySignature(ClickRequest req, bool isPrepare)
     {
         if (!long.TryParse(req.SignTime, out var signUnix))
@@ -218,7 +192,6 @@ public class ClickController : ControllerBase
     }
 }
 
-// ── DTOs ──────────────────────────────────────────────────────────────────────
 
 public class ClickRequest
 {

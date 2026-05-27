@@ -42,7 +42,6 @@ namespace Mulkchi.Api.Controllers
         {
             try
             {
-                // Admin can view all if needed, mapped inside service
                 var (items, total) = await this.bookingService.RetrieveBookingsAsync(queryParams);
 
                 var result = new PagedResult<BookingResponse>
@@ -72,7 +71,7 @@ namespace Mulkchi.Api.Controllers
                 if (userIdClaim == null || !Guid.TryParse(userIdClaim, out Guid currentUserId))
                     return Unauthorized();
 
-                queryParams.UserId = currentUserId; // Set internally for Guest lookup
+                queryParams.UserId = currentUserId;
                 queryParams.IsHostView = false;
 
                 var (items, total) = await this.bookingService.RetrieveBookingsAsync(queryParams);
@@ -100,14 +99,13 @@ namespace Mulkchi.Api.Controllers
         {
             try
             {
-                // Check if user is in Guest role and provide helpful error message
                 var userRole = User.FindFirstValue(ClaimTypes.Role);
                 if (userRole == "Guest")
                 {
-                    return Forbid(); // Returns 403 with clear indication that role upgrade is needed
+                    return Forbid();
                 }
 
-                queryParams.IsHostView = true; // Tell service to filter by Host
+                queryParams.IsHostView = true;
 
                 var (items, total) = await this.bookingService.RetrieveBookingsAsync(queryParams);
 

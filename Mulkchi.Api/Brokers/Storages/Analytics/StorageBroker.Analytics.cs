@@ -5,17 +5,12 @@ namespace Mulkchi.Api.Brokers.Storages;
 
 public partial class StorageBroker
 {
-    // Analytics DbSets
     public DbSet<DistrictStat> DistrictStats { get; set; }
     public DbSet<MarketTrend> MarketTrends { get; set; }
     public DbSet<PriceHistory> PriceHistories { get; set; }
 
-    /// <summary>
-    /// Configure analytics models with indexes and relationships
-    /// </summary>
     private static void ConfigureAnalytics(ModelBuilder modelBuilder)
     {
-        // DistrictStat configuration
         modelBuilder.Entity<DistrictStat>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -28,7 +23,6 @@ public partial class StorageBroker
                   .HasDatabaseName("IX_DistrictStats_OverallScore");
         });
 
-        // MarketTrend configuration
         modelBuilder.Entity<MarketTrend>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -39,7 +33,6 @@ public partial class StorageBroker
                   .HasDatabaseName("IX_MarketTrends_CalculatedAt");
         });
 
-        // PriceHistory configuration
         modelBuilder.Entity<PriceHistory>(entity =>
         {
             entity.HasKey(e => e.Id);

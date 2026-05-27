@@ -165,7 +165,7 @@ import * as L from 'leaflet';
 export class PropertyLocationMapComponent implements AfterViewInit, OnDestroy, OnChanges {
   @ViewChild('map', { static: true }) mapElement!: ElementRef;
 
-  @Input() latitude = 41.2995; // Tashkent default
+  @Input() latitude = 41.2995;
   @Input() longitude = 69.2401;
   @Input() zoom = 13;
   @Input() showControls = true;
@@ -199,7 +199,6 @@ export class PropertyLocationMapComponent implements AfterViewInit, OnDestroy, O
   }
 
   private initMap(): void {
-    // Fix Leaflet default icon path issue
 
     delete (L.Icon.Default.prototype as any)._getIconUrl;
     L.Icon.Default.mergeOptions({
@@ -208,7 +207,6 @@ export class PropertyLocationMapComponent implements AfterViewInit, OnDestroy, O
       shadowUrl: 'assets/marker-shadow.png',
     });
 
-    // Create map
     const mapId = this.mapElement.nativeElement.id || 'map';
     this.map = L.map(mapId || this.mapElement.nativeElement, {
       center: [this.latitude, this.longitude],
@@ -217,27 +215,23 @@ export class PropertyLocationMapComponent implements AfterViewInit, OnDestroy, O
       attributionControl: false,
     });
 
-    // Add OpenStreetMap tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '© OpenStreetMap contributors',
     }).addTo(this.map);
 
-    // Add attribution control at bottom right
     L.control
       .attribution({
         position: 'bottomright',
       })
       .addTo(this.map);
 
-    // Add marker
     this.addMarker();
 
     this.map.on('click', (event: L.LeafletMouseEvent) => {
       this.updateLocation(event.latlng.lat, event.latlng.lng);
     });
 
-    // Make draggable if enabled
     if (this.draggable && this.marker) {
       this.marker.dragging?.enable();
       this.marker.on('dragend', (e) => {
@@ -252,7 +246,6 @@ export class PropertyLocationMapComponent implements AfterViewInit, OnDestroy, O
   private addMarker(): void {
     if (!this.map) return;
 
-    // Use price bubble marker if price is provided, otherwise use standard marker
     const customIcon = this.price ? this.createPriceBubbleMarker() : this.createStandardMarker();
 
     this.marker = L.marker([this.latitude, this.longitude], {
@@ -260,7 +253,6 @@ export class PropertyLocationMapComponent implements AfterViewInit, OnDestroy, O
       draggable: this.draggable,
     }).addTo(this.map);
 
-    // Add popup
     if (this.showPopup) {
       const popupContent = `
         <div class="popup-content">

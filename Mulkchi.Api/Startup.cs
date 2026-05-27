@@ -122,8 +122,8 @@ public class Startup
                 };
             });
         services.AddEndpointsApiExplorer();
-        services.AddHttpContextAccessor(); // Add HttpContextAccessor
-        services.AddHttpClient(); // Add IHttpClientFactory
+        services.AddHttpContextAccessor();
+        services.AddHttpClient();
         services.AddHttpClient("OpenStreetMap", client =>
         {
             client.BaseAddress = new Uri("https://overpass-api.de/api/");
@@ -131,12 +131,10 @@ public class Startup
             client.DefaultRequestHeaders.Add("User-Agent", "Mulkchi Real Estate Platform");
         });
 
-        // In-process response cache for public analytics / search endpoints
         services.AddResponseCaching();
         services.AddMemoryCache();
         services.AddCustomDistributedCache(redisConnection);
 
-        // Add FluentValidation
         services.AddFluentValidationAutoValidation();
         services.AddFluentValidationClientsideAdapters();
         services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
@@ -154,10 +152,8 @@ public class Startup
         services.AddSingleton<IUserIdProvider, JwtUserIdProvider>();
         services.AddCorsConfiguration(this.configuration);
 
-        // Add localization
         services.AddLocalization(options => options.ResourcesPath = "Resources");
 
-        // Add health checks
         services.AddHealthChecks()
             .AddDbContextCheck<StorageBroker>(name: "database")
             .AddCheck("file-storage", () => HealthCheckResult.Healthy());
@@ -172,15 +168,13 @@ public class Startup
         }
 
         app.UseHttpsRedirection();
-        app.UseStaticFiles(); // Enable static file serving
+        app.UseStaticFiles();
         app.UseMiddleware<CorrelationIdMiddleware>();
         app.UseMiddleware<RequestLoggingMiddleware>();
         app.UseSecurityHeaders();
 
-        // Add global exception handling
         app.UseGlobalExceptionHandling();
 
-        // Add request localization
         var supportedCultures = new[] { "uz", "ru", "en" };
         app.UseRequestLocalization(new RequestLocalizationOptions
         {
@@ -193,7 +187,6 @@ public class Startup
             }
         });
 
-        // Add Hangfire dashboard (development only)
         if (env.IsDevelopment())
         {
             app.UseHangfireDashboard("/hangfire");
@@ -202,14 +195,12 @@ public class Startup
         app.UseRouting();
         app.UseCors(env.IsDevelopment() ? "AllowAngular" : "Production");
 
-        // Add rate limiting middleware AFTER CORS so 429 responses get CORS headers
         app.UseMiddleware<RateLimitMiddleware>();
 
         app.UseResponseCaching();
         app.UseAuthentication();
         app.UseAuthorization();
 
-        // Add health check endpoints
         app.UseHealthChecks("/health", new HealthCheckOptions
         {
             ResponseWriter = WriteHealthCheckResponse
@@ -234,24 +225,21 @@ public class Startup
             endpoints.MapHub<NotificationHub>("/hubs/notifications");
         });
 
-        // Schedule recurring Hangfire jobs
         ScheduleRecurringJobs();
     }
 
     private void ScheduleRecurringJobs()
     {
-        // Schedule subscription renewal daily at 2 AM UTC
         RecurringJob.AddOrUpdate<SubscriptionRenewalService>(
             "subscription-renewal",
             x => x.RenewExpiredSubscriptionsAsync(),
-            "0 2 * * *", // 2 AM daily
+            "0 2 * * *",
             timeZone: TimeZoneInfo.Utc);
 
-        // Schedule expiration reminders daily at 8 AM UTC
         RecurringJob.AddOrUpdate<SubscriptionRenewalService>(
             "subscription-expiration-reminders",
             x => x.SendExpirationRemindersAsync(),
-            "0 8 * * *", // 8 AM daily
+            "0 8 * * *",
             timeZone: TimeZoneInfo.Utc);
     }
 

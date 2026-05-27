@@ -305,9 +305,6 @@ public class AnalyticsController : ControllerBase
 
     #region Smart Property Analysis
 
-    /// <summary>
-    /// Analyze a property to determine if it's overpriced or underpriced
-    /// </summary>
     [HttpGet("property-analysis/{propertyId}")]
     [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Any, NoStore = false)]
     public async Task<ActionResult<PropertyAnalysisResult>> AnalyzeProperty(Guid propertyId)
@@ -328,9 +325,6 @@ public class AnalyticsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Get best deals - properties significantly below market price
-    /// </summary>
     [HttpGet("smart-filters/best-deals")]
     [ResponseCache(Duration = 600, Location = ResponseCacheLocation.Any, NoStore = false)]
     public async Task<ActionResult<List<PropertyDealScore>>> GetBestDeals([FromQuery] int limit = 10)
@@ -347,9 +341,6 @@ public class AnalyticsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Get high ROI properties - good for rental investment
-    /// </summary>
     [HttpGet("smart-filters/high-roi")]
     [ResponseCache(Duration = 600, Location = ResponseCacheLocation.Any, NoStore = false)]
     public async Task<ActionResult<List<PropertyDealScore>>> GetHighRoiProperties([FromQuery] int limit = 10)
@@ -366,9 +357,6 @@ public class AnalyticsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Get fast selling properties - high demand indicators
-    /// </summary>
     [HttpGet("smart-filters/fast-selling")]
     [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Any, NoStore = false)]
     public async Task<ActionResult<List<PropertyDealScore>>> GetFastSellingProperties([FromQuery] int limit = 10)
@@ -385,9 +373,6 @@ public class AnalyticsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Get all smart filters in one call
-    /// </summary>
     [HttpGet("smart-filters/all")]
     [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Any, NoStore = false)]
     public async Task<ActionResult> GetAllSmartFilters([FromQuery] int limit = 10)
@@ -423,9 +408,6 @@ public class AnalyticsController : ControllerBase
 
     #region Location Intelligence
 
-    /// <summary>
-    /// Get location living score and metrics
-    /// </summary>
     [HttpGet("location-score")]
     [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any, NoStore = false)]
     public async Task<ActionResult<LocationScore>> GetLocationScore(
@@ -449,9 +431,6 @@ public class AnalyticsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Get detailed insights about a location
-    /// </summary>
     [HttpGet("location-insights")]
     [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any, NoStore = false)]
     public async Task<ActionResult<List<LocationInsight>>> GetLocationInsights(
@@ -475,9 +454,6 @@ public class AnalyticsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Compare multiple districts
-    /// </summary>
     [HttpPost("district-comparison")]
     [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any, NoStore = false)]
     public async Task<ActionResult> CompareDistricts([FromBody] string[] districts)
@@ -503,9 +479,6 @@ public class AnalyticsController : ControllerBase
 
     #region Price Intelligence
 
-    /// <summary>
-    /// Predict property price based on market data
-    /// </summary>
     [HttpGet("price-prediction/{propertyId}")]
     [ResponseCache(Duration = 600, Location = ResponseCacheLocation.Any, NoStore = false)]
     public async Task<ActionResult<PricePrediction>> PredictPropertyPrice(Guid propertyId)
@@ -526,9 +499,6 @@ public class AnalyticsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Get price trend forecast for a location
-    /// </summary>
     [HttpGet("price-forecast")]
     [ResponseCache(Duration = 1800, Location = ResponseCacheLocation.Any, NoStore = false)]
     public async Task<ActionResult<PriceTrendForecast>> GetPriceForecast(

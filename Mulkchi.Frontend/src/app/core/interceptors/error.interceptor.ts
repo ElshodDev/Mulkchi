@@ -7,7 +7,6 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
 
-/** API paths where 404 should NOT navigate to /not-found page */
 const SKIP_404_NAVIGATION_PATHS = [
   '/properties/',
   '/users/',
@@ -94,7 +93,6 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       } else if (error.status === 403) {
         void router.navigate(['/forbidden']);
       } else if (error.status === 404 && isApiRequest && !isDataEndpoint404(req.url)) {
-        // Only navigate to not-found for page-level 404s, not API data errors
         void router.navigate(['/not-found']);
       } else if (error.status >= 500) {
         toastService.error("Kutilmagan xatolik yuz berdi. Bir ozdan keyin qayta urinib ko'ring.");

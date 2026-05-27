@@ -90,7 +90,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
         gap: 20px;
       }
 
-      /* --- LEFT SECTION --- */
       .pagination-left {
         display: flex;
         align-items: center;
@@ -115,7 +114,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
         font-weight: 500;
       }
 
-      /* --- CENTER SECTION --- */
       .pagination-center {
         display: flex;
         align-items: center;
@@ -167,7 +165,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
         box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
       }
 
-      /* --- RIGHT SECTION --- */
       .pagination-right {
         display: flex;
         align-items: center;
@@ -192,7 +189,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
         outline: none;
       }
 
-      /* --- ANIMATION --- */
       .animate-fade-in {
         animation: fadeIn 0.6s ease-out;
       }

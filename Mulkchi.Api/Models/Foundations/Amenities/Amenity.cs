@@ -3,10 +3,10 @@ namespace Mulkchi.Api.Models.Foundations.Amenities;
 public class Amenity
 {
     public Guid Id { get; set; }
-    public string Name { get; set; } // "WiFi", "Parking" etc
-    public string NameUz { get; set; } // O'zbek tili
-    public string NameRu { get; set; } // Rus tili
-    public string Icon { get; set; } // icon name e.g. "wifi", "car"
+    public string Name { get; set; }
+    public string NameUz { get; set; }
+    public string NameRu { get; set; }
+    public string Icon { get; set; }
     public AmenityCategory Category { get; set; }
     public bool IsActive { get; set; }
     public int DisplayOrder { get; set; }
@@ -16,11 +16,11 @@ public class Amenity
 
 public enum AmenityCategory
 {
-    Basic = 1,       // WiFi, Electricity, Water
-    Comfort = 2,     // AC, Heating, Washing Machine
-    Kitchen = 3,     // Refrigerator, Dishwasher, Microwave
-    Bedroom = 4,     // Wardrobe, TV
-    Building = 5,    // Elevator, Parking, Security
-    Outdoor = 6,     // Balcony, Garden, Pool
-    Policy = 7       // PetFriendly, SmokingAllowed
+    Basic = 1,      
+    Comfort = 2,    
+    Kitchen = 3,    
+    Bedroom = 4,    
+    Building = 5,   
+    Outdoor = 6,    
+    Policy = 7      
 }

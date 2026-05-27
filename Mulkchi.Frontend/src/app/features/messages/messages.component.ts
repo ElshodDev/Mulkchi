@@ -107,6 +107,16 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
   conversations = this.chatService.conversations;
   activeConversation = this.chatService.activeConversation;
   currentMessages = this.chatService.currentMessages;
+  typingUsers = this.chatService.typingUsers;
+
+  quickReplies = [
+    "Ushbu mulk hali ham bo'shmi?",
+    "Narxini kelishsak bo'ladimi?",
+    "Qachon borib ko'rsam bo'ladi?",
+    "Qo'shimcha rasmlari bormi?"
+  ];
+  
+  private typingTimeout: any;
 
   filteredConversations = computed(() => {
     const query = this.searchQuery.toLowerCase().trim();
@@ -195,11 +205,25 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
       };
 
       this.chatService.setActiveConversation(tempConv);
+      if (propertyId && propertyTitle) {
+        this.propertyContext.set({ id: propertyId, title: propertyTitle, image: propertyImage || '' });
+      } else {
+        this.propertyContext.set(null);
+      }
     }
   }
 
   selectConversation(conversation: Conversation): void {
     this.chatService.setActiveConversation(conversation);
+    if (conversation.propertyId && conversation.propertyTitle) {
+      this.propertyContext.set({ 
+        id: conversation.propertyId, 
+        title: conversation.propertyTitle, 
+        image: conversation.propertyImage || '' 
+      });
+    } else {
+      this.propertyContext.set(null);
+    }
     this.shouldScroll.set(true);
     setTimeout(() => this.resetInputHeight(), 0);
   }
@@ -247,6 +271,11 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
     }
   }
 
+  sendQuickReply(text: string): void {
+    this.newMessageText = text;
+    this.sendMessage();
+  }
+
   handleEnter(event: Event): void {
     const keyboardEvent = event as KeyboardEvent;
     if (!keyboardEvent.shiftKey) {
@@ -269,7 +298,17 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
   }
 
   formatTime(date: Date | string): string {
-    return ChatUtils.formatTime(date);
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  onImgError(event: any): void {
+    event.target.src = 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop';
+  }
+
+  onAvatarError(event: any): void {
+    event.target.style.display = 'none';
   }
 
   shouldShowDateDivider(index: number): boolean {
@@ -308,11 +347,52 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
   }
 
   onTyping(): void {
-    // typing logic
+    const activeConv = this.activeConversation();
+    if (!activeConv) return;
+    
+    this.chatService.sendTypingIndicator(activeConv.otherUserId, true);
+    
+    if (this.typingTimeout) {
+      clearTimeout(this.typingTimeout);
+    }
+    
+    this.typingTimeout = setTimeout(() => {
+      this.chatService.sendTypingIndicator(activeConv.otherUserId, false);
+    }, 2000);
   }
 
   attachFile(): void {
-    this.snackBar.open('Fayl biriktirish funksiyasi tez kunda!', 'OK', { duration: 2000 });
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*,.pdf,.doc,.docx';
+    
+    fileInput.onchange = async (e: any) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const activeConv = this.activeConversation();
+      if (!activeConv) return;
+
+      this.isSending.set(true);
+      try {
+        const response = await this.chatService.uploadAttachment(file).toPromise();
+        if (response) {
+          await this.chatService.sendFileMessage(
+            activeConv.otherUserId,
+            response.fileUrl,
+            response.fileName,
+            activeConv.propertyId
+          );
+          this.shouldScroll.set(true);
+        }
+      } catch (error) {
+        this.snackBar.open("Fayl yuklashda xatolik yuz berdi.", 'Yopish', { duration: 3000 });
+      } finally {
+        this.isSending.set(false);
+      }
+    };
+    
+    fileInput.click();
   }
 
   viewPropertyById(id: string | undefined): void {

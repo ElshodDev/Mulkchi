@@ -6,6 +6,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ComparisonService } from '../../services/comparison.service';
 import { AuthStore } from '../../stores/auth.store';
 import { NavbarComponent } from '../navbar/navbar.component';
+import { FooterComponent } from '../footer/footer.component';
 
 @Component({
   selector: 'app-layout',
@@ -17,6 +18,7 @@ import { NavbarComponent } from '../navbar/navbar.component';
     MatIconModule,
     MatBadgeModule,
     NavbarComponent,
+    FooterComponent,
   ],
   template: `
     <div class="layout-shell">
@@ -25,6 +27,8 @@ import { NavbarComponent } from '../navbar/navbar.component';
       <main id="main-content" class="layout-main">
         <router-outlet />
       </main>
+
+      <app-footer />
 
       <nav class="mobile-dock" aria-label="Mobil navigatsiya">
         <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">

@@ -24,7 +24,6 @@ public class ChatHub : Hub
         this.dateTimeBroker = dateTimeBroker;
     }
 
-    // Send text message to specific user and save to DB
     public async Task SendMessage(Guid receiverId, string content, Guid? propertyId = null)
     {
         var userIdClaim = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
@@ -37,7 +36,6 @@ public class ChatHub : Hub
         await CreateAndDispatchMessageAsync(senderId, receiverId, content.Trim(), MessageType.Text, propertyId);
     }
 
-    // Send file message to specific user and save to DB
     public async Task SendFileMessage(Guid receiverId, string fileUrl, string fileName, Guid? propertyId = null)
     {
         var userIdClaim = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
@@ -78,7 +76,6 @@ public class ChatHub : Hub
 
             Message savedMessage = await this.messageService.AddMessageAsync(message);
 
-            // Only send to receiver if they have a valid user ID
             if (!string.IsNullOrEmpty(receiverId.ToString()))
             {
                 await Clients.User(receiverId.ToString())
@@ -95,7 +92,6 @@ public class ChatHub : Hub
         }
     }
 
-    // Join a property chat room
     public async Task JoinPropertyRoom(Guid propertyId)
     {
         try
@@ -111,7 +107,6 @@ public class ChatHub : Hub
         }
     }
 
-    // Leave a property chat room
     public async Task LeavePropertyRoom(Guid propertyId)
     {
         try
@@ -127,7 +122,6 @@ public class ChatHub : Hub
         }
     }
 
-    // Typing indicator
     public async Task SendTypingIndicator(Guid receiverId, bool isTyping)
     {
         try
@@ -142,7 +136,6 @@ public class ChatHub : Hub
         }
     }
 
-    // Mark messages as read
     public async Task MarkAsRead(Guid messageId)
     {
         try

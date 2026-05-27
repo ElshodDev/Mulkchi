@@ -287,13 +287,11 @@ export class LocationPickerMapComponent implements OnInit {
       maxBoundsViscosity: 1.0,
     });
 
-    // Add tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
       maxZoom: 19,
     }).addTo(this.leafletMap);
 
-    // Add click handler
     this.leafletMap.on('click', (e: any) => {
       this.onMapClick(e.latlng.lat, e.latlng.lng);
     });
@@ -307,10 +305,8 @@ export class LocationPickerMapComponent implements OnInit {
 
     this.geolocationService.setLocation(coords);
 
-    // Update marker
     this.updateMarker(lat, lng);
 
-    // Get location name
     const locName = await this.geolocationService.getReverseGeocode(lat, lng);
     this.locationName.set(locName);
   }
@@ -323,18 +319,15 @@ export class LocationPickerMapComponent implements OnInit {
         this.onMapClick(coords.latitude, coords.longitude);
       },
       error: () => {
-        // Error message is already set in service
       },
     });
   }
 
   private updateMarker(lat: number, lng: number): void {
-    // Remove old marker
     if (this.searchMarker) {
       this.leafletMap.removeLayer(this.searchMarker);
     }
 
-    // Add new marker with custom icon
     const markerIcon = icon({
       iconUrl:
         'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',

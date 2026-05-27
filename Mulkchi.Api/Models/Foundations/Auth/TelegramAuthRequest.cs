@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Mulkchi.Api.Models.Foundations.Auth;
 
-/// <summary>Data received from the Telegram Login Widget (https://core.telegram.org/widgets/login).</summary>
 public class TelegramAuthRequest
 {
     [Required]

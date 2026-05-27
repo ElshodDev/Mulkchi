@@ -64,7 +64,6 @@ describe('PropertyService', () => {
     httpMock.verify();
   });
 
-  // ─── initial state ────────────────────────────────────────────────────────
 
   it('should initialize with empty state', () => {
     expect(service.properties()).toEqual([]);
@@ -74,7 +73,6 @@ describe('PropertyService', () => {
     expect(service.loading()).toBe(false);
   });
 
-  // ─── getAllProperties ─────────────────────────────────────────────────────
 
   it('getAllProperties() — should fetch paged properties and update signals', () => {
     service.getAllProperties(1, 20).subscribe((result) => {
@@ -102,7 +100,6 @@ describe('PropertyService', () => {
     req.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
   });
 
-  // ─── getPropertyById ─────────────────────────────────────────────────────
 
   it('getPropertyById() — should fetch single property and update signal', () => {
     const id = mockProperty.id;
@@ -118,7 +115,6 @@ describe('PropertyService', () => {
     req.flush(mockProperty);
   });
 
-  // ─── getFeaturedProperties ────────────────────────────────────────────────
 
   it('getFeaturedProperties() — should return array and update signal', () => {
     service.getFeaturedProperties(3).subscribe((properties) => {
@@ -130,7 +126,6 @@ describe('PropertyService', () => {
     req.flush([mockProperty]);
   });
 
-  // ─── searchProperties ────────────────────────────────────────────────────
 
   it('searchProperties() — should include location params in request', () => {
     service.searchProperties({ location: 'Toshkent', listingType: 'Rent' as any }).subscribe();
@@ -140,7 +135,6 @@ describe('PropertyService', () => {
     req.flush(mockPagedResult);
   });
 
-  // ─── deleteProperty ──────────────────────────────────────────────────────
 
   it('deleteProperty() — should send DELETE request', () => {
     const id = mockProperty.id;

@@ -23,9 +23,9 @@ public class Boost
 
 public enum BoostPlan
 {
-    Bronze = 1,  // 1 day, 10,000 UZS
-    Silver = 2,  // 3 days, 25,000 UZS
-    Gold = 3     // 7 days, 50,000 UZS
+    Bronze = 1, 
+    Silver = 2, 
+    Gold = 3    
 }
 
 public enum BoostStatus

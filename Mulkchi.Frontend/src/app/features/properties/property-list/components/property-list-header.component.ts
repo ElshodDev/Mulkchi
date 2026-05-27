@@ -92,7 +92,6 @@ import { MatSelectModule } from '@angular/material/select';
         margin-bottom: 24px;
       }
 
-      /* Stats Section */
       .stats-section {
         display: flex;
         flex-direction: column;
@@ -136,14 +135,12 @@ import { MatSelectModule } from '@angular/material/select';
         height: 14px;
       }
 
-      /* Controls Section */
       .controls-section {
         display: flex;
         align-items: center;
         gap: 20px;
       }
 
-      /* Segmented Control */
       .segmented-control {
         position: relative;
         display: flex;
@@ -206,7 +203,6 @@ import { MatSelectModule } from '@angular/material/select';
         background: var(--gray-200);
       }
 
-      /* Sort Wrapper */
       .sort-wrapper {
         display: flex;
         align-items: center;

@@ -121,7 +121,6 @@ public partial class AmenityService : IAmenityService
 
     public async ValueTask UpdatePropertyAmenitiesAsync(Guid propertyId, List<Guid> amenityIds)
     {
-        // Remove existing amenities
         var existing = await this.storageBroker.SelectAllPropertyAmenities()
             .Where(pa => pa.PropertyId == propertyId)
             .ToListAsync();
@@ -131,7 +130,6 @@ public partial class AmenityService : IAmenityService
             await this.storageBroker.DeletePropertyAmenityAsync(pa);
         }
 
-        // Add new amenities
         var now = this.dateTimeBroker.GetCurrentDateTimeOffset();
         foreach (var amenityId in amenityIds.Distinct())
         {

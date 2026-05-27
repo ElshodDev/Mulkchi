@@ -68,7 +68,6 @@ public partial class StorageBroker : DbContext, IStorageBroker
             entity.Property(p => p.PlatformFee).HasPrecision(18, 2);
             entity.Property(p => p.HostReceives).HasPrecision(18, 2);
             entity.Property(p => p.IdempotencyKey).HasMaxLength(128);
-            // Filtered unique index: enforce idempotency key uniqueness only when set
             entity.HasIndex(p => p.IdempotencyKey)
                 .IsUnique()
                 .HasFilter("\"IdempotencyKey\" IS NOT NULL");
@@ -87,7 +86,6 @@ public partial class StorageBroker : DbContext, IStorageBroker
             entity.Property(p => p.AverageRating).HasPrecision(18, 2);
             entity.Property(p => p.ExchangeRate).HasPrecision(18, 6);
 
-            // Add performance indexes
             entity.HasIndex(p => p.HostId);
             entity.HasIndex(p => p.Region);
             entity.HasIndex(p => p.Status);
@@ -100,7 +98,6 @@ public partial class StorageBroker : DbContext, IStorageBroker
         {
             entity.Property(p => p.TotalPrice).HasPrecision(18, 2);
 
-            // Add performance indexes
             entity.HasIndex(p => p.PropertyId);
             entity.HasIndex(p => p.GuestId);
             entity.HasIndex(p => p.Status);
@@ -109,7 +106,6 @@ public partial class StorageBroker : DbContext, IStorageBroker
             entity.HasIndex(p => new { p.PropertyId, p.CheckInDate, p.CheckOutDate, p.Status });
         });
 
-        // BookingHold — no soft delete, purged via DeleteExpiredBookingHoldsAsync
         modelBuilder.Entity<BookingHold>(entity =>
         {
             entity.HasIndex(p => p.PropertyId);
@@ -132,7 +128,6 @@ public partial class StorageBroker : DbContext, IStorageBroker
             entity.Property(p => p.CommunicationRating).HasPrecision(18, 2);
             entity.Property(p => p.AccuracyRating).HasPrecision(18, 2);
 
-            // Add performance indexes
             entity.HasIndex(p => p.PropertyId);
             entity.HasIndex(p => p.ReviewerId);
         });
@@ -148,23 +143,19 @@ public partial class StorageBroker : DbContext, IStorageBroker
             entity.Property(p => p.Rating).HasPrecision(18, 2);
             entity.Property(p => p.ResponseRate).HasPrecision(18, 2);
 
-            // Add performance indexes
             entity.HasIndex(p => p.Email).IsUnique();
             entity.HasIndex(p => p.Role);
         });
 
         modelBuilder.Entity<Message>(entity =>
         {
-            // Individual indexes kept for single-column queries
             entity.HasIndex(p => p.SenderId);
             entity.HasIndex(p => p.ReceiverId);
-            // Compound index for conversation queries (SenderId, ReceiverId, date-ordered)
             entity.HasIndex(p => new { p.SenderId, p.ReceiverId, p.CreatedDate });
         });
 
         modelBuilder.Entity<Favorite>(entity =>
         {
-            // Add performance indexes
             entity.HasIndex(p => new { p.UserId, p.PropertyId }).IsUnique();
         });
 
@@ -248,13 +239,10 @@ public partial class StorageBroker : DbContext, IStorageBroker
         modelBuilder.Entity<EmailVerificationToken>().HasQueryFilter(e => e.DeletedDate == null);
         modelBuilder.Entity<PhoneOtp>().HasQueryFilter(e => e.DeletedDate == null);
 
-        // Analytics models configuration
         ConfigureAnalytics(modelBuilder);
 
-        // Analytics query filters - only filter by CalculatedAt to exclude invalid records
         modelBuilder.Entity<MarketTrend>().HasQueryFilter(e => e.CalculatedAt > DateTimeOffset.MinValue);
         modelBuilder.Entity<DistrictStat>().HasQueryFilter(e => e.CalculatedAt > DateTimeOffset.MinValue);
     }
 
-    // DbSet<Booking> Bookings property is defined in StorageBroker.Bookings.cs partial class.
 }

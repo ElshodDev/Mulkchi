@@ -5,6 +5,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { AiPriceDialogComponent } from '../components/ai-price-dialog/ai-price-dialog.component';
 
 @Component({
   selector: 'app-step-basic-info',
@@ -16,6 +19,8 @@ import { MatIconModule } from '@angular/material/icon';
     MatSelectModule,
     MatButtonModule,
     MatIconModule,
+    MatTooltipModule,
+    MatDialogModule,
   ],
   template: `
     <div class="step-wrapper">
@@ -91,6 +96,9 @@ import { MatIconModule } from '@angular/material/icon';
                 [formControlName]="getActivePriceControl()"
                 placeholder="0.00"
               />
+              <button mat-icon-button matSuffix matTooltip="AI orqali narx hisoblash" (click)="openAiPriceDialog($event)" style="color: #6366f1;">
+                <mat-icon>auto_awesome</mat-icon>
+              </button>
               <mat-icon matPrefix>payments</mat-icon>
               <span matSuffix class="currency-tag">{{ form.get('currency')?.value }}</span>
             </mat-form-field>
@@ -365,6 +373,8 @@ export class StepBasicInfoComponent {
     { value: 'ShortTermRent', label: 'Kunlik ijara' },
   ];
 
+  constructor(private dialog: MatDialog) {}
+
   selectType(value: string) {
     this.form.patchValue({ type: value });
   }
@@ -404,6 +414,31 @@ export class StepBasicInfoComponent {
       area: 85,
       numberOfBedrooms: 3,
       numberOfBathrooms: 1
+    });
+  }
+
+  openAiPriceDialog(event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const dialogRef = this.dialog.open(AiPriceDialogComponent, {
+      width: '450px',
+      panelClass: 'ai-dialog-panel',
+      data: {
+        propertyType: this.form.get('type')?.value || 'Apartment',
+        listingType: this.form.get('listingType')?.value || 'Sale',
+        area: this.form.get('area')?.value || 50,
+        rooms: this.form.get('numberOfBedrooms')?.value || 2
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        const activeControl = this.getActivePriceControl();
+        this.form.patchValue({ [activeControl]: result });
+        this.form.get(activeControl)?.markAsTouched();
+        this.form.get(activeControl)?.markAsDirty();
+      }
     });
   }
 }

@@ -24,7 +24,7 @@ public class EmailAuthSession
 
 public class EmailSessionStatus
 {
-    public string Status { get; set; } = string.Empty; // "pending", "verified", "expired"
+    public string Status { get; set; } = string.Empty;
     public string AccessToken { get; set; } = string.Empty;
     public string RefreshToken { get; set; } = string.Empty;
     public bool IsNewUser { get; set; }

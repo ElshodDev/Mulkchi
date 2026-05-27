@@ -118,6 +118,7 @@ public partial class PropertyService : IPropertyService
             Mahalla = dto.Mahalla,
             Latitude = dto.Latitude,
             Longitude = dto.Longitude,
+            VirtualTourUrl = dto.VirtualTourUrl,
             HasWifi = dto.HasWifi,
             HasParking = dto.HasParking,
             HasPool = dto.HasPool,
@@ -417,7 +418,7 @@ public partial class PropertyService : IPropertyService
 
         if (searchParams.Latitude.HasValue && searchParams.Longitude.HasValue)
         {
-            var radius = searchParams.RadiusKm ?? 5.0;
+            var radius = searchParams.RadiusKm ?? 50.0;
             query = query.WithinRadius(searchParams.Latitude.Value, searchParams.Longitude.Value, radius);
         }
 
@@ -705,6 +706,7 @@ public partial class PropertyService : IPropertyService
             CreatedDate = p.CreatedDate,
             UpdatedDate = p.UpdatedDate,
             DeletedDate = p.DeletedDate,
+            VirtualTourUrl = p.VirtualTourUrl,
             MonthlyRentUSD = (p.MonthlyRent.HasValue && p.ExchangeRate > 0) ? p.MonthlyRent.Value / p.ExchangeRate : null,
             SalePriceUSD = (p.SalePrice.HasValue && p.ExchangeRate > 0) ? p.SalePrice.Value / p.ExchangeRate : null,
             PricePerNightUSD = (p.PricePerNight.HasValue && p.ExchangeRate > 0) ? p.PricePerNight.Value / p.ExchangeRate : null,

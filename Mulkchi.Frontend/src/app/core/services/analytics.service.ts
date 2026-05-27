@@ -4,7 +4,6 @@ import { environment } from '../../../environments/environment';
 import { Observable, catchError, tap, throwError } from 'rxjs';
 import { PropertyResponse } from '../models/property.model';
 
-// ========== BASIC ANALYTICS ==========
 
 export interface MarketOverview {
   totalListings: number;
@@ -49,7 +48,6 @@ export interface DistrictAnalytics {
   pricePerSqm: number;
 }
 
-// ========== SMART ANALYTICS - PROPERTY ANALYSIS ==========
 
 export type PriceStatus = 'Underpriced' | 'Fair' | 'Overpriced';
 
@@ -79,7 +77,6 @@ export interface PropertyDealScore {
   reasoning: string[];
 }
 
-// ========== SMART ANALYTICS - LOCATION INTELLIGENCE ==========
 
 export interface LocationScore {
   district: string;
@@ -124,7 +121,6 @@ export interface LocationInsight {
   transportOptions: string[];
 }
 
-// ========== SMART ANALYTICS - PRICE INTELLIGENCE ==========
 
 export interface PricePrediction {
   propertyId: string;
@@ -164,7 +160,6 @@ export interface MonthlyForecast {
   };
 }
 
-// ========== SMART FILTERS ==========
 
 export interface SmartFilterResult {
   properties: PropertyResponse[];
@@ -222,11 +217,7 @@ export class AnalyticsService {
     return this.http.get<DistrictAnalytics[]>(`${this.apiUrl}/by-district`);
   }
 
-  // ========== SMART ANALYTICS METHODS ==========
 
-  /**
-   * Analyze a specific property for pricing insights
-   */
   analyzeProperty(propertyId: string): Observable<PropertyAnalysisResult> {
     this.loading.set(true);
     return this.http
@@ -241,27 +232,18 @@ export class AnalyticsService {
       );
   }
 
-  /**
-   * Get location score for a district
-   */
   getLocationScore(district: string, region?: string): Observable<LocationScore> {
     const params: any = { district };
     if (region) params.region = region;
     return this.http.get<LocationScore>(`${this.apiUrl}/location-score`, { params });
   }
 
-  /**
-   * Get detailed location insights
-   */
   getLocationInsights(district: string, region?: string): Observable<LocationInsight> {
     const params: any = { district };
     if (region) params.region = region;
     return this.http.get<LocationInsight>(`${this.apiUrl}/location-insights`, { params });
   }
 
-  /**
-   * Get smart filtered properties
-   */
   getSmartDeals(limit = 10): Observable<SmartFilterResult> {
     return this.http.get<SmartFilterResult>(`${this.apiUrl}/smart-filters/best-deals`, {
       params: { limit: limit.toString() },
@@ -280,39 +262,24 @@ export class AnalyticsService {
     });
   }
 
-  /**
-   * Get price prediction for a property
-   */
   getPricePrediction(propertyId: string): Observable<PricePrediction> {
     return this.http.get<PricePrediction>(`${this.apiUrl}/price-prediction/${propertyId}`);
   }
 
-  /**
-   * Get price forecast for a region/district
-   */
   getPriceForecast(district: string, region?: string, months = 6): Observable<PriceTrendForecast> {
     const params: any = { district, months: months.toString() };
     if (region) params.region = region;
     return this.http.get<PriceTrendForecast>(`${this.apiUrl}/price-forecast`, { params });
   }
 
-  /**
-   * Get property deal score
-   */
   getPropertyDealScore(propertyId: string): Observable<PropertyDealScore> {
     return this.http.get<PropertyDealScore>(`${this.apiUrl}/property-deal-score/${propertyId}`);
   }
 
-  /**
-   * Get price history for a property
-   */
   getPriceHistory(propertyId: string): Observable<PriceHistoryItem[]> {
     return this.http.get<PriceHistoryItem[]>(`${this.apiUrl}/price-history/${propertyId}`);
   }
 
-  /**
-   * Get host dashboard statistics
-   */
   getHostDashboardStats(): Observable<HostDashboardStats> {
     return this.http.get<HostDashboardStats>(`${this.apiUrl}/host-dashboard`);
   }

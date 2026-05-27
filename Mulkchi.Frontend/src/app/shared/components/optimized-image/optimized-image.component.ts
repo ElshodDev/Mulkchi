@@ -118,7 +118,6 @@ import { ImageOptimizationService } from '../../../core/services/image-optimizat
         opacity: 0;
       }
 
-      /* Responsive image sizes */
       @media (max-width: 768px) {
         .optimized-image-container {
           border-radius: var(--radius-2);
@@ -137,20 +136,17 @@ export class OptimizedImageComponent {
   placeholderBlur = input<boolean>(true);
   lazy = input<boolean>(true);
 
-  // Internal state
   private _isLoaded = signal(false);
   private _hasError = signal(false);
   private _isLoading = signal(true);
 
   private imageOptimizationService = inject(ImageOptimizationService);
 
-  // Computed properties
   isLoaded = computed(() => this._isLoaded());
   hasError = computed(() => this._hasError());
   isLoading = computed(() => this._isLoading());
   aspectRatio = computed(() => `${this.width()} / ${this.height()}`);
 
-  // Generate optimized image URLs
   currentSrc = computed(() => {
     return this.imageOptimizationService.getOptimizedImage(this.src(), this.width(), this.height());
   });
@@ -160,11 +156,9 @@ export class OptimizedImageComponent {
   });
 
   sizes = computed(() => {
-    // Responsive sizes based on viewport
     return '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw';
   });
 
-  // Event handlers
   onImageLoad(): void {
     this._isLoaded.set(true);
     this._isLoading.set(false);
@@ -174,18 +168,15 @@ export class OptimizedImageComponent {
     this._hasError.set(true);
     this._isLoading.set(false);
 
-    // Fallback to a high-quality house image from Unsplash if the original fails
     if (event && event.target) {
       this._isLoaded.set(false);
       this._hasError.set(false);
       const img = event.target as HTMLImageElement;
-      img.src = `https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=400&auto=format&fit=crop`;
+      img.src = `https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=400&auto=format&fit=crop`;
     }
   }
 
-  // Utility methods
   private checkWebPSupport(): boolean {
-    // Simple WebP support detection
     const canvas = document.createElement('canvas');
     canvas.width = 1;
     canvas.height = 1;

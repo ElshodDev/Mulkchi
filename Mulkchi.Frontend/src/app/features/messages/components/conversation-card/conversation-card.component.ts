@@ -209,7 +209,6 @@ export class ConversationCardComponent {
   }
 
   onAvatarError(event: any): void {
-    // Hide broken image and show fallback avatar
     const img = event.target as HTMLImageElement;
     img.style.display = 'none';
     const wrapper = img.parentElement;

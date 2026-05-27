@@ -96,7 +96,6 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
   similarRealProperties: Property[] = [];
   isLoadingSimilar = false;
 
-  // Form options
   regions = Object.values(UzbekistanRegion);
 
   propertyTypes = [
@@ -108,7 +107,6 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
 
   roomOptions = Array.from({ length: 10 }, (_, i) => i + 1);
 
-  // Reactive Form
   priceForm = this.fb.group({
     region: ['', Validators.required],
     propertyType: ['', Validators.required],
@@ -141,7 +139,6 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
     const area = Number(this.priceForm.value.area || 0) || 1;
     const price = viewModel.recommendedPrice || 0;
 
-    // Fallbacks for missing fields in backend response
     const pricePerSqm = viewModel.pricePerSqm ?? Math.round(price / area);
     const estimatedRent =
       viewModel.estimatedRent ??
@@ -168,7 +165,6 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
-    // Clear any previous results
     this.aiService.clearResult();
   }
 
@@ -192,7 +188,6 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
         this.fetchSimilarProperties(request);
       },
       error: () => {
-        // Error is already shown in UI
       },
     });
   }
@@ -227,7 +222,7 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
     if (rawUrl) {
       return this.imageOptimizationService.getOptimizedImage(rawUrl, 600, 400);
     }
-    return `https://placehold.co/600x400/0f172a/c9a84c?text=Mulkchi`;
+    return 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop';
   }
 
   formatPrice(price: number | undefined): string {
@@ -235,15 +230,13 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
     return price.toLocaleString('uz-UZ');
   }
 
-  // Gauge helper methods
   getGaugeColor(confidence: number): string {
-    if (confidence >= 0.8) return '#10b981'; // Green
-    if (confidence >= 0.6) return '#f59e0b'; // Yellow
-    return '#ef4444'; // Red
+    if (confidence >= 0.8) return '#10b981';
+    if (confidence >= 0.6) return '#f59e0b';
+    return '#ef4444';
   }
 
   getGaugeOffset(confidence: number): number {
-    // 251.2 is the length of the arc (π * 80)
     return 251.2 - 251.2 * confidence;
   }
 
@@ -268,7 +261,6 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
     return "Bozor o'rtachasidan past narxda — juda qulay!";
   }
 
-  // Comparison methods
   getComparisonPercentage(): number {
     const result = this.prediction;
     if (!result) return 0;
@@ -277,7 +269,6 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
 
   getComparisonBarValue(): number {
     const percentage = this.getComparisonPercentage();
-    // Normalize to 0-100 range, where 50 is market average
     return Math.max(0, Math.min(100, 50 + percentage));
   }
 
@@ -287,7 +278,6 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
       : "⚠ Bozor o'rtachasidan yuqori narxdasiz";
   }
 
-  // Price per sqm calculation
   getPricePerSqm(): number {
     const result = this.prediction;
     const area = this.priceForm.value.area;
@@ -295,7 +285,6 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
     return Math.round((result.recommendedPrice || 0) / area);
   }
 
-  // Factor breakdown helpers
   getFactorKeys(): string[] {
     const result = this.prediction;
     if (!result?.factorBreakdown) return [];
@@ -318,7 +307,6 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
     const regionalData = this.aiService.priceResult()?.regionalData;
     if (!regionalData || regionalData.length === 0) return;
 
-    // Destroy existing chart
     if (this.chart) {
       this.chart.destroy();
     }
