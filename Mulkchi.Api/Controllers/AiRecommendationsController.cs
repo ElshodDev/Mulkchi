@@ -445,7 +445,7 @@ public class AiRecommendationsController : ControllerBase
         }
         else if (request.ListingType == "ShortTermRent")
         {
-            recommendedPrice = (recommendedPrice * 0.007m) * 0.05m;
+            recommendedPrice = (recommendedPrice * 0.007m) * 0.025m;
             pricePerSqm = recommendedPrice / request.Area;
         }
 

@@ -320,7 +320,7 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
         labels: regionalData.map((d) => d.region),
         datasets: [
           {
-            label: "O'rtacha narx (UZS)",
+            label: "O'rtacha narx",
             data: regionalData.map((d) => d.averagePrice),
             backgroundColor: 'rgba(102, 126, 234, 0.8)',
             borderColor: 'rgba(102, 126, 234, 1)',
@@ -339,7 +339,7 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
           tooltip: {
             callbacks: {
               label: (context) => {
-                return this.formatPrice(context.raw as number) + ' UZS';
+                return this.formatPrice(context.raw as number) + ' ' + (this.prediction?.currency || 'USD');
               },
             },
           },

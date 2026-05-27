@@ -217,7 +217,7 @@
               <p class="stat-lab">Tavsiya etilgan bozor narxi</p>
               <div class="price-display">
                 <span class="price-main">{{ prediction.recommendedPrice | number }}</span>
-                <span class="currency">UZS</span>
+                <span class="currency">{{ prediction.currency || 'USD' }}</span>
               </div>
 
               <div class="confidence-meter">
@@ -232,7 +232,7 @@
             <div class="stats-grid">
               <div class="stat-item">
                 <div class="stat-val">{{ prediction.pricePerSqm | number }}</div>
-                <div class="stat-lab">UZS / m²</div>
+                <div class="stat-lab">{{ prediction.currency || 'USD' }} / m²</div>
               </div>
               <div class="stat-item">
                 <div class="stat-val">{{ prediction.minPrice | number }}</div>
@@ -286,7 +286,7 @@
                       <img [src]="getImageUrl(prop)" [alt]="prop.title" />
                       <div class="similar-info">
                         <div class="sim-price">
-                          {{ prop.salePrice || prop.monthlyRent || 0 | number }} UZS
+                          {{ prop.salePrice || prop.monthlyRent || 0 | number }} {{ prop.currency || 'USD' }}
                         </div>
                         <div class="sim-title">{{ prop.title }}</div>
                         <div class="sim-meta">
