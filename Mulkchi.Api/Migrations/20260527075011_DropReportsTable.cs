@@ -11,7 +11,8 @@ namespace Mulkchi.Api.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-
+            migrationBuilder.DropTable(
+                name: "Reports");
         }
 
         /// <inheritdoc />

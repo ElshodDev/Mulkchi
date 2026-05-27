@@ -1669,7 +1669,6 @@ export class PropertyDetailComponent {
   }
 
 
-
   startVirtualTour(): void {
     const vt = this.property()?.virtualTourUrl;
     if (vt) {
