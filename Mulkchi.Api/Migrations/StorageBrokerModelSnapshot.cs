@@ -1046,41 +1046,6 @@ namespace Mulkchi.Api.Migrations
                     b.ToTable("Notifications");
                 });
 
-            modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Reports.Report", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("DeletedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("PropertyId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("ReporterId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset>("UpdatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PropertyId");
-
-                    b.ToTable("Reports");
-                });
-
             modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Outbox.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1421,6 +1386,9 @@ namespace Mulkchi.Api.Migrations
                     b.Property<int>("ViewsCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("VirtualTourUrl")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedDate");
@@ -1572,6 +1540,39 @@ namespace Mulkchi.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("RentalContracts");
+                });
+
+            modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Reports.Report", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("PropertyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ReporterId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Reports");
                 });
 
             modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Reviews.Review", b =>
