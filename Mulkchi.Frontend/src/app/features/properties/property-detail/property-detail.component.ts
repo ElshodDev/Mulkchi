@@ -25,7 +25,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { FavoritesService } from '../../../core/services/favorites.service';
 import { ImageOptimizationService } from '../../../core/services/image-optimization.service';
 import { PropertyService } from '../../../core/services/property.service';
-import { ReportService } from '../../../core/services/report.service';
+
 import { ToastService } from '../../../core/services/toast.service';
 import {
   ConfirmationDialogComponent,
@@ -444,13 +444,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                           >
                             <mat-icon>{{ isFavorite() ? 'favorite' : 'favorite_border' }}</mat-icon>
                           </button>
-                          <button
-                            mat-icon-button
-                            (click)="openReportDialog()"
-                            matTooltip="Shikoyat qilish"
-                          >
-                            <mat-icon>flag</mat-icon>
-                          </button>
+
                         </div>
                       </ng-container>
 
@@ -1593,7 +1587,7 @@ export class PropertyDetailComponent {
   private favoritesService = inject(FavoritesService);
   private dialog = inject(MatDialog);
   private toastService = inject(ToastService);
-  private reportService = inject(ReportService);
+
   private imageOptimizationService = inject(ImageOptimizationService);
 
   property = this.propertyService.currentProperty;
@@ -1674,21 +1668,7 @@ export class PropertyDetailComponent {
     this.isLightboxOpen.set(false);
   }
 
-  openReportDialog(): void {
-    if (!this.isAuthenticated()) {
-      this.toastService.info('Iltimos, shikoyat yuborish uchun tizimga kiring');
-      return;
-    }
 
-    const message = window.prompt('Iltimos shikoyat yoki muammoni qisqacha yozing:');
-    if (!message || !message.trim()) return;
-
-    const payload = { propertyId: this.property()!.id, message: message.trim() };
-    this.reportService.createReport(payload).subscribe({
-      next: () => this.toastService.success('Shikoyatingiz qabul qilindi. Rahmat!'),
-      error: () => this.toastService.error('Shikoyat yuborishda xatolik yuz berdi'),
-    });
-  }
 
   startVirtualTour(): void {
     const vt = this.property()?.virtualTourUrl;

@@ -27,7 +27,7 @@ using Mulkchi.Api.Services.Foundations.RentalContracts;
 using Mulkchi.Api.Services.Foundations.Favorites;
 using Mulkchi.Api.Services.Foundations.SavedSearches;
 using Mulkchi.Api.Services.Foundations.PropertyImages;
-using Mulkchi.Api.Services.Foundations.Reports;
+
 using Mulkchi.Api.Services.Foundations.PropertyViews;
 using Mulkchi.Api.Services.Foundations.AiRecommendations;
 using Mulkchi.Api.Services.Foundations.Discounts;
@@ -252,7 +252,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IFavoriteService, FavoriteService>();
         services.AddScoped<ISavedSearchService, SavedSearchService>();
         services.AddScoped<IPropertyImageService, PropertyImageService>();
-        services.AddScoped<IReportService, ReportService>();
+
         services.AddScoped<IPropertyViewService, PropertyViewService>();
         services.AddScoped<IAiRecommendationService, AiRecommendationService>();
         services.AddScoped<IDiscountService, DiscountService>();

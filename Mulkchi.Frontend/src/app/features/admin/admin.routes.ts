@@ -17,12 +17,4 @@ export const ADMIN_ROUTES: Routes = [
       ),
     title: "E'lonlarni boshqarish",
   },
-  {
-    path: 'reports',
-    loadComponent: () =>
-      import('./admin-dashboard/reports-management.component').then(
-        (module) => module.ReportsManagementComponent,
-      ),
-    title: 'Shikoyatlar',
-  },
 ];
