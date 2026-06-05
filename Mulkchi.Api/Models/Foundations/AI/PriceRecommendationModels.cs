@@ -35,6 +35,12 @@ public class PropertyPriceInput
     public float DistanceToCityCenter { get; set; }
 
     [LoadColumn(10)]
+    public float ListingType { get; set; } // 0 = Sale, 1 = Rent
+
+    [LoadColumn(11)]
+    public string DescriptionText { get; set; } = string.Empty; // NLP Feature
+
+    [LoadColumn(12)]
     public float Label { get; set; }
 }
 
@@ -56,16 +62,18 @@ public class PriceRecommendationRequest
     public bool IsRenovated { get; set; }
     public bool HasElevator { get; set; }
     public float DistanceToCityCenter { get; set; }
+    public int ListingType { get; set; } // 0 = Sale, 1 = Rent
+    public string DescriptionText { get; set; } = string.Empty;
 }
 
 public class PriceRecommendationResponse
 {
     public decimal PredictedPrice { get; set; }
     public string Currency { get; set; } = "USD";
-    public string Confidence { get; set; }
+    public string Confidence { get; set; } = "Low";
     public PriceRange PriceRange { get; set; } = new();
     public int BasedOnProperties { get; set; }
-    public string Recommendation { get; set; }
+    public string Recommendation { get; set; } = string.Empty;
     public bool IsRuleBased { get; set; }
 }
 

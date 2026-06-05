@@ -1,4 +1,4 @@
-import { Component, Input, computed, signal, effect } from '@angular/core';
+import { Component, Input, computed, signal, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -172,7 +172,7 @@ import { MatSliderModule } from '@angular/material/slider';
     }
   `]
 })
-export class MortgageCalculatorComponent {
+export class MortgageCalculatorComponent implements OnInit {
   @Input() set propertyPrice(val: number) {
     if (val > 0) this.priceValue = val;
   }

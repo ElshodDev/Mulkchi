@@ -31,13 +31,11 @@ public class AnalyticsService : IAnalyticsService
         var totalForRent = await properties.CountAsync(
             p => p.ListingType == ListingType.Rent || p.ListingType == ListingType.ShortTermRent);
 
-        var averageSalePrice = await properties
-            .Where(p => p.SalePrice.HasValue && p.SalePrice > 0)
-            .AverageAsync(p => (decimal?)p.SalePrice) ?? 0;
+        var salePriceQuery = properties.Where(p => p.SalePrice.HasValue && p.SalePrice > 0);
+        var averageSalePrice = await salePriceQuery.AnyAsync() ? await salePriceQuery.AverageAsync(p => (decimal?)p.SalePrice) ?? 0 : 0;
 
-        var averageRentPrice = await properties
-            .Where(p => p.MonthlyRent.HasValue && p.MonthlyRent > 0)
-            .AverageAsync(p => (decimal?)p.MonthlyRent) ?? 0;
+        var rentPriceQuery = properties.Where(p => p.MonthlyRent.HasValue && p.MonthlyRent > 0);
+        var averageRentPrice = await rentPriceQuery.AnyAsync() ? await rentPriceQuery.AverageAsync(p => (decimal?)p.MonthlyRent) ?? 0 : 0;
 
         var newListingsToday = await properties
             .CountAsync(p => p.CreatedDate.Date == today);
@@ -46,11 +44,10 @@ public class AnalyticsService : IAnalyticsService
             .CountAsync(p => p.CreatedDate.Date == yesterday);
 
         var lastWeek = today.AddDays(-7);
-        var avgNewListingsPerDay = await properties
+        var newListingCountLastWeek = await properties
             .Where(p => p.CreatedDate.Date >= lastWeek && p.CreatedDate.Date < today)
-            .GroupBy(p => p.CreatedDate.Date)
-            .Select(g => g.Count())
-            .AverageAsync();
+            .CountAsync();
+        var avgNewListingsPerDay = newListingCountLastWeek / 7.0;
 
         var topCity = await properties
             .GroupBy(p => p.City)
@@ -58,10 +55,8 @@ public class AnalyticsService : IAnalyticsService
             .OrderByDescending(x => x.Count)
             .FirstOrDefaultAsync();
 
-        var averagePricePerSqm = await properties
-            .Where(p => p.SalePrice.HasValue && p.SalePrice > 0 && p.Area > 0)
-            .Select(p => p.SalePrice.GetValueOrDefault() / (decimal)p.Area)
-            .AverageAsync();
+        var sqmQuery = properties.Where(p => p.SalePrice.HasValue && p.SalePrice > 0 && p.Area > 0);
+        var averagePricePerSqm = await sqmQuery.AnyAsync() ? await sqmQuery.AverageAsync(p => (decimal?)p.SalePrice / (decimal)p.Area) ?? 0 : 0;
 
         var priceChangePercent = newListingsYesterday > 0
             ? ((double)(newListingsToday - newListingsYesterday) / newListingsYesterday * 100)

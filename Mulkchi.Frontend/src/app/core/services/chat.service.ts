@@ -140,7 +140,7 @@ export class ChatService {
       this._isConnected.set(false);
     });
 
-    this.hubConnection.onreconnected((connectionId) => {
+    this.hubConnection.onreconnected(() => {
       this._isConnected.set(true);
     });
 
@@ -299,7 +299,8 @@ export class ChatService {
     if (this.hubConnection && this._isConnected()) {
       try {
         await this.hubConnection.invoke('SendTypingIndicator', receiverId, isTyping);
-      } catch (err) {
+      } catch {
+        // Ignore typing indicator errors
       }
     }
   }
@@ -443,6 +444,7 @@ export class ChatService {
       try {
         await this.hubConnection.stop();
       } catch {
+        // Ignore disconnect errors
       }
 
       this.hubConnection = null;

@@ -185,7 +185,8 @@ export class SavedSearchesComponent implements OnInit {
     this.searchSelected.emit(search);
   }
 
-  editSearch(search: SavedSearch): void {
+  editSearch(_search: SavedSearch): void {
+    // Edit functionality not implemented yet
   }
 
   deleteSearch(id: string): void {

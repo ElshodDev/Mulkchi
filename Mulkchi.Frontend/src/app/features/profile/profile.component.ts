@@ -16,7 +16,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { Router, RouterModule } from '@angular/router';
 import { Gender, HostBadge, UserRole } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
-import { ConfirmationService } from '../../core/services/confirmation.service';
 import { AuthStore } from '../../core/stores/auth.store';
 import { UIStore } from '../../core/stores/ui.store';
 import { AnalyticsService, HostDashboardStats } from '../../core/services/analytics.service';

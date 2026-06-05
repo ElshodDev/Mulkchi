@@ -13,7 +13,7 @@ export interface OptimizedImage {
   providedIn: 'root',
 })
 export class ImageOptimizationService {
-  getOptimizedImage(url: string, width?: number, height?: number, quality = 80): string {
+  getOptimizedImage(url: string, width?: number, height?: number, quality?: number): string {
     if (!url) return '';
 
     if (url.startsWith('http') || url.includes('images.unsplash.com')) {
@@ -99,16 +99,6 @@ export class ImageOptimizationService {
   }
 
   getFallbackImage(type = 'Apartment'): string {
-    const colors: Record<string, string> = {
-      Apartment: '1B3A6B/C9A84C',
-      House: '1B3A6B/ffffff',
-      Villa: 'C9A84C/1B3A6B',
-      Office: '2a4a7c/ffffff',
-      Land: '10b981/ffffff',
-      Commercial: 'f59e0b/1B3A6B',
-    };
-
-    const color = colors[type as keyof typeof colors] || '64748b/ffffff';
     return 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop';
   }
 

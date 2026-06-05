@@ -774,6 +774,8 @@ export class AiToolsComponent implements OnInit, AfterViewChecked {
       if (this.myScrollContainer) {
         this.myScrollContainer.nativeElement.scrollTop = this.myScrollContainer.nativeElement.scrollHeight;
       }
-    } catch(err) { }
+    } catch {
+      // Ignore scroll errors
+    }
   }
 }
