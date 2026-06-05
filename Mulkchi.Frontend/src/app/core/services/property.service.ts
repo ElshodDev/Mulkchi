@@ -62,13 +62,29 @@ export class PropertyService {
     );
   }
 
+  semanticSearchProperties(query: string): Observable<{ parsedParams: any, results: PagedResult<Property> }> {
+    this._loading.set(true);
+    return this.http.get<{ parsedParams: any, results: PagedResult<Property> }>(`${this.apiUrl}/semantic-search`, { 
+      params: new HttpParams().set('query', query) 
+    }).pipe(
+      tap((response) => {
+        this._properties.set(response.results.items);
+        this._totalCount.set(response.results.totalCount);
+        this._loading.set(false);
+      }),
+      catchError((error) => {
+        this._loading.set(false);
+        return throwError(() => this.handleError(error));
+      }),
+    );
+  }
+
   private buildHttpParams(searchParams: PropertySearchParams): HttpParams {
     let params = new HttpParams();
 
     const paramMappings: Record<string, string | number | undefined | null> = {
-      location: searchParams.location,
-      city: searchParams.location,
-      searchQuery: searchParams.location,
+      searchQuery: searchParams.location || searchParams.search,
+      city: searchParams.location && false ? searchParams.location : undefined, // Ignore city mapping from location
       minPrice: searchParams.minPrice,
       maxPrice: searchParams.maxPrice,
       bedrooms: searchParams.bedrooms,

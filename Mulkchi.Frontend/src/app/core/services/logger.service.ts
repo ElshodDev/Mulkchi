@@ -38,6 +38,7 @@ export class LoggerService {
     const prefix = `[${timestamp}] [${LogLevel[level]}]`;
 
     if (this.isProduction && level >= LogLevel.ERROR) {
+      // Production error logging could be sent to a service here
     }
 
     if (!this.isProduction) {

@@ -62,11 +62,10 @@
   ],
   "navigationUrls": [
     "/**",
-    "/properties/**",
-    "/bookings/**",
-    "/profile/**",
-    "/host/**",
-    "/admin/**"
+    "!/**/*.*",
+    "!/**/*__*",
+    "!/**/*__*/**",
+    "!/api/**"
   ],
   "navigationRequestStrategy": "performance"
 }

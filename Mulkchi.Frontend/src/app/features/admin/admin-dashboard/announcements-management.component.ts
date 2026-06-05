@@ -477,7 +477,7 @@ export class AnnouncementsManagementComponent implements OnInit, OnDestroy {
           this.announcements = result.items;
           this.loading.set(false);
         },
-        error: (error) => {
+        error: () => {
           this.toast.error("E'lonlarni yuklashda xato");
           this.loading.set(false);
         },
@@ -512,7 +512,7 @@ export class AnnouncementsManagementComponent implements OnInit, OnDestroy {
           }
         }, 300);
       },
-      error: (error) => {
+      error: () => {
         this.toast.error(this.editingId() ? "E'lonni yangilashda xato" : "E'lonni yaratishda xato");
         this.loading.set(false);
       },

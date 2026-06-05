@@ -359,31 +359,67 @@ public partial class PropertyService : IPropertyService
 
     private async ValueTask<(IEnumerable<PropertyResponse> Items, int TotalCount)> SearchPropertiesWithFiltersAsync(PropertySearchParams searchParams)
     {
+        if (!string.IsNullOrWhiteSpace(searchParams.SearchQuery) && string.IsNullOrWhiteSpace(searchParams.Region))
+        {
+            var (extractedRegion, remainingQuery) = ExtractRegionFromQuery(searchParams.SearchQuery);
+            if (extractedRegion.HasValue)
+            {
+                searchParams.Region = extractedRegion.Value.ToString();
+                searchParams.SearchQuery = remainingQuery; // Query without the region name
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchParams.City) && searchParams.City == searchParams.SearchQuery)
+        {
+            searchParams.City = null;
+        }
+
+        IQueryable<Property> query = this.storageBroker.SelectAllProperties()
+            .Where(p => p.DeletedDate == null);
+
+        Dictionary<Guid, int>? orderedById = null;
+
         if (!string.IsNullOrWhiteSpace(searchParams.SearchQuery) &&
             await this.featureManager.IsEnabledAsync("UseMeiliSearch"))
         {
             var (ids, meiliTotalCount) = await this.meiliPropertySearchService.SearchAsync(searchParams.SearchQuery, 50);
             if (ids.Count > 0)
             {
-                var orderedById = ids.Select((id, index) => new { id, index })
+                orderedById = ids.Select((id, index) => new { id, index })
                     .ToDictionary(x => x.id, x => x.index);
-
-                var meiliProperties = await this.storageBroker.SelectAllProperties()
-                    .Where(p => ids.Contains(p.Id))
-                    .ToListAsync();
-
-                var ordered = meiliProperties
-                    .OrderBy(p => orderedById.TryGetValue(p.Id, out int idx) ? idx : int.MaxValue)
-                    .Take(50)
-                    .Select(ToPropertyResponse)
-                    .ToList();
-
-                return (ordered, meiliTotalCount);
+                
+                query = query.Where(p => ids.Contains(p.Id));
+            }
+            else
+            {
+                return (new List<PropertyResponse>(), 0);
             }
         }
+        else if (!string.IsNullOrWhiteSpace(searchParams.SearchQuery))
+        {
+            var keywords = searchParams.SearchQuery.ToLower()
+                .Split(new[] { ' ', ',', '.' }, StringSplitOptions.RemoveEmptyEntries)
+                .Where(k => k.Length > 2)
+                .ToList();
 
-        IQueryable<Property> query = this.storageBroker.SelectAllProperties()
-            .Where(p => p.DeletedDate == null);
+            if (keywords.Any())
+            {
+                query = query.Where(p => keywords.All(k => 
+                    (p.Title != null && p.Title.ToLower().Contains(k)) ||
+                    (p.Description != null && p.Description.ToLower().Contains(k)) ||
+                    (p.City != null && p.City.ToLower().Contains(k)) ||
+                    (p.Address != null && p.Address.ToLower().Contains(k))
+                ));
+            }
+            else 
+            {
+                var q = searchParams.SearchQuery.ToLower();
+                query = query.Where(p =>
+                    (p.Title != null && p.Title.ToLower().Contains(q)) ||
+                    (p.Description != null && p.Description.ToLower().Contains(q)) ||
+                    (p.City != null && p.City.ToLower().Contains(q)));
+            }
+        }
 
         if (!string.IsNullOrWhiteSpace(searchParams.City))
         {
@@ -400,8 +436,14 @@ public partial class PropertyService : IPropertyService
         if (searchParams.Bedrooms.HasValue)
             query = query.Where(p => p.NumberOfBedrooms == searchParams.Bedrooms);
 
-        if (!string.IsNullOrWhiteSpace(searchParams.Region) && Enum.TryParse(searchParams.Region, true, out UzbekistanRegion parsedRegion))
-            query = query.Where(p => p.Region == parsedRegion);
+        if (!string.IsNullOrWhiteSpace(searchParams.Region))
+        {
+            var parsedRegion = ParseRegionFromString(searchParams.Region);
+            if (parsedRegion.HasValue)
+            {
+                query = query.Where(p => p.Region == parsedRegion.Value);
+            }
+        }
 
         if (searchParams.ListingType.HasValue)
             query = query.Where(p => p.ListingType == searchParams.ListingType.Value);
@@ -424,6 +466,14 @@ public partial class PropertyService : IPropertyService
 
         int totalCount = await query.CountAsync();
 
+        if (orderedById != null && string.IsNullOrEmpty(searchParams.SortBy))
+        {
+            // If we used MeiliSearch and no specific sort is requested, fetch and sort in memory by Meili score
+            var properties = await query.Take(50).ToListAsync();
+            properties = properties.OrderBy(p => orderedById.TryGetValue(p.Id, out int idx) ? idx : int.MaxValue).ToList();
+            return (properties.Select(ToPropertyResponse).ToList(), totalCount);
+        }
+
         if (searchParams.Latitude.HasValue && searchParams.Longitude.HasValue && string.IsNullOrEmpty(searchParams.SortBy))
         {
             query = query.OrderByDistance(searchParams.Latitude.Value, searchParams.Longitude.Value);
@@ -440,9 +490,8 @@ public partial class PropertyService : IPropertyService
             };
         }
 
-        // Apply a default limit to the search size since there is no pagination params in PropertySearchParams
-        var properties = await query.Take(50).ToListAsync();
-        var responseItems = properties.Select(ToPropertyResponse).ToList();
+        var pagedProperties = await query.Take(50).ToListAsync();
+        var responseItems = pagedProperties.Select(ToPropertyResponse).ToList();
 
         return (responseItems, totalCount);
     }
@@ -826,5 +875,119 @@ public partial class PropertyService : IPropertyService
             .ToListAsync();
 
         return properties.Select(ToPropertyResponse);
+    }
+
+    private (UzbekistanRegion? Region, string RemainingQuery) ExtractRegionFromQuery(string query)
+    {
+        var normalized = query.ToLower().Replace("'", "").Replace("‘", "").Replace("`", "");
+        
+        var regionMappings = new Dictionary<string, UzbekistanRegion>
+        {
+            { "toshkent shahar", UzbekistanRegion.ToshkentShahar },
+            { "toshkent viloyati", UzbekistanRegion.ToshkentViloyat },
+            { "toshkent viloyat", UzbekistanRegion.ToshkentViloyat },
+            { "toshkent", UzbekistanRegion.ToshkentShahar },
+            { "tashkent", UzbekistanRegion.ToshkentShahar },
+            { "samarqand", UzbekistanRegion.Samarqand },
+            { "samarkand", UzbekistanRegion.Samarqand },
+            { "buxoro", UzbekistanRegion.Buxoro },
+            { "bukhara", UzbekistanRegion.Buxoro },
+            { "andijon", UzbekistanRegion.Andijon },
+            { "andijan", UzbekistanRegion.Andijon },
+            { "farg'ona", UzbekistanRegion.Fargona },
+            { "fargona", UzbekistanRegion.Fargona },
+            { "fergana", UzbekistanRegion.Fargona },
+            { "namangan", UzbekistanRegion.Namangan },
+            { "qashqadaryo", UzbekistanRegion.Qashqadaryo },
+            { "kashkadarya", UzbekistanRegion.Qashqadaryo },
+            { "surxondaryo", UzbekistanRegion.Surxondaryo },
+            { "surkhandarya", UzbekistanRegion.Surxondaryo },
+            { "xorazm", UzbekistanRegion.Xorazm },
+            { "khorezm", UzbekistanRegion.Xorazm },
+            { "navoiy", UzbekistanRegion.Navoiy },
+            { "navoi", UzbekistanRegion.Navoiy },
+            { "jizzax", UzbekistanRegion.Jizzax },
+            { "jizzakh", UzbekistanRegion.Jizzax },
+            { "sirdaryo", UzbekistanRegion.Sirdaryo },
+            { "syrdarya", UzbekistanRegion.Sirdaryo },
+            { "qoraqalpog'iston", UzbekistanRegion.Qoraqalpogiston },
+            { "qoraqalpogiston", UzbekistanRegion.Qoraqalpogiston },
+            { "karakalpakstan", UzbekistanRegion.Qoraqalpogiston }
+        };
+
+        foreach (var mapping in regionMappings)
+        {
+            int index = normalized.IndexOf(mapping.Key);
+            if (index >= 0)
+            {
+                bool startBoundary = index == 0 || !char.IsLetter(normalized[index - 1]);
+                bool endBoundary = index + mapping.Key.Length == normalized.Length || !char.IsLetter(normalized[index + mapping.Key.Length]);
+                
+                if (startBoundary && endBoundary)
+                {
+                    string remaining = query.Remove(index, mapping.Key.Length).Trim();
+                    remaining = string.Join(" ", remaining.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+                    
+                    if (remaining.ToLower().StartsWith("viloyati"))
+                        remaining = remaining.Substring("viloyati".Length).Trim();
+                    else if (remaining.ToLower().StartsWith("viloyat"))
+                        remaining = remaining.Substring("viloyat".Length).Trim();
+
+                    return (mapping.Value, remaining);
+                }
+            }
+        }
+
+        return (null, query);
+    }
+
+    private UzbekistanRegion? ParseRegionFromString(string regionName)
+    {
+        if (string.IsNullOrWhiteSpace(regionName)) return null;
+        if (Enum.TryParse(regionName, true, out UzbekistanRegion parsedEnum)) return parsedEnum;
+
+        var normalized = regionName.ToLower().Replace("'", "").Replace("‘", "").Replace("`", "").Trim();
+        var regionMappings = new Dictionary<string, UzbekistanRegion>
+        {
+            { "toshkent shahar", UzbekistanRegion.ToshkentShahar },
+            { "toshkent viloyati", UzbekistanRegion.ToshkentViloyat },
+            { "toshkent viloyat", UzbekistanRegion.ToshkentViloyat },
+            { "toshkent", UzbekistanRegion.ToshkentShahar },
+            { "tashkent", UzbekistanRegion.ToshkentShahar },
+            { "samarqand", UzbekistanRegion.Samarqand },
+            { "samarkand", UzbekistanRegion.Samarqand },
+            { "buxoro", UzbekistanRegion.Buxoro },
+            { "bukhara", UzbekistanRegion.Buxoro },
+            { "andijon", UzbekistanRegion.Andijon },
+            { "andijan", UzbekistanRegion.Andijon },
+            { "fargona", UzbekistanRegion.Fargona },
+            { "fergana", UzbekistanRegion.Fargona },
+            { "namangan", UzbekistanRegion.Namangan },
+            { "qashqadaryo", UzbekistanRegion.Qashqadaryo },
+            { "kashkadarya", UzbekistanRegion.Qashqadaryo },
+            { "surxondaryo", UzbekistanRegion.Surxondaryo },
+            { "surkhandarya", UzbekistanRegion.Surxondaryo },
+            { "xorazm", UzbekistanRegion.Xorazm },
+            { "khorezm", UzbekistanRegion.Xorazm },
+            { "navoiy", UzbekistanRegion.Navoiy },
+            { "navoi", UzbekistanRegion.Navoiy },
+            { "jizzax", UzbekistanRegion.Jizzax },
+            { "jizzakh", UzbekistanRegion.Jizzax },
+            { "sirdaryo", UzbekistanRegion.Sirdaryo },
+            { "syrdarya", UzbekistanRegion.Sirdaryo },
+            { "qoraqalpogiston", UzbekistanRegion.Qoraqalpogiston },
+            { "karakalpakstan", UzbekistanRegion.Qoraqalpogiston }
+        };
+
+        if (regionMappings.TryGetValue(normalized, out var mappedRegion))
+            return mappedRegion;
+
+        foreach (var mapping in regionMappings)
+        {
+            if (normalized.Contains(mapping.Key))
+                return mapping.Value;
+        }
+
+        return null;
     }
 }

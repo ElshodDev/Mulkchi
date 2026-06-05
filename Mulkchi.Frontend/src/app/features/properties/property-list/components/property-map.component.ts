@@ -7,8 +7,6 @@ import {
   OnDestroy,
   OnChanges,
   SimpleChanges,
-  ElementRef,
-  ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Property } from '../../../../core/models';

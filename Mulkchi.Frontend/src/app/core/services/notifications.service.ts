@@ -162,6 +162,7 @@ export class NotificationsService implements OnDestroy {
       try {
         await this.hubConnection.stop();
       } catch {
+        // Ignore stop errors
       }
 
       this.hubConnection = null;

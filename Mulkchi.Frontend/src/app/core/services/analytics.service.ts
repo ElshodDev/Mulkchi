@@ -195,7 +195,8 @@ export class AnalyticsService {
 
   getMarketOverview(): Observable<MarketOverview> {
     this.loading.set(true);
-    return this.http.get<MarketOverview>(`${this.apiUrl}/market-overview`).pipe(
+    // Add cache-buster to bypass browser caching of previous 500 errors
+    return this.http.get<MarketOverview>(`${this.apiUrl}/market-overview?_cb=${Date.now()}`).pipe(
       tap(() => this.loading.set(false)),
       catchError((err) => {
         this.error.set('Bozor maʼlumotlarini yuklashda xatolik yuz berdi');

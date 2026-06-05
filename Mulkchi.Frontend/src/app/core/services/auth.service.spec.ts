@@ -162,15 +162,6 @@ describe('AuthService', () => {
 
 
   it('mapApiAuthResponse() — should handle both camelCase and PascalCase fields', () => {
-    const mockPagedResult = {
-      items: [],
-      totalCount: 0,
-      page: 1,
-      pageSize: 20,
-      totalPages: 0,
-      hasNextPage: false,
-      hasPreviousPage: false,
-    };
     const camelCase = {
       accessToken: 'tok',
       refreshToken: 'ref',

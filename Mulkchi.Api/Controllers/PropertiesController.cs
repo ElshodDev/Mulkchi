@@ -5,6 +5,7 @@ using Mulkchi.Api.Models.Foundations.Common;
 using Mulkchi.Api.Models.Foundations.Properties;
 using Mulkchi.Api.Models.Foundations.Properties.Exceptions;
 using Mulkchi.Api.Services.Foundations.Properties;
+using Mulkchi.Api.Services.Foundations.AI;
 using Microsoft.FeatureManagement;
 using System.Threading.Tasks;
 using System;
@@ -17,13 +18,16 @@ namespace Mulkchi.Api.Controllers;
 public class PropertiesController : ControllerBase
 {
     private readonly IPropertyService propertyService;
+    private readonly ISemanticSearchService semanticSearchService;
     private readonly IFeatureManagerSnapshot featureManager;
 
     public PropertiesController(
         IPropertyService propertyService,
+        ISemanticSearchService semanticSearchService,
         IFeatureManagerSnapshot featureManager)
     {
         this.propertyService = propertyService;
+        this.semanticSearchService = semanticSearchService;
         this.featureManager = featureManager;
     }
 
@@ -182,6 +186,40 @@ public class PropertiesController : ControllerBase
             };
 
             return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("semantic-search")]
+    [AllowAnonymous]
+    public async Task<ActionResult<PagedResult<PropertyResponse>>> SemanticSearch([FromQuery] string query)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return BadRequest(new { message = "Search query cannot be empty." });
+            }
+
+            var searchParams = await this.semanticSearchService.ParseQueryAsync(query);
+
+            var (items, total) = await this.propertyService.SearchPropertiesAsync(searchParams);
+
+            var result = new PagedResult<PropertyResponse>
+            {
+                Items = items,
+                TotalCount = total,
+                Page = 1,
+                PageSize = 20
+            };
+
+            return Ok(new { 
+                parsedParams = searchParams,
+                results = result 
+            });
         }
         catch (Exception ex)
         {

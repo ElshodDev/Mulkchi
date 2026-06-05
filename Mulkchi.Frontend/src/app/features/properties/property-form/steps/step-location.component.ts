@@ -557,6 +557,7 @@ export class StepLocationComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const reg = this.regions.find(r => r.value === regionMatch);
     if (reg && this.map) {
+      // Region match found, could do something with map here
     }
 
     this.snackBar.open('✅ Manzil avtomatik aniqlandi!', '', { duration: 2000 });

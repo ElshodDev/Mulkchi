@@ -269,6 +269,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAnalyticsService, AnalyticsService>();
         services.AddScoped<IDashboardAnalyticsService, DashboardAnalyticsService>();
         services.AddScoped<IPriceRecommendationService, PriceRecommendationService>();
+        services.AddScoped<ISemanticSearchService, SemanticSearchService>();
 
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
 

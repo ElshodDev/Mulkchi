@@ -48,7 +48,9 @@ public class PriceRecommendationService : IPriceRecommendationService
             HasPool = request.HasPool ? 1f : 0f,
             IsRenovated = request.IsRenovated ? 1f : 0f,
             HasElevator = request.HasElevator ? 1f : 0f,
-            DistanceToCityCenter = request.DistanceToCityCenter
+            DistanceToCityCenter = request.DistanceToCityCenter,
+            ListingType = request.ListingType,
+            DescriptionText = request.DescriptionText ?? string.Empty
         };
 
         var prediction = predictionEngine!.Predict(input);
@@ -108,8 +110,7 @@ public class PriceRecommendationService : IPriceRecommendationService
     {
         var properties = await storageBroker.Properties
             .Where(p => !p.DeletedDate.HasValue &&
-                       p.SalePrice.HasValue &&
-                       p.SalePrice > 0 &&
+                       ((p.SalePrice.HasValue && p.SalePrice > 0) || (p.MonthlyRent.HasValue && p.MonthlyRent > 0)) &&
                        p.Area > 0)
             .ToListAsync();
 
@@ -120,8 +121,7 @@ public class PriceRecommendationService : IPriceRecommendationService
     {
         return await storageBroker.Properties
             .Where(p => !p.DeletedDate.HasValue &&
-                       p.SalePrice.HasValue &&
-                       p.SalePrice > 0 &&
+                       ((p.SalePrice.HasValue && p.SalePrice > 0) || (p.MonthlyRent.HasValue && p.MonthlyRent > 0)) &&
                        p.Area > 0 &&
                        p.NumberOfBedrooms > 0 &&
                        p.NumberOfBathrooms > 0)
@@ -142,7 +142,9 @@ public class PriceRecommendationService : IPriceRecommendationService
             IsRenovated = p.IsRenovated ? 1f : 0f,
             HasElevator = p.HasElevator ? 1f : 0f,
             DistanceToCityCenter = (float)p.DistanceToCityCenter,
-            Label = (float)p.SalePrice.GetValueOrDefault()
+            ListingType = p.ListingType == ListingType.Rent ? 1f : 0f,
+            DescriptionText = (p.Title + " " + p.Description) ?? string.Empty,
+            Label = (float)(p.ListingType == ListingType.Rent ? p.MonthlyRent.GetValueOrDefault() : p.SalePrice.GetValueOrDefault())
         });
 
         return mlContext.Data.LoadFromEnumerable(trainingData);
@@ -161,8 +163,11 @@ public class PriceRecommendationService : IPriceRecommendationService
             nameof(PropertyPriceInput.HasPool),
             nameof(PropertyPriceInput.IsRenovated),
             nameof(PropertyPriceInput.HasElevator),
-            nameof(PropertyPriceInput.DistanceToCityCenter)
+            nameof(PropertyPriceInput.DistanceToCityCenter),
+            nameof(PropertyPriceInput.ListingType)
         )
+        .Append(mlContext.Transforms.Text.FeaturizeText("TextFeatures", nameof(PropertyPriceInput.DescriptionText)))
+        .Append(mlContext.Transforms.Concatenate("Features", "Features", "TextFeatures"))
         .Append(mlContext.Regression.Trainers.FastTree(
             numberOfLeaves: 20,
             numberOfTrees: 100,
@@ -174,7 +179,7 @@ public class PriceRecommendationService : IPriceRecommendationService
 
     private PriceRecommendationResponse GetRuleBasedPrediction(PriceRecommendationRequest request)
     {
-        var basePricePerSqm = GetBasePriceByRegion(request.Region);
+        var basePricePerSqm = GetBasePriceByRegion(request.Region, request.ListingType);
 
         var basePrice = (decimal)request.Area * basePricePerSqm;
 
@@ -208,8 +213,20 @@ public class PriceRecommendationService : IPriceRecommendationService
         };
     }
 
-    private decimal GetBasePriceByRegion(int region)
+    private decimal GetBasePriceByRegion(int region, int listingType)
     {
+        // listingType 1 = Rent, 0 = Sale
+        if (listingType == 1) 
+        {
+            return region switch
+            {
+                0 => 10m, // Toshkent shahar $10 per sqm rent
+                1 => 5m,
+                2 => 4.5m,
+                _ => 3m
+            };
+        }
+
         return region switch
         {
             0 => 800m,

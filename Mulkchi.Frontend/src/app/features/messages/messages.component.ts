@@ -385,7 +385,7 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
           );
           this.shouldScroll.set(true);
         }
-      } catch (error) {
+      } catch {
         this.snackBar.open("Fayl yuklashda xatolik yuz berdi.", 'Yopish', { duration: 3000 });
       } finally {
         this.isSending.set(false);

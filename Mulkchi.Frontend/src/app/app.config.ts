@@ -13,7 +13,7 @@ import {
   withPreloading,
   withViewTransitions,
 } from '@angular/router';
-import { Title } from '@angular/platform-browser';
+import { Title, provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 import { routes } from './app.routes';
@@ -49,6 +49,6 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([authInterceptor, cacheInterceptor, loadingInterceptor, errorInterceptor]),
     ),
     provideAnimationsAsync(),
-    { provide: TitleStrategy, useClass: MulkchiTitleStrategy },
+    { provide: TitleStrategy, useClass: MulkchiTitleStrategy }, provideClientHydration(withEventReplay()),
   ],
 };

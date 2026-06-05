@@ -10,7 +10,6 @@ import { fromEvent, map, startWith } from 'rxjs';
 
 import { ChatService } from '../../services/chat.service';
 import { ComparisonService } from '../../services/comparison.service';
-import { AuthService } from '../../services/auth.service';
 import { AuthStore } from '../../stores/auth.store';
 import { UIStore } from '../../stores/ui.store';
 
@@ -27,17 +26,28 @@ import { UIStore } from '../../stores/ui.store';
     MatMenuModule,
   ],
   template: `
-    <header class="navbar-shell" [class.scrolled]="isScrolled()">
-      <div class="navbar container">
-        <a class="brand" routerLink="/" (click)="uiStore.closeSidebar()">
-          <span class="brand-mark">
+    <header 
+      class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out py-3"
+      [class.backdrop-blur-xl]="isScrolled()" 
+      [class.bg-white/85]="isScrolled() && !uiStore.isDarkTheme()"
+      [class.bg-slate-900/85]="isScrolled() && uiStore.isDarkTheme()"
+      [class.shadow-md]="isScrolled()"
+      [class.border-b]="isScrolled()"
+      [class.border-slate-200]="isScrolled() && !uiStore.isDarkTheme()"
+      [class.border-slate-800]="isScrolled() && uiStore.isDarkTheme()"
+    >
+      <div class="container mx-auto flex items-center justify-between px-6 h-16">
+        <a class="flex items-center gap-3 no-underline group" routerLink="/" (click)="uiStore.closeSidebar()">
+          <span class="flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br from-green-400 to-green-600 text-white shadow-lg transition-transform group-hover:scale-105">
             <mat-icon>apartment</mat-icon>
           </span>
-          <span class="brand-copy">
-            <strong>Mulkchi</strong>
-            <small>{{ text().brandTagline }}</small>
+          <span class="flex flex-col leading-tight">
+            <strong class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Mulkchi</strong>
+            <small class="text-xs font-medium text-slate-500 dark:text-slate-400">{{ text().brandTagline }}</small>
           </span>
-          <span class="bmi-badge">BMI Loyihasi</span>
+          <span class="hidden sm:inline-block ml-2 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/40 rounded-full border border-green-200 dark:border-green-800">
+            BMI Loyihasi
+          </span>
         </a>
 
         <nav class="desktop-nav" aria-label="Asosiy navigatsiya">
@@ -90,6 +100,7 @@ import { UIStore } from '../../stores/ui.store';
             <div class="quick-actions desktop-utilities">
               <a mat-icon-button routerLink="/compare" matTooltip="Solishtirish">
                 <mat-icon
+                  aria-hidden="false"
                   [matBadge]="comparisonService.count() || null"
                   [matBadgeHidden]="comparisonService.count() === 0"
                   matBadgeColor="accent"

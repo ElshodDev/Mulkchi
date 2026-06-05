@@ -753,10 +753,16 @@ export class PropertyListComponent implements OnInit {
 
   loadSmartSearch(query: string): void {
     this.loading.set(true);
-    this.aiService.smartSearch(query).subscribe({
+    this.propertyService.semanticSearchProperties(query).subscribe({
       next: (res: any) => {
-        this.properties.set(res);
-        this.totalCount.set(res.length);
+        this.properties.set(res.results.items);
+        this.totalCount.set(res.results.totalCount);
+        
+        // Show parsed info in UI if you want
+        if (res.parsedParams) {
+           console.log("AI Tushungan parametrlar:", res.parsedParams);
+        }
+        
         this.loading.set(false);
       },
       error: () => {

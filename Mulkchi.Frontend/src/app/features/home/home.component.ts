@@ -22,6 +22,7 @@ import { LocationPickerMapComponent } from './location-picker-map.component';
 import { VoiceSearchService } from '../../core/services/voice-search.service';
 import { UIStore } from '../../core/stores/ui.store';
 import { ImageOptimizationService } from '../../core/services/image-optimization.service';
+import { SeoService } from '../../core/services/seo.service';
 
 @Component({
   selector: 'app-home',
@@ -55,16 +56,16 @@ import { ImageOptimizationService } from '../../core/services/image-optimization
           />
         </div>
 
-        <div class="container hero-container">
-          <div class="hero-content">
-            <div class="badge-premium animate-fade-in">
-              <mat-icon>school</mat-icon>
+        <div class="container relative z-10 mx-auto px-6 pt-32 pb-20 text-center">
+          <div class="max-w-4xl mx-auto">
+            <div class="inline-flex items-center gap-2 px-5 py-2 mb-8 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-sm font-medium animate-fade-in text-white">
+              <mat-icon class="text-accent">school</mat-icon>
               <span>Bitiruv Malakaviy Ishi (BMI) Loyihasi</span>
             </div>
 
-            <h1 class="hero-title animate-slide-up" style="font-size: 3rem; line-height: 1.2;">
+            <h1 class="text-5xl md:text-7xl font-extrabold leading-tight tracking-tight mb-6 animate-slide-up text-white">
               Ma'lumotlar bazasiga asoslangan <br />
-              <span class="text-gradient">uy joy savdosi va ijarasi</span>
+              <span class="bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">uy joy savdosi va ijarasi</span>
             </h1>
 
             <p class="hero-subtitle animate-slide-up-delay">
@@ -996,6 +997,7 @@ export class HomeComponent implements OnInit {
   protected readonly uiStore = inject(UIStore);
   private snackBar = inject(MatSnackBar);
   private geolocationService = inject(GeolocationService);
+  private seoService = inject(SeoService);
 
   locationSuggestions = signal<string[]>([]);
   counts = { listings: 0, regions: 0, users: 0 };
@@ -1008,6 +1010,8 @@ export class HomeComponent implements OnInit {
   nearbyProperties = signal<any[]>([]);
   loadingNearby = signal(false);
   nearbyTitle = signal('Sizga yaqin mulklar');
+
+
 
   topRegions = [
     {
@@ -1121,6 +1125,13 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.seoService.updateMetaTags({
+      title: 'Bosh Sahifa',
+      description: "Mulkchi - O'zbekistondagi eng innovatsion ko'chmas mulk platformasi. Uy sotib olish, ijaraga olish yoki sotish uchun eng yaxshi tanlov.",
+      keywords: "ko'chmas mulk, uy sotib olish, kvartira ijara, toshkent uylari, hovli, mulkchi",
+    });
+    this.seoService.setIndexable(true);
+
     this.voiceService.textResult$.subscribe((text) => {
       this.searchQuery = text;
       this.onSearch();

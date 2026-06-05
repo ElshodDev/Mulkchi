@@ -705,6 +705,7 @@ export class BookingPanelComponent implements OnDestroy {
       try {
         await firstValueFrom(this.bookingService.cancelHold(hId));
       } catch {
+        // Ignore cancel errors
       }
     }
     this.stopHoldTimer();
