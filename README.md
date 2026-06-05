@@ -32,19 +32,35 @@
 
 ## 🚀 O'rnatish va Ishga Tushirish
 
-Loyihani o'z kompyuteringizda ishga tushirish uchun Docker dan foydalanish tavsiya etiladi.
+## 🚀 O'rnatish va Ishga Tushirish
 
+### 1-usul: Docker orqali (Faqat Backend va Ma'lumotlar bazasi)
+Backend xizmatlari, PostgreSQL va Redis'ni osongina ishga tushirish uchun:
 ```bash
-# Repozitoriyni klonlash
 git clone https://github.com/ElshodDev/Mulkchi.git
 cd Mulkchi
 
-# Environment faylini yaratish
-cp .env.example .env
-# .env faylga kerakli sirlarni kiriting (DB parol, JWT secret, Telegram token)
-
-# Docker orqali barcha xizmatlarni ko'tarish
+# Docker-compose orqali API, DB va Redisni ko'tarish
 docker-compose up -d
+```
+
+### 2-usul: Dasturchilar uchun lokal o'rnatish
+
+#### Backend (.NET API)
+```bash
+cd Mulkchi.Api
+# Ma'lumotlar bazasiga ulanish va kerakli kalitlarni appsettings.json da to'g'irlang.
+dotnet restore
+dotnet ef database update # Migratsiyalarni o'tkazish
+dotnet run
+```
+
+#### Frontend (Angular SSR)
+```bash
+cd Mulkchi.Frontend
+npm install --legacy-peer-deps
+# Loyihani ishga tushirish
+npm run start
 ```
 
 ## 🤝 Hissa Qo'shish (Contributing)
