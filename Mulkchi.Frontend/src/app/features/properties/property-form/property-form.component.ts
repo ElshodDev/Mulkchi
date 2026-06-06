@@ -53,17 +53,17 @@ import { StepLocationComponent } from './steps/step-location.component';
           <mat-icon>home_work</mat-icon> <span>Mulkchi</span>
         </div>
 
-        <div class="stepper-progress">
-          <div class="progress-labels">
-            <span class="step-label">{{ steps[currentStep()].label }}</span>
-            <span class="step-count">Qadam {{ currentStep() + 1 }} / {{ steps.length }}</span>
-          </div>
-          <div class="progress-bar">
-            <div
-              class="progress-fill"
-              [style.width.%]="(currentStep() / (steps.length - 1)) * 100"
-            ></div>
-          </div>
+        <div class="stepper-visual">
+          <ng-container *ngFor="let step of steps; let i = index">
+            <div class="step-item" [class.active]="i === currentStep()" [class.completed]="i < currentStep()">
+              <div class="step-circle">
+                <mat-icon *ngIf="i < currentStep()">check</mat-icon>
+                <mat-icon *ngIf="i >= currentStep()">{{ step.icon }}</mat-icon>
+              </div>
+              <span class="step-label-text">{{ step.label }}</span>
+            </div>
+            <div class="step-line" *ngIf="i < steps.length - 1" [class.completed]="i < currentStep()"></div>
+          </ng-container>
         </div>
 
         <button mat-button class="btn-exit" routerLink="/host/properties">Chiqish</button>
@@ -166,41 +166,81 @@ import { StepLocationComponent } from './steps/step-location.component';
         height: 28px;
       }
 
-      .stepper-progress {
+      .stepper-visual {
         flex: 1;
-        max-width: 600px;
+        max-width: 800px;
         margin: 0 40px;
         display: flex;
-        flex-direction: column;
-        gap: 8px;
+        align-items: center;
+        justify-content: center;
       }
 
-      .progress-labels {
+      .step-item {
         display: flex;
-        justify-content: space-between;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        position: relative;
+        z-index: 2;
+        width: 80px;
+      }
+
+      .step-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #e2e8f0;
+        transition: all 0.3s ease;
+      }
+
+      .step-circle mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .step-label-text {
+        font-size: 0.75rem;
         font-weight: 600;
+        color: #94a3b8;
+        transition: color 0.3s ease;
       }
 
-      .step-label {
-        color: var(--slate-900);
+      .step-item.active .step-circle {
+        background: white;
+        border-color: #6366f1;
+        color: #6366f1;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
       }
-      .step-count {
-        color: #64748b;
-        font-size: 0.9rem;
+      .step-item.active .step-label-text {
+        color: #1e293b;
+        font-weight: 700;
       }
 
-      .progress-bar {
-        height: 8px;
+      .step-item.completed .step-circle {
+        background: linear-gradient(135deg, #10b981, #059669);
+        border-color: #10b981;
+        color: white;
+      }
+      .step-item.completed .step-label-text {
+        color: #059669;
+      }
+
+      .step-line {
+        flex: 1;
+        height: 2px;
         background: #e2e8f0;
-        border-radius: 4px;
-        overflow: hidden;
+        margin: 0 -20px 24px -20px;
+        z-index: 1;
+        transition: background 0.3s ease;
       }
-
-      .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #6366f1, #a855f7);
-        border-radius: 4px;
-        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      .step-line.completed {
+        background: #10b981;
       }
 
       .btn-exit {
@@ -269,24 +309,28 @@ export class PropertyFormComponent implements OnInit {
   isSubmitting = signal(false);
 
   steps = [
-    { label: 'Asosiy', desc: 'Tur va narx', fullDesc: 'Mulkning asosiy parametrlarini kiriting' },
+    { label: 'Asosiy', icon: 'info', desc: 'Tur va narx', fullDesc: 'Mulkning asosiy parametrlarini kiriting' },
     {
       label: 'Joylashuv',
+      icon: 'location_on',
       desc: 'Manzil va xarita',
       fullDesc: "Mulk qayerda joylashganini ko'rsating",
     },
     {
       label: 'Tafsilotlar',
+      icon: 'home',
       desc: 'Xonalar va maydon',
       fullDesc: "Mulkning o'lchamlari va xonalari haqida",
     },
     {
       label: 'Qulayliklar',
+      icon: 'wifi',
       desc: 'Sharoitlar',
       fullDesc: 'Mulkdagi mavjud qulayliklarni belgilang',
     },
     {
       label: 'Rasmlar',
+      icon: 'photo_library',
       desc: "Vizual ma'lumot",
       fullDesc: 'Mulkning rasmlari va tavsifini yuklang',
     },

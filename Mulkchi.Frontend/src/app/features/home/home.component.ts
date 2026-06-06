@@ -103,7 +103,7 @@ import { SeoService } from '../../core/services/seo.service';
                     [(ngModel)]="searchQuery"
                     [matAutocomplete]="auto"
                     (input)="onSearchInput($event)"
-                    placeholder="O'zingizga yoqadigan hudud yoki uy turini yozing..."
+                    placeholder="Mulk turi, shahar yoki metro bekatini yozing..."
                     (keyup.enter)="onSearch()"
                   />
                   <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSearch()">
@@ -118,24 +118,22 @@ import { SeoService } from '../../core/services/seo.service';
 
                 <div class="search-tools">
                   <button
-                    mat-icon-button
                     (click)="toggleVoiceSearch()"
                     [class.mic-active]="voiceService.isListening()"
-                    [matTooltip]="voiceService.isListening() ? 'Eshitilmoqda...' : 'Ovozli qidiruv'"
-                    class="tool-btn"
+                    class="tool-btn-expanded"
                   >
                     <mat-icon>{{ voiceService.isListening() ? 'mic' : 'mic_none' }}</mat-icon>
+                    <span class="tool-text">{{ voiceService.isListening() ? 'Eshitilmoqda...' : 'Gapiring' }}</span>
                   </button>
                   
                   <div class="divider"></div>
                   
                   <button 
-                    mat-icon-button 
                     (click)="openMapPicker()" 
-                    matTooltip="Xaritadan tanlash" 
-                    class="tool-btn map-btn"
+                    class="tool-btn-expanded"
                   >
                     <mat-icon>map</mat-icon>
+                    <span class="tool-text">Xarita</span>
                   </button>
                   
                   <button mat-flat-button class="btn-primary-search" (click)="onSearch()">
@@ -518,13 +516,29 @@ import { SeoService } from '../../core/services/seo.service';
         padding-right: 8px;
       }
       
-      .tool-btn {
-        color: var(--text-muted);
-        transition: color 0.2s, background 0.2s;
+      .tool-btn-expanded {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: #f1f5f9;
+        border: none;
+        color: #475569;
+        padding: 10px 16px;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
       }
-      .tool-btn:hover {
-        background: var(--color-surface);
-        color: var(--primary);
+      .tool-btn-expanded:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+      }
+      .tool-btn-expanded mat-icon {
+        color: #6366f1;
+      }
+      @media (max-width: 768px) {
+        .tool-text { display: none; }
+        .tool-btn-expanded { padding: 10px; border-radius: 50%; }
       }
       .mic-active {
         color: var(--color-error) !important;

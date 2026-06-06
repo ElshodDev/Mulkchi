@@ -138,10 +138,18 @@ import { UploadedImage } from '../../../../shared/components/image-upload/image-
           <div class="upload-zone" (click)="fileInput.click()">
             <div class="upload-content">
               <div class="icon-circle"><mat-icon>cloud_upload</mat-icon></div>
-              <h3>Rasmlarni yuklang</h3>
-              <p>Fayllarni shu yerga tashlang yoki tanlash uchun bosing</p>
-              <button mat-flat-button color="primary" type="button" class="btn-browse">
-                Fayllarni tanlash
+              <h3>Rasmlarni yuklang yoki shu yerga tashlang</h3>
+              <p class="upload-subtitle">Maksimal 10 ta rasm. Birinchi rasm asosiy bo'ladi.</p>
+              
+              <div class="upload-hints">
+                <div class="hint-chip"><mat-icon>living</mat-icon> Mehmonxona</div>
+                <div class="hint-chip"><mat-icon>bed</mat-icon> Yotoqxona</div>
+                <div class="hint-chip"><mat-icon>countertops</mat-icon> Oshxona</div>
+                <div class="hint-chip"><mat-icon>bathtub</mat-icon> Vanna</div>
+              </div>
+
+              <button mat-flat-button type="button" class="btn-browse">
+                Kompyuterdan tanlash
               </button>
             </div>
           </div>
@@ -153,7 +161,7 @@ import { UploadedImage } from '../../../../shared/components/image-upload/image-
               <button mat-icon-button class="remove-btn" (click)="removeImage(i, $event)">
                 <mat-icon>close</mat-icon>
               </button>
-              <div class="primary-badge" *ngIf="i === 0">Asosiy</div>
+              <div class="primary-badge" *ngIf="i === 0"><mat-icon>star</mat-icon> Asosiy</div>
             </div>
           </div>
         </div>
@@ -365,29 +373,91 @@ import { UploadedImage } from '../../../../shared/components/image-upload/image-
 
       .upload-zone {
         width: 100%;
-        height: 200px;
-        border: 2px dashed #e2e8f0;
+        min-height: 280px;
+        border: 2px dashed #cbd5e1;
         border-radius: 24px;
         background: #f8fafc;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
         margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .upload-zone::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(99,102,241,0.05) 0%, rgba(168,85,247,0.05) 100%);
+        opacity: 0;
+        transition: opacity 0.3s;
       }
 
       .upload-zone:hover {
         border-color: #6366f1;
-        background: #f1f5ff;
+        transform: scale(1.01);
+      }
+
+      .upload-zone:hover::before {
+        opacity: 1;
       }
 
       .upload-content {
+        position: relative;
+        z-index: 1;
         text-align: center;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
+        padding: 32px;
+      }
+
+      .upload-subtitle {
+        color: #64748b;
+        font-size: 0.95rem;
+        margin-bottom: 16px;
+      }
+
+      .upload-hints {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-bottom: 24px;
+      }
+
+      .hint-chip {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 16px;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        color: #475569;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      }
+
+      .hint-chip mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        color: #64748b;
+      }
+
+      .btn-browse {
+        background: linear-gradient(135deg, #6366f1, #a855f7) !important;
+        color: white !important;
+        border-radius: 12px !important;
+        padding: 0 24px !important;
+        height: 44px !important;
+        font-weight: 600 !important;
       }
 
       .icon-circle {
@@ -443,12 +513,21 @@ import { UploadedImage } from '../../../../shared/components/image-upload/image-
         position: absolute;
         bottom: 8px;
         left: 8px;
-        background: #6366f1;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
         color: white;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 0.7rem;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 0.75rem;
         font-weight: 700;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .primary-badge mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
       }
 
       .btn-browse {
