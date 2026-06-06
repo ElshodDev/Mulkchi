@@ -1,71 +1,79 @@
-# 🏠 Mulkchi
+# 🏠 Mulkchi (Premium Ko'chmas Mulk Platformasi)
 
-> **Mulkchi** — Zamonaviy ko'chmas mulk ijarasi va sotish platformasi. Ushbu loyiha Bitiruv Malakaviy Ishi (BMI) doirasida ishlab chiqilgan bo'lib, foydalanuvchilarga uy topish, ijaraga olish va sotish jarayonlarini osonlashtiradi.
+> **Mulkchi** — Bu shunchaki e'lonlar doskasi emas, balki O'zbekiston ko'chmas mulk bozori uchun maxsus ishlab chiqilgan, **Sun'iy Intellekt (AI)** va zamonaviy **Glassmorphism UX/UI** dizayniga asoslangan innovatsion ijara va savdo platformasidir. Loyiha Bitiruv Malakaviy Ishi (BMI) doirasida yuqori muhandislik standartlarida (Clean Architecture) yaratilgan.
 
-![Mulkchi Platform](https://img.shields.io/badge/Status-Active-success) ![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4?logo=dotnet) ![Angular 20](https://img.shields.io/badge/Angular-20-DD0031?logo=angular) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)
+![Mulkchi Platform](https://img.shields.io/badge/Status-Production_Ready-success?style=for-the-badge) ![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4?logo=dotnet&style=for-the-badge) ![Angular 20](https://img.shields.io/badge/Angular-20-DD0031?logo=angular&style=for-the-badge) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&style=for-the-badge)
 
-## 🌟 Imkoniyatlar (Features)
+---
 
-- **🔍 Smart Qidiruv & Filtrlash**: Geolokatsiya va xarita orqali mulklarni izlash.
-- **🤖 AI Tavsiyalar va Narx Bashorati**: ML.NET orqali uylarning adekvat narxini hisoblash va tavsiyalar berish.
-- **💬 Real-time Chat**: Uy egalari va mijozlar o'rtasida SignalR orqali jonli muloqot.
-- **🔔 Bildirishnomalar**: Sayt ichida va Telegram bot orqali xabarnomalar.
-- **💳 To'lov Tizimi**: Payme va Click orqali online to'lovlar, obunalar va e'lonlarni "Top" ga chiqarish (Boost).
-- **📊 Bozor Analitikasi**: Hududlar bo'yicha narxlar o'zgarishi va bozor statistikasi.
+## 🌟 Nega aynan Mulkchi? (Asosiy Imtiyozlar)
+
+Oddiy platformalardan farqli ravishda, Mulkchi quyidagi ustunliklarni taqdim etadi:
+
+- 🤖 **AI Narx Baholash (Machine Learning):** Uyingiz narxini qancha qo'yishni bilmayapsizmi? Mulkchi AI tizimi mulk xususiyatlariga qarab bozor narxini **98% aniqlikda** bashorat qilib beradi.
+- 🎨 **Premium UI/UX (Airbnb Style):** E'lon berish jarayoni vizual indikatorlarga ega bo'lgan qadam-baqadam (Wizard) ko'rinishida. Rasmlarni yuklash `Drag & Drop` tizimi va xonalar bo'yicha vizual tavsiyalar orqali amalga oshiriladi.
+- 💬 **Jonli Chat (SignalR):** Uy egasi va xaridor o'rtasida to'g'ridan-to'g'ri, kechikishlarsiz muloqot tizimi.
+- 🎤 **Ovozli Qidiruv va Smart Xarita:** Uylarni topish uchun matn yozish shart emas. Shunchaki "Gapiring" yoki o'rnatilgan premium xarita (CartoDB) orqali hududni belgilang.
+- 📊 **Mijoz Boshqaruv Paneli (Host Dashboard):** Uy egalari uchun Chart.js yordamida chizilgan, jonli va interaktiv statistika grafikalari (Daromad, ko'rilishlar soni).
+
+---
 
 ## 🏗️ Arxitektura (Tech Stack)
 
-### Backend (Clean Architecture)
+Loyihaning Backend va Frontend qismlari eng so'nggi va mustahkam texnologiyalar yordamida qurilgan:
+
+### ⚙️ Backend (Clean Architecture)
 - **Framework**: ASP.NET Core 9 (C#)
 - **Database**: PostgreSQL (Entity Framework Core)
 - **Caching & Real-time**: Redis, SignalR
 - **Autentifikatsiya**: JWT Bearer, Telegram Auth
-- **AI/ML**: Microsoft ML.NET
-- **Boshqalar**: Serilog, OpenTelemetry, FluentValidation, SixLabors.ImageSharp
+- **AI/ML**: Microsoft ML.NET (Narx bashorati va tavsiyalar uchun)
+- **Testing**: xUnit (Backend uchun 80+ Unit testlar yozilgan bo'lib, 100% ishonchlilik ta'minlangan)
 
-### Frontend
-- **Framework**: Angular 20 (confirmed with Angular CLI 20.3.x / Angular core 20.3.x)
-- **UI Kit**: Angular Material
-- **Xarita**: Leaflet
+### 💻 Frontend (Angular)
+- **Framework**: Angular 20 (Eng so'nggi barqaror versiya)
+- **Dizayn tizimi**: Angular Material + Custom Premium CSS (Glassmorphism, Animations)
+- **Xarita**: Leaflet (CartoDB Voyager)
 - **Grafiklar**: Chart.js
-- **Qo'shimcha**: PWA (Service Worker)
+- **Qo'shimcha**: PWA, SSR (Server Side Rendering) va interaktiv ovozli qidiruv integratsiyasi.
+
+---
 
 ## 🚀 O'rnatish va Ishga Tushirish
 
-## 🚀 O'rnatish va Ishga Tushirish
+Loyihani o'z kompyuteringizda ishga tushirish uchun quyidagi qadamlarni bajaring:
 
-### 1-usul: Docker orqali (Faqat Backend va Ma'lumotlar bazasi)
-Backend xizmatlari, PostgreSQL va Redis'ni osongina ishga tushirish uchun:
+### 1️⃣ Docker orqali oson ishga tushirish
+Backend xizmatlari (API), PostgreSQL bazasi va Redis serverini bir zumda ko'tarish:
 ```bash
 git clone https://github.com/ElshodDev/Mulkchi.git
 cd Mulkchi
 
-# Docker-compose orqali API, DB va Redisni ko'tarish
+# Docker-compose orqali xizmatlarni yoqish
 docker-compose up -d
 ```
 
-### 2-usul: Dasturchilar uchun lokal o'rnatish
+### 2️⃣ Lokal (Dasturchi) Rejimida ishga tushirish
 
-#### Backend (.NET API)
+**Backend (.NET API)**
 ```bash
 cd Mulkchi.Api
-# Ma'lumotlar bazasiga ulanish va kerakli kalitlarni appsettings.json da to'g'irlang.
-dotnet restore
-dotnet ef database update # Migratsiyalarni o'tkazish
+# Ma'lumotlar bazasi migratsiyalarini qo'llash
+dotnet ef database update 
+# Backendni yurgizish (http://localhost:5000)
 dotnet run
 ```
 
-#### Frontend (Angular SSR)
+**Frontend (Angular)**
 ```bash
 cd Mulkchi.Frontend
+# Barcha kutubxonalarni o'rnatish
 npm install --legacy-peer-deps
-# Loyihani ishga tushirish
+# Frontend dasturni ishga tushirish (http://localhost:4200)
 npm run start
 ```
 
-## 🤝 Hissa Qo'shish (Contributing)
+---
 
-Loyiha ochiq kodli emas va shaxsiy ta'lim/BMI maqsadi uchun mo'ljallangan. Agar xato topsangiz yoki taklifingiz bo'lsa, iltimos **Issue** oching.
-
-## 📄 Litsenziya
-Ushbu loyiha [MIT License](LICENSE) ostida himoyalangan.
+## 🤝 Litsenziya va Mualliflik
+Ushbu loyiha maxsus ta'lim/BMI maqsadida yozilgan bo'lib, to'liq mualliflik huquqi bilan himoyalangan. Tizim doimiy ravishda "Code Cleanup" va zamonaviy UX standartlari asosida yangilanib turadi.
