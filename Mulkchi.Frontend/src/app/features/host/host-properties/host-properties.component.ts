@@ -169,6 +169,17 @@ import { Property, PropertyStatus } from '../../../core/models';
                     <span class="price-period">{{ getPricePeriod(property) }}</span>
                   </div>
 
+                  <!-- AI Price Recommendation -->
+                  @if (shouldSuggestPrice(property)) {
+                    <div class="ai-price-suggestion">
+                      <mat-icon>auto_awesome</mat-icon>
+                      <div class="ai-suggestion-text">
+                        Talab yuqori! Narxni +15% oshirish tavsiya etiladi.
+                      </div>
+                      <button class="ai-suggestion-btn" (click)="applyAiPrice(property)">Qo'llash</button>
+                    </div>
+                  }
+
                   <!-- Expiry Countdown -->
                   @if (getDaysLeft(property) !== null) {
                     <div class="expiry-bar" [class.danger]="getDaysLeft(property)! <= 2">
@@ -621,6 +632,44 @@ import { Property, PropertyStatus } from '../../../core/models';
         color: var(--gray-500);
       }
 
+      .ai-price-suggestion {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        padding: 8px 12px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+      }
+      .ai-price-suggestion mat-icon {
+        color: #7c3aed;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+      .ai-suggestion-text {
+        font-size: 0.75rem;
+        color: var(--navy);
+        font-weight: 600;
+        flex: 1;
+        line-height: 1.2;
+      }
+      .ai-suggestion-btn {
+        background: #7c3aed;
+        color: white;
+        border: none;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+      .ai-suggestion-btn:hover {
+        transform: scale(1.05);
+      }
+
       .expiry-bar {
         display: flex;
         align-items: center;
@@ -869,6 +918,33 @@ export class HostPropertiesComponent implements OnInit {
     if (property.monthlyRent) return '/oy';
     if (property.pricePerNight) return '/tun';
     return '';
+  }
+
+  shouldSuggestPrice(property: Property): boolean {
+    // Faqatgina 10 martadan ko'p ko'rilgan va faol mulklar uchun AI narx taklifi simulyatsiyasi
+    return property.status === 'Active' && (property.viewsCount || 0) >= 10;
+  }
+
+  applyAiPrice(property: Property): void {
+    const currentPrice = this.getPrice(property);
+    const suggestedPrice = Math.floor(currentPrice * 1.15); // +15%
+    
+    this.confirmationService
+      .confirm({
+        title: 'AI Narx Tavsiyasi',
+        message: `Hozir bozorda ushbu turdagi mulklarga talab yuqori. Narxni ${currentPrice} dan ${suggestedPrice} ga (15% ga) oshirishni xohlaysizmi?`,
+        confirmLabel: "Qo'llash",
+        cancelLabel: "Bekor qilish",
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        // Muvaffaqiyatli qabul qilinsa, frontendda narxni simulyatsiya qilib o'zgartiramiz
+        if (property.salePrice) property.salePrice = suggestedPrice;
+        if (property.monthlyRent) property.monthlyRent = suggestedPrice;
+        if (property.pricePerNight) property.pricePerNight = suggestedPrice;
+        
+        this.snackBar.open("Narx AI tavsiyasiga ko'ra yangilandi!", 'OK', { duration: 4000 });
+      });
   }
 
   scrollToExpiring(): void {

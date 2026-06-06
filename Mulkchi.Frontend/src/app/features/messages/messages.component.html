@@ -135,6 +135,11 @@
               <mat-icon>more_horiz</mat-icon>
             </button>
             <mat-menu #chatMenu="matMenu">
+              <button mat-menu-item (click)="toggleAutoResponder()">
+                <mat-icon [class.online]="isAutoResponderEnabled()">{{ isAutoResponderEnabled() ? 'smart_toy' : 'power_off' }}</mat-icon>
+                <span>AI Javob: {{ isAutoResponderEnabled() ? 'Yoqilgan' : 'O\'chirilgan' }}</span>
+              </button>
+              <mat-divider></mat-divider>
               <button mat-menu-item (click)="viewProfile()">
                 <mat-icon>person</mat-icon>
                 <span>Profilni ko'rish</span>

@@ -138,10 +138,17 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                       (error)="onMainImageError()"
                     />
                     
-                    <button class="btn-3d-tour" (click)="open3DTour($event)">
-                      <mat-icon>360</mat-icon>
-                      <span>3D Tur</span>
-                    </button>
+                    <div class="virtual-tours-actions">
+                      <button class="btn-3d-tour" (click)="open3DTour($event)">
+                        <mat-icon>360</mat-icon>
+                        <span>3D Tur</span>
+                      </button>
+                      
+                      <button class="btn-ar-tour" (click)="openARViewer($event)">
+                        <mat-icon>view_in_ar</mat-icon>
+                        <span>Mebel AR</span>
+                      </button>
+                    </div>
                   </div>
 
                   <div class="side-photos" *ngIf="property()!.images!.length > 1">
@@ -193,6 +200,24 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                 </button>
                 <div class="lightbox-content viewer-3d-content">
                    <div id="psv-container" style="width: 100%; height: 100vh;"></div>
+                </div>
+              </div>
+
+              <!-- AR Viewer Overlay -->
+              <div class="lightbox-overlay" *ngIf="isARViewerOpen()" @fadeInUp>
+                <button class="lightbox-close" (click)="closeARViewer()">
+                  <mat-icon>close</mat-icon>
+                </button>
+                <div class="lightbox-content viewer-ar-content">
+                  <model-viewer
+                    src="https://modelviewer.dev/shared-assets/models/Chair.glb"
+                    ios-src="https://modelviewer.dev/shared-assets/models/Chair.usdz"
+                    alt="A 3D model of a chair"
+                    ar
+                    auto-rotate
+                    camera-controls
+                    style="width: 100%; height: 80vh; background-color: #f1f5f9; border-radius: 16px;">
+                  </model-viewer>
                 </div>
               </div>
 
@@ -795,30 +820,53 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         width: 18px;
         height: 18px;
       }
-
       .btn-3d-tour {
-        position: absolute;
-        top: 20px;
-        left: 20px;
         background: rgba(15, 23, 42, 0.75);
         color: white;
         border: 1px solid rgba(255, 255, 255, 0.2);
         padding: 8px 16px;
-        border-radius: 100px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         gap: 8px;
         font-weight: 700;
-        font-size: 0.95rem;
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(8px);
         cursor: pointer;
-        transition: all 0.3s ease;
-        z-index: 10;
+        transition: all 0.3s;
       }
       .btn-3d-tour:hover {
-        background: rgba(15, 23, 42, 0.95);
+        background: var(--color-gold);
+        color: var(--color-navy);
         transform: scale(1.05);
       }
+      .virtual-tours-actions {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 12px;
+        z-index: 10;
+      }
+      .btn-ar-tour {
+        background: rgba(124, 58, 237, 0.85);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 8px 16px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        backdrop-filter: blur(8px);
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .btn-ar-tour:hover {
+        background: #6d28d9;
+        transform: scale(1.05);
+      }
+
       .btn-3d-tour mat-icon {
         font-size: 20px;
         width: 20px;
@@ -1652,10 +1700,11 @@ export class PropertyDetailComponent {
   property = this.propertyService.currentProperty;
   loading = this.propertyService.loading;
   error = signal<string | null>(null);
-  currentImageIndex = signal<number>(0);
-  isLightboxOpen = signal<boolean>(false);
-  
-  is3DViewerOpen = signal<boolean>(false);
+
+  isLightboxOpen = signal(false);
+  currentImageIndex = signal(0);
+  is3DViewerOpen = signal(false);
+  isARViewerOpen = signal(false);
   private viewer: any = null;
   private routeSub: Subscription | null = null;
   
@@ -1768,6 +1817,17 @@ export class PropertyDetailComponent {
       this.viewer.destroy();
       this.viewer = null;
     }
+  }
+
+  openARViewer(event: Event): void {
+    event.stopPropagation();
+    this.isARViewerOpen.set(true);
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeARViewer(): void {
+    this.isARViewerOpen.set(false);
+    document.body.style.overflow = 'auto';
   }
 
   startVirtualTour(): void {

@@ -108,6 +108,7 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
   activeConversation = this.chatService.activeConversation;
   currentMessages = this.chatService.currentMessages;
   typingUsers = this.chatService.typingUsers;
+  isAutoResponderEnabled = this.chatService.isAutoResponderEnabled;
 
   quickReplies = [
     "Ushbu mulk hali ham bo'shmi?",
@@ -410,5 +411,14 @@ export class MessagesComponent implements OnInit, AfterViewChecked {
     if (propertyId) {
       this.router.navigate(['/properties', propertyId]);
     }
+  }
+
+  toggleAutoResponder(): void {
+    this.chatService.toggleAutoResponder();
+    this.snackBar.open(
+      `AI Yordamchi ${this.isAutoResponderEnabled() ? "yoqildi" : "o'chirildi"}`,
+      'Yopish',
+      { duration: 3000 }
+    );
   }
 }

@@ -10,8 +10,11 @@ export const HOST_ROUTES: Routes = [
   },
   {
     path: 'dashboard',
-    redirectTo: 'properties',
-    pathMatch: 'full',
+    loadComponent: () =>
+      import('./host-dashboard/host-dashboard.component').then(
+        (module) => module.HostDashboardComponent,
+      ),
+    title: "Kengaytirilgan Analitika",
   },
   {
     path: 'properties',

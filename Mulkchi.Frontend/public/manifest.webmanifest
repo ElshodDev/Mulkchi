@@ -1,9 +1,13 @@
 {
-  "name": "Mulkchi.Frontend",
-  "short_name": "Mulkchi.Frontend",
+  "name": "Mulkchi - Zamonaviy Ko'chmas Mulk",
+  "short_name": "Mulkchi",
+  "theme_color": "#c9a84c",
+  "background_color": "#0f172a",
   "display": "standalone",
+  "orientation": "portrait",
   "scope": "./",
   "start_url": "./",
+  "description": "Mulkchi - O'zbekistonning eng zamonaviy ko'chmas mulk platformasi. AI yordamida uylarni ijaraga oling va soting.",
   "icons": [
     {
       "src": "icons/icon-72x72.png",
