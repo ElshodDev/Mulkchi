@@ -23,11 +23,14 @@ using Mulkchi.Api.Models.Foundations.RentalContracts;
 using Mulkchi.Api.Models.Foundations.Reviews;
 using Mulkchi.Api.Models.Foundations.SavedSearches;
 using Mulkchi.Api.Models.Foundations.Users;
+using Mulkchi.Api.Models.Foundations.Verifications;
 
 namespace Mulkchi.Api.Brokers.Storages;
 
 public partial class StorageBroker : DbContext, IStorageBroker
 {
+    public DbSet<Verification> Verifications { get; set; }
+
     public StorageBroker(DbContextOptions<StorageBroker> options)
         : base(options) { }
 
@@ -237,6 +240,7 @@ public partial class StorageBroker : DbContext, IStorageBroker
         modelBuilder.Entity<Booking>().HasQueryFilter(e => e.DeletedDate == null);
         modelBuilder.Entity<PasswordResetToken>().HasQueryFilter(e => e.DeletedDate == null);
         modelBuilder.Entity<EmailVerificationToken>().HasQueryFilter(e => e.DeletedDate == null);
+        modelBuilder.Entity<Verification>().HasQueryFilter(e => e.DeletedDate == null);
         modelBuilder.Entity<PhoneOtp>().HasQueryFilter(e => e.DeletedDate == null);
 
         ConfigureAnalytics(modelBuilder);

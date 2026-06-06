@@ -32,7 +32,7 @@ public class SecurityHeadersMiddleware
             "frame-ancestors 'none';";
 
         headers["Permissions-Policy"] =
-            "camera=(), microphone=(), geolocation=(), payment=()";
+            "camera=(), microphone=(self), geolocation=(self), payment=(self)";
 
         if (context.Request.IsHttps)
         {

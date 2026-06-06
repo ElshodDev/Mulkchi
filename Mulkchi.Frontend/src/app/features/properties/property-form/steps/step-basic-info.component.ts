@@ -5,7 +5,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AiPriceDialogComponent } from '../components/ai-price-dialog/ai-price-dialog.component';
 
@@ -19,19 +18,13 @@ import { AiPriceDialogComponent } from '../components/ai-price-dialog/ai-price-d
     MatSelectModule,
     MatButtonModule,
     MatIconModule,
-    MatTooltipModule,
     MatDialogModule,
   ],
   template: `
     <div class="step-wrapper">
-      <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
-        <div>
-          <h1>Mulk haqida asosiy ma'lumotlar</h1>
-          <p>Xaridorlarga mulkingiz haqida qisqacha ma'lumot bering</p>
-        </div>
-        <button mat-stroked-button color="primary" class="btn-ai-fill" type="button" (click)="autoFillWithAI()">
-          <mat-icon>auto_awesome</mat-icon> AI yordamida to'ldirish
-        </button>
+      <div class="section-header">
+        <h1>Mulk haqida asosiy ma'lumotlar</h1>
+        <p>Xaridorlarga mulkingiz haqida qisqacha ma'lumot bering</p>
       </div>
 
       <form [formGroup]="form" class="premium-form">
@@ -96,12 +89,12 @@ import { AiPriceDialogComponent } from '../components/ai-price-dialog/ai-price-d
                 [formControlName]="getActivePriceControl()"
                 placeholder="0.00"
               />
-              <button mat-icon-button matSuffix matTooltip="AI orqali narx hisoblash" (click)="openAiPriceDialog($event)" style="color: #6366f1;">
-                <mat-icon>auto_awesome</mat-icon>
-              </button>
               <mat-icon matPrefix>payments</mat-icon>
               <span matSuffix class="currency-tag">{{ form.get('currency')?.value }}</span>
             </mat-form-field>
+            <button mat-button class="ai-price-helper" (click)="openAiPriceDialog($event)">
+              <mat-icon>auto_awesome</mat-icon> ✨ Narxni aniqlashda qiynalyapsizmi? AI tavsiyasini oling
+            </button>
           </div>
 
           <!-- Currency Select -->
@@ -125,18 +118,70 @@ import { AiPriceDialogComponent } from '../components/ai-price-dialog/ai-price-d
               <mat-icon matPrefix>square_foot</mat-icon>
             </mat-form-field>
           </div>
+          
+          <ng-container *ngIf="showRoomDetails()">
+            <div class="form-section">
+              <label class="section-label">Xonalar</label>
+              <mat-form-field appearance="outline" class="full-width premium-field">
+                <mat-select formControlName="numberOfBedrooms">
+                  <mat-option *ngFor="let n of [1,2,3,4,5,6,7,8,9,10]" [value]="n">{{n}} xona</mat-option>
+                  <mat-option [value]="11">10+ xona</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>bed</mat-icon>
+              </mat-form-field>
+            </div>
+            <div class="form-section">
+              <label class="section-label">Hammom</label>
+              <mat-form-field appearance="outline" class="full-width premium-field">
+                <mat-select formControlName="numberOfBathrooms">
+                  <mat-option *ngFor="let n of [1,2,3,4,5]" [value]="n">{{n}} ta</mat-option>
+                  <mat-option [value]="6">5+ ta</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>bathtub</mat-icon>
+              </mat-form-field>
+            </div>
+          </ng-container>
+        </div>
+
+        <div class="row-grid" *ngIf="showRoomDetails()">
           <div class="form-section">
-            <label class="section-label">Xonalar</label>
+            <label class="section-label">Qavat</label>
             <mat-form-field appearance="outline" class="full-width premium-field">
-              <input matInput type="number" formControlName="numberOfBedrooms" />
-              <mat-icon matPrefix>bed</mat-icon>
+              <mat-select formControlName="floor">
+                <mat-option *ngFor="let n of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]" [value]="n">{{n}} - qavat</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>stairs</mat-icon>
             </mat-form-field>
           </div>
           <div class="form-section">
-            <label class="section-label">Hammom</label>
+            <label class="section-label">Umumiy qavatlar</label>
             <mat-form-field appearance="outline" class="full-width premium-field">
-              <input matInput type="number" formControlName="numberOfBathrooms" />
-              <mat-icon matPrefix>bathtub</mat-icon>
+              <mat-select formControlName="totalFloors">
+                <mat-option *ngFor="let n of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]" [value]="n">{{n}} qavatli bino</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>domain</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="row-grid" *ngIf="showRoomDetails()">
+          <div class="form-section">
+            <label class="section-label">Qurilgan yili</label>
+            <mat-form-field appearance="outline" class="full-width premium-field">
+              <input matInput type="number" formControlName="yearBuilt" placeholder="Masalan: 2024" />
+              <mat-icon matPrefix>event</mat-icon>
+            </mat-form-field>
+          </div>
+          <div class="form-section">
+            <label class="section-label">Uy holati</label>
+            <mat-form-field appearance="outline" class="full-width premium-field">
+              <mat-select formControlName="condition">
+                <mat-option value="Excellent">Yevroremont / Yangi</mat-option>
+                <mat-option value="Good">Yaxshi (O'rtacha)</mat-option>
+                <mat-option value="NeedsRepair">Ta'mirtalab</mat-option>
+                <mat-option value="Rough">Qora suvoq (Karobka)</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>handyman</mat-icon>
             </mat-form-field>
           </div>
         </div>
@@ -177,16 +222,6 @@ import { AiPriceDialogComponent } from '../components/ai-price-dialog/ai-price-d
         font-size: 1.1rem;
         margin-top: 8px;
       }
-
-      .btn-ai-fill {
-        border-radius: 12px;
-        height: 42px;
-        font-weight: 600;
-        border-color: #6366f1 !important;
-        color: #6366f1 !important;
-        background: rgba(99, 102, 241, 0.05);
-      }
-      .btn-ai-fill mat-icon { margin-right: 4px; }
 
       .premium-form {
         display: flex;
@@ -254,6 +289,20 @@ import { AiPriceDialogComponent } from '../components/ai-price-dialog/ai-price-d
         justify-content: center;
         color: #64748b;
         transition: all 0.3s ease;
+      }
+
+      .ai-price-helper {
+        margin-top: 8px;
+        width: 100%;
+        border-radius: 12px;
+        font-weight: 600;
+        color: #6366f1;
+        background: rgba(99, 102, 241, 0.05);
+        border: 1px dashed rgba(99, 102, 241, 0.3);
+      }
+      .ai-price-helper mat-icon {
+        margin-right: 8px;
+        color: #f59e0b;
       }
 
       .active .choice-icon {
@@ -383,6 +432,11 @@ export class StepBasicInfoComponent {
     this.form.patchValue({ listingType: value });
   }
 
+  showRoomDetails(): boolean {
+    const type = this.form.get('type')?.value;
+    return type !== 'Land' && type !== 'Other';
+  }
+
   getActivePriceControl(): string {
     const type = this.form.get('listingType')?.value;
     if (type === 'Sale') return 'salePrice';
@@ -403,20 +457,6 @@ export class StepBasicInfoComponent {
     this.cancel.emit();
   }
 
-  autoFillWithAI() {
-    this.form.patchValue({
-      title: 'Toshkent markazida zamonaviy 3 xonali kvartira',
-      type: 'Apartment',
-      category: 'Residential',
-      listingType: 'Sale',
-      currency: 'USD',
-      salePrice: 125000,
-      area: 85,
-      numberOfBedrooms: 3,
-      numberOfBathrooms: 1
-    });
-  }
-
   openAiPriceDialog(event: Event) {
     event.preventDefault();
     event.stopPropagation();
@@ -434,8 +474,12 @@ export class StepBasicInfoComponent {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
+        let finalPrice = result;
+        if (this.form.get('currency')?.value === 'UZS') {
+          finalPrice = result * 12600;
+        }
         const activeControl = this.getActivePriceControl();
-        this.form.patchValue({ [activeControl]: result });
+        this.form.patchValue({ [activeControl]: finalPrice });
         this.form.get(activeControl)?.markAsTouched();
         this.form.get(activeControl)?.markAsDirty();
       }

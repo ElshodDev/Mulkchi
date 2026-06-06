@@ -57,6 +57,11 @@ public partial class FavoriteService
 
             throw CreateAndLogDependencyException(failedStorage);
         }
+        catch (UnauthorizedAccessException unauthorizedAccessException)
+        {
+            var exception = new Xeption(unauthorizedAccessException.Message, unauthorizedAccessException);
+            throw CreateAndLogDependencyValidationException(exception);
+        }
         catch (Exception exception)
         {
             var failedService = new FailedFavoriteServiceException(

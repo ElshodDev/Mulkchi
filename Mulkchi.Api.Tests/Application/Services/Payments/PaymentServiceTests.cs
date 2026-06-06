@@ -7,6 +7,7 @@ using FluentAssertions;
 using Moq;
 using Mulkchi.Api.Brokers.DateTimes;
 using Mulkchi.Api.Brokers.Loggings;
+using Mulkchi.Api.Brokers.Payments;
 using Mulkchi.Api.Brokers.Storages;
 using Mulkchi.Api.Models.Foundations.Payments;
 using Mulkchi.Api.Models.Foundations.Payments.Exceptions;
@@ -20,6 +21,8 @@ public class PaymentServiceTests
     private readonly Mock<IStorageBroker> storageBrokerMock;
     private readonly Mock<ILoggingBroker> loggingBrokerMock;
     private readonly Mock<IDateTimeBroker> dateTimeBrokerMock;
+    private readonly Mock<IPaymeBroker> paymeBrokerMock;
+    private readonly Mock<IClickBroker> clickBrokerMock;
     private readonly IPaymentService paymentService;
 
     public PaymentServiceTests()
@@ -27,11 +30,15 @@ public class PaymentServiceTests
         this.storageBrokerMock = new Mock<IStorageBroker>();
         this.loggingBrokerMock = new Mock<ILoggingBroker>();
         this.dateTimeBrokerMock = new Mock<IDateTimeBroker>();
+        this.paymeBrokerMock = new Mock<IPaymeBroker>();
+        this.clickBrokerMock = new Mock<IClickBroker>();
 
         this.paymentService = new PaymentService(
             this.storageBrokerMock.Object,
             this.loggingBrokerMock.Object,
-            this.dateTimeBrokerMock.Object);
+            this.dateTimeBrokerMock.Object,
+            this.paymeBrokerMock.Object,
+            this.clickBrokerMock.Object);
     }
 
     private static Payment CreateRandomPayment()
@@ -40,6 +47,7 @@ public class PaymentServiceTests
             .RuleFor(p => p.Id, f => Guid.NewGuid())
             .RuleFor(p => p.BookingId, f => Guid.NewGuid())
             .RuleFor(p => p.PayerId, f => Guid.NewGuid())
+            .RuleFor(p => p.ReceiverId, f => Guid.NewGuid())
             .RuleFor(p => p.Amount, f => f.Random.Decimal(10, 1000))
             .RuleFor(p => p.ExternalTransactionId, f => f.Random.AlphaNumeric(10))
             .RuleFor(p => p.IdempotencyKey, f => Guid.NewGuid().ToString())

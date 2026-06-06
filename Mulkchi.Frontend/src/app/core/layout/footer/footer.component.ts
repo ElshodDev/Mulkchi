@@ -33,6 +33,15 @@ import { RouterLink } from '@angular/router';
               <a routerLink="/auth/register">Ro'yxatdan o'tish</a>
               <a routerLink="/profile">Profil</a>
             </div>
+            <div class="link-column app-downloads">
+              <h4>Ilovani yuklab oling</h4>
+              <a href="javascript:void(0)" class="app-badge">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="Download on the App Store">
+              </a>
+              <a href="javascript:void(0)" class="app-badge mt-2">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play">
+              </a>
+            </div>
           </div>
         </div>
         
@@ -41,8 +50,8 @@ import { RouterLink } from '@angular/router';
             &copy; {{ currentYear }} Mulkchi. Barcha huquqlar himoyalangan.
           </p>
           <div class="badges">
-            <span class="tech-badge">Angular 18</span>
-            <span class="tech-badge">.NET 8</span>
+            <span class="tech-badge">Angular 20</span>
+            <span class="tech-badge">.NET 9</span>
             <span class="tech-badge">PostgreSQL</span>
           </div>
         </div>
@@ -51,8 +60,9 @@ import { RouterLink } from '@angular/router';
   `,
   styles: [`
     .modern-footer {
-      background: #0f172a;
-      color: #f8fafc;
+      background: var(--color-background);
+      border-top: 1px solid var(--color-border);
+      color: var(--color-text-secondary);
       padding: 60px 0 20px;
       margin-top: 40px;
       font-family: 'Inter', sans-serif;
@@ -67,7 +77,7 @@ import { RouterLink } from '@angular/router';
       grid-template-columns: 1.5fr 2fr;
       gap: 40px;
       margin-bottom: 40px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid var(--color-border);
       padding-bottom: 40px;
     }
     .brand-section {
@@ -80,7 +90,7 @@ import { RouterLink } from '@angular/router';
       font-size: 1.5rem;
       font-weight: 800;
       margin-bottom: 16px;
-      color: white;
+      color: var(--color-text-primary);
     }
     .logo-icon {
       font-size: 2rem;
@@ -88,10 +98,10 @@ import { RouterLink } from '@angular/router';
     .thesis-title {
       font-size: 0.95rem;
       line-height: 1.6;
-      color: #94a3b8;
+      color: var(--color-text-secondary);
     }
     .thesis-title strong {
-      color: #c084fc;
+      color: var(--color-gold);
       font-size: 1.05rem;
     }
     .links-section {
@@ -105,26 +115,26 @@ import { RouterLink } from '@angular/router';
       gap: 12px;
     }
     .link-column h4 {
-      color: white;
+      color: var(--color-text-primary);
       font-size: 1.1rem;
       margin: 0 0 8px 0;
       font-weight: 600;
     }
     .link-column a {
-      color: #94a3b8;
+      color: var(--color-text-secondary);
       text-decoration: none;
       transition: color 0.3s, transform 0.3s;
       font-size: 0.95rem;
     }
     .link-column a:hover {
-      color: #c084fc;
+      color: var(--color-gold);
       transform: translateX(5px);
     }
     .footer-bottom {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      color: #64748b;
+      color: var(--color-text-secondary);
       font-size: 0.85rem;
     }
     .badges {
@@ -132,11 +142,31 @@ import { RouterLink } from '@angular/router';
       gap: 10px;
     }
     .tech-badge {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 4px 10px;
+      background: rgba(15, 23, 42, 0.05);
+      padding: 4px 12px;
       border-radius: 12px;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+    
+    .app-downloads .app-badge {
+      display: block;
+      margin-bottom: 12px;
+      transition: transform 0.2s;
+    }
+    
+    .app-downloads .app-badge img {
+      height: 40px;
+      width: auto;
+    }
+    
+    .app-downloads .app-badge:hover {
+      transform: translateY(-2px);
+    }
+    
+    .mt-2 {
+      margin-top: 8px;
     }
 
     @media (max-width: 768px) {

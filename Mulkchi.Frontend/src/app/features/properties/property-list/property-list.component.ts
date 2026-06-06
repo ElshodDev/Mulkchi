@@ -70,9 +70,13 @@ import { AIService } from '../../../core/services/ai.service';
   ],
   template: `
     <div class="property-list-container">
-      <!-- Premium Hero Header -->
-      <section class="premium-hero-header">
-        <div class="hero-bg-overlay"></div>
+      <!-- Clean Modern Hero Header -->
+      <section class="modern-hero-header">
+        <div class="hero-decorative-blobs">
+          <div class="blob blob-1"></div>
+          <div class="blob blob-2"></div>
+        </div>
+        
         <div class="container hero-content">
           <div class="breadcrumb animate-fade-in">
             <a routerLink="/">Bosh sahifa</a>
@@ -87,46 +91,40 @@ import { AIService } from '../../../core/services/ai.service';
 
           <div class="modern-search-wrapper animate-slide-up">
             <div class="search-main">
-              <mat-icon class="search-icon-hero">location_on</mat-icon>
-              <input
-                type="text"
-                class="hero-input"
-                [placeholder]="text().searchPlaceholder"
-                [value]="heroSearchValue()"
-                (input)="onSearchInput($any($event).target.value)"
-                (keyup.enter)="onHeroSearch()"
-                [matAutocomplete]="auto"
-              />
-              <mat-autocomplete
-                #auto="matAutocomplete"
-                (optionSelected)="onLocationSelected($event)"
-              >
-                <mat-option
-                  *ngFor="let loc of searchSuggestions().locations.slice(0, 5)"
-                  [value]="loc"
+              <div class="search-input-group">
+                <mat-icon class="search-icon-hero">location_on</mat-icon>
+                <input
+                  type="text"
+                  class="hero-input"
+                  [placeholder]="text().searchPlaceholder"
+                  [value]="heroSearchValue()"
+                  (input)="onSearchInput($any($event).target.value)"
+                  (keyup.enter)="onHeroSearch()"
+                  [matAutocomplete]="auto"
+                />
+                <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onLocationSelected($event)">
+                  <mat-option *ngFor="let loc of searchSuggestions().locations.slice(0, 5)" [value]="loc">
+                    <mat-icon>place</mat-icon>
+                    <span>{{ loc }}</span>
+                  </mat-option>
+                </mat-autocomplete>
+                
+                <button
+                  mat-icon-button
+                  class="btn-voice"
+                  (click)="toggleVoiceSearch()"
+                  [class.mic-active]="voiceService.isListening()"
+                  [matTooltip]="voiceService.isListening() ? 'Eshitilmoqda...' : 'Ovozli qidiruv'"
                 >
-                  <mat-icon>place</mat-icon>
-                  <span>{{ loc }}</span>
-                </mat-option>
-              </mat-autocomplete>
-
-              <button
-                mat-icon-button
-                (click)="toggleVoiceSearch()"
-                [class.mic-active]="voiceService.isListening()"
-                [matTooltip]="voiceService.isListening() ? 'Eshitilmoqda...' : 'Ovozli qidiruv'"
-              >
-                <mat-icon>{{ voiceService.isListening() ? 'mic' : 'mic_none' }}</mat-icon>
-              </button>
+                  <mat-icon>{{ voiceService.isListening() ? 'mic' : 'mic_none' }}</mat-icon>
+                </button>
+              </div>
 
               <div class="search-divider"></div>
 
               <div class="search-type-selector">
                 <mat-icon>home</mat-icon>
-                <mat-select
-                  [value]="filtersValue().listingType || 'All'"
-                  (selectionChange)="onTypeChange($event.value)"
-                >
+                <mat-select [value]="filtersValue().listingType || 'All'" (selectionChange)="onTypeChange($event.value)">
                   <mat-option value="All">{{ text().allTypes }}</mat-option>
                   <mat-option value="Rent">{{ text().rent }}</mat-option>
                   <mat-option value="Sale">{{ text().sale }}</mat-option>
@@ -141,9 +139,6 @@ import { AIService } from '../../../core/services/ai.service';
             </div>
           </div>
         </div>
-
-        <!-- Smooth fade transition into page background -->
-        <div class="hero-bottom-fade"></div>
       </section>
 
       <div class="main-content-wrapper">
@@ -218,10 +213,17 @@ import { AIService } from '../../../core/services/ai.service';
                 </div>
               } @else {
                 <div class="map-view-container animate-fade-in">
-                  <app-property-map
-                    [properties]="properties()"
-                    (propertyClick)="navigateToProperty($event)"
-                  ></app-property-map>
+                  @defer (on viewport) {
+                    <app-property-map
+                      [properties]="properties()"
+                      (propertyClick)="navigateToProperty($event)"
+                    ></app-property-map>
+                  } @placeholder {
+                    <div class="map-placeholder pulse">
+                      <mat-icon>map</mat-icon>
+                      <p>Xarita yuklanmoqda...</p>
+                    </div>
+                  }
                 </div>
               }
             }
@@ -233,91 +235,52 @@ import { AIService } from '../../../core/services/ai.service';
   styles: [
     `
       :host {
-        --color-navy: #0f172a;
-        --color-gold: #c9a84c;
-        --color-white: #ffffff;
-        --color-gray-50: #f8fafc;
-        --color-gray-200: #e2e8f0;
-        --radius-xl: 24px;
-        --radius-lg: 16px;
         display: block;
       }
 
       .property-list-container {
-        background: var(--color-gray-50);
+        background: var(--color-surface-canvas);
         min-height: 100vh;
       }
 
-      .premium-hero-header {
+      .modern-hero-header {
         position: relative;
-        background-color: #020617;
-        background-image:
-          linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.6)),
-          url('https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=2400&q=80');
-        background-size: cover;
-        background-position: center;
-        padding: 100px 0 140px;
-        color: var(--color-white);
+        background: var(--color-surface-canvas);
+        padding: 40px 0 60px;
+        color: var(--color-text-primary);
         overflow: hidden;
+        border-bottom: 1px solid var(--color-border-soft);
       }
 
-      .premium-hero-header::before {
-        content: '';
-        position: absolute;
-        top: -100px;
-        right: -100px;
-        width: 500px;
-        height: 500px;
-        background: radial-gradient(circle, rgba(201, 168, 76, 0.08) 0%, transparent 70%);
-        border-radius: 50%;
-        z-index: 0;
-        animation: float 8s ease-in-out infinite;
-      }
-
-      .premium-hero-header::after {
-        content: '';
-        position: absolute;
-        bottom: -80px;
-        left: -80px;
-        width: 400px;
-        height: 400px;
-        background: radial-gradient(circle, rgba(30, 64, 120, 0.2) 0%, transparent 70%);
-        border-radius: 50%;
-        z-index: 0;
-        animation: float 10s ease-in-out infinite reverse;
-      }
-
-      @keyframes float {
-        0%,
-        100% {
-          transform: translateY(0) scale(1);
-        }
-        50% {
-          transform: translateY(-20px) scale(1.05);
-        }
-      }
-
-      .hero-bg-overlay {
+      .hero-decorative-blobs {
         position: absolute;
         inset: 0;
-        background: linear-gradient(
-          135deg,
-          rgba(10, 22, 40, 0.75) 0%,
-          rgba(15, 30, 60, 0.45) 50%,
-          rgba(10, 22, 40, 0.85) 100%
-        );
-        z-index: 1;
+        pointer-events: none;
+        overflow: hidden;
+        z-index: 0;
       }
 
-      .hero-bottom-fade {
+      .blob {
         position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 150px;
-        background: linear-gradient(to bottom, transparent, var(--color-gray-50));
-        z-index: 2;
-        pointer-events: none;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.5;
+      }
+
+      .blob-1 {
+        top: -100px;
+        right: -100px;
+        width: 400px;
+        height: 400px;
+        background: rgba(99, 102, 241, 0.15); /* Indigo tint */
+      }
+
+      .blob-2 {
+        bottom: -150px;
+        left: -100px;
+        width: 500px;
+        height: 500px;
+        background: rgba(168, 85, 247, 0.1); /* Purple tint */
       }
 
       .hero-content {
@@ -329,71 +292,109 @@ import { AIService } from '../../../core/services/ai.service';
         align-items: center;
         gap: 8px;
         font-size: 0.85rem;
-        opacity: 0.8;
-        margin-bottom: 24px;
+        color: var(--color-text-secondary);
+        font-weight: 600;
+        margin-bottom: 20px;
+      }
+      .breadcrumb a:hover {
+        color: #6366f1;
       }
       .hero-title-group h1 {
-        font-size: 4rem;
+        font-size: 3.5rem;
         font-weight: 900;
         letter-spacing: -0.04em;
         margin: 0;
-        text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        color: #1e293b;
       }
       .hero-title-group p {
-        font-size: 1.25rem;
-        opacity: 0.9;
+        font-size: 1.15rem;
+        color: #64748b;
         margin-top: 12px;
         font-weight: 500;
       }
 
       .modern-search-wrapper {
         max-width: 900px;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(16px);
-        padding: 12px;
-        border-radius: var(--radius-xl);
-        border: 1px solid rgba(255, 255, 255, 0.2);
         margin-top: 32px;
       }
 
       .search-main {
         display: flex;
         align-items: center;
-        background: var(--color-white);
-        border-radius: var(--radius-lg);
-        padding: 6px;
+        background: white;
+        border-radius: 100px;
+        padding: 8px 8px 8px 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        gap: 12px;
+      }
+      
+      .search-input-group {
+        flex: 1;
+        display: flex;
+        align-items: center;
         gap: 8px;
       }
+      
+      .search-icon-hero {
+        color: #6366f1;
+      }
+      
       .hero-input {
         flex: 1;
         border: none;
         outline: none;
-        padding: 12px;
-        font-size: 1rem;
-        color: var(--color-navy);
+        padding: 8px 0;
+        font-size: 1.05rem;
+        font-weight: 500;
+        background: transparent;
+        color: #1e293b;
       }
+      
+      .hero-input::placeholder {
+        color: #94a3b8;
+        font-weight: 400;
+      }
+      
+      .btn-voice {
+        color: #94a3b8;
+      }
+      .btn-voice:hover {
+        color: #6366f1;
+        background: rgba(99, 102, 241, 0.05);
+      }
+      
       .search-divider {
         width: 1px;
         height: 32px;
-        background: var(--color-gray-200);
+        background: #e2e8f0;
       }
+      
       .search-type-selector {
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 0 16px;
-        color: var(--color-navy);
+        padding: 0 12px;
+        color: #475569;
+        font-weight: 600;
       }
+      .search-type-selector mat-icon {
+        color: #94a3b8;
+      }
+      
       .search-trigger-btn {
-        background: var(--color-gold) !important;
-        color: var(--color-navy) !important;
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%) !important;
+        color: white !important;
         height: 52px !important;
-        border-radius: 12px !important;
-        font-weight: 800 !important;
+        border-radius: 100px !important;
+        padding: 0 32px !important;
+        font-weight: 700 !important;
+        font-size: 1.05rem !important;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3) !important;
       }
 
       .mic-active {
-        color: #ef4444 !important;
+        color: var(--color-error) !important;
         position: relative;
         z-index: 1;
       }
@@ -404,7 +405,7 @@ import { AIService } from '../../../core/services/ai.service';
         transform: translate(-50%, -50%);
         width: 100%; height: 100%;
         border-radius: 50%;
-        background: linear-gradient(45deg, #ef4444, #3b82f6, #8b5cf6, #ec4899);
+        background: linear-gradient(45deg, var(--color-error), var(--color-primary), var(--color-gold), var(--color-primary-light));
         background-size: 300% 300%;
         z-index: -1;
         animation: siri-wave 1.5s infinite ease-out, siri-gradient 3s infinite linear;
@@ -435,11 +436,10 @@ import { AIService } from '../../../core/services/ai.service';
       }
 
       .main-content-wrapper {
-        padding: 0 24px;
-        margin-top: -80px;
+        padding: 40px 24px 80px;
         position: relative;
         z-index: 10;
-        padding-bottom: 80px;
+        background: #f8fafc; /* Very light slate background for contrast against white cards */
       }
 
       .layout-grid {
@@ -456,13 +456,24 @@ import { AIService } from '../../../core/services/ai.service';
         position: sticky;
         top: 80px;
         align-self: flex-start;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+      }
+      
+      /* Custom scrollbar for sidebar */
+      .filters-sidebar-column::-webkit-scrollbar {
+        width: 6px;
+      }
+      .filters-sidebar-column::-webkit-scrollbar-thumb {
+        background: var(--color-border-strong);
+        border-radius: 10px;
       }
 
       .filters-sidebar-plate {
-        background: var(--color-white);
-        border-radius: var(--radius-xl);
-        box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.08);
-        border: 1px solid var(--color-gray-200);
+        background: var(--color-surface-elevated);
+        border-radius: var(--radius-xl, 24px);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--color-border-soft);
         overflow: hidden;
         padding: 24px;
       }
@@ -470,10 +481,10 @@ import { AIService } from '../../../core/services/ai.service';
       .results-area-plate {
         flex: 1;
         min-width: 0;
-        background: var(--color-white);
-        border-radius: var(--radius-xl);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
-        border: 1px solid var(--color-gray-200);
+        background: var(--color-surface-elevated);
+        border-radius: var(--radius-xl, 24px);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--color-border-soft);
         padding: 0 40px 40px;
         min-height: 600px;
         height: fit-content;
@@ -482,9 +493,9 @@ import { AIService } from '../../../core/services/ai.service';
       .sidebar-ad-card {
         margin-top: 24px;
         padding: 24px;
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-background) 100%);
         border-radius: 20px;
-        color: white;
+        color: var(--color-text-inverse, white);
         text-align: center;
       }
       .sidebar-ad-card mat-icon {
@@ -506,9 +517,9 @@ import { AIService } from '../../../core/services/ai.service';
       .sidebar-info-card {
         margin-top: 16px;
         padding: 24px;
-        background: #f8fafc;
+        background: var(--color-surface);
         border-radius: 20px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--color-border);
       }
       .widget-header {
         display: flex;
@@ -535,7 +546,7 @@ import { AIService } from '../../../core/services/ai.service';
         gap: 12px;
       }
       .widget-list mat-icon {
-        color: #64748b;
+        color: var(--color-text-secondary);
         font-size: 20px;
         width: 20px;
         height: 20px;
@@ -547,7 +558,7 @@ import { AIService } from '../../../core/services/ai.service';
       }
       .widget-list p {
         font-size: 0.7rem;
-        color: #64748b;
+        color: var(--color-text-secondary);
         margin: 0;
       }
 
@@ -580,8 +591,8 @@ import { AIService } from '../../../core/services/ai.service';
       }
       .skeleton-loader-card {
         height: 450px;
-        background: #e2e8f0;
-        border-radius: var(--radius-xl);
+        background: var(--color-border-soft);
+        border-radius: var(--radius-xl, 24px);
         animation: pulse 1.5s infinite;
       }
 
@@ -760,7 +771,7 @@ export class PropertyListComponent implements OnInit {
         
         // Show parsed info in UI if you want
         if (res.parsedParams) {
-           console.log("AI Tushungan parametrlar:", res.parsedParams);
+
         }
         
         this.loading.set(false);
@@ -788,7 +799,14 @@ export class PropertyListComponent implements OnInit {
   }
 
   onHeroSearch(): void {
-    this.updateUrl({ search: this.heroSearchValue(), page: 1 });
+    const searchValue = this.heroSearchValue();
+    if (searchValue.trim().split(' ').length > 1 || this.voiceService.isListening()) {
+      // If it's a multi-word phrase or voice search, use AI semantic search
+      this.updateUrl({ search: searchValue, page: 1, ai_search: 'true' });
+    } else {
+      // Standard exact search
+      this.updateUrl({ search: searchValue, page: 1 });
+    }
   }
 
   onTypeChange(type: string): void {

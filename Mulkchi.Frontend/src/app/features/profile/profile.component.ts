@@ -19,6 +19,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { AuthStore } from '../../core/stores/auth.store';
 import { UIStore } from '../../core/stores/ui.store';
 import { AnalyticsService, HostDashboardStats } from '../../core/services/analytics.service';
+import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
   selector: 'app-profile',
@@ -292,6 +293,10 @@ import { AnalyticsService, HostDashboardStats } from '../../core/services/analyt
                           </mat-form-field>
                         </div>
 
+                        <div class="form-row">
+                           <mat-slide-toggle (change)="enablePush()">Push bildirishnomalar</mat-slide-toggle>
+                        </div>
+
                         @if (isEditing()) {
                           <div class="form-actions">
                             <button mat-button type="button" (click)="toggleEdit()">
@@ -318,17 +323,17 @@ import { AnalyticsService, HostDashboardStats } from '../../core/services/analyt
   styles: [
     `
       :host {
-        --color-navy: #1b3a6b;
-        --color-navy-light: #2a4a7c;
-        --color-navy-dark: #122a4d;
-        --color-gold: #c9a84c;
-        --color-white: #ffffff;
-        --color-gray-50: #f8fafc;
-        --color-gray-100: #f1f5f9;
-        --color-gray-200: #e2e8f0;
-        --color-gray-300: #cbd5e1;
-        --color-gray-500: #64748b;
-        --color-gray-900: #0f172a;
+        --color-navy: var(--color-primary);
+        --color-navy-light: var(--color-primary-light);
+        --color-navy-dark: var(--color-primary);
+        --color-gold: var(--color-gold);
+        --color-white: var(--color-surface);
+        --color-gray-50: var(--color-background);
+        --color-gray-100: var(--color-surface);
+        --color-gray-200: var(--color-border);
+        --color-gray-300: var(--color-border);
+        --color-gray-500: var(--color-text-secondary);
+        --color-gray-900: var(--color-text-primary);
         --radius-lg: 16px;
         --radius-xl: 24px;
         --shadow-lg: 0 10px 25px -3px rgb(0 0 0 / 0.1);
@@ -464,16 +469,16 @@ import { AnalyticsService, HostDashboardStats } from '../../core/services/analyt
         text-transform: uppercase;
       }
       .role-badge.guest {
-        background: #f1f5f9;
-        color: #475569;
+        background: var(--color-surface);
+        color: var(--color-text-primary);
       }
       .role-badge.host {
-        background: #fffbeb;
-        color: #b45309;
+        background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+        color: var(--color-warning);
       }
       .role-badge.admin {
-        background: #fef2f2;
-        color: #dc2626;
+        background: color-mix(in srgb, var(--color-error) 15%, transparent);
+        color: var(--color-error);
       }
 
       .host-badge {
@@ -530,15 +535,15 @@ import { AnalyticsService, HostDashboardStats } from '../../core/services/analyt
       .icon-box {
         width: 44px;
         height: 44px;
-        background: #f8fafc;
+        background: var(--color-background);
         border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
       }
       .link-item:hover .icon-box {
-        background: #eff6ff;
-        color: #3b82f6;
+        background: color-mix(in srgb, var(--color-info) 15%, transparent);
+        color: var(--color-info);
       }
       .link-item span {
         font-size: 0.75rem;
@@ -593,24 +598,24 @@ import { AnalyticsService, HostDashboardStats } from '../../core/services/analyt
         justify-content: center;
       }
       .stat-icon.listings {
-        background: #eff6ff;
-        color: #2563eb;
+        background: color-mix(in srgb, var(--color-info) 15%, transparent);
+        color: var(--color-info);
       }
       .stat-icon.bookings {
-        background: #f0fdf4;
-        color: #16a34a;
+        background: color-mix(in srgb, var(--color-success) 15%, transparent);
+        color: var(--color-success);
       }
       .stat-icon.views {
-        background: #fdf4ff;
-        color: #c026d3;
+        background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+        color: var(--color-primary);
       }
       .stat-icon.rating {
-        background: #fffbeb;
-        color: #d97706;
+        background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+        color: var(--color-warning);
       }
       .stat-icon.revenue {
-        background: #ecfdf5;
-        color: #059669;
+        background: color-mix(in srgb, var(--color-success) 15%, transparent);
+        color: var(--color-success);
       }
       .stat-content {
         display: flex;
@@ -714,6 +719,7 @@ export class ProfileComponent implements OnInit {
   private router = inject(Router);
   private uiStore = inject(UIStore);
   private analyticsService = inject(AnalyticsService);
+  private notificationService = inject(NotificationService);
 
   currentUser = this.authService.currentUser;
   isEditing = signal(false);
@@ -815,6 +821,16 @@ export class ProfileComponent implements OnInit {
     gender: ['' as Gender],
   });
 
+  enablePush(): void {
+    if ('Notification' in window) {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          this.snackBar.open('Push xabarlar yoqildi!', 'Yopish', { duration: 3000 });
+        }
+      });
+    }
+  }
+
   ngOnInit(): void {
     this.loadUserData();
     this.loadStats();
@@ -853,7 +869,7 @@ export class ProfileComponent implements OnInit {
           datasets: [{
             label: "Ko'rilishlar",
             data: viewsData,
-            borderColor: '#3b82f6',
+            borderColor: 'var(--color-info)',
             backgroundColor: 'rgba(59, 130, 246, 0.1)',
             tension: 0.4,
             fill: true
@@ -872,7 +888,7 @@ export class ProfileComponent implements OnInit {
           datasets: [{
             label: "Tushum (UZS)",
             data: revData,
-            backgroundColor: '#10b981',
+            backgroundColor: 'var(--color-success)',
             borderRadius: 6
           }]
         },

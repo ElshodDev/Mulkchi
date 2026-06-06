@@ -98,6 +98,9 @@ interface ChatMessage {
           placeholder="Xabaringizni yozing..." 
           class="chat-input"
         />
+        <button mat-icon-button color="warn" (click)="toggleVoice()" [class.recording]="isRecording()" matTooltip="Ovozli yordam">
+          <mat-icon>{{ isRecording() ? 'mic_off' : 'mic' }}</mat-icon>
+        </button>
         <button mat-icon-button color="primary" (click)="sendMessage()" [disabled]="!currentInput.trim() || isTyping()">
           <mat-icon>send</mat-icon>
         </button>
@@ -116,7 +119,7 @@ interface ChatMessage {
       width: 64px;
       height: 64px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
       color: white;
       border: none;
       box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
@@ -155,7 +158,7 @@ interface ChatMessage {
     }
 
     .chat-header {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
       color: white;
       padding: 20px;
       display: flex;
@@ -201,12 +204,12 @@ interface ChatMessage {
       display: flex;
       flex-direction: column;
       gap: 16px;
-      background: #f8fafc;
+      background: var(--color-surface-elevated);
     }
 
     .welcome-message {
       text-align: center;
-      color: #64748b;
+      color: var(--color-text-secondary);
       margin-bottom: 20px;
     }
 
@@ -214,7 +217,7 @@ interface ChatMessage {
       font-size: 48px;
       width: 48px;
       height: 48px;
-      color: #cbd5e1;
+      color: var(--color-border);
       margin-bottom: 12px;
     }
 
@@ -227,18 +230,18 @@ interface ChatMessage {
 
     .suggestion-chips button {
       background: white;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--color-border);
       padding: 10px 16px;
       border-radius: 20px;
-      color: #6366f1;
+      color: var(--color-primary);
       font-size: 0.9rem;
       cursor: pointer;
       transition: all 0.2s;
     }
 
     .suggestion-chips button:hover {
-      background: #f1f5ff;
-      border-color: #6366f1;
+      background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+      border-color: var(--color-primary);
     }
 
     .message-wrapper {
@@ -263,14 +266,14 @@ interface ChatMessage {
     }
     
     .message-wrapper.user .message-bubble {
-      background: #6366f1;
+      background: var(--color-primary);
       color: white;
       border-bottom-right-radius: 4px;
     }
 
     .message-wrapper.assistant .message-bubble {
-      background: #f1f5f9;
-      color: #334155;
+      background: var(--color-surface);
+      color: var(--color-text-primary);
       border-bottom-left-radius: 4px;
     }
 
@@ -285,8 +288,8 @@ interface ChatMessage {
     .widget-prop-card {
       display: flex;
       gap: 8px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background: var(--color-surface-elevated);
+      border: 1px solid var(--color-border);
       border-radius: 8px;
       padding: 6px;
       text-decoration: none;
@@ -294,8 +297,8 @@ interface ChatMessage {
       transition: all 0.2s;
     }
     .widget-prop-card:hover {
-      background: #f1f5f9;
-      border-color: #cbd5e1;
+      background: var(--color-surface);
+      border-color: var(--color-border);
     }
     .widget-prop-card img {
       width: 40px;
@@ -320,7 +323,7 @@ interface ChatMessage {
     }
     .widget-prop-card .info span {
       font-size: 11px;
-      color: #6366f1;
+      color: var(--color-primary);
       font-weight: 700;
     }
 
@@ -334,7 +337,7 @@ interface ChatMessage {
     .chat-input-area {
       padding: 16px;
       background: white;
-      border-top: 1px solid #e2e8f0;
+      border-top: 1px solid var(--color-border);
       display: flex;
       gap: 12px;
       align-items: center;
@@ -343,7 +346,7 @@ interface ChatMessage {
     .chat-input {
       flex: 1;
       border: none;
-      background: #f1f5f9;
+      background: var(--color-surface);
       padding: 14px 20px;
       border-radius: 24px;
       font-size: 0.95rem;
@@ -352,7 +355,7 @@ interface ChatMessage {
     }
 
     .chat-input:focus {
-      background: #e2e8f0;
+      background: var(--color-border);
     }
 
     .typing {
@@ -365,19 +368,26 @@ interface ChatMessage {
       width: 6px;
       height: 6px;
       border-radius: 5px;
-      background-color: #cbd5e1;
-      color: #cbd5e1;
-      box-shadow: 9984px 0 0 0 #cbd5e1, 9999px 0 0 0 #cbd5e1, 10014px 0 0 0 #cbd5e1;
+      background-color: var(--color-border);
+      color: var(--color-border);
+      box-shadow: 9984px 0 0 0 var(--color-border), 9999px 0 0 0 var(--color-border), 10014px 0 0 0 var(--color-border);
       animation: dot-typing 1.5s infinite linear;
     }
 
     @keyframes dot-typing {
-      0% { box-shadow: 9984px 0 0 0 #cbd5e1, 9999px 0 0 0 #cbd5e1, 10014px 0 0 0 #cbd5e1; }
-      16.667% { box-shadow: 9984px -6px 0 0 #cbd5e1, 9999px 0 0 0 #cbd5e1, 10014px 0 0 0 #cbd5e1; }
-      33.333% { box-shadow: 9984px 0 0 0 #cbd5e1, 9999px -6px 0 0 #cbd5e1, 10014px 0 0 0 #cbd5e1; }
-      50% { box-shadow: 9984px 0 0 0 #cbd5e1, 9999px 0 0 0 #cbd5e1, 10014px -6px 0 0 #cbd5e1; }
-      66.667% { box-shadow: 9984px 0 0 0 #cbd5e1, 9999px 0 0 0 #cbd5e1, 10014px 0 0 0 #cbd5e1; }
-      100% { box-shadow: 9984px 0 0 0 #cbd5e1, 9999px 0 0 0 #cbd5e1, 10014px 0 0 0 #cbd5e1; }
+      0% { box-shadow: 9984px 0 0 0 var(--color-border), 9999px 0 0 0 var(--color-border), 10014px 0 0 0 var(--color-border); }
+      16.667% { box-shadow: 9984px -6px 0 0 var(--color-border), 9999px 0 0 0 var(--color-border), 10014px 0 0 0 var(--color-border); }
+      33.333% { box-shadow: 9984px 0 0 0 var(--color-border), 9999px -6px 0 0 var(--color-border), 10014px 0 0 0 var(--color-border); }
+      50% { box-shadow: 9984px 0 0 0 var(--color-border), 9999px 0 0 0 var(--color-border), 10014px -6px 0 0 var(--color-border); }
+      66.667% { box-shadow: 9984px 0 0 0 var(--color-border), 9999px 0 0 0 var(--color-border), 10014px 0 0 0 var(--color-border); }
+      100% { box-shadow: 9984px 0 0 0 var(--color-border), 9999px 0 0 0 var(--color-border), 10014px 0 0 0 var(--color-border); }
+    }
+
+    .recording { color: var(--color-error) !important; animation: pulse 1.5s infinite; }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
     }
 
     @media (max-width: 480px) {
@@ -412,10 +422,48 @@ export class AiAssistantWidgetComponent implements AfterViewChecked {
   private aiService = inject(AIService);
   isOpen = signal(false);
   isTyping = signal(false);
+  isRecording = signal(false);
   messages = signal<ChatMessage[]>([]);
   currentInput = '';
+  private recognition: any;
 
   @ViewChild('scrollMe') private myScrollContainer!: ElementRef;
+
+  constructor() {
+    this.initSpeechRecognition();
+  }
+
+  initSpeechRecognition() {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        this.recognition = new SpeechRecognition();
+        this.recognition.lang = 'uz-UZ';
+        this.recognition.interimResults = false;
+        this.recognition.maxAlternatives = 1;
+
+        this.recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          this.currentInput = transcript;
+          this.isRecording.set(false);
+          this.sendMessage(); // auto send when finished talking
+        };
+
+        this.recognition.onerror = () => this.isRecording.set(false);
+        this.recognition.onend = () => this.isRecording.set(false);
+      }
+    }
+  }
+
+  toggleVoice() {
+    if (this.isRecording()) {
+      this.recognition?.stop();
+    } else {
+      this.isRecording.set(true);
+      this.recognition?.start();
+    }
+  }
+
 
   ngAfterViewChecked() {
     this.scrollToBottom();

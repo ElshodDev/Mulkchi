@@ -8,16 +8,16 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e', // main primary color for Mulkchi
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
+          50: '#f0fdfa',
+          100: '#ccfbf1',
+          200: '#99f6e4',
+          300: '#5eead4',
+          400: '#2dd4bf',
+          500: '#0f766e', // main primary color for Mulkchi (Teal-700)
+          600: '#0d9488', // Teal-600
+          700: '#115e59', // Teal-800
+          800: '#134e4a', // Teal-900
+          900: '#042f2e',
         },
         secondary: '#0ea5e9', // a nice blue contrast
         dark: {

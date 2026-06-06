@@ -214,10 +214,10 @@ export interface QuickFilter {
   styles: [
     `
       :host {
-        --navy: #0f172a;
-        --gold: #c9a84c;
-        --border: #f1f5f9;
-        --bg: #ffffff;
+        --navy: var(--color-text-primary);
+        --gold: var(--color-gold);
+        --border: var(--color-border-soft);
+        --bg: var(--color-surface-elevated);
         display: block;
       }
 
@@ -240,7 +240,7 @@ export interface QuickFilter {
       .header-icon {
         width: 28px;
         height: 28px;
-        background: linear-gradient(135deg, var(--gold), #e8c97a);
+        background: linear-gradient(135deg, var(--gold), color-mix(in srgb, var(--gold) 40%, transparent));
         border-radius: 8px;
         display: flex;
         align-items: center;
@@ -271,15 +271,15 @@ export interface QuickFilter {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: #f8fafc;
-        border: 1px solid #f1f5f9;
+        background: var(--color-surface-subtle);
+        border: 1px solid var(--border);
         padding: 14px 16px;
         border-radius: 18px;
         cursor: pointer;
         transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       }
       .quick-card-btn:hover {
-        background: white;
+        background: var(--bg);
         border-color: var(--accent-color);
         transform: scale(1.02);
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
@@ -304,14 +304,14 @@ export interface QuickFilter {
       }
       .card-btn-sub {
         font-size: 0.7rem;
-        color: #94a3b8;
+        color: var(--color-text-secondary);
         font-weight: 600;
       }
       .card-btn-arrow {
         font-size: 12px !important;
         width: 12px !important;
         height: 12px !important;
-        color: #cbd5e1;
+        color: var(--color-text-secondary);
       }
       .quick-card-btn:hover .card-btn-arrow {
         color: var(--accent-color);
@@ -350,7 +350,7 @@ export interface QuickFilter {
       .price-inputs-modern {
         display: flex;
         align-items: center;
-        background: #f8fafc;
+        background: var(--color-surface-subtle);
         border-radius: 12px;
         border: 1px solid var(--border);
         padding: 8px 16px;
@@ -361,9 +361,9 @@ export interface QuickFilter {
         flex-direction: column;
       }
       .input-field .label {
-        font-size: 0.65rem;
+        font-size: 0.75rem;
         font-weight: 800;
-        color: #94a3b8;
+        color: var(--color-text-muted);
         text-transform: uppercase;
       }
       .input-field input {
@@ -377,14 +377,14 @@ export interface QuickFilter {
       .separator {
         width: 1px;
         height: 24px;
-        background: #e2e8f0;
+        background: var(--border);
         margin: 0 16px;
       }
 
       .rooms-selector {
         display: flex;
         gap: 6px;
-        background: #f1f5f9;
+        background: var(--color-surface-canvas);
         padding: 4px;
         border-radius: 10px;
       }
@@ -396,15 +396,15 @@ export interface QuickFilter {
         justify-content: center;
         font-size: 0.85rem;
         font-weight: 700;
-        color: #64748b;
+        color: var(--color-text-secondary);
         cursor: pointer;
         border-radius: 8px;
         transition: all 0.2s;
       }
       .room-option.active {
-        background: white;
+        background: var(--bg);
         color: var(--navy);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        box-shadow: var(--shadow-sm);
       }
 
       .type-chips {
@@ -414,19 +414,19 @@ export interface QuickFilter {
       }
       .type-chip {
         padding: 6px 14px;
-        background: #f8fafc;
+        background: var(--color-surface-subtle);
         border: 1px solid var(--border);
         border-radius: 20px;
         font-size: 0.8rem;
         font-weight: 600;
-        color: #475569;
+        color: var(--color-text-secondary);
         cursor: pointer;
         transition: all 0.2s;
       }
       .type-chip.selected {
-        background: var(--navy);
+        background: var(--color-brand-600);
         color: white;
-        border-color: var(--navy);
+        border-color: var(--color-brand-600);
       }
 
       .amenities-grid-modern {
@@ -439,7 +439,7 @@ export interface QuickFilter {
         align-items: center;
         gap: 8px;
         padding: 10px;
-        background: #f8fafc;
+        background: var(--color-surface-subtle);
         border: 1px solid var(--border);
         border-radius: 12px;
         cursor: pointer;
@@ -449,18 +449,18 @@ export interface QuickFilter {
         font-size: 16px;
         width: 16px;
         height: 16px;
-        color: #94a3b8;
+        color: var(--color-text-muted);
       }
       .amenity-pill span {
         font-size: 0.75rem;
         font-weight: 600;
       }
       .amenity-pill.active {
-        background: #f0fdf4;
-        border-color: #bbf7d0;
+        background: rgba(34, 197, 94, 0.1);
+        border-color: var(--color-success-500);
       }
       .amenity-pill.active mat-icon {
-        color: #16a34a;
+        color: var(--color-success-500);
       }
 
       .sticky-footer {
@@ -472,12 +472,12 @@ export interface QuickFilter {
       .btn-apply-unified {
         height: 50px !important;
         border-radius: 14px !important;
-        background: var(--navy) !important;
+        background: var(--color-brand-600) !important;
         color: white !important;
         font-weight: 700 !important;
       }
       .btn-clear {
-        color: #64748b !important;
+        color: var(--color-text-secondary) !important;
         font-weight: 600 !important;
       }
 
@@ -507,28 +507,28 @@ export class PropertyFiltersComponent implements OnInit, OnChanges {
       id: 'cheap',
       label: 'Arzon',
       emoji: '💰',
-      color: '#f59e0b',
-      query: { maxPrice: 10000000, sortBy: 'price_asc' },
+      color: 'var(--color-gold)',
+      query: { maxPrice: 10000000, minPrice: undefined, sortBy: 'price_asc' },
     },
     {
       id: 'expensive',
       label: 'Lux mulklar',
       emoji: '💎',
-      color: '#6366f1',
-      query: { minPrice: 50000000, sortBy: 'price_desc' },
+      color: 'var(--color-info)',
+      query: { minPrice: 50000000, maxPrice: undefined, sortBy: 'price_desc' },
     },
     {
       id: 'tashkent',
       label: 'Toshkent',
       emoji: '📍',
-      color: '#10b981',
+      color: 'var(--color-success)',
       query: { location: 'Toshkent' },
     },
     {
       id: 'house',
       label: 'Hovli uylar',
       emoji: '🏡',
-      color: '#ef4444',
+      color: 'var(--color-error)',
       query: { propertyType: PropertyType.House },
     },
   ];

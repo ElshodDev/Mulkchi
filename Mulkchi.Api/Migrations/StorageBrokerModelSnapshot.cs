@@ -949,6 +949,12 @@ namespace Mulkchi.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AttachmentType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AttachmentUrl")
+                        .HasColumnType("text");
+
                     b.Property<string>("Content")
                         .HasColumnType("text");
 
@@ -1391,13 +1397,19 @@ namespace Mulkchi.Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("City");
+
                     b.HasIndex("CreatedDate");
 
                     b.HasIndex("HostId");
 
                     b.HasIndex("ListingType");
 
+                    b.HasIndex("MonthlyRent");
+
                     b.HasIndex("Region");
+
+                    b.HasIndex("SalePrice");
 
                     b.HasIndex("Status");
 
@@ -1909,6 +1921,46 @@ namespace Mulkchi.Api.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Verifications.Verification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("AiConfidenceScore")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DocumentUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SelfieUrl")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Verifications");
+                });
+
             modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Amenities.PropertyAmenity", b =>
                 {
                     b.HasOne("Mulkchi.Api.Models.Foundations.Amenities.Amenity", "Amenity")
@@ -2021,6 +2073,17 @@ namespace Mulkchi.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Plan");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Mulkchi.Api.Models.Foundations.Verifications.Verification", b =>
+                {
+                    b.HasOne("Mulkchi.Api.Models.Foundations.Users.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

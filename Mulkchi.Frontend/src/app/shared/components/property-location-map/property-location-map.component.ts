@@ -72,7 +72,7 @@ import * as L from 'leaflet';
         justify-content: center;
         font-size: 18px;
         font-weight: 600;
-        color: #333;
+        color: var(--color-text-primary);
         transition: all 0.2s;
       }
 
@@ -106,7 +106,7 @@ import * as L from 'leaflet';
         padding: 8px 14px;
         font-weight: 800;
         font-size: 0.9rem;
-        color: #0f172a;
+        color: var(--color-text-primary);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         border: 2px solid white;
         white-space: nowrap;
@@ -131,16 +131,16 @@ import * as L from 'leaflet';
       }
 
       :host ::ng-deep .custom-price-marker:hover .marker-bubble {
-        background: #0f172a;
+        background: var(--color-text-primary);
         color: white;
         transform: scale(1.15) translateY(-6px);
         box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
-        border-color: #0f172a;
+        border-color: var(--color-text-primary);
         z-index: 1000 !important;
       }
 
       :host ::ng-deep .custom-price-marker:hover .marker-bubble::after {
-        border-top-color: #0f172a;
+        border-top-color: var(--color-text-primary);
       }
 
       .popup-content {
@@ -152,12 +152,12 @@ import * as L from 'leaflet';
         font-weight: 600;
         font-size: 14px;
         margin-bottom: 4px;
-        color: #333;
+        color: var(--color-text-primary);
       }
 
       .popup-address {
         font-size: 12px;
-        color: #666;
+        color: var(--color-text-secondary);
       }
     `,
   ],
@@ -282,7 +282,7 @@ export class PropertyLocationMapComponent implements AfterViewInit, OnDestroy, O
         <div style="
           width: 40px;
           height: 40px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
           border-radius: 50% 50% 50% 0;
           transform: rotate(-45deg);
           box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);

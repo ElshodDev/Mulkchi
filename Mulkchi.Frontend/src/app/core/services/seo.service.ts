@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
+import { DOCUMENT } from '@angular/common';
 import { Router } from '@angular/router';
 
 @Injectable({
@@ -9,6 +10,7 @@ export class SeoService {
   private titleService = inject(Title);
   private metaService = inject(Meta);
   private router = inject(Router);
+  private document = inject(DOCUMENT);
 
   updateTitle(title: string) {
     this.titleService.setTitle(`${title} | Mulkchi - Ko'chmas Mulk`);
@@ -47,5 +49,18 @@ export class SeoService {
     } else {
       this.metaService.updateTag({ name: 'robots', content: 'noindex, nofollow' });
     }
+  }
+
+  setJsonLd(schema: any) {
+    // Remove existing JSON-LD if any
+    const existingScript = this.document.head.querySelector('script[type="application/ld+json"]');
+    if (existingScript) {
+      this.document.head.removeChild(existingScript);
+    }
+
+    const script = this.document.createElement('script');
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify(schema);
+    this.document.head.appendChild(script);
   }
 }

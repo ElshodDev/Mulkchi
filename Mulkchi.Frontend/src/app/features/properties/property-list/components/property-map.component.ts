@@ -9,16 +9,23 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 import { Property } from '../../../../core/models';
 import * as L from 'leaflet';
 
 @Component({
   selector: 'app-property-map',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatIconModule],
   template: `
     <div class="map-container animate-fade-in">
       <div id="map" class="property-map"></div>
+      <div class="map-controls">
+        <button class="heatmap-toggle" [class.active]="heatmapMode" (click)="toggleHeatmap()">
+          <mat-icon>local_fire_department</mat-icon>
+          AI Heatmap
+        </button>
+      </div>
     </div>
   `,
   styles: [
@@ -137,6 +144,44 @@ import * as L from 'leaflet';
         }
       }
 
+      .map-controls {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+      }
+      .heatmap-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+        color: var(--color-text-primary);
+      }
+      .heatmap-toggle:hover {
+        transform: translateY(-2px);
+      }
+      .heatmap-toggle.active {
+        background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+        color: white;
+        border-color: transparent;
+      }
+      .heatmap-toggle.active mat-icon {
+        color: white;
+      }
+      .heatmap-toggle mat-icon {
+        color: #f97316;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+
       .animate-fade-in {
         animation: fadeIn 0.5s ease-out;
       }
@@ -160,8 +205,9 @@ export class PropertyMapComponent implements AfterViewInit, OnDestroy, OnChanges
 
   @Output() propertyClick = new EventEmitter<string>();
 
+  heatmapMode = false;
   private map: L.Map | null = null;
-  private markers: L.Marker[] = [];
+  private markers: L.Layer[] = [];
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['properties'] && !changes['properties'].firstChange) {
@@ -203,26 +249,56 @@ export class PropertyMapComponent implements AfterViewInit, OnDestroy, OnChanges
     if (!this.properties || this.properties.length === 0) return;
 
     const bounds: L.LatLngExpression[] = [];
+    
+    let maxPrice = 1;
+    if (this.heatmapMode) {
+      maxPrice = Math.max(...this.properties.map(p => this.getRawPrice(p)));
+    }
 
     this.properties.forEach((property) => {
       if (property.latitude && property.longitude) {
-        const shortPrice = this.formatShortPrice(property);
+        
+        let marker: L.Layer;
 
-        const customIcon = L.divIcon({
-          className: 'custom-price-marker',
-          html: `<div class="marker-bubble">${shortPrice}</div>`,
-          iconSize: [0, 0],
-          iconAnchor: [30, 40],
-        });
-
-        const marker = L.marker([property.latitude, property.longitude], { icon: customIcon })
-          .addTo(this.map!)
+        if (this.heatmapMode) {
+          const rawPrice = this.getRawPrice(property);
+          const intensity = rawPrice / maxPrice; // 0.0 to 1.0
+          const color = this.getHeatmapColor(intensity);
+          
+          marker = L.circleMarker([property.latitude, property.longitude], {
+            radius: 15 + (intensity * 20),
+            fillColor: color,
+            color: color,
+            weight: 1,
+            opacity: 0.8,
+            fillOpacity: 0.6
+          }).addTo(this.map!)
           .on('click', () => {
             this.propertyClick.emit(property.id);
           });
+        } else {
+          const shortPrice = this.formatShortPrice(property);
+          const customIcon = L.divIcon({
+            className: 'custom-price-marker',
+            html: `<div class="marker-bubble">${shortPrice}</div>`,
+            iconSize: [0, 0],
+            iconAnchor: [30, 40],
+          });
 
-        const popupContent = this.createPopupContent(property);
-        marker.bindPopup(popupContent, { offset: [30, -30] });
+          marker = L.marker([property.latitude, property.longitude], { icon: customIcon })
+            .addTo(this.map!)
+            .on('click', () => {
+              this.propertyClick.emit(property.id);
+            });
+        }
+
+        if (marker instanceof L.Marker) {
+          const popupContent = this.createPopupContent(property);
+          marker.bindPopup(popupContent, { offset: [30, -30] });
+        } else if (marker instanceof L.CircleMarker) {
+          const popupContent = this.createPopupContent(property);
+          marker.bindPopup(popupContent);
+        }
 
         this.markers.push(marker);
         bounds.push([property.latitude, property.longitude]);
@@ -280,5 +356,24 @@ export class PropertyMapComponent implements AfterViewInit, OnDestroy, OnChanges
       return `${(price / 1000).toFixed(0)}k`;
     }
     return price.toString();
+  }
+
+  toggleHeatmap() {
+    this.heatmapMode = !this.heatmapMode;
+    this.addMarkers();
+  }
+
+  private getRawPrice(property: Property): number {
+    const p = property as any;
+    if (p.salePrice) return p.salePrice;
+    if (p.monthlyRent) return p.monthlyRent;
+    if (p.pricePerNight) return p.pricePerNight;
+    return 0;
+  }
+
+  private getHeatmapColor(value: number): string {
+    // value is from 0.0 to 1.0. Returns color from green (cheap) to yellow to red (expensive)
+    const hue = ((1 - value) * 120).toString(10);
+    return `hsl(${hue}, 100%, 50%)`;
   }
 }

@@ -75,12 +75,12 @@ import { MatSelectModule } from '@angular/material/select';
       :host {
         display: block;
         margin-bottom: 32px;
-        --navy: #0f172a;
-        --gold: #c9a84c;
-        --white: #ffffff;
-        --gray-50: #f8fafc;
-        --gray-200: #e2e8f0;
-        --gray-500: #64748b;
+        --navy: var(--color-text-primary);
+        --gold: var(--color-gold);
+        --white: var(--color-surface-elevated);
+        --gray-50: var(--color-surface-canvas);
+        --gray-200: var(--color-border-soft);
+        --gray-500: var(--color-text-secondary);
       }
 
       .premium-header-wrapper {

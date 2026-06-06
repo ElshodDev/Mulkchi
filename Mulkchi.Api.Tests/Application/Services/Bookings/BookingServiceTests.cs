@@ -41,10 +41,14 @@ public class BookingServiceTests
 
     private static BookingCreateDto CreateRandomBookingCreateDto(Guid propertyId)
     {
+        var faker = new Faker();
+        var checkIn = faker.Date.FutureOffset();
+        var checkOut = checkIn.AddDays(faker.Random.Int(1, 10));
+
         return new Faker<BookingCreateDto>()
             .RuleFor(dto => dto.PropertyId, _ => propertyId)
-            .RuleFor(b => b.CheckInDate, f => f.Date.FutureOffset())
-            .RuleFor(b => b.CheckOutDate, f => f.Date.FutureOffset().AddDays(f.Random.Int(1, 10)))
+            .RuleFor(b => b.CheckInDate, _ => checkIn)
+            .RuleFor(b => b.CheckOutDate, _ => checkOut)
             .Generate();
     }
 
@@ -60,12 +64,16 @@ public class BookingServiceTests
 
     private static Booking CreateRandomBooking()
     {
+        var faker = new Faker();
+        var checkIn = faker.Date.FutureOffset();
+        var checkOut = checkIn.AddDays(faker.Random.Int(1, 10));
+
         return new Faker<Booking>()
-            .RuleFor(b => b.Id, faker => Guid.NewGuid())
-            .RuleFor(b => b.GuestId, faker => Guid.NewGuid())
-            .RuleFor(b => b.PropertyId, faker => Guid.NewGuid())
-            .RuleFor(b => b.CheckInDate, f => f.Date.FutureOffset())
-            .RuleFor(b => b.CheckOutDate, f => f.Date.FutureOffset().AddDays(f.Random.Int(1, 10)))
+            .RuleFor(b => b.Id, f => Guid.NewGuid())
+            .RuleFor(b => b.GuestId, f => Guid.NewGuid())
+            .RuleFor(b => b.PropertyId, f => Guid.NewGuid())
+            .RuleFor(b => b.CheckInDate, _ => checkIn)
+            .RuleFor(b => b.CheckOutDate, _ => checkOut)
             .RuleFor(b => b.CreatedDate, f => f.Date.PastOffset())
             .Generate();
     }
@@ -161,8 +169,7 @@ public class BookingServiceTests
         Func<Task> action = async () => await this.bookingService.RetrieveBookingByIdAsync(bookingId);
 
         // Assert
-        var exception = await action.Should().ThrowAsync<BookingValidationException>();
-        exception.WithInnerException<NotFoundBookingException>();
+        await action.Should().ThrowAsync<NotFoundBookingException>();
     }
 
     [Fact]

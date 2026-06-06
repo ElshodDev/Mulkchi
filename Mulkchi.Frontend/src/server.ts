@@ -1,3 +1,4 @@
+import './mock-window';
 import {
   AngularNodeAppEngine,
   createNodeRequestHandler,

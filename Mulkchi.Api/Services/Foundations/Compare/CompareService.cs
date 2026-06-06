@@ -53,13 +53,15 @@ public class CompareService : ICompareService
 
         var summary = GenerateComparisonSummary(details);
         var recommendation = GenerateRecommendation(details);
+        var confidenceScore = CalculateOverallConfidence(details);
 
         return new ComparisonResult
         {
             ComparedPropertyIds = propertyIds,
             Summary = summary,
             Details = details,
-            Recommendation = recommendation
+            Recommendation = recommendation,
+            ConfidenceScore = confidenceScore
         };
     }
 
@@ -148,5 +150,13 @@ public class CompareService : ICompareService
     {
         var best = details.OrderByDescending(d => d.Score).First();
         return $"Solishtirish natijalariga ko'ra, sizga **{best.Title}** ob'yektini tavsiya qilaman. U {best.Score}/100 ball bilan barcha qulayliklarga ega.";
+    }
+
+    private int CalculateOverallConfidence(List<PropertyComparisonDetail> details)
+    {
+        if (details.Count == 0) return 0;
+        int avgScore = (int)details.Average(d => d.Score);
+        int confidence = 75 + (avgScore / 5);
+        return Math.Min(confidence, 98);
     }
 }

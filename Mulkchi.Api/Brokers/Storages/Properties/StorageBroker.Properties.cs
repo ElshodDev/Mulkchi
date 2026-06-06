@@ -17,11 +17,13 @@ public partial class StorageBroker
     public IQueryable<Property> SelectAllProperties()
         => this.Properties
             .Include(p => p.Images.OrderBy(img => img.SortOrder))
+            .AsSplitQuery()
             .AsQueryable();
 
     public async ValueTask<Property> SelectPropertyByIdAsync(Guid propertyId)
         => (await this.Properties
             .Include(p => p.Images.OrderBy(img => img.SortOrder))
+            .AsSplitQuery()
             .FirstOrDefaultAsync(p => p.Id == propertyId))!;
 
     public async ValueTask<Property> UpdatePropertyAsync(Property property)
@@ -45,11 +47,13 @@ public partial class StorageBroker
         => this.Properties
             .IgnoreQueryFilters()
             .Include(p => p.Images.OrderBy(img => img.SortOrder))
+            .AsSplitQuery()
             .AsQueryable();
 
     public async ValueTask<Property> SelectPropertyByIdIncludingDeletedAsync(Guid propertyId)
         => (await this.Properties
             .IgnoreQueryFilters()
             .Include(p => p.Images.OrderBy(img => img.SortOrder))
+            .AsSplitQuery()
             .FirstOrDefaultAsync(p => p.Id == propertyId))!;
 }

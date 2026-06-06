@@ -22,6 +22,7 @@ export interface ComparisonResult {
   summary: string;
   details: PropertyComparisonDetail[];
   recommendation: string;
+  confidenceScore?: number;
 }
 
 @Injectable({

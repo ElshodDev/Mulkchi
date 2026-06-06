@@ -1,9 +1,15 @@
 #nullable disable
 
+using Microsoft.EntityFrameworkCore;
 using Mulkchi.Api.Models.Foundations.PropertyImages;
 
 namespace Mulkchi.Api.Models.Foundations.Properties;
 
+[Index(nameof(City))]
+[Index(nameof(Region))]
+[Index(nameof(ListingType))]
+[Index(nameof(SalePrice))]
+[Index(nameof(MonthlyRent))]
 public class Property
 {
     public Guid Id { get; set; }

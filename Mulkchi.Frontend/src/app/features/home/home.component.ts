@@ -14,6 +14,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterLink } from '@angular/router';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ListingType } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
 import { GeolocationService } from '../../core/services/geolocation.service';
@@ -58,10 +60,7 @@ import { SeoService } from '../../core/services/seo.service';
 
         <div class="container relative z-10 mx-auto px-6 pt-32 pb-20 text-center">
           <div class="max-w-4xl mx-auto">
-            <div class="inline-flex items-center gap-2 px-5 py-2 mb-8 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-sm font-medium animate-fade-in text-white">
-              <mat-icon class="text-accent">school</mat-icon>
-              <span>Bitiruv Malakaviy Ishi (BMI) Loyihasi</span>
-            </div>
+
 
             <h1 class="text-5xl md:text-7xl font-extrabold leading-tight tracking-tight mb-6 animate-slide-up text-white">
               Ma'lumotlar bazasiga asoslangan <br />
@@ -300,51 +299,16 @@ import { SeoService } from '../../core/services/seo.service';
         </div>
       </section>
 
-      <!-- FOOTER -->
-      <footer class="footer-premium">
-        <div class="container">
-          <div class="footer-grid">
-            <div class="footer-col brand-col">
-              <div class="logo">
-                <mat-icon>apartment</mat-icon>
-                <span>Mulkchi</span>
-              </div>
-              <p>O'zbekistondagi eng innovatsion ko'chmas mulk portali.</p>
-              <div class="socials">
-                <a href="#"><mat-icon>facebook</mat-icon></a>
-                <a href="#"><mat-icon>telegram</mat-icon></a>
-                <a href="#"><mat-icon>camera_alt</mat-icon></a>
-              </div>
-            </div>
-            <div class="footer-col">
-              <h4>Platforma</h4>
-              <a routerLink="/properties">Mulklar</a>
-              <a routerLink="/ai-tools">AI Tools</a>
-              <a routerLink="/market">Bozor tahlili</a>
-            </div>
-            <div class="footer-col">
-              <h4>Yordam</h4>
-              <a href="#">FAQ</a>
-              <a href="#">Aloqa</a>
-              <a href="#">Shartlar</a>
-            </div>
-          </div>
-          <div class="footer-bottom">
-            <p>© 2026 Mulkchi. Barcha huquqlar himoyalangan.</p>
-            <p class="bmi-tag">Bitiruv malakaviy ishi — Elshod Ibadullayev</p>
-          </div>
-        </div>
-      </footer>
     </div>
   `,
   styles: [
     `
       :host {
-        --primary: #0f172a;
-        --accent: #c9a84c;
-        --accent-light: #d4bc74;
-        --text-muted: #64748b;
-        --white: #ffffff;
+        --primary: var(--color-text-primary);
+        --accent: var(--color-gold, #c9a84c);
+        --accent-light: var(--color-gold-light, #d4bc74);
+        --text-muted: var(--color-text-muted);
+        --white: var(--color-surface-elevated);
         --glass: rgba(255, 255, 255, 0.1);
         --glass-dark: rgba(15, 23, 42, 0.8);
         --radius: 16px;
@@ -420,7 +384,7 @@ import { SeoService } from '../../core/services/seo.service';
 
       .hero-title {
         font-size: clamp(3rem, 6vw, 5rem);
-        font-weight: 800;
+        font-weight: var(--font-weight-bold, 700);
         line-height: 1.1;
         margin-bottom: 20px;
         letter-spacing: -2px;
@@ -485,7 +449,7 @@ import { SeoService } from '../../core/services/seo.service';
         display: flex;
         align-items: center;
         gap: 8px;
-        background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+        background: linear-gradient(135deg, var(--color-primary, #1B3A6B) 0%, #2d5a9e 100%);
         color: white;
         border: none;
         padding: 10px 20px;
@@ -543,7 +507,7 @@ import { SeoService } from '../../core/services/seo.service';
         font-weight: 500;
       }
       .input-wrapper input::placeholder {
-        color: #94a3b8;
+        color: var(--color-text-muted);
         font-weight: 400;
       }
 
@@ -559,11 +523,11 @@ import { SeoService } from '../../core/services/seo.service';
         transition: color 0.2s, background 0.2s;
       }
       .tool-btn:hover {
-        background: #f1f5f9;
+        background: var(--color-surface);
         color: var(--primary);
       }
       .mic-active {
-        color: #ef4444 !important;
+        color: var(--color-error) !important;
         position: relative;
         z-index: 1;
       }
@@ -574,7 +538,7 @@ import { SeoService } from '../../core/services/seo.service';
         transform: translate(-50%, -50%);
         width: 100%; height: 100%;
         border-radius: 50%;
-        background: linear-gradient(45deg, #ef4444, #3b82f6, #8b5cf6, #ec4899);
+        background: linear-gradient(45deg, var(--color-error), var(--color-primary), var(--color-gold), var(--color-primary-light));
         background-size: 300% 300%;
         z-index: -1;
         animation: siri-wave 1.5s infinite ease-out, siri-gradient 3s infinite linear;
@@ -596,7 +560,7 @@ import { SeoService } from '../../core/services/seo.service';
       .divider {
         width: 1px;
         height: 32px;
-        background: #e2e8f0;
+        background: var(--color-border);
         margin: 0 8px;
       }
 
@@ -614,6 +578,14 @@ import { SeoService } from '../../core/services/seo.service';
       .btn-primary-search:hover {
         background: #0f172a !important;
       }
+      .btn-primary-search:disabled,
+      .btn-primary-search[disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+        background: var(--color-primary, #1B3A6B) !important;
+        filter: grayscale(30%);
+      }
 
       .hero-stats {
         display: flex;
@@ -627,7 +599,7 @@ import { SeoService } from '../../core/services/seo.service';
       }
       .stat-val {
         font-size: 2rem;
-        font-weight: 800;
+        font-weight: var(--font-weight-bold, 700);
         color: var(--accent);
       }
       .stat-lab {
@@ -645,14 +617,14 @@ import { SeoService } from '../../core/services/seo.service';
 
       .regions-section, .nearby-section {
         padding: 80px 0;
-        background: #fff;
+        background: var(--color-surface-canvas, #fff);
       }
       .nearby-section {
-        background: #f8fafc;
-        border-bottom: 1px solid #e2e8f0;
+        background: var(--color-surface, #f8fafc);
+        border-bottom: 1px solid var(--color-surface-elevated, #e2e8f0);
       }
       .section-top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; }
-      .section-title { font-size: 2.2rem; font-weight: 800; color: var(--primary); margin: 0 0 8px; }
+      .section-title { font-size: 2.2rem; font-weight: var(--font-weight-bold, 700); color: var(--primary); margin: 0 0 8px; }
       .section-desc { font-size: 1.1rem; color: var(--text-muted); margin: 0; }
       
       .loading-nearby { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 0; gap: 16px; color: var(--text-muted); }
@@ -664,7 +636,7 @@ import { SeoService } from '../../core/services/seo.service';
       .region-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
       .region-card:hover img { transform: scale(1.1); }
       .region-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(15,23,42,0.9) 0%, transparent 60%); display: flex; flex-direction: column; justify-content: flex-end; padding: 24px; color: var(--white); }
-      .region-overlay h3 { font-size: 1.5rem; font-weight: 800; margin: 0; }
+      .region-overlay h3 { font-size: 1.5rem; font-weight: var(--font-weight-bold, 700); margin: 0; }
       .region-overlay span { font-size: 0.9rem; opacity: 0.7; }
 
       .ai-section {
@@ -689,7 +661,7 @@ import { SeoService } from '../../core/services/seo.service';
       }
       .ai-title {
         font-size: 3.5rem;
-        font-weight: 800;
+        font-weight: var(--font-weight-bold, 700);
         line-height: 1.1;
         margin-bottom: 24px;
       }
@@ -754,7 +726,7 @@ import { SeoService } from '../../core/services/seo.service';
       }
       .ai-chart-mock .bar {
         flex: 1;
-        background: #e2e8f0;
+        background: var(--color-border);
         border-radius: 4px;
       }
       .ai-chart-mock .bar:nth-child(3) {
@@ -763,7 +735,7 @@ import { SeoService } from '../../core/services/seo.service';
       .ai-result {
         text-align: center;
         padding-top: 20px;
-        border-top: 1px solid #f1f5f9;
+        border-top: 1px solid var(--color-border);
       }
       .ai-result small {
         display: block;
@@ -786,7 +758,7 @@ import { SeoService } from '../../core/services/seo.service';
       }
       .cta-box h2 {
         font-size: 3rem;
-        font-weight: 800;
+        font-weight: var(--font-weight-bold, 700);
         margin-bottom: 16px;
       }
       .cta-box p {
@@ -815,77 +787,6 @@ import { SeoService } from '../../core/services/seo.service';
         border-radius: 14px !important;
         height: 56px !important;
         font-weight: 700 !important;
-      }
-
-      .footer-premium {
-        background: #020617;
-        padding: 100px 0 40px;
-        color: var(--white);
-      }
-      .footer-grid {
-        display: grid;
-        grid-template-columns: 1.5fr 1fr 1.5fr;
-        gap: 60px;
-        margin-bottom: 80px;
-      }
-      .brand-col .logo {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 1.8rem;
-        font-weight: 800;
-        margin-bottom: 24px;
-        color: var(--white);
-      }
-      .brand-col p {
-        opacity: 0.6;
-        line-height: 1.6;
-        max-width: 280px;
-      }
-      .socials {
-        display: flex;
-        gap: 16px;
-        margin-top: 32px;
-      }
-      .socials a {
-        color: var(--white);
-        opacity: 0.6;
-        transition: 0.3s;
-      }
-      .socials a:hover {
-        opacity: 1;
-        color: var(--accent);
-      }
-
-      .footer-col h4 {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 24px;
-      }
-      .footer-col a {
-        display: block;
-        color: var(--white);
-        opacity: 0.6;
-        margin-bottom: 12px;
-        transition: 0.3s;
-      }
-      .footer-col a:hover {
-        opacity: 1;
-        padding-left: 5px;
-        color: var(--accent);
-      }
-
-      .footer-bottom {
-        border-top: 1px solid rgba(255, 255, 255, 0.05);
-        padding-top: 40px;
-        display: flex;
-        justify-content: space-between;
-        opacity: 0.5;
-        font-size: 0.9rem;
-      }
-      .bmi-tag {
-        font-weight: 600;
-        color: var(--accent);
       }
 
       @keyframes fadeIn {
@@ -1011,7 +912,7 @@ export class HomeComponent implements OnInit {
   loadingNearby = signal(false);
   nearbyTitle = signal('Sizga yaqin mulklar');
 
-
+  private searchSubject = new Subject<string>();
 
   topRegions = [
     {
@@ -1139,6 +1040,20 @@ export class HomeComponent implements OnInit {
     this.loadFeaturedProperties();
     this.loadNearbyProperties(false);
     this.animateCounters();
+    
+    // Setup search debounce
+    this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(query => {
+      if (query.length < 2) {
+        this.locationSuggestions.set([]);
+        return;
+      }
+      this.propertyService.autocompleteLocations(query).subscribe((res) => {
+        this.locationSuggestions.set(res);
+      });
+    });
   }
 
   loadNearbyProperties(forceUpdate: boolean = false) {
@@ -1181,14 +1096,7 @@ export class HomeComponent implements OnInit {
 
   onSearchInput(event: any) {
     const query = event.target.value;
-    if (query.length < 2) {
-      this.locationSuggestions.set([]);
-      return;
-    }
-
-    this.propertyService.autocompleteLocations(query).subscribe((res) => {
-      this.locationSuggestions.set(res);
-    });
+    this.searchSubject.next(query);
   }
 
   private animateCounters() {

@@ -11,6 +11,8 @@ public class Message
     public DateTimeOffset? ReadAt { get; set; }
     public Guid SenderId { get; set; }
     public Guid ReceiverId { get; set; }
+    public string AttachmentUrl { get; set; }
+    public string AttachmentType { get; set; }
     public Guid? PropertyId { get; set; }
     public Guid? HomeRequestId { get; set; }
     public DateTimeOffset CreatedDate { get; set; }

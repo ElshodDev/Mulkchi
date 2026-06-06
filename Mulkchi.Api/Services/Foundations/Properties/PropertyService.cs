@@ -921,11 +921,21 @@ public partial class PropertyService : IPropertyService
             if (index >= 0)
             {
                 bool startBoundary = index == 0 || !char.IsLetter(normalized[index - 1]);
-                bool endBoundary = index + mapping.Key.Length == normalized.Length || !char.IsLetter(normalized[index + mapping.Key.Length]);
+                
+                string suffix = "";
+                int afterWordIndex = index + mapping.Key.Length;
+                while (afterWordIndex < normalized.Length && char.IsLetter(normalized[afterWordIndex]))
+                {
+                    suffix += normalized[afterWordIndex];
+                    afterWordIndex++;
+                }
+
+                var validSuffixes = new[] { "", "da", "dagi", "ga", "dan", "ning", "i", "ni" };
+                bool endBoundary = validSuffixes.Contains(suffix);
                 
                 if (startBoundary && endBoundary)
                 {
-                    string remaining = query.Remove(index, mapping.Key.Length).Trim();
+                    string remaining = query.Remove(index, mapping.Key.Length + suffix.Length).Trim();
                     remaining = string.Join(" ", remaining.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
                     
                     if (remaining.ToLower().StartsWith("viloyati"))

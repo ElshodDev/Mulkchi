@@ -164,13 +164,13 @@ export interface UploadedImage {
       }
 
       .upload-area {
-        border: 3px dashed #cbd5e1;
+        border: 3px dashed var(--color-border);
         border-radius: 24px;
         padding: 80px 24px;
         text-align: center;
         cursor: pointer;
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        background: #f8fafc;
+        background: var(--color-background);
         position: relative;
         overflow: hidden;
       }
@@ -185,7 +185,7 @@ export interface UploadedImage {
       }
 
       .upload-area:hover {
-        border-color: #6366f1;
+        border-color: var(--color-primary);
         transform: translateY(-2px);
         box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.2);
       }
@@ -195,8 +195,8 @@ export interface UploadedImage {
       }
 
       .upload-area.dragging {
-        border-color: #6366f1;
-        background: #eef2ff;
+        border-color: var(--color-primary);
+        background: color-mix(in srgb, var(--color-primary) 10%, transparent);
         transform: scale(1.02);
         border-style: solid;
         box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.3);
@@ -219,7 +219,7 @@ export interface UploadedImage {
         font-size: 80px;
         width: 80px;
         height: 80px;
-        color: #6366f1;
+        color: var(--color-primary);
         margin-bottom: 8px;
         filter: drop-shadow(0 10px 10px rgba(99, 102, 241, 0.2));
         transition: transform 0.4s;
@@ -232,19 +232,19 @@ export interface UploadedImage {
       .upload-content h3 {
         font-size: 1.5rem;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--color-text-primary);
         margin: 0;
       }
 
       .upload-content p {
-        color: #666;
+        color: var(--color-text-secondary);
         margin: 0;
       }
 
       .file-types {
         font-size: 0.85rem;
-        color: #999;
-        background: #f0f0f0;
+        color: var(--color-text-muted);
+        background: var(--color-surface-elevated);
         padding: 4px 12px;
         border-radius: 16px;
       }
@@ -268,7 +268,7 @@ export interface UploadedImage {
 
       .image-count {
         font-weight: 500;
-        color: #666;
+        color: var(--color-text-secondary);
       }
 
       .image-grid {
@@ -293,7 +293,7 @@ export interface UploadedImage {
       }
 
       .image-card.primary {
-        border: 2px solid #667eea;
+        border: 2px solid var(--color-primary);
       }
 
       .drag-handle {
@@ -319,14 +319,14 @@ export interface UploadedImage {
 
       .drag-handle mat-icon {
         font-size: 20px;
-        color: #666;
+        color: var(--color-text-secondary);
       }
 
       .image-preview {
         position: relative;
         aspect-ratio: 4/3;
         overflow: hidden;
-        background: #f0f0f0;
+        background: var(--color-surface-elevated);
       }
 
       .image-preview img {
@@ -362,7 +362,7 @@ export interface UploadedImage {
         position: absolute;
         top: 8px;
         right: 8px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
         color: white;
         padding: 4px 10px;
         border-radius: 20px;
@@ -383,15 +383,15 @@ export interface UploadedImage {
         justify-content: center;
         gap: 8px;
         padding: 12px;
-        border-top: 1px solid #eee;
+        border-top: 1px solid var(--color-border);
       }
 
       .image-caption {
         padding: 8px 12px;
         font-size: 0.85rem;
-        color: #666;
+        color: var(--color-text-secondary);
         background: #f8f9fa;
-        border-top: 1px solid #eee;
+        border-top: 1px solid var(--color-border);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -411,7 +411,7 @@ export interface UploadedImage {
         gap: 4px;
         padding: 2px 8px;
         background: #f0f4ff;
-        color: #6366f1;
+        color: var(--color-primary);
         border-radius: 12px;
         font-size: 0.75rem;
         font-weight: 600;
@@ -445,7 +445,7 @@ export interface UploadedImage {
 
       .tips-content {
         font-size: 0.9rem;
-        color: #333;
+        color: var(--color-text-primary);
       }
 
       .tips-content ul {

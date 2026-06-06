@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Bogus;
 using FluentAssertions;
 using Moq;
+using Xeptions;
 using Mulkchi.Api.Brokers.DateTimes;
 using Mulkchi.Api.Brokers.Loggings;
 using Mulkchi.Api.Brokers.Storages;
@@ -215,7 +216,7 @@ public class ReviewServiceTests
 
         // Assert
         var exception = await action.Should().ThrowAsync<ReviewDependencyValidationException>();
-        exception.WithInnerException<UnauthorizedAccessException>();
+        exception.WithInnerException<Xeption>().WithInnerException<UnauthorizedAccessException>();
     }
 
     [Fact]

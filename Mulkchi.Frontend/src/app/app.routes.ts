@@ -34,6 +34,14 @@ export const routes: Routes = [
         data: { preload: true, preloadPriority: 0 },
       },
       {
+        path: 'map',
+        loadComponent: () =>
+          import('./features/properties/map-search/map-search.component').then(
+            (module) => module.MapSearchComponent,
+          ),
+        title: 'Xaritadan qidirish',
+      },
+      {
         path: 'properties/:id',
         loadComponent: () =>
           import('./features/properties/property-detail/property-detail.component').then(

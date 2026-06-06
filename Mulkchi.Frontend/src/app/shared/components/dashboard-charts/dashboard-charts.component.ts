@@ -56,11 +56,11 @@ export interface TimeSeriesData {
             </div>
             <div class="chart-legend">
               <span class="legend-item">
-                <span class="legend-color" style="background: #667eea;"></span>
+                <span class="legend-color" style="background: var(--color-primary);"></span>
                 <span>Yangi bronlar</span>
               </span>
               <span class="legend-item">
-                <span class="legend-color" style="background: #48bb78;"></span>
+                <span class="legend-color" style="background: var(--color-success);"></span>
                 <span>Tasdiqlangan</span>
               </span>
             </div>
@@ -90,19 +90,19 @@ export interface TimeSeriesData {
           </div>
           <div class="chart-stats">
             <div class="stat-item">
-              <span class="stat-value" style="color: #667eea;">{{ pendingCount }}</span>
+              <span class="stat-value" style="color: var(--color-primary);">{{ pendingCount }}</span>
               <span class="stat-label">Kutilmoqda</span>
             </div>
             <div class="stat-item">
-              <span class="stat-value" style="color: #48bb78;">{{ confirmedCount }}</span>
+              <span class="stat-value" style="color: var(--color-success);">{{ confirmedCount }}</span>
               <span class="stat-label">Tasdiqlangan</span>
             </div>
             <div class="stat-item">
-              <span class="stat-value" style="color: #ed8936;">{{ completedCount }}</span>
+              <span class="stat-value" style="color: var(--color-warning);">{{ completedCount }}</span>
               <span class="stat-label">Yakunlangan</span>
             </div>
             <div class="stat-item">
-              <span class="stat-value" style="color: #e53e3e;">{{ cancelledCount }}</span>
+              <span class="stat-value" style="color: var(--color-error);">{{ cancelledCount }}</span>
               <span class="stat-label">Bekor qilingan</span>
             </div>
           </div>
@@ -146,7 +146,7 @@ export interface TimeSeriesData {
           <mat-card class="mini-stat">
             <div
               class="mini-stat-icon"
-              style="background: linear-gradient(135deg, #667eea, #764ba2);"
+              style="background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));"
             >
               <mat-icon>calendar_today</mat-icon>
             </div>
@@ -167,7 +167,7 @@ export interface TimeSeriesData {
           <mat-card class="mini-stat">
             <div
               class="mini-stat-icon"
-              style="background: linear-gradient(135deg, #48bb78, #38a169);"
+              style="background: linear-gradient(135deg, var(--color-success), var(--color-success));"
             >
               <mat-icon>attach_money</mat-icon>
             </div>
@@ -188,7 +188,7 @@ export interface TimeSeriesData {
           <mat-card class="mini-stat">
             <div
               class="mini-stat-icon"
-              style="background: linear-gradient(135deg, #ed8936, #dd6b20);"
+              style="background: linear-gradient(135deg, var(--color-warning), var(--color-warning));"
             >
               <mat-icon>visibility</mat-icon>
             </div>
@@ -205,7 +205,7 @@ export interface TimeSeriesData {
           <mat-card class="mini-stat">
             <div
               class="mini-stat-icon"
-              style="background: linear-gradient(135deg, #9f7aea, #805ad5);"
+              style="background: linear-gradient(135deg, var(--color-info), var(--color-info));"
             >
               <mat-icon>people</mat-icon>
             </div>
@@ -283,7 +283,7 @@ export interface TimeSeriesData {
       }
 
       .chart-title mat-icon {
-        color: #667eea;
+        color: var(--color-primary);
       }
 
       .chart-legend {
@@ -296,7 +296,7 @@ export interface TimeSeriesData {
         align-items: center;
         gap: 6px;
         font-size: 0.85rem;
-        color: #666;
+        color: var(--color-text-secondary);
       }
 
       .legend-color {
@@ -320,7 +320,7 @@ export interface TimeSeriesData {
         gap: 12px;
         margin-top: 16px;
         padding-top: 16px;
-        border-top: 1px solid #eee;
+        border-top: 1px solid var(--color-border);
       }
 
       .stat-item {
@@ -337,7 +337,7 @@ export interface TimeSeriesData {
 
       .stat-label {
         font-size: 0.85rem;
-        color: #666;
+        color: var(--color-text-secondary);
       }
 
       .mini-stats-grid {
@@ -378,12 +378,12 @@ export interface TimeSeriesData {
       .mini-stat-value {
         font-size: 1.25rem;
         font-weight: 600;
-        color: #333;
+        color: var(--color-text-primary);
       }
 
       .mini-stat-label {
         font-size: 0.85rem;
-        color: #666;
+        color: var(--color-text-secondary);
       }
 
       .mini-stat-trend {
@@ -395,11 +395,11 @@ export interface TimeSeriesData {
       }
 
       .mini-stat-trend.up {
-        color: #48bb78;
+        color: var(--color-success);
       }
 
       .mini-stat-trend.down {
-        color: #e53e3e;
+        color: var(--color-error);
       }
 
       .mini-stat-trend mat-icon {
@@ -474,7 +474,7 @@ export class DashboardChartsComponent implements OnInit {
       {
         data: [12, 19, 15, 25, 22, 30, 28],
         label: 'Yangi bronlar',
-        borderColor: '#667eea',
+        borderColor: 'var(--color-primary)',
         backgroundColor: 'rgba(102, 126, 234, 0.1)',
         fill: true,
         tension: 0.4,
@@ -482,7 +482,7 @@ export class DashboardChartsComponent implements OnInit {
       {
         data: [8, 15, 12, 20, 18, 25, 22],
         label: 'Tasdiqlangan',
-        borderColor: '#48bb78',
+        borderColor: 'var(--color-success)',
         backgroundColor: 'rgba(72, 187, 120, 0.1)',
         fill: true,
         tension: 0.4,
@@ -518,7 +518,7 @@ export class DashboardChartsComponent implements OnInit {
       y: {
         beginAtZero: true,
         grid: {
-          color: '#f0f0f0',
+          color: 'var(--color-surface-elevated)',
         },
       },
     },
@@ -529,7 +529,7 @@ export class DashboardChartsComponent implements OnInit {
     datasets: [
       {
         data: [24, 85, 42, 8],
-        backgroundColor: ['#667eea', '#48bb78', '#ed8936', '#e53e3e'],
+        backgroundColor: ['var(--color-primary)', 'var(--color-success)', 'var(--color-warning)', 'var(--color-error)'],
         borderWidth: 0,
         hoverOffset: 4,
       },
@@ -552,7 +552,7 @@ export class DashboardChartsComponent implements OnInit {
       {
         data: [4500000, 3200000, 2800000, 2100000, 1900000],
         label: 'Daromad (UZS)',
-        backgroundColor: '#667eea',
+        backgroundColor: 'var(--color-primary)',
         borderRadius: 6,
         barThickness: 30,
       },
@@ -576,7 +576,7 @@ export class DashboardChartsComponent implements OnInit {
       y: {
         beginAtZero: true,
         grid: {
-          color: '#f0f0f0',
+          color: 'var(--color-surface-elevated)',
         },
       },
     },
@@ -589,11 +589,11 @@ export class DashboardChartsComponent implements OnInit {
         data: [4.5, 4.2, 4.8, 3.9, 4.6, 4.3],
         label: "O'rtacha reyting",
         backgroundColor: 'rgba(102, 126, 234, 0.2)',
-        borderColor: '#667eea',
-        pointBackgroundColor: '#667eea',
-        pointBorderColor: '#fff',
-        pointHoverBackgroundColor: '#fff',
-        pointHoverBorderColor: '#667eea',
+        borderColor: 'var(--color-primary)',
+        pointBackgroundColor: 'var(--color-primary)',
+        pointBorderColor: 'var(--color-surface)',
+        pointHoverBackgroundColor: 'var(--color-surface)',
+        pointHoverBorderColor: 'var(--color-primary)',
       },
     ],
   };

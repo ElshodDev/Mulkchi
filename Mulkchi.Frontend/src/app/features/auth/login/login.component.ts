@@ -71,7 +71,6 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
                   type="email"
                   formControlName="email"
                   autocomplete="email"
-                  placeholder="email@example.com"
                 />
                 <mat-icon matPrefix>mail</mat-icon>
                 @if (shouldShowEmailError()) {
@@ -125,7 +124,6 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
                   type="text"
                   formControlName="code"
                   autocomplete="one-time-code"
-                  placeholder="123456"
                   maxlength="6"
                 />
                 <mat-icon matPrefix>password</mat-icon>
@@ -188,9 +186,9 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
         gap: var(--space-5);
         min-height: 42rem;
         background:
-          linear-gradient(160deg, rgba(126, 34, 206, 0.94), rgba(15, 23, 42, 0.95)),
+          linear-gradient(160deg, color-mix(in srgb, var(--color-primary) 94%, transparent), color-mix(in srgb, var(--color-background) 95%, transparent)),
           var(--color-surface-inverse);
-        color: white;
+        color: var(--color-text-inverse, white);
       }
 
       .brand-pulse {
@@ -199,7 +197,7 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
         width: 18rem;
         height: 18rem;
         border-radius: var(--radius-round);
-        background: rgba(245, 158, 11, 0.18);
+        background: color-mix(in srgb, var(--color-gold) 18%, transparent);
         filter: blur(18px);
       }
 
@@ -216,8 +214,8 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
       }
 
       .eyebrow--secondary {
-        background: rgba(168, 85, 247, 0.1);
-        color: #c084fc;
+        background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+        color: var(--color-primary);
       }
 
       h1,
@@ -275,9 +273,13 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
         color: white !important;
       }
 
-      .submit-button:disabled {
-        opacity: 0.7;
+      .submit-button:disabled,
+      .submit-button[disabled] {
+        opacity: 0.5;
         cursor: not-allowed;
+        pointer-events: none;
+        background: var(--color-primary, #1B3A6B) !important;
+        filter: grayscale(30%);
       }
 
       .form-alert {
@@ -290,8 +292,8 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
       }
 
       .form-alert--error {
-        background: rgba(220, 38, 38, 0.08);
-        color: var(--color-danger-600);
+        background: color-mix(in srgb, var(--color-error) 8%, transparent);
+        color: var(--color-error);
       }
 
       .separator {
@@ -359,12 +361,12 @@ export class LoginComponent {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly currentSessionId = signal<string | null>(null);
 
-  protected readonly emailForm = this.fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
+  protected readonly emailForm = this.fb.group({
+    email: [null as any, [Validators.required, Validators.email]],
   });
 
-  protected readonly otpForm = this.fb.nonNullable.group({
-    code: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
+  protected readonly otpForm = this.fb.group({
+    code: [null as any, [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
   });
 
   protected async onEmailSubmit(): Promise<void> {

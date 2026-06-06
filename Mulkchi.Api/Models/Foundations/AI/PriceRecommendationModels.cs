@@ -1,4 +1,5 @@
 using Microsoft.ML.Data;
+using Mulkchi.Api.Models.Foundations.Properties;
 
 namespace Mulkchi.Api.Models.Foundations.AI;
 
@@ -62,7 +63,7 @@ public class PriceRecommendationRequest
     public bool IsRenovated { get; set; }
     public bool HasElevator { get; set; }
     public float DistanceToCityCenter { get; set; }
-    public int ListingType { get; set; } // 0 = Sale, 1 = Rent
+    public ListingType ListingType { get; set; }
     public string DescriptionText { get; set; } = string.Empty;
 }
 

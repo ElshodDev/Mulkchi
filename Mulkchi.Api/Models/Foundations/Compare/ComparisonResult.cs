@@ -6,4 +6,5 @@ public class ComparisonResult
     public string Summary { get; set; }
     public List<PropertyComparisonDetail> Details { get; set; }
     public string Recommendation { get; set; }
+    public int ConfidenceScore { get; set; }
 }

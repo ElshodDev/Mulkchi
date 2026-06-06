@@ -49,12 +49,15 @@ public class PriceRecommendationService : IPriceRecommendationService
             IsRenovated = request.IsRenovated ? 1f : 0f,
             HasElevator = request.HasElevator ? 1f : 0f,
             DistanceToCityCenter = request.DistanceToCityCenter,
-            ListingType = request.ListingType,
+            ListingType = request.ListingType == ListingType.Rent ? 1f : (request.ListingType == ListingType.ShortTermRent ? 2f : 0f),
             DescriptionText = request.DescriptionText ?? string.Empty
         };
 
         var prediction = predictionEngine!.Predict(input);
         var predictedPrice = (decimal)prediction.PredictedPrice;
+
+        // Smart Pricing Modifiers
+        predictedPrice = ApplyDynamicPricing(predictedPrice, request.ListingType);
 
         var trainingDataCount = await GetTrainingDataCountAsync();
         var confidence = GetConfidenceLevel(trainingDataCount, predictedPrice);
@@ -69,6 +72,35 @@ public class PriceRecommendationService : IPriceRecommendationService
             Recommendation = GenerateRecommendation(predictedPrice, confidence),
             IsRuleBased = false
         };
+    }
+
+    private decimal ApplyDynamicPricing(decimal basePrice, ListingType listingType)
+    {
+        // Only apply dynamic pricing to Rent/ShortTermRent
+        if (listingType == ListingType.Sale) return basePrice;
+
+        var now = DateTime.UtcNow;
+        var multiplier = 1.0m;
+
+        // Weekend Surge Pricing
+        if (now.DayOfWeek == DayOfWeek.Friday || now.DayOfWeek == DayOfWeek.Saturday)
+        {
+            multiplier *= 1.15m; // +15% on weekends
+        }
+
+        // Seasonality Surge (Summer: June, July, August)
+        if (now.Month >= 6 && now.Month <= 8)
+        {
+            multiplier *= 1.10m; // +10% in summer
+        }
+
+        // Seasonality Drop (Winter: Jan, Feb)
+        if (now.Month == 1 || now.Month == 2)
+        {
+            multiplier *= 0.90m; // -10% in deep winter
+        }
+
+        return basePrice * multiplier;
     }
 
     public async Task TrainModelAsync()
@@ -201,6 +233,9 @@ public class PriceRecommendationService : IPriceRecommendationService
 
         var predictedPrice = basePrice * multiplier;
 
+        // Smart Pricing for Rule-Based
+        predictedPrice = ApplyDynamicPricing(predictedPrice, request.ListingType);
+
         return new PriceRecommendationResponse
         {
             PredictedPrice = Math.Round(predictedPrice, 2),
@@ -213,10 +248,9 @@ public class PriceRecommendationService : IPriceRecommendationService
         };
     }
 
-    private decimal GetBasePriceByRegion(int region, int listingType)
+    private decimal GetBasePriceByRegion(int region, ListingType listingType)
     {
-        // listingType 1 = Rent, 0 = Sale
-        if (listingType == 1) 
+        if (listingType == ListingType.Rent) 
         {
             return region switch
             {

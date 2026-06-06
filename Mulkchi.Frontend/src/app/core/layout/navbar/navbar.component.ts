@@ -27,14 +27,8 @@ import { UIStore } from '../../stores/ui.store';
   ],
   template: `
     <header 
-      class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out py-3"
-      [class.backdrop-blur-xl]="isScrolled()" 
-      [class.bg-white/85]="isScrolled() && !uiStore.isDarkTheme()"
-      [class.bg-slate-900/85]="isScrolled() && uiStore.isDarkTheme()"
-      [class.shadow-md]="isScrolled()"
-      [class.border-b]="isScrolled()"
-      [class.border-slate-200]="isScrolled() && !uiStore.isDarkTheme()"
-      [class.border-slate-800]="isScrolled() && uiStore.isDarkTheme()"
+      class="navbar-shell fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out py-3"
+      [class.scrolled]="isScrolled()" 
     >
       <div class="container mx-auto flex items-center justify-between px-6 h-16">
         <a class="flex items-center gap-3 no-underline group" routerLink="/" (click)="uiStore.closeSidebar()">
@@ -45,9 +39,7 @@ import { UIStore } from '../../stores/ui.store';
             <strong class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Mulkchi</strong>
             <small class="text-xs font-medium text-slate-500 dark:text-slate-400">{{ text().brandTagline }}</small>
           </span>
-          <span class="hidden sm:inline-block ml-2 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-900/40 rounded-full border border-green-200 dark:border-green-800">
-            BMI Loyihasi
-          </span>
+
         </a>
 
         <nav class="desktop-nav" aria-label="Asosiy navigatsiya">
@@ -235,8 +227,8 @@ import { UIStore } from '../../stores/ui.store';
 
       .navbar-shell.scrolled {
         backdrop-filter: blur(22px);
-        background: color-mix(in srgb, var(--color-surface-elevated) 85%, transparent);
-        border-bottom: 1px solid var(--color-border-soft);
+        background: var(--color-surface-elevated);
+        border-bottom: 1px solid var(--color-border);
         box-shadow: var(--shadow-sm);
       }
 
@@ -264,8 +256,8 @@ import { UIStore } from '../../stores/ui.store';
         inline-size: 2.75rem;
         aspect-ratio: 1;
         border-radius: 1rem;
-        background: linear-gradient(135deg, var(--color-brand-500), var(--color-brand-700));
-        color: white;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+        color: var(--color-text-inverse);
         box-shadow: var(--shadow-sm);
         flex-shrink: 0;
       }
@@ -290,15 +282,35 @@ import { UIStore } from '../../stores/ui.store';
         white-space: nowrap;
       }
 
+      .nav-links a {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: var(--color-text);
+        border-radius: var(--radius-full);
+        padding: 0 16px;
+        height: 40px;
+        line-height: 40px;
+      }
+      .nav-links .map-link {
+        color: var(--color-primary);
+        background: rgba(0, 106, 255, 0.05);
+      }
+      .nav-links .map-link mat-icon {
+        margin-right: 4px;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+
       .bmi-badge {
         font-size: 0.65rem;
-        background: rgba(168, 85, 247, 0.15);
-        color: #c084fc;
+        background: var(--color-surface);
+        color: var(--color-primary);
         padding: 4px 8px;
         border-radius: 12px;
         font-weight: 700;
         text-transform: uppercase;
-        border: 1px solid rgba(168, 85, 247, 0.3);
+        border: 1px solid var(--color-border);
         margin-left: 8px;
       }
 
@@ -320,26 +332,17 @@ import { UIStore } from '../../stores/ui.store';
       .desktop-nav a {
         padding: 0.6rem 1rem;
         border-radius: var(--radius-round);
-        color: var(--color-text-primary);
+        color: var(--color-text-secondary);
         font-size: 0.85rem;
         font-weight: 600;
         transition: all 0.25s ease;
         white-space: nowrap;
         text-decoration: none;
-        opacity: 0.85;
       }
 
-      .desktop-nav a:hover {
-        color: var(--color-brand-600);
-        background: rgba(15, 118, 110, 0.08);
-        opacity: 1;
-      }
-
+      .desktop-nav a:hover,
       .desktop-nav a.active {
-        background: var(--color-brand-600);
-        color: white !important;
-        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
-        opacity: 1;
+        color: var(--color-primary);
       }
 
       .navbar-actions {
@@ -365,8 +368,8 @@ import { UIStore } from '../../stores/ui.store';
       }
 
       .post-button {
-        background: linear-gradient(135deg, var(--color-brand-500), var(--color-brand-700));
-        color: white !important;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+        color: var(--color-text-inverse) !important;
         border-radius: 24px !important;
         padding: 0 16px !important;
         font-weight: 600 !important;
@@ -375,8 +378,8 @@ import { UIStore } from '../../stores/ui.store';
       }
 
       .register-button {
-        background: var(--color-brand-600) !important;
-        color: white !important;
+        background: var(--color-primary) !important;
+        color: var(--color-text-inverse) !important;
         border-radius: 24px !important;
         flex-shrink: 0;
       }
@@ -461,19 +464,19 @@ import { UIStore } from '../../stores/ui.store';
 
       :host-context(.theme-dark) {
         .profile-chip {
-          background: #2d3748;
-          border-color: rgba(255, 255, 255, 0.15);
+          background: var(--color-surface-elevated);
+          border-color: var(--color-border);
         }
         .profile-chip:hover {
-          background: #3a4a63;
-          border-color: var(--color-brand-500);
+          background: var(--color-surface);
+          border-color: var(--color-border-focus);
         }
         .profile-copy small,
         .expand-icon {
-          color: #cbd5e0;
+          color: var(--color-text-secondary);
         }
         .quick-actions mat-icon {
-          color: #e2e8f0;
+          color: var(--color-text-primary);
         }
       }
 
@@ -599,6 +602,7 @@ export class NavbarComponent {
     return [
       { label: t.navHome, link: '/', exact: true },
       { label: t.navProperties, link: '/properties' },
+      { label: 'Xarita', link: '/map' },
       { label: t.aiAssistant, link: '/ai-tools' },
       { label: t.market, link: '/market' },
     ];

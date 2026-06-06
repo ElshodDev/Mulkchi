@@ -3,9 +3,9 @@ import {
   inject,
   Injectable,
   provideBrowserGlobalErrorListeners,
-  provideZoneChangeDetection,
+  provideZoneChangeDetection, isDevMode,
 } from '@angular/core';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import {
   provideRouter,
   RouterStateSnapshot,
@@ -22,6 +22,7 @@ import { cacheInterceptor } from './core/interceptors/cache.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 import { SelectivePreloadingStrategy } from './core/strategies/selective-preloading.strategy';
+import { provideServiceWorker } from '@angular/service-worker';
 
 @Injectable()
 class MulkchiTitleStrategy extends TitleStrategy {
@@ -46,9 +47,13 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes, withPreloading(SelectivePreloadingStrategy), withViewTransitions()),
     provideHttpClient(
+      withFetch(),
       withInterceptors([authInterceptor, cacheInterceptor, loadingInterceptor, errorInterceptor]),
     ),
     provideAnimationsAsync(),
-    { provide: TitleStrategy, useClass: MulkchiTitleStrategy }, provideClientHydration(withEventReplay()),
+    { provide: TitleStrategy, useClass: MulkchiTitleStrategy }, provideClientHydration(withEventReplay()), provideServiceWorker('ngsw-worker.js', {
+            enabled: !isDevMode(),
+            registrationStrategy: 'registerWhenStable:30000'
+          }),
   ],
 };

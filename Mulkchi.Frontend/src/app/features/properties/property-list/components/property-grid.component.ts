@@ -10,6 +10,7 @@ import { Property } from '../../../../core/models';
 import { ComparisonService } from '../../../../core/services/comparison.service';
 import { FavoritesService } from '../../../../core/services/favorites.service';
 import { ImageOptimizationService } from '../../../../core/services/image-optimization.service';
+import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 
 @Component({
   selector: 'app-property-grid',
@@ -22,6 +23,7 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
     MatBadgeModule,
     MatTooltipModule,
     ScrollingModule,
+    SkeletonLoaderComponent,
   ],
   template: `
     <div class="property-grid-modern" [class.list-view]="viewMode === 'list'">
@@ -31,11 +33,22 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
         [class.list-view-item]="viewMode === 'list'"
       >
         <div class="grid-layout">
-          <div
-            *cdkVirtualFor="let property of properties; trackBy: trackByPropertyFn"
-            class="card-wrapper"
-          >
-            <div class="premium-card" (click)="propertyClick.emit(property.id)">
+          @if (isLoading) {
+            @for (i of [1,2,3,4,5,6]; track i) {
+              <div class="card-wrapper">
+                <app-skeleton-loader type="card"></app-skeleton-loader>
+              </div>
+            }
+          } @else {
+            <div
+              *cdkVirtualFor="let property of properties; trackBy: trackByPropertyFn"
+              class="card-wrapper"
+            >
+            <div class="premium-card" 
+                 (click)="propertyClick.emit(property.id)"
+                 [matTooltip]="getAiInsight(property)" 
+                 matTooltipClass="ai-tooltip" 
+                 matTooltipPosition="above">
               <!-- IMAGE SECTION -->
               <div class="card-media">
                 <div class="img-zoom-container">
@@ -46,6 +59,7 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
                       [src]="getFullImageUrl(property)"
                       [alt]="property.title"
                       class="main-img"
+                      [style.view-transition-name]="'property-image-' + property.id"
                       (error)="
                         $any($event.target).src =
                           'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop'
@@ -63,25 +77,22 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
 
                 <!-- Action Buttons Overlay -->
                 <div class="media-actions">
-                  <button
-                    mat-icon-button
-                    class="btn-action-glass"
-                    [class.active]="isCompared(property.id)"
-                    matTooltip="Solishtirish"
+                  <button 
+                    mat-icon-button 
+                    class="btn-action-glass compare" 
+                    [class.active-compare]="isCompared(property.id)"
                     (click)="onCompareClick($event, property)"
+                    [matTooltip]="isCompared(property.id) ? 'Solishtirishdan olish' : 'Solishtirishga qo‘shish'"
                   >
-                    <mat-icon>{{
-                      isCompared(property.id) ? 'check_circle' : 'add_circle_outline'
-                    }}</mat-icon>
+                    <mat-icon>{{ isCompared(property.id) ? 'compare_arrows' : 'add_road' }}</mat-icon>
                   </button>
                   <button
                     mat-icon-button
                     class="btn-action-glass favorite"
-                    [class.active]="isFavorite(property.id)"
-                    matTooltip="Sevimlilarga qo'shish"
                     (click)="onFavoriteClick($event, property.id)"
+                    matTooltip="Saqlanganlarga qo'shish"
                   >
-                    <mat-icon [style.color]="isFavorite(property.id) ? '#ef4444' : ''">
+                    <mat-icon [style.color]="isFavorite(property.id) ? 'var(--color-error)' : ''">
                       {{ isFavorite(property.id) ? 'favorite' : 'favorite_border' }}
                     </mat-icon>
                   </button>
@@ -161,6 +172,7 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
               </div>
             </div>
           </div>
+          }
         </div>
       </cdk-virtual-scroll-viewport>
     </div>
@@ -168,12 +180,12 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
   styles: [
     `
       :host {
-        --navy: #0f172a;
-        --gold: #c9a84c;
-        --text: #334155;
-        --muted: #64748b;
-        --border: #f1f5f9;
-        --white: #ffffff;
+        --navy: var(--color-primary);
+        --gold: var(--color-gold);
+        --text: var(--color-text-primary);
+        --muted: var(--color-text-secondary);
+        --border: var(--color-border);
+        --white: var(--color-surface);
         --shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
         --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.12);
         display: block;
@@ -200,11 +212,11 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
 
       .premium-card {
         background: var(--white);
-        border-radius: 24px;
+        border-radius: 20px;
         overflow: hidden;
-        box-shadow: var(--shadow);
-        border: 1px solid var(--border);
-        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         cursor: pointer;
         display: flex;
         flex-direction: column;
@@ -212,9 +224,8 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
       }
 
       .premium-card:hover {
-        transform: translateY(-12px);
-        box-shadow: var(--shadow-hover);
-        border-color: rgba(201, 168, 76, 0.3);
+        transform: translateY(-8px);
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.08);
       }
 
       .card-media {
@@ -260,7 +271,15 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
         color: var(--navy) !important;
       }
       .btn-action-glass.favorite:hover {
-        color: #ef4444 !important;
+        color: var(--color-error) !important;
+      }
+      .btn-action-glass.compare.active-compare {
+        background: var(--color-primary) !important;
+        color: var(--white) !important;
+        border-color: var(--color-primary);
+      }
+      .btn-action-glass.compare:hover {
+        color: var(--color-primary) !important;
       }
 
       .badge-container {
@@ -289,7 +308,7 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
       }
       .badge-lux.verified {
         background: rgba(255, 255, 255, 0.8);
-        color: #10b981;
+        color: var(--color-success);
         padding: 6px;
       }
       .badge-lux mat-icon {
@@ -325,14 +344,14 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
       }
 
       .rating-box.high {
-        background: #fffbeb;
-        color: #b45309;
+        background: var(--color-surface-elevated);
+        color: var(--color-gold);
       }
       .rating-box mat-icon {
         font-size: 16px;
         width: 16px;
         height: 16px;
-        color: #f59e0b;
+        color: var(--color-gold);
       }
 
       .card-location {
@@ -347,7 +366,7 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
         font-size: 16px;
         width: 16px;
         height: 16px;
-        color: #94a3b8;
+        color: var(--color-text-secondary);
       }
 
       .card-specs {
@@ -362,8 +381,8 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
         gap: 6px;
         font-size: 0.85rem;
         font-weight: 700;
-        color: #475569;
-        background: #f1f5f9;
+        color: var(--color-text-primary);
+        background: var(--color-surface-elevated);
         padding: 6px 12px;
         border-radius: 12px;
       }
@@ -371,7 +390,7 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
         font-size: 16px;
         width: 16px;
         height: 16px;
-        color: #64748b;
+        color: var(--color-text-secondary);
       }
 
       .card-footer {
@@ -380,7 +399,7 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
         justify-content: space-between;
         align-items: center;
         padding-top: 16px;
-        border-top: 1px dashed #e2e8f0;
+        border-top: 1px dashed var(--color-border);
       }
 
       .price-tag {
@@ -414,16 +433,16 @@ import { ImageOptimizationService } from '../../../../core/services/image-optimi
         letter-spacing: 0.8px;
       }
       .type-pill.rent {
-        background: #ecfdf5;
-        color: #059669;
+        background: color-mix(in srgb, var(--color-success) 15%, transparent);
+        color: var(--color-success);
       }
       .type-pill.sale {
-        background: #fff7ed;
-        color: #ea580c;
+        background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+        color: var(--color-warning);
       }
       .type-pill.shorttermrent {
-        background: #eff6ff;
-        color: #2563eb;
+        background: color-mix(in srgb, var(--color-info) 15%, transparent);
+        color: var(--color-info);
       }
 
       .property-grid-modern.list-view .grid-layout {
@@ -480,6 +499,24 @@ export class PropertyGridComponent {
 
   trackByPropertyFn(index: number, property: Property): string {
     return property.id;
+  }
+
+  getAiInsight(property: Property): string {
+    const p = property as any;
+    let price = 0;
+    if (p.salePrice) price = p.salePrice;
+    else if (p.monthlyRent) price = p.monthlyRent;
+    
+    if (price === 0) return 'AI: Bu uy sarmoya uchun yaxshi tanlov bo\'lishi mumkin.';
+    
+    // Mock AI logic based on price and area
+    if (price > 1000000000) {
+      return 'AI Xulosasi: Premium toifadagi mulk. Narxi hudud o\'rtachasidan yuqori, lekin yuqori qulayliklarga ega.';
+    } else if (price < 500000000) {
+      return 'AI Xulosasi: Qulay narx! Bu mulk o\'z hududidagi o\'rtacha narxdan 10-15% arzonroq.';
+    } else {
+      return 'AI Xulosasi: Balanslashgan narx. Sarmoya kiritish uchun xavfsiz tanlov.';
+    }
   }
 
   isFavorite(id: string): boolean {

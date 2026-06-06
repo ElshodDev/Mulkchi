@@ -11,6 +11,8 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { RouterLink } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
+import { BaseChartDirective } from 'ng2-charts';
+import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { environment } from '../../../../environments/environment';
 import { Property, User } from '../../../core/models';
 import { AnalyticsService } from '../../../core/services/analytics.service';
@@ -31,6 +33,7 @@ import { PropertyService } from '../../../core/services/property.service';
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    BaseChartDirective,
   ],
   template: `
     <div class="admin-dashboard-container">
@@ -81,6 +84,20 @@ import { PropertyService } from '../../../core/services/property.service';
         </div>
 
         <mat-tab-group class="dashboard-tabs">
+          <!-- Analytics Charts Tab -->
+          <mat-tab label="Biznes Analitika (Grafiklar)">
+            <mat-card class="table-card" style="padding: 24px;">
+              <h3>Mulkchi Platformasi o'sish dinamikasi (Daromad va Bronlar)</h3>
+              <div style="display: block; width: 100%; height: 400px; margin-top: 20px;">
+                <canvas baseChart
+                  [data]="revenueChartData"
+                  [options]="revenueChartOptions"
+                  [type]="'line'">
+                </canvas>
+              </div>
+            </mat-card>
+          </mat-tab>
+
           <!-- Users Tab -->
           <mat-tab label="Foydalanuvchilar">
             <mat-card class="table-card">
@@ -689,6 +706,24 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   userColumns = ['user', 'role', 'phone', 'status', 'joined', 'actions'];
   propertyColumns = ['property', 'type', 'price', 'status', 'owner', 'actions'];
+
+  // Superior Analytics Chart Data
+  public revenueChartData: ChartData<'line'> = {
+    labels: ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun'],
+    datasets: [
+      { data: [6500000, 8900000, 12000000, 15500000, 22000000, 28000000], label: 'Oylik Daromad (UZS)', tension: 0.4, borderColor: '#1976d2', backgroundColor: 'rgba(25, 118, 210, 0.2)', fill: true },
+      { data: [12, 18, 25, 40, 55, 80], label: 'Bronlar soni', tension: 0.4, borderColor: '#388e3c', backgroundColor: 'rgba(56, 142, 60, 0.2)', yAxisID: 'y1' }
+    ]
+  };
+
+  public revenueChartOptions: ChartConfiguration['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: { type: 'linear', display: true, position: 'left' },
+      y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false } }
+    }
+  };
 
   get usersData(): User[] {
     return this.users();

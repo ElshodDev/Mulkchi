@@ -265,9 +265,19 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
                 </div>
               </div>
 
-              <button mat-flat-button color="primary" class="btn-full-report">
-                <mat-icon>download</mat-icon>
-                <span>To'liq AI tahlil hisobotini yuklash (PDF)</span>
+              <button mat-flat-button color="primary" class="btn-full-report" 
+                      (click)="downloadReport()" [disabled]="isGeneratingPdf()">
+                @if (isGeneratingPdf()) {
+                  <ng-container>
+                    <mat-spinner diameter="20" color="accent" style="margin-right: 8px;"></mat-spinner>
+                    <span>PDF Yaratilmoqda...</span>
+                  </ng-container>
+                } @else {
+                  <ng-container>
+                    <mat-icon>download</mat-icon>
+                    <span>To'liq AI tahlil hisobotini yuklash (PDF)</span>
+                  </ng-container>
+                }
               </button>
             </div>
           </div>
@@ -849,6 +859,7 @@ export class MarketComponent implements OnInit {
   regions = signal<RegionAnalytics[]>([]);
   trends = signal<PriceTrend[]>([]);
   isLoading = signal(true);
+  isGeneratingPdf = signal(false);
 
   private charts: Chart[] = [];
 
@@ -1138,5 +1149,54 @@ export class MarketComponent implements OnInit {
   formatPrice(price: number | undefined): string {
     if (!price) return "0 so'm";
     return Math.round(price).toLocaleString('ru-RU').replace(/,/g, ' ') + " so'm";
+  }
+
+  async downloadReport(): Promise<void> {
+    this.isGeneratingPdf.set(true);
+    try {
+      const element = document.querySelector('.main-content-container') as HTMLElement;
+      if (!element) return;
+
+      // Ensure charts are fully rendered before capturing
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Dynamically import to avoid SSR errors
+      const html2canvasModule = await import('html2canvas');
+      const html2canvas = html2canvasModule.default || html2canvasModule;
+      
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#f8fafc'
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      
+      const jsPDFModule = await import('jspdf');
+      const { jsPDF } = jsPDFModule;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.setFontSize(16);
+      pdf.text("Mulkchi AI - Bozor Tahlili va Bashorati", 14, 15);
+      pdf.setFontSize(10);
+      pdf.setTextColor(100);
+      pdf.text(`Sana: ${new Date().toLocaleDateString('uz-UZ')}`, 14, 22);
+
+      // If the content is too long for A4, it will just scale down to fit the width.
+      // A more complex implementation could split pages, but for this dashboard,
+      // fitting it entirely on one or two pages is usually acceptable.
+      pdf.addImage(imgData, 'JPEG', 0, 30, pdfWidth, pdfHeight);
+      
+      pdf.save('Mulkchi_Bozor_Tahlili.pdf');
+    } catch (error) {
+      console.error('PDF yaratishda xatolik:', error);
+      alert("PDF yaratishda xatolik yuz berdi. Iltimos qayta urinib ko'ring.");
+    } finally {
+      this.isGeneratingPdf.set(false);
+    }
   }
 }

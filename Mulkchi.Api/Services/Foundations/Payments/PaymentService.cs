@@ -3,6 +3,7 @@ using Mulkchi.Api.Models.Foundations.Payments.Exceptions;
 using Mulkchi.Api.Brokers.DateTimes;
 using Mulkchi.Api.Brokers.Loggings;
 using Mulkchi.Api.Brokers.Storages;
+using Mulkchi.Api.Brokers.Payments;
 
 namespace Mulkchi.Api.Services.Foundations.Payments;
 
@@ -11,15 +12,21 @@ public partial class PaymentService : IPaymentService
     private readonly IStorageBroker storageBroker;
     private readonly ILoggingBroker loggingBroker;
     private readonly IDateTimeBroker dateTimeBroker;
+    private readonly IPaymeBroker paymeBroker;
+    private readonly IClickBroker clickBroker;
 
     public PaymentService(
         IStorageBroker storageBroker,
         ILoggingBroker loggingBroker,
-        IDateTimeBroker dateTimeBroker)
+        IDateTimeBroker dateTimeBroker,
+        IPaymeBroker paymeBroker,
+        IClickBroker clickBroker)
     {
         this.storageBroker = storageBroker;
         this.loggingBroker = loggingBroker;
         this.dateTimeBroker = dateTimeBroker;
+        this.paymeBroker = paymeBroker;
+        this.clickBroker = clickBroker;
     }
 
     public ValueTask<Payment> AddPaymentAsync(Payment payment) =>

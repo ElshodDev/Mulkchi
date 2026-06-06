@@ -19,13 +19,14 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import * as L from 'leaflet';
-import { map } from 'rxjs';
+import { map, Subscription } from 'rxjs';
 import { ListingType, PropertyImage, PropertyType } from '../../../core/models';
 import { AuthService } from '../../../core/services/auth.service';
 import { FavoritesService } from '../../../core/services/favorites.service';
 import { ImageOptimizationService } from '../../../core/services/image-optimization.service';
 import { PropertyService } from '../../../core/services/property.service';
-
+import { SeoService } from '../../../core/services/seo.service';
+import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ToastService } from '../../../core/services/toast.service';
 import {
   ConfirmationDialogComponent,
@@ -49,6 +50,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
     MatTooltipModule,
     BookingPanelComponent,
     MortgageCalculatorComponent,
+    SkeletonLoaderComponent,
   ],
   animations: [
     trigger('fadeInUp', [
@@ -64,15 +66,8 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
   template: `
     <div class="property-detail-container">
       <ng-container *ngIf="loading(); else checkError">
-        <div class="loading-container">
-          <div class="skeleton-loader">
-            <div class="skeleton-main-image"></div>
-            <div class="skeleton-content">
-              <div class="skeleton-title"></div>
-              <div class="skeleton-line"></div>
-              <div class="skeleton-line short"></div>
-            </div>
-          </div>
+        <div class="loading-container p-6">
+          <app-skeleton-loader type="detail"></app-skeleton-loader>
         </div>
       </ng-container>
       <ng-template #checkError>
@@ -139,8 +134,14 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                     <img
                       [src]="getFullImageUrl(property()!.images![0])"
                       [alt]="property()?.title"
+                      [style.view-transition-name]="'property-image-' + property()?.id"
                       (error)="onMainImageError()"
                     />
+                    
+                    <button class="btn-3d-tour" (click)="open3DTour($event)">
+                      <mat-icon>360</mat-icon>
+                      <span>3D Tur</span>
+                    </button>
                   </div>
 
                   <div class="side-photos" *ngIf="property()!.images!.length > 1">
@@ -182,6 +183,16 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                 </div>
                 <div class="count-pill lightbox-counter">
                   {{ currentImageIndex() + 1 }} / {{ property()!.images!.length }}
+                </div>
+              </div>
+
+              <!-- 3D Viewer Overlay -->
+              <div class="lightbox-overlay" *ngIf="is3DViewerOpen()" @fadeInUp>
+                <button class="lightbox-close" (click)="close3DViewer()">
+                  <mat-icon>close</mat-icon>
+                </button>
+                <div class="lightbox-content viewer-3d-content">
+                   <div id="psv-container" style="width: 100%; height: 100vh;"></div>
                 </div>
               </div>
 
@@ -279,7 +290,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                     </span>
                   </div>
                   <img
-                    [src]="getFullImageUrl(property()!.images![0])"
+                    [src]="getFullImageUrl(property()?.images?.[0])"
                     alt="360 Tour Preview"
                     class="tour-bg-img"
                   />
@@ -541,7 +552,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                 <app-mortgage-calculator
                   *ngIf="property()?.listingType === ListingType.Sale && property()?.salePrice"
                   [propertyPrice]="property()!.salePrice!"
-                  [currencyType]="property()!.currency || 'UZS'"
+                  [currencyType]="property()?.currency || 'UZS'"
                 ></app-mortgage-calculator>
               </div>
             </div>
@@ -584,14 +595,14 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
   styles: [
     `
       :host {
-        --color-navy: #0f172a;
-        --color-gold: #fbbf24;
-        --color-gold-dark: #d97706;
-        --color-blue-accent: #3b82f6;
-        --color-blue-dark: #2563eb;
-        --color-bg: #f8fafc;
-        --color-text-main: #1e293b;
-        --color-text-muted: #64748b;
+        --color-navy: var(--color-primary);
+        --color-gold: var(--color-gold);
+        --color-gold-dark: var(--color-gold);
+        --color-blue-accent: var(--color-info);
+        --color-blue-dark: var(--color-info);
+        --color-bg: var(--color-background);
+        --color-text-main: var(--color-text-primary);
+        --color-text-muted: var(--color-text-secondary);
         font-family: 'Inter', sans-serif;
       }
 
@@ -657,28 +668,28 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         letter-spacing: 0.5px;
       }
       .badge.featured {
-        background: linear-gradient(135deg, #fef3c7, #fde68a);
-        color: #b45309;
+        background: linear-gradient(135deg, color-mix(in srgb, var(--color-gold) 15%, transparent), color-mix(in srgb, var(--color-gold) 35%, transparent));
+        color: var(--color-gold);
       }
       .badge.verified {
-        background: #dcfce7;
-        color: #15803d;
+        background: color-mix(in srgb, var(--color-success) 15%, transparent);
+        color: var(--color-success);
       }
       .badge.type {
-        background: #e0e7ff;
-        color: #4338ca;
+        background: color-mix(in srgb, var(--color-info) 15%, transparent);
+        color: var(--color-info);
       }
       .badge.type.sale {
-        background: #fee2e2;
-        color: #b91c1c;
+        background: color-mix(in srgb, var(--color-error) 15%, transparent);
+        color: var(--color-error);
       }
       .badge.type.rent {
-        background: #dcfce7;
-        color: #15803d;
+        background: color-mix(in srgb, var(--color-success) 15%, transparent);
+        color: var(--color-success);
       }
       .badge.type.shorttermrent {
-        background: #e0e7ff;
-        color: #4338ca;
+        background: color-mix(in srgb, var(--color-info) 15%, transparent);
+        color: var(--color-info);
       }
       .badge mat-icon {
         font-size: 16px;
@@ -715,7 +726,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         border-radius: 24px;
         overflow: hidden;
         position: relative;
-        background: #f1f5f9;
+        background: var(--color-surface);
       }
       .gallery-grid {
         display: grid;
@@ -773,7 +784,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         align-items: center;
         gap: 6px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--color-border);
         transition: transform 0.2s;
       }
       .show-all-btn:hover {
@@ -783,6 +794,35 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         font-size: 18px;
         width: 18px;
         height: 18px;
+      }
+
+      .btn-3d-tour {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(15, 23, 42, 0.75);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 8px 16px;
+        border-radius: 100px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        backdrop-filter: blur(10px);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 10;
+      }
+      .btn-3d-tour:hover {
+        background: rgba(15, 23, 42, 0.95);
+        transform: scale(1.05);
+      }
+      .btn-3d-tour mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
       }
 
       .lightbox-overlay {
@@ -818,6 +858,12 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         align-items: center;
         justify-content: center;
         gap: 24px;
+      }
+      .viewer-3d-content {
+        width: 100%;
+        height: 100%;
+        padding: 0 !important;
+        background: #000;
       }
       .lightbox-img {
         max-width: 100%;
@@ -860,7 +906,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         border-radius: 24px;
         margin-bottom: 32px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--color-border);
       }
       .stat-item {
         display: flex;
@@ -870,7 +916,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
       .stat-icon-wrapper {
         width: 48px;
         height: 48px;
-        background: #eff6ff;
+        background: color-mix(in srgb, var(--color-info) 10%, transparent);
         border-radius: 14px;
         display: flex;
         align-items: center;
@@ -898,7 +944,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
       .divider-vertical {
         width: 1px;
         height: 40px;
-        background: #e2e8f0;
+        background: var(--color-border);
       }
 
       .content-card {
@@ -907,7 +953,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         border-radius: 24px;
         margin-bottom: 32px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
-        border: 1px solid #f1f5f9;
+        border: 1px solid var(--color-surface);
       }
       .section-title {
         font-size: 1.5rem;
@@ -919,7 +965,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
       .description-text {
         font-size: 1.05rem;
         line-height: 1.7;
-        color: #334155;
+        color: var(--color-text-primary);
         white-space: pre-wrap;
         margin: 0;
       }
@@ -941,12 +987,12 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #f1f5f9;
-        color: #94a3b8;
+        background: var(--color-surface);
+        color: var(--color-text-secondary);
         transition: all 0.3s;
       }
       .amenity-icon.active {
-        background: #eff6ff;
+        background: color-mix(in srgb, var(--color-info) 10%, transparent);
         color: var(--color-blue-dark);
       }
       .amenity-item:hover .amenity-icon.active {
@@ -961,7 +1007,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
       }
       .amenity-label.strike {
         text-decoration: line-through;
-        color: #94a3b8;
+        color: var(--color-text-secondary);
       }
       .unavailable {
         opacity: 0.6;
@@ -979,9 +1025,9 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         height: 400px;
         width: 100%;
         border-radius: 16px;
-        background: #cbd5e1;
+        background: var(--color-border);
         z-index: 1;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--color-border);
         overflow: hidden;
       }
 
@@ -1088,10 +1134,10 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         border-radius: 14px !important;
         font-weight: 700 !important;
         color: var(--color-navy) !important;
-        border-color: #cbd5e1 !important;
+        border-color: var(--color-border) !important;
       }
       .btn-chat:hover {
-        background: #f8fafc !important;
+        background: var(--color-background) !important;
         border-color: var(--color-blue-accent) !important;
         color: var(--color-blue-dark) !important;
       }
@@ -1100,7 +1146,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         width: 48px;
         height: 48px;
         border-radius: 14px;
-        border: 1px solid #cbd5e1;
+        border: 1px solid var(--color-border);
         background: transparent;
         color: var(--color-text-muted);
         cursor: pointer;
@@ -1110,13 +1156,13 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         transition: all 0.3s;
       }
       .btn-fav-icon:hover {
-        background: #fee2e2;
-        border-color: #fca5a5;
-        color: #ef4444;
+        background: color-mix(in srgb, var(--color-error) 15%, transparent);
+        border-color: var(--color-error);
+        color: var(--color-error);
       }
       .btn-fav-icon.active {
-        background: #ef4444;
-        border-color: #ef4444;
+        background: var(--color-error);
+        border-color: var(--color-error);
         color: white;
         box-shadow: 0 8px 16px rgba(239, 68, 68, 0.3);
       }
@@ -1145,7 +1191,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         height: 64px;
         border-radius: 50%;
         overflow: hidden;
-        background: #e2e8f0;
+        background: var(--color-border);
         flex-shrink: 0;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         border: 2px solid white;
@@ -1161,7 +1207,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #94a3b8;
+        color: var(--color-text-secondary);
       }
       .avatar-placeholder mat-icon {
         font-size: 32px;
@@ -1191,7 +1237,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         align-items: center;
         gap: 4px;
         font-size: 0.85rem;
-        color: #10b981;
+        color: var(--color-success);
         font-weight: 600;
       }
       .host-badge mat-icon {
@@ -1203,7 +1249,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
       .recommendations-section {
         margin-top: 60px;
         padding-top: 60px;
-        border-top: 1px solid #e2e8f0;
+        border-top: 1px solid var(--color-border);
       }
       .rec-header {
         display: flex;
@@ -1214,7 +1260,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
       .rec-icon {
         width: 56px;
         height: 56px;
-        background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+        background: linear-gradient(135deg, color-mix(in srgb, var(--color-info) 15%, transparent), var(--color-surface));
         color: var(--color-blue-dark);
         border-radius: 16px;
         display: flex;
@@ -1241,7 +1287,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         background: white;
         border-radius: 24px;
         overflow: hidden;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--color-border);
         cursor: pointer;
         transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.02);
@@ -1249,7 +1295,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
       .rel-card-premium:hover {
         transform: translateY(-10px);
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
-        border-color: #cbd5e1;
+        border-color: var(--color-border);
       }
       .rel-image-box {
         position: relative;
@@ -1298,17 +1344,17 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         height: 16px;
       }
       .amenity-icon.active {
-        background: #fef3c7;
-        color: #d97706;
+        background: color-mix(in srgb, var(--color-gold) 15%, transparent);
+        color: var(--color-gold);
       }
       .amenity-label {
         font-size: 0.9rem;
         font-weight: 500;
-        color: #334155;
+        color: var(--color-text-primary);
       }
       .strike {
         text-decoration: line-through;
-        color: #94a3b8;
+        color: var(--color-text-secondary);
       }
       .unavailable {
         opacity: 0.5;
@@ -1320,7 +1366,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         height: 400px;
         border-radius: 16px;
         overflow: hidden;
-        background: #000;
+        background: var(--color-surface-overlay);
         cursor: pointer;
       }
       .tour-bg-img {
@@ -1375,7 +1421,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         position: fixed;
         inset: 0;
         z-index: 10000;
-        background: #0a0a0a;
+        background: var(--color-background);
         display: flex;
         flex-direction: column;
       }
@@ -1398,7 +1444,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         font-size: 1rem;
       }
       .tour-topbar-left mat-icon {
-        color: #60a5fa;
+        color: var(--color-info);
       }
       .tour-counter {
         background: rgba(255, 255, 255, 0.12);
@@ -1488,7 +1534,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
       }
       .tour-progress-bar {
         height: 100%;
-        background: linear-gradient(90deg, #3b82f6, #60a5fa);
+        background: linear-gradient(90deg, var(--color-info), var(--color-info));
         transition: width 0.4s ease;
         border-radius: 0 2px 2px 0;
       }
@@ -1519,7 +1565,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         opacity: 0.8;
       }
       .tour-thumb.active {
-        border-color: #3b82f6;
+        border-color: var(--color-info);
         opacity: 1;
       }
       .tour-thumb img {
@@ -1530,13 +1576,25 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
 
       .location-subtitle {
         font-size: 1rem;
-        color: #64748b;
+        color: var(--color-text-secondary);
         margin: 0 0 16px 0;
       }
       .property-map {
         width: 100%;
         height: 300px;
         border-radius: 16px;
+      }
+      
+      .no-image-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        color: var(--color-text-muted);
+        background: var(--color-surface);
+        min-height: 300px;
       }
 
       @media (max-width: 1024px) {
@@ -1583,6 +1641,7 @@ export class PropertyDetailComponent {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private propertyService = inject(PropertyService);
+  private seoService = inject(SeoService);
   private authService = inject(AuthService);
   private favoritesService = inject(FavoritesService);
   private dialog = inject(MatDialog);
@@ -1595,6 +1654,11 @@ export class PropertyDetailComponent {
   error = signal<string | null>(null);
   currentImageIndex = signal<number>(0);
   isLightboxOpen = signal<boolean>(false);
+  
+  is3DViewerOpen = signal<boolean>(false);
+  private viewer: any = null;
+  private routeSub: Subscription | null = null;
+  
   avatarLoadError = signal<boolean>(false);
   isTourActive = signal<boolean>(false);
   tourCurrentIndex = signal<number>(0);
@@ -1666,8 +1730,45 @@ export class PropertyDetailComponent {
 
   closeLightbox(): void {
     this.isLightboxOpen.set(false);
+    document.body.style.overflow = '';
   }
 
+  open3DTour(event: Event) {
+    event.stopPropagation();
+    this.is3DViewerOpen.set(true);
+    document.body.style.overflow = 'hidden';
+    
+    // Initialize 3D Viewer after view renders
+    setTimeout(() => {
+      import('@photo-sphere-viewer/core').then(({ Viewer }) => {
+        const container = document.querySelector('#psv-container') as HTMLElement;
+        if (!container) return;
+        
+        // Load a dummy 360 image if real one is not present. Real apps would use property().virtualTourUrl
+        this.viewer = new Viewer({
+          container: container,
+          panorama: 'https://photo-sphere-viewer-data.netlify.app/assets/sphere.jpg',
+          caption: '3D Tur - Mulkchi AI',
+          navbar: [
+            'zoom',
+            'move',
+            'download',
+            'caption',
+            'fullscreen',
+          ],
+        });
+      });
+    }, 100);
+  }
+
+  close3DViewer() {
+    this.is3DViewerOpen.set(false);
+    document.body.style.overflow = '';
+    if (this.viewer) {
+      this.viewer.destroy();
+      this.viewer = null;
+    }
+  }
 
   startVirtualTour(): void {
     const vt = this.property()?.virtualTourUrl;
@@ -1878,6 +1979,13 @@ export class PropertyDetailComponent {
     this.propertyService.getPropertyById(id).subscribe({
       next: (prop) => {
         setTimeout(() => this.initMap(prop), 500);
+        
+        // Update SEO metadata
+        this.seoService.updateMetaTags({
+          title: prop.title,
+          description: prop.description ? prop.description.substring(0, 150) + '...' : 'Toshkentda zamonaviy ijara va savdo uylari',
+          image: prop.images?.length ? this.getFullImageUrl(prop.images[0]) : undefined
+        });
       },
       error: () => {
         this.error.set("Mulk ma'lumotlarini yuklashda xatolik yuz berdi");
@@ -1902,7 +2010,7 @@ export class PropertyDetailComponent {
 
     const customIcon = L.divIcon({
       className: 'custom-leaflet-marker',
-      html: `<div style="background: #2563eb; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"><i class="material-icons" style="font-size: 20px;">home</i></div>`,
+      html: `<div style="background: var(--color-info); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"><i class="material-icons" style="font-size: 20px;">home</i></div>`,
       iconSize: [40, 40],
       iconAnchor: [20, 40],
     });

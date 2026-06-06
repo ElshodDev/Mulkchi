@@ -110,11 +110,11 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
   priceForm = this.fb.group({
     region: ['', Validators.required],
     propertyType: ['', Validators.required],
-    area: [0, [Validators.required, Validators.min(1)]],
-    rooms: [1, [Validators.required, Validators.min(1)]],
-    floor: [1, [Validators.required, Validators.min(1)]],
-    totalFloors: [1, [Validators.required, Validators.min(1)]],
-    buildingAge: [0, [Validators.required, Validators.min(0)]],
+    area: [null as any, [Validators.required, Validators.min(1)]],
+    rooms: [null as any, [Validators.required, Validators.min(1)]],
+    floor: [null as any, [Validators.required, Validators.min(1)]],
+    totalFloors: [null as any, [Validators.required, Validators.min(1)]],
+    buildingAge: [null as any, [Validators.required, Validators.min(0)]],
     isRenovated: [false],
     hasFurniture: [false],
     hasParking: [false],
@@ -231,9 +231,9 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
   }
 
   getGaugeColor(confidence: number): string {
-    if (confidence >= 0.8) return '#10b981';
-    if (confidence >= 0.6) return '#f59e0b';
-    return '#ef4444';
+    if (confidence >= 0.8) return 'var(--color-success)';
+    if (confidence >= 0.6) return 'var(--color-gold)';
+    return 'var(--color-error)';
   }
 
   getGaugeOffset(confidence: number): number {

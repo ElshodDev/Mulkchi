@@ -185,113 +185,123 @@ public static class DevelopmentDataSeeder
             return new List<Property>();
         }
 
-        var cityTemplates = new[]
+        var realListings = new[]
         {
-            new { Region = UzbekistanRegion.ToshkentShahar, City = "Toshkent", District = "Chilonzor", Latitude = 41.2850, Longitude = 69.2030, BaseRent = 8000000m, BaseSale = 1100000000m, Metro = true },
-            new { Region = UzbekistanRegion.ToshkentShahar, City = "Toshkent", District = "Yunusobod", Latitude = 41.3645, Longitude = 69.2861, BaseRent = 9000000m, BaseSale = 1300000000m, Metro = true },
+            // Toshkent - Kvartiralar
+            new { Region = UzbekistanRegion.ToshkentShahar, City = "Toshkent", District = "Yunusobod", Type = PropertyType.Apartment, ListingType = ListingType.Rent, Price = 4000000m, Area = 45, Beds = 1, Baths = 1, Title = "Yunusobod 4-mavze, 1 xonali evroremont kvartira ijaraga beriladi", Desc = "Mega Planet orqasida joylashgan. Hamma sharoiti bor, faqat oilaga. Kirmashina, xolodilnik, televizor, konditsioner yangi. Makler haqi yo'q.", Lat = 41.3645, Lon = 69.2861 },
+            new { Region = UzbekistanRegion.ToshkentShahar, City = "Toshkent", District = "Chilonzor", Type = PropertyType.Apartment, ListingType = ListingType.Rent, Price = 6000000m, Area = 65, Beds = 2, Baths = 1, Title = "Chilonzor 9-kvartal, 2 xonali kvartira (Metroga yaqin)", Desc = "Chilonzor metrosiga 5 minutlik yo'l. Uy toza va ozoda. 2 ta xona, balkon 1.5x3m. Narxini yana ozgina kelishamiz.", Lat = 41.2850, Lon = 69.2030 },
+            new { Region = UzbekistanRegion.ToshkentShahar, City = "Toshkent", District = "Mirobod", Type = PropertyType.Apartment, ListingType = ListingType.Sale, Price = 1200000000m, Area = 90, Beds = 3, Baths = 2, Title = "Mirobod (Gospitalniy)da 3 xonali Elitny dom sotiladi", Desc = "Yangi qurilgan dom, 4-qavat. Evroremont qilingan, mebellari bilan birga sotiladi. Ajoyib manzara va qorovulxona mavjud.", Lat = 41.2954, Lon = 69.2804 },
+            new { Region = UzbekistanRegion.ToshkentShahar, City = "Toshkent", District = "Yashnobod", Type = PropertyType.Apartment, ListingType = ListingType.Sale, Price = 550000000m, Area = 42, Beds = 1, Baths = 1, Title = "Yashnobodda (Qorasuv) zudlik bilan 1 xonali uy sotiladi", Desc = "Qorasuv 6, 1-qavat. Podvali bor. Yaxshi remont qilingan. Pul zarurligi uchun arzon sotilyapti.", Lat = 41.3200, Lon = 69.3400 },
             
-            new { Region = UzbekistanRegion.Samarqand, City = "Samarqand", District = "Markaz", Latitude = 39.6542, Longitude = 66.9597, BaseRent = 6000000m, BaseSale = 850000000m, Metro = false },
-            new { Region = UzbekistanRegion.Samarqand, City = "Samarqand", District = "Siyob", Latitude = 39.6642, Longitude = 66.9797, BaseRent = 5500000m, BaseSale = 750000000m, Metro = false },
+            // Toshkent - Hovlilar
+            new { Region = UzbekistanRegion.ToshkentShahar, City = "Toshkent", District = "Olmazor", Type = PropertyType.House, ListingType = ListingType.Sale, Price = 2500000000m, Area = 300, Beds = 6, Baths = 3, Title = "Qorasaroyda 3 sotiqli, 6 xonali yangi Hovli sotiladi", Desc = "Qorasaroy ko'chasi. 3 sotiq, 3 qavatli uy (Podval bilan). Pishtgan g'ishtdan qurilgan. Kadastr hujjatlari tayyor.", Lat = 41.3400, Lon = 69.2300 },
+            new { Region = UzbekistanRegion.ToshkentShahar, City = "Toshkent", District = "Yakkasaroy", Type = PropertyType.House, ListingType = ListingType.Rent, Price = 15000000m, Area = 200, Beds = 4, Baths = 2, Title = "Rakat mahallada 4 xonali hovli ijaraga beriladi", Desc = "Chet ellik mehmonlarga uzoq muddatga hovli ijaraga beriladi. Basseyn va letniy kuxnyasi bor.", Lat = 41.2800, Lon = 69.2500 },
+
+            // Dacha / Qisqa muddatli
+            new { Region = UzbekistanRegion.ToshkentViloyat, City = "Bo'stonliq", District = "Chorvoq", Type = PropertyType.House, ListingType = ListingType.ShortTermRent, Price = 1500000m, Area = 400, Beds = 5, Baths = 3, Title = "Chorvoqda lyuks Dacha ijarasi (Kunlik)", Desc = "Oilaviy dam olish uchun mukammal joy. Qishgi va yozgi basseyn, bilyard, sauna, stol tennisi mavjud. Narx dam olish kunlari o'zgaradi.", Lat = 41.6200, Lon = 70.0200 },
+            new { Region = UzbekistanRegion.ToshkentViloyat, City = "Bo'stonliq", District = "Chorvoq", Type = PropertyType.House, ListingType = ListingType.ShortTermRent, Price = 800000m, Area = 200, Beds = 3, Baths = 1, Title = "Chorvoqda arzon va shinam Dacha", Desc = "Faqat oilaga beriladi! Tapchan, toza hovuz va mangal bor. Tog' manzarasi juda chiroyli ko'rinadi.", Lat = 41.6150, Lon = 70.0100 },
+
+            // Samarqand
+            new { Region = UzbekistanRegion.Samarqand, City = "Samarqand", District = "Siyob", Type = PropertyType.Apartment, ListingType = ListingType.Rent, Price = 3500000m, Area = 50, Beds = 2, Baths = 1, Title = "Samarqand markazida 2 xonali uy ijarasi (Siyob bozoriga yaqin)", Desc = "Registon maydoniga 10 minutlik masofa. Talaba qizlarga yoki oilaga beriladi. O'rtacha remont.", Lat = 39.6642, Lon = 66.9797 },
+            new { Region = UzbekistanRegion.Samarqand, City = "Samarqand", District = "Markaz", Type = PropertyType.House, ListingType = ListingType.Sale, Price = 900000000m, Area = 150, Beds = 4, Baths = 2, Title = "Urgut va Markaz yo'lida 2 sotiqli hovli zudlik bilan sotiladi", Desc = "Darvoza o'rnatilgan, ichi qorasuvaqdan chiqqan. Gaz, suv, svet uzluksiz. Pul zarurligi sabab arzon beriladi.", Lat = 39.6542, Lon = 66.9597 },
+
+            // Buxoro
+            new { Region = UzbekistanRegion.Buxoro, City = "Buxoro", District = "Kogon", Type = PropertyType.Apartment, ListingType = ListingType.Sale, Price = 420000000m, Area = 65, Beds = 3, Baths = 1, Title = "Buxoroda 3 xonali kvartira arzon narxda sotiladi", Desc = "Kogon vokzali orqasida. 1990-yilda qurilgan dom, g'ishtli. Remonti o'rtacha. Kadastr tayyor.", Lat = 39.7270, Lon = 64.4550 },
+
+            // Xorazm
+            new { Region = UzbekistanRegion.Xorazm, City = "Urganch", District = "Al-Xorazmiy", Type = PropertyType.Apartment, ListingType = ListingType.Rent, Price = 2500000m, Area = 45, Beds = 2, Baths = 1, Title = "Urganch markazida ijara uy", Desc = "UrDU universitetiga yaqin. Hamma o'quv markazlari va magazinlar atrofida joylashgan.", Lat = 41.5500, Lon = 60.6333 },
+
+            // Namangan
+            new { Region = UzbekistanRegion.Namangan, City = "Namangan", District = "Davlatobod", Type = PropertyType.House, ListingType = ListingType.Sale, Price = 750000000m, Area = 200, Beds = 5, Baths = 2, Title = "Namanganda 5 xonali hovli sotiladi", Desc = "Eski shahar tomonda, masjid yonida joylashgan hovli sotiladi. Mevali daraxtlari va garaji bor.", Lat = 41.0011, Lon = 71.6673 },
+
+            // Farg'ona
+            new { Region = UzbekistanRegion.Fargona, City = "Farg'ona", District = "Yangi", Type = PropertyType.Apartment, ListingType = ListingType.Sale, Price = 380000000m, Area = 55, Beds = 2, Baths = 1, Title = "Farg'ona shahar markazida 2 xonali uy sotiladi", Desc = "Yangi novostroykada olingan, karobka holatida (remont qilinmagan). 3-qavat.", Lat = 40.3894, Lon = 71.7870 },
             
-            new { Region = UzbekistanRegion.Buxoro, City = "Buxoro", District = "Kogon", Latitude = 39.7670, Longitude = 64.4550, BaseRent = 5000000m, BaseSale = 700000000m, Metro = false },
-            
-            new { Region = UzbekistanRegion.Fargona, City = "Farg'ona", District = "Yangi", Latitude = 40.3894, Longitude = 71.7870, BaseRent = 4500000m, BaseSale = 600000000m, Metro = false },
-            new { Region = UzbekistanRegion.Namangan, City = "Namangan", District = "Davlatobod", Latitude = 41.0011, Longitude = 71.6673, BaseRent = 4500000m, BaseSale = 620000000m, Metro = false },
-            new { Region = UzbekistanRegion.Andijon, City = "Andijon", District = "Bobur", Latitude = 40.7821, Longitude = 72.3442, BaseRent = 4500000m, BaseSale = 580000000m, Metro = false },
-            
-            new { Region = UzbekistanRegion.ToshkentViloyat, City = "Chirchiq", District = "Markaz", Latitude = 41.4689, Longitude = 69.5822, BaseRent = 5000000m, BaseSale = 650000000m, Metro = false },
-            new { Region = UzbekistanRegion.Qashqadaryo, City = "Qarshi", District = "Nasaf", Latitude = 38.8606, Longitude = 65.7888, BaseRent = 4000000m, BaseSale = 550000000m, Metro = false },
-            new { Region = UzbekistanRegion.Xorazm, City = "Urganch", District = "Al-Xorazmiy", Latitude = 41.5500, Longitude = 60.6333, BaseRent = 4000000m, BaseSale = 550000000m, Metro = false },
-            new { Region = UzbekistanRegion.Navoiy, City = "Navoiy", District = "Karmana", Latitude = 40.0844, Longitude = 65.3792, BaseRent = 4500000m, BaseSale = 600000000m, Metro = false },
-            
-            new { Region = UzbekistanRegion.Jizzax, City = "Jizzax", District = "Sharof Rashidov", Latitude = 40.1158, Longitude = 67.8422, BaseRent = 3500000m, BaseSale = 450000000m, Metro = false },
-            new { Region = UzbekistanRegion.Sirdaryo, City = "Guliston", District = "Sayxunobod", Latitude = 40.4897, Longitude = 68.7842, BaseRent = 3000000m, BaseSale = 400000000m, Metro = false },
-            new { Region = UzbekistanRegion.Surxondaryo, City = "Termiz", District = "Markaz", Latitude = 37.2242, Longitude = 67.2783, BaseRent = 3500000m, BaseSale = 500000000m, Metro = false },
-            new { Region = UzbekistanRegion.Qoraqalpogiston, City = "Nukus", District = "Xo'jayli", Latitude = 42.4619, Longitude = 59.6166, BaseRent = 3000000m, BaseSale = 450000000m, Metro = false }
+            // Qashqadaryo
+            new { Region = UzbekistanRegion.Qashqadaryo, City = "Qarshi", District = "Nasaf", Type = PropertyType.House, ListingType = ListingType.Rent, Price = 3000000m, Area = 180, Beds = 4, Baths = 1, Title = "Qarshida hovli ijaraga beriladi", Desc = "Qarshi davlat universiteti tomonda, toza, shinam hovli. Mevali daraxtlar ekilgan.", Lat = 38.8606, Lon = 65.7888 }
+        };
+
+        string[] validUnsplashIds = new[] 
+        {
+            "1600596542815-ffad4c1539a9", "1512917774080-9991f1c4c750", "1600607686527-6fb886090705",
+            "1580587771525-78b9dba3b914", "1564013799919-ab600027ffc6", "1449844908441-8829872d2607",
+            "1600585154340-be6161a56a0c", "1600566752355-325b9021d0b0", "1600210491369-eaea3650bc23",
+            "1484154218962-a197022b5858", "1522708323590-d24dbb6b0267", "1497362943212-0b9f0fcd6cc9"
         };
 
         var properties = new List<Property>();
         for (int i = existingCount; i < NewTargetPropertyCount; i++)
         {
-            var city = cityTemplates[i % cityTemplates.Length];
-            ListingType listingType = (ListingType)(i % 3);
-            PropertyType type = i % 5 == 0 ? PropertyType.House : i % 4 == 0 ? PropertyType.Office : PropertyType.Apartment;
-            bool isCommercial = type == PropertyType.Office;
+            var template = realListings[i % realListings.Length];
             Guid propertyId = Guid.NewGuid();
 
-            string[] validUnsplashIds = new[] 
-            {
-                "1600596542815-ffad4c1539a9", "1512917774080-9991f1c4c750", "1600607686527-6fb886090705",
-                "1580587771525-78b9dba3b914", "1564013799919-ab600027ffc6", "1449844908441-8829872d2607",
-                "1600585154340-be6161a56a0c", "1600566752355-325b9021d0b0", "1600210491369-eaea3650bc23"
-            };
             string photoId = validUnsplashIds[i % validUnsplashIds.Length];
             string demoImgUrl = $"https://images.unsplash.com/photo-{photoId}?auto=format&fit=crop&w=800&q=80";
 
-            decimal? monthlyRent = listingType == ListingType.Rent ? city.BaseRent + (i * 200000) : null;
-            decimal? salePrice = listingType == ListingType.Sale ? city.BaseSale + (i * 15000000) : null;
-            decimal? pricePerNight = listingType == ListingType.ShortTermRent ? 400000 + (i * 20000) : null;
+            decimal? monthlyRent = template.ListingType == ListingType.Rent ? template.Price + (i % 5) * 500000m : null;
+            decimal? salePrice = template.ListingType == ListingType.Sale ? template.Price + (i % 7) * 20000000m : null;
+            decimal? pricePerNight = template.ListingType == ListingType.ShortTermRent ? template.Price + (i % 3) * 100000m : null;
 
             properties.Add(new Property
             {
                 Id = propertyId,
-                Title = $"{city.City}da {(type == PropertyType.Office ? "biznes" : "zamonaviy")} {type.ToString().ToLowerInvariant()}",
-                Description = $"{city.City}, {city.District} hududida joylashgan juda qulay va barcha sharoitlarga ega mulk. BMI doirasida demo listing sifatida yaratilgan.",
-                Type = type,
-                Category = isCommercial ? PropertyCategory.Commercial : PropertyCategory.Residential,
+                Title = template.Title,
+                Description = template.Desc,
+                Type = template.Type,
+                Category = template.Type == PropertyType.Office ? PropertyCategory.Commercial : PropertyCategory.Residential,
                 Status = PropertyStatus.Active,
-                ListingType = listingType,
+                ListingType = template.ListingType,
                 MonthlyRent = monthlyRent,
                 SalePrice = salePrice,
                 PricePerNight = pricePerNight,
                 Price = salePrice ?? monthlyRent ?? pricePerNight ?? 0,
-                SecurityDeposit = listingType == ListingType.Rent ? monthlyRent * 1.5m : null,
-                Area = 45 + (i % 6) * 25,
-                NumberOfBedrooms = type == PropertyType.Office ? 0 : 1 + (i % 4),
-                NumberOfBathrooms = 1 + (i % 3),
-                MaxGuests = type == PropertyType.Office ? 8 + (i % 6) : 2 + (i % 5),
-                Region = city.Region,
-                City = city.City,
-                District = city.District,
-                Address = $"{city.District} ko'chasi {10 + i}",
-                Mahalla = "Mulkchi Mahalla",
-                Latitude = city.Latitude + i * 0.001,
-                Longitude = city.Longitude + i * 0.001,
-                HasWifi = true,
-                HasParking = i % 2 == 0,
-                HasPool = i % 7 == 0,
-                PetsAllowed = i % 3 == 0,
-                IsInstantBook = listingType == ListingType.ShortTermRent,
+                SecurityDeposit = template.ListingType == ListingType.Rent ? monthlyRent * 1.5m : null,
+                Area = template.Area + (i % 3) * 5,
+                NumberOfBedrooms = template.Beds,
+                NumberOfBathrooms = template.Baths,
+                MaxGuests = template.Beds * 2,
+                Region = template.Region,
+                City = template.City,
+                District = template.District,
+                Address = $"{template.District} ko'chasi {10 + (i % 40)}",
+                Mahalla = "Markaz",
+                Latitude = template.Lat + (i % 10) * 0.005,
+                Longitude = template.Lon + (i % 10) * 0.005,
+                HasWifi = i % 2 == 0,
+                HasParking = i % 3 != 0,
+                HasPool = template.Type == PropertyType.House && i % 4 == 0,
+                PetsAllowed = i % 5 == 0,
+                IsInstantBook = template.ListingType == ListingType.ShortTermRent,
                 IsVacant = true,
                 IsFeatured = i % 6 == 0,
-                IsVerified = i % 4 != 0,
-                HasMetroNearby = city.Metro,
+                IsVerified = true,
+                HasMetroNearby = template.City == "Toshkent",
                 HasBusStop = true,
                 HasMarketNearby = true,
-                HasSchoolNearby = !isCommercial,
-                HasHospitalNearby = true,
-                DistanceToCityCenter = 1.5 + (i % 8) * 1.1,
-                HasElevator = type != PropertyType.House,
-                HasSecurity = i % 5 == 0 || isCommercial,
-                HasGenerator = i % 9 == 0,
-                HasGas = !isCommercial,
-                HasFurniture = i % 2 == 0,
-                IsRenovated = i % 3 != 0,
-                HasAirConditioning = true,
+                HasSchoolNearby = true,
+                HasHospitalNearby = i % 2 == 0,
+                DistanceToCityCenter = 1.0 + (i % 8) * 0.5,
+                HasElevator = template.Type == PropertyType.Apartment && i % 2 == 0,
+                HasSecurity = template.Type == PropertyType.Office || (template.Type == PropertyType.Apartment && i % 4 == 0),
+                HasGenerator = i % 10 == 0,
+                HasGas = true,
+                HasFurniture = template.ListingType != ListingType.Sale || i % 3 == 0,
+                IsRenovated = i % 4 != 0,
+                HasAirConditioning = i % 3 != 0,
                 HasHeating = true,
-                HasWasher = !isCommercial,
-                HasKitchen = !isCommercial,
-                HasTV = !isCommercial,
-                HasWorkspace = isCommercial || i % 4 == 0,
-                IsSelfCheckIn = listingType == ListingType.ShortTermRent,
-                IsChildFriendly = !isCommercial,
-                IsAccessible = i % 5 == 0,
+                HasWasher = i % 2 == 0,
+                HasKitchen = true,
+                HasTV = i % 2 == 0,
+                HasWorkspace = i % 5 == 0,
+                IsSelfCheckIn = template.ListingType == ListingType.ShortTermRent,
+                IsChildFriendly = true,
+                IsAccessible = i % 7 == 0,
                 Currency = Currency.UZS,
                 ExchangeRate = 1.0m,
                 HostId = hosts[i % hosts.Count].Id,
-                AverageRating = 4.3m + (i % 6) * 0.1m,
-                ViewsCount = 40 + i * 17,
-                FavoritesCount = 3 + (i % 9),
+                AverageRating = 4.0m + (i % 10) * 0.1m,
+                ViewsCount = 50 + (i * 123) % 400,
+                FavoritesCount = 5 + (i * 7) % 50,
                 CreatedDate = now.AddDays(-i),
                 UpdatedDate = now,
                 Images = new List<PropertyImage>

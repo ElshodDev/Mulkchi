@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, effect } from '@angular/core';
+import { Component, inject, OnInit, signal, effect, SecurityContext } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,6 +14,7 @@ import {
   PropertyComparisonDetail,
 } from '../../../core/services/comparison.service';
 import { ImageOptimizationService } from '../../../core/services/image-optimization.service';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { animate, style, transition, trigger, query, stagger } from '@angular/animations';
 
 @Component({
@@ -101,9 +102,17 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
               <div class="ai-content">
                 <h3>Sun'iy intellekt tahlili</h3>
                 <p [innerHTML]="formatSummary(apiResult()!.summary)"></p>
-                <div class="recommendation-badge">
-                  <mat-icon>verified</mat-icon>
-                  <span>{{ apiResult()!.recommendation }}</span>
+                <div class="badges-row" style="display: flex; gap: 12px; margin-top: 16px;">
+                  <div class="recommendation-badge">
+                    <mat-icon>verified</mat-icon>
+                    <span>{{ apiResult()!.recommendation }}</span>
+                  </div>
+                  @if (apiResult()!.confidenceScore) {
+                    <div class="confidence-badge" [matTooltip]="'Mulkchi AI ushbu tahlilning to\\'g\\'riligiga ' + apiResult()!.confidenceScore + '% ishonch hosil qilgan.'">
+                      <mat-icon>analytics</mat-icon>
+                      <span>Aniqlik: {{ apiResult()!.confidenceScore }}%</span>
+                    </div>
+                  }
                 </div>
               </div>
             </div>
@@ -367,6 +376,22 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
         font-size: 0.95rem;
       }
       .recommendation-badge mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+      .confidence-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #3b82f6;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 30px;
+        font-weight: 700;
+        font-size: 0.95rem;
+      }
+      .confidence-badge mat-icon {
         font-size: 20px;
         width: 20px;
         height: 20px;
@@ -813,6 +838,7 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
 export class ComparisonComponent implements OnInit {
   comparisonService = inject(ComparisonService);
   private imageService = inject(ImageOptimizationService);
+  private sanitizer = inject(DomSanitizer);
 
   apiResult = signal<ComparisonResult | null>(null);
   isLoading = signal<boolean>(false);
@@ -870,12 +896,16 @@ export class ComparisonComponent implements OnInit {
     return this.apiResult()?.details.find((d) => d.propertyId === propertyId);
   }
 
-  formatSummary(summary: string): string {
+  formatSummary(summary: string): SafeHtml {
     if (!summary) return '';
-    return summary
+    const formatted = summary
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\n/g, '<br/>')
       .replace(/- /g, '<br/>• ');
+    
+    // Explicit HTML Sanitization to prevent XSS
+    const sanitized = this.sanitizer.sanitize(SecurityContext.HTML, formatted) || '';
+    return this.sanitizer.bypassSecurityTrustHtml(sanitized);
   }
 
   getImg(prop: any): string {
