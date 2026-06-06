@@ -30,9 +30,10 @@ import { MatIconModule } from '@angular/material/icon';
           <div class="form-section flex-1">
             <label class="section-label">Qavat</label>
             <mat-form-field appearance="outline" class="full-width premium-field">
-              <input matInput type="number" formControlName="floor" />
-              <mat-icon matPrefix>layers</mat-icon>
-              <mat-error *ngIf="form.get('floor')?.invalid">Qavatni kiriting</mat-error>
+              <mat-select formControlName="floor">
+                <mat-option *ngFor="let n of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]" [value]="n">{{n}} - qavat</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>stairs</mat-icon>
             </mat-form-field>
           </div>
 
@@ -40,11 +41,10 @@ import { MatIconModule } from '@angular/material/icon';
           <div class="form-section flex-1">
             <label class="section-label">Umumiy qavatlar</label>
             <mat-form-field appearance="outline" class="full-width premium-field">
-              <input matInput type="number" formControlName="totalFloors" />
-              <mat-icon matPrefix>apartment</mat-icon>
-              <mat-error *ngIf="form.get('totalFloors')?.invalid"
-                >Umumiy qavatlar sonini kiriting</mat-error
-              >
+              <mat-select formControlName="totalFloors">
+                <mat-option *ngFor="let n of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]" [value]="n">{{n}} qavatli bino</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>domain</mat-icon>
             </mat-form-field>
           </div>
         </div>
@@ -54,7 +54,7 @@ import { MatIconModule } from '@angular/material/icon';
           <div class="form-section flex-1">
             <label class="section-label">Qurilgan yili</label>
             <mat-form-field appearance="outline" class="full-width premium-field">
-              <input matInput type="number" formControlName="yearBuilt" />
+              <input matInput type="number" formControlName="yearBuilt" placeholder="Masalan: 2024" />
               <mat-icon matPrefix>event</mat-icon>
             </mat-form-field>
           </div>
@@ -64,10 +64,10 @@ import { MatIconModule } from '@angular/material/icon';
             <label class="section-label">Holati (Remont)</label>
             <mat-form-field appearance="outline" class="full-width premium-field">
               <mat-select formControlName="condition">
-                <mat-option value="Excellent">Evro remont</mat-option>
-                <mat-option value="Good">Yaxshi</mat-option>
-                <mat-option value="Average">O'rtacha</mat-option>
-                <mat-option value="NeedsRenovation">Ta'mirga muhtoj</mat-option>
+                <mat-option value="Excellent">Yevroremont / Yangi</mat-option>
+                <mat-option value="Good">Yaxshi (O'rtacha)</mat-option>
+                <mat-option value="NeedsRepair">Ta'mirtalab</mat-option>
+                <mat-option value="Rough">Qora suvoq (Karobka)</mat-option>
               </mat-select>
               <mat-icon matPrefix>handyman</mat-icon>
             </mat-form-field>
