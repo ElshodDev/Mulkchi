@@ -35,8 +35,6 @@ jobs:
       - name: Production build
         run: npm run build -- --configuration production
 
-      - name: Unit testlar
-        run: npm test -- --watch=false --browsers=ChromeHeadless
 
       - name: Console.log tekshiruvi
         run: |

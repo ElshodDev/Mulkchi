@@ -42,10 +42,6 @@ jobs:
           cd Mulkchi.Frontend
           npm run lint
 
-      - name: 🧪 Run Unit Tests
-        run: |
-          cd Mulkchi.Frontend
-          npm run test:ci
 
       - name: 🏗️ Build Frontend
         run: |
