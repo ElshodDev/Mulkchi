@@ -42,7 +42,12 @@ import { NotificationService } from '../../core/services/notification.service';
   ],
   template: `
     <div class="profile-container">
-      <div class="profile-cover"></div>
+      <div class="profile-cover">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+        <div class="cover-overlay"></div>
+      </div>
       <div class="container profile-main-wrapper">
         <div class="profile-header-modern">
           <h1>{{ text().title }}</h1>
@@ -351,13 +356,31 @@ import { NotificationService } from '../../core/services/notification.service';
         top: 0;
         left: 0;
         width: 100%;
-        height: 280px;
-        background: linear-gradient(
-          135deg,
-          var(--color-navy-dark) 0%,
-          var(--color-navy) 50%,
-          var(--color-navy-light) 100%
-        );
+        height: 320px;
+        background: #1e293b;
+        overflow: hidden;
+        z-index: 0;
+      }
+      .blob {
+        position: absolute;
+        filter: blur(60px);
+        opacity: 0.8;
+        animation: float 10s infinite ease-in-out alternate;
+      }
+      .blob-1 { top: -50px; left: -10%; width: 500px; height: 500px; background: #6366f1; border-radius: 50%; }
+      .blob-2 { bottom: -100px; right: -5%; width: 400px; height: 400px; background: #a855f7; border-radius: 50%; animation-delay: -5s; }
+      .blob-3 { top: 20%; left: 40%; width: 300px; height: 300px; background: #ec4899; border-radius: 50%; animation-delay: -2s; }
+      
+      .cover-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to bottom, rgba(15,23,42,0.2) 0%, rgba(248,250,252,1) 100%);
+      }
+
+      @keyframes float {
+        0% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(30px, -30px) scale(1.1); }
+        100% { transform: translate(-20px, 20px) scale(0.9); }
       }
 
       .profile-main-wrapper {
@@ -580,10 +603,11 @@ import { NotificationService } from '../../core/services/notification.service';
         border: 1px solid var(--color-gray-200);
       }
       .stat-card.modern.glass {
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 8px 32px rgba(30, 41, 59, 0.05);
       }
       .stat-card.modern:hover {
         transform: translateY(-4px);
@@ -862,6 +886,14 @@ export class ProfileComponent implements OnInit {
       const totalV = s.totalViews || 1500;
       const viewsData = [totalV*0.1, totalV*0.15, totalV*0.12, totalV*0.2, totalV*0.18, totalV*0.25];
       
+      const ctxViews = viewsCanvas.getContext('2d');
+      let gradientViews;
+      if (ctxViews) {
+        gradientViews = ctxViews.createLinearGradient(0, 0, 0, 250);
+        gradientViews.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
+        gradientViews.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
+      }
+
       new Chart(viewsCanvas, {
         type: 'line',
         data: {
@@ -869,18 +901,39 @@ export class ProfileComponent implements OnInit {
           datasets: [{
             label: "Ko'rilishlar",
             data: viewsData,
-            borderColor: 'var(--color-info)',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderColor: '#6366f1',
+            backgroundColor: gradientViews || 'rgba(99, 102, 241, 0.1)',
+            borderWidth: 3,
+            pointBackgroundColor: '#ffffff',
+            pointBorderColor: '#6366f1',
+            pointBorderWidth: 2,
+            pointRadius: 4,
             tension: 0.4,
             fill: true
           }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false } },
+            y: { grid: { color: '#f1f5f9' }, beginAtZero: true }
+          }
+        }
       });
 
       const totalR = s.totalRevenue || 5000000;
       const revData = [totalR*0.05, totalR*0.1, totalR*0.15, totalR*0.2, totalR*0.2, totalR*0.3];
       
+      const ctxRev = revenueCanvas.getContext('2d');
+      let gradientRev;
+      if (ctxRev) {
+        gradientRev = ctxRev.createLinearGradient(0, 0, 0, 250);
+        gradientRev.addColorStop(0, '#10b981');
+        gradientRev.addColorStop(1, '#34d399');
+      }
+
       new Chart(revenueCanvas, {
         type: 'bar',
         data: {
@@ -888,11 +941,20 @@ export class ProfileComponent implements OnInit {
           datasets: [{
             label: "Tushum (UZS)",
             data: revData,
-            backgroundColor: 'var(--color-success)',
-            borderRadius: 6
+            backgroundColor: gradientRev || '#10b981',
+            borderRadius: 8,
+            barThickness: 24
           }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false } },
+            y: { grid: { color: '#f1f5f9' }, beginAtZero: true }
+          }
+        }
       });
     }).catch(e => console.warn("Chart.js yuklanmadi", e));
   }

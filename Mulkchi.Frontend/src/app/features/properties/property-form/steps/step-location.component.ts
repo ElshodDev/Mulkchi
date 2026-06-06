@@ -60,16 +60,26 @@ interface NominatimResult {
           <h1>📍 Joylashuvni belgilang</h1>
           <p>Xaritada bosing yoki markerni suring — manzil avtomatik to'ldiriladi</p>
         </div>
-        <button mat-flat-button class="btn-gps" (click)="useMyLocation()" [disabled]="geocoding()">
-          <mat-icon>my_location</mat-icon>
-          Mening joyim
-        </button>
       </div>
 
       <!-- MAP CARD -->
       <div class="map-card">
         <div class="map-container-wrapper">
           <div id="location-map" class="map-instance"></div>
+
+          <!-- Top-left: Detected Address Floating Overlay -->
+          <div class="floating-address-glass" *ngIf="detectedAddress()">
+            <mat-icon color="primary">location_on</mat-icon>
+            <div class="preview-text">
+              <span class="preview-label">Tanlangan manzil:</span>
+              <span class="preview-value">{{ detectedAddress() }}</span>
+            </div>
+          </div>
+
+          <!-- Bottom-right: Floating GPS Button -->
+          <button mat-fab class="floating-gps-btn" (click)="useMyLocation()" [disabled]="geocoding()" matTooltip="Mening joyim">
+            <mat-icon>my_location</mat-icon>
+          </button>
 
           <!-- Loading overlay -->
           <div class="map-overlay" *ngIf="geocoding()">
@@ -87,15 +97,6 @@ interface NominatimResult {
           <div class="map-success-badge" *ngIf="hasPickedLocation() && !geocoding()">
             <mat-icon>check_circle</mat-icon>
             <span>Manzil aniqlandi!</span>
-          </div>
-        </div>
-
-        <!-- Detected Address Preview -->
-        <div class="address-preview" *ngIf="detectedAddress()">
-          <mat-icon color="primary">location_on</mat-icon>
-          <div class="preview-text">
-            <span class="preview-label">Aniqlangan manzil:</span>
-            <span class="preview-value">{{ detectedAddress() }}</span>
           </div>
         </div>
       </div>
@@ -205,19 +206,6 @@ interface NominatimResult {
       font-size: 1rem;
       margin-top: 6px;
     }
-    .btn-gps {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-      color: white !important;
-      border-radius: 14px !important;
-      height: 48px;
-      padding: 0 24px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      white-space: nowrap;
-    }
-    .btn-gps mat-icon { font-size: 20px; width: 20px; height: 20px; }
 
     .map-card {
       background: white;
@@ -300,18 +288,46 @@ interface NominatimResult {
     }
     .map-success-badge mat-icon { font-size: 18px; width: 18px; height: 18px; }
 
-    .address-preview {
+    .map-success-badge mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+    .floating-address-glass {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      padding: 12px 20px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 16px 24px;
-      border-top: 1px solid #f1f5f9;
-      background: #f8fafc;
+      z-index: 500;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      max-width: calc(100% - 32px);
+      transition: all 0.3s ease;
     }
-    .address-preview mat-icon { flex-shrink: 0; }
+    .floating-address-glass mat-icon { flex-shrink: 0; color: #6366f1; }
     .preview-text { display: flex; flex-direction: column; gap: 2px; }
-    .preview-label { font-size: 0.75rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
-    .preview-value { font-size: 0.95rem; color: #1e293b; font-weight: 600; }
+    .preview-label { font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; }
+    .preview-value { font-size: 0.95rem; color: #1e293b; font-weight: 700; }
+
+    .floating-gps-btn {
+      position: absolute !important;
+      bottom: 24px;
+      right: 24px;
+      z-index: 500;
+      background: white !important;
+      color: #6366f1 !important;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+      transition: all 0.3s ease !important;
+    }
+    .floating-gps-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 28px rgba(99, 102, 241, 0.25) !important;
+      color: #8b5cf6 !important;
+    }
 
     .address-form {
       background: white;
@@ -458,8 +474,8 @@ export class StepLocationComponent implements OnInit, AfterViewInit, OnDestroy {
       zoomControl: false,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       maxZoom: 19,
     }).addTo(this.map);
 

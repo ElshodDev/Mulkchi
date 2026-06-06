@@ -28,11 +28,15 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
   ],
   template: `
     <div class="dialog-container">
+      <div class="dialog-bg-glow"></div>
       <div class="dialog-header">
-        <div class="ai-icon-wrapper">
+        <div class="ai-icon-wrapper pulse-animation">
           <mat-icon>auto_awesome</mat-icon>
         </div>
-        <h2>AI Narx Baholovchi</h2>
+        <div>
+          <h2>AI Narx Baholovchi</h2>
+          <p class="subtitle">Bozor tahlili asosida optimal narxni hisoblaymiz</p>
+        </div>
         <button mat-icon-button (click)="close()" class="close-btn">
           <mat-icon>close</mat-icon>
         </button>
@@ -40,11 +44,9 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 
       <div class="dialog-content">
         <ng-container *ngIf="!priceResult(); else resultView">
-          <p class="subtitle">Mulk haqida qisqacha ma'lumot bering, AI sizga optimal narxni hisoblab beradi.</p>
-
           <form [formGroup]="form" class="ai-form">
             <div class="form-row">
-              <mat-form-field appearance="outline" class="full-width">
+              <mat-form-field appearance="outline" class="premium-field full-width">
                 <mat-label>Viloyat</mat-label>
                 <mat-select formControlName="region">
                   <mat-option value="Toshkent">Toshkent shahri</mat-option>
@@ -54,7 +56,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
                 </mat-select>
               </mat-form-field>
               
-              <mat-form-field appearance="outline" class="full-width">
+              <mat-form-field appearance="outline" class="premium-field full-width">
                 <mat-label>Mulk turi</mat-label>
                 <mat-select formControlName="propertyType">
                   <mat-option value="Apartment">Kvartira</mat-option>
@@ -65,66 +67,77 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
             </div>
 
             <div class="form-row">
-              <mat-form-field appearance="outline" class="full-width">
+              <mat-form-field appearance="outline" class="premium-field full-width">
                 <mat-label>Maydon (m²)</mat-label>
                 <input matInput type="number" formControlName="area" />
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="full-width">
+              <mat-form-field appearance="outline" class="premium-field full-width">
                 <mat-label>Xonalar soni</mat-label>
                 <input matInput type="number" formControlName="rooms" />
               </mat-form-field>
             </div>
 
             <div class="checkbox-grid">
-              <mat-checkbox formControlName="isRenovated">Ta'mirlangan</mat-checkbox>
-              <mat-checkbox formControlName="hasFurniture">Mebel bor</mat-checkbox>
+              <mat-checkbox formControlName="isRenovated" color="primary">Ta'mirlangan (Yevroremont)</mat-checkbox>
+              <mat-checkbox formControlName="hasFurniture" color="primary">Mebel va jihozlar bilan</mat-checkbox>
             </div>
           </form>
 
           <div class="actions">
-            <button mat-button (click)="close()">Bekor qilish</button>
+            <button mat-button class="btn-cancel" (click)="close()">Bekor qilish</button>
             <button 
               mat-flat-button 
-              color="primary" 
               class="btn-predict"
               [disabled]="form.invalid || loading()" 
               (click)="predictPrice()">
-              <mat-icon *ngIf="!loading()">calculate</mat-icon>
+              <mat-icon *ngIf="!loading()">insights</mat-icon>
               <mat-spinner diameter="20" *ngIf="loading()"></mat-spinner>
-              <span>{{ loading() ? 'Hisoblanmoqda...' : 'Narxni hisoblash' }}</span>
+              <span>{{ loading() ? 'Tahlil qilinmoqda...' : 'Sun\\'iy intellekt orqali hisoblash' }}</span>
             </button>
           </div>
         </ng-container>
 
         <ng-template #resultView>
-          <div class="result-container">
-            <div class="price-circle">
-              <span class="price-value">{{ priceResult()?.recommendedPrice | number:'1.0-0' }} $</span>
+          <div class="result-container fade-in">
+            <div class="price-circle glass-panel">
+              <div class="price-glow"></div>
               <span class="price-label">Tavsiya etilgan narx</span>
+              <span class="price-value">{{ priceResult()?.recommendedPrice | number:'1.0-0' }} $</span>
             </div>
             
-            <div class="price-details">
+            <div class="price-details glass-panel">
               <div class="detail-item">
-                <span class="detail-label">Bozor o'rtachasi:</span>
-                <span class="detail-value">{{ priceResult()?.marketAverage | number:'1.0-0' }} $</span>
+                <div class="detail-icon"><mat-icon>trending_flat</mat-icon></div>
+                <div class="detail-text">
+                  <span class="detail-label">Bozor o'rtachasi</span>
+                  <span class="detail-value">{{ priceResult()?.marketAverage | number:'1.0-0' }} $</span>
+                </div>
               </div>
+              <div class="detail-divider"></div>
               <div class="detail-item">
-                <span class="detail-label">Oraliq:</span>
-                <span class="detail-value">{{ priceResult()?.minPrice | number:'1.0-0' }} - {{ priceResult()?.maxPrice | number:'1.0-0' }} $</span>
+                <div class="detail-icon"><mat-icon>swap_horiz</mat-icon></div>
+                <div class="detail-text">
+                  <span class="detail-label">Narx oraliqi</span>
+                  <span class="detail-value">{{ priceResult()?.minPrice | number:'1.0-0' }} - {{ priceResult()?.maxPrice | number:'1.0-0' }} $</span>
+                </div>
               </div>
             </div>
 
-            <div class="ai-comment">
-              <mat-icon>lightbulb</mat-icon>
-              <p>{{ priceResult()?.comparisonMessage || "AI ushbu narxni bozor holatidan kelib chiqib tavsiya qildi." }}</p>
+            <div class="ai-comment glass-panel">
+              <div class="comment-icon">
+                <mat-icon>lightbulb</mat-icon>
+              </div>
+              <p>{{ priceResult()?.comparisonMessage || "AI ushbu narxni bozordagi o'xshash mulklar tahlili asosida tavsiya qildi." }}</p>
             </div>
 
             <div class="actions result-actions">
-              <button mat-button (click)="reset()">Qayta hisoblash</button>
-              <button mat-flat-button color="primary" class="btn-apply" (click)="applyPrice()">
+              <button mat-button class="btn-cancel" (click)="reset()">
+                <mat-icon>refresh</mat-icon> Boshqatan
+              </button>
+              <button mat-flat-button class="btn-apply" (click)="applyPrice()">
                 <mat-icon>check_circle</mat-icon>
-                Formaga qo'shish
+                Formaga qo'llash
               </button>
             </div>
           </div>
@@ -215,97 +228,169 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 
       .btn-predict mat-spinner {
         margin-right: 8px;
+        margin-top: 16px;
       }
 
-      .result-container {
+      .btn-cancel {
+        color: #64748b;
+        font-weight: 600;
+        height: 48px;
+        padding: 0 24px;
+      }
+
+      .btn-predict, .btn-apply {
+        background: linear-gradient(135deg, #6366f1, #a855f7) !important;
+        color: white !important;
+        height: 48px;
+        padding: 0 32px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1rem;
+        box-shadow: 0 8px 20px rgba(99,102,241,0.25);
         display: flex;
-        flex-direction: column;
         align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+      }
+      .btn-predict:hover:not(:disabled), .btn-apply:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(99,102,241,0.35);
+      }
+
+      .fade-in {
+        animation: fadeIn 0.5s ease-out forwards;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .glass-panel {
+        background: rgba(248, 250, 252, 0.8);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 20px;
+        padding: 24px;
+        margin-bottom: 16px;
       }
 
       .price-circle {
-        width: 200px;
-        height: 200px;
-        border-radius: 50%;
-        background: #f8fafc;
-        border: 4px solid #6366f1;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        margin-bottom: 24px;
-        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.2);
+        text-align: center;
+        background: linear-gradient(135deg, #f0fdfa, #ecfdf5);
+        border: 1px solid #a7f3d0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .price-glow {
+        position: absolute;
+        width: 150px;
+        height: 150px;
+        background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(255,255,255,0) 70%);
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
       }
 
       .price-value {
         font-size: 2.5rem;
         font-weight: 800;
-        color: #1e293b;
+        color: #059669;
+        line-height: 1.2;
+        text-shadow: 0 2px 4px rgba(5,150,105,0.1);
+        z-index: 1;
       }
 
       .price-label {
         font-size: 0.9rem;
-        color: #64748b;
+        color: #047857;
         font-weight: 600;
-        margin-top: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+        z-index: 1;
       }
 
       .price-details {
-        width: 100%;
-        background: #f1f5f9;
-        border-radius: 12px;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
         padding: 16px;
-        margin-bottom: 24px;
       }
 
       .detail-item {
         display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
+        align-items: center;
+        gap: 12px;
       }
-      .detail-item:last-child {
-        margin-bottom: 0;
+
+      .detail-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+      }
+
+      .detail-text {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .detail-divider {
+        width: 1px;
+        height: 40px;
+        background: #e2e8f0;
       }
 
       .detail-label {
+        font-size: 0.75rem;
         color: #64748b;
-        font-weight: 500;
+        text-transform: uppercase;
+        font-weight: 700;
       }
 
       .detail-value {
-        color: #1e293b;
+        font-size: 1.1rem;
         font-weight: 700;
+        color: #1e293b;
       }
 
       .ai-comment {
         display: flex;
+        gap: 16px;
         align-items: flex-start;
-        gap: 12px;
-        background: rgba(99, 102, 241, 0.05);
-        padding: 16px;
-        border-radius: 12px;
-        margin-bottom: 32px;
-        border-left: 4px solid #6366f1;
+        background: #eff6ff;
+        border-color: #bfdbfe;
       }
 
-      .ai-comment mat-icon {
-        color: #f59e0b;
+      .comment-icon {
+        background: #3b82f6;
+        color: white;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
       }
+      .comment-icon mat-icon { font-size: 18px; width: 18px; height: 18px; }
 
       .ai-comment p {
         margin: 0;
-        color: #334155;
+        color: #1e3a8a;
         font-size: 0.95rem;
         line-height: 1.5;
-      }
-
-      .btn-apply {
-        background: #10b981;
-        border-radius: 12px;
-        padding: 0 24px;
-        height: 48px;
-        font-weight: 600;
-        width: 100%;
+        font-weight: 500;
       }
 
       .result-actions {
