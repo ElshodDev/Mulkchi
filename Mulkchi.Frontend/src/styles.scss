@@ -4,7 +4,8 @@
 @tailwind utilities;
 
 @import 'leaflet/dist/leaflet.css';
-
+@import 'leaflet-draw/dist/leaflet.draw.css';
+@import '@photo-sphere-viewer/core/index.css';
 html {
   @include mat.theme(
     (

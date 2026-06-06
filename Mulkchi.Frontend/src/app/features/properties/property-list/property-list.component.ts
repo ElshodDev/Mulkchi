@@ -67,6 +67,7 @@ import { AIService } from '../../../core/services/ai.service';
     PropertyGridComponent,
     PropertyMapComponent,
     PropertyPaginationComponent,
+    SavedSearchesComponent,
   ],
   template: `
     <div class="property-list-container">
@@ -145,10 +146,17 @@ import { AIService } from '../../../core/services/ai.service';
         <div class="layout-grid">
           <!-- Sidebar Filters -->
           <aside class="filters-sidebar-column">
+            <app-saved-searches
+              #savedSearchesComponent
+              (searchSelected)="onSavedSearchSelected($event)"
+              (searchDeleted)="onSavedSearchDeleted($event)"
+            ></app-saved-searches>
+
             <app-property-filters
               [filters]="filtersValue()"
               (filtersChange)="onFiltersChange($event)"
               (filterReset)="resetFilters()"
+              (saveSearch)="onSaveSearch($event)"
             ></app-property-filters>
 
             <div class="sidebar-ad-card">
@@ -642,6 +650,8 @@ export class PropertyListComponent implements OnInit {
   private aiService = inject(AIService);
   protected voiceService = inject(VoiceSearchService);
 
+  @ViewChild('savedSearchesComponent') savedSearchesComponent!: SavedSearchesComponent;
+
   properties = signal<Property[]>([]);
   totalCount = signal(0);
   loading = signal(false);
@@ -796,6 +806,41 @@ export class PropertyListComponent implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  onSaveSearch(query: PropertySearchParams): void {
+    if (Object.keys(query).length === 0) {
+      this.toast.info("Saqlash uchun qidiruv mezonlarini kiriting");
+      return;
+    }
+    
+    const searchName = prompt("Qidiruv uchun nom kiriting:", "Mening qidiruvim");
+    if (!searchName) return;
+
+    const newSearch: SavedSearch = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: searchName,
+      query: query as Record<string, unknown>,
+      icon: 'bookmark',
+      color: '#c9a84c',
+      createdDate: new Date(),
+    };
+
+    if (this.savedSearchesComponent) {
+      this.savedSearchesComponent.addSearch(newSearch);
+      this.toast.success("Qidiruv muvaffaqiyatli saqlandi!");
+    }
+  }
+
+  onSavedSearchSelected(search: SavedSearch): void {
+    const params = search.query as PropertySearchParams;
+    this.filtersValue.set(params);
+    this.loadProperties();
+    this.toast.info(`"${search.name}" qidiruvi qo'llanildi`);
+  }
+
+  onSavedSearchDeleted(id: string): void {
+    this.toast.success("Saqlangan qidiruv o'chirildi");
   }
 
   onHeroSearch(): void {

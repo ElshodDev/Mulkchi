@@ -43,18 +43,6 @@ Loyihaning Backend va Frontend qismlari eng so'nggi va mustahkam texnologiyalar 
 
 Loyihani o'z kompyuteringizda ishga tushirish uchun quyidagi qadamlarni bajaring:
 
-### 1️⃣ Docker orqali oson ishga tushirish
-Backend xizmatlari (API), PostgreSQL bazasi va Redis serverini bir zumda ko'tarish:
-```bash
-git clone https://github.com/ElshodDev/Mulkchi.git
-cd Mulkchi
-
-# Docker-compose orqali xizmatlarni yoqish
-docker-compose up -d
-```
-
-### 2️⃣ Lokal (Dasturchi) Rejimida ishga tushirish
-
 **Backend (.NET API)**
 ```bash
 cd Mulkchi.Api

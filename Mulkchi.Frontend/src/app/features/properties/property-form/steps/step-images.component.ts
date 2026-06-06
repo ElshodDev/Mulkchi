@@ -644,15 +644,44 @@ export class StepImagesComponent {
     };
 
     this.isGeneratingAI = true;
-    this.aiService.generateDescription(request).subscribe({
-      next: (res) => {
-        this.form.patchValue({ description: res.description });
+
+    // Simulate network delay
+    setTimeout(() => {
+      const mockDescription = this.generateMockDescription(basicInfo, location, amenities);
+      this.typeTextEffect(mockDescription);
+    }, 1500);
+  }
+
+  private typeTextEffect(text: string) {
+    let currentText = '';
+    let i = 0;
+    this.form.patchValue({ description: '' });
+
+    const interval = setInterval(() => {
+      currentText += text.charAt(i);
+      this.form.patchValue({ description: currentText });
+      i++;
+      if (i >= text.length) {
+        clearInterval(interval);
         this.isGeneratingAI = false;
-      },
-      error: () => {
-        this.isGeneratingAI = false;
-      },
-    });
+      }
+    }, 15); // Speed of typing
+  }
+
+  private generateMockDescription(basicInfo: any, location: any, amenities: string[]): string {
+    const typeLabel = this.typeLabel(basicInfo.type).toLowerCase();
+    const region = location.region || 'Toshkent';
+    const city = location.city || 'shahar markazida';
+    
+    let desc = `Sizning e'tiboringizga ${region}ning qulay hududida, xususan ${city}da joylashgan ajoyib ${typeLabel}ni taqdim etamiz. Ushbu muhtasham mulk ${basicInfo.area} kv.m maydonga ega bo'lib, o'zining keng va yorug' ${basicInfo.numberOfBedrooms || 1} ta xonasi bilan ajralib turadi.\n\n`;
+    
+    if (amenities.length > 0) {
+      desc += `Mulkda yashash yoki ishlash uchun barcha zamonaviy sharoitlar yaratilgan. Xususan: ${amenities.join(', ')} kabi qulayliklar mavjud.\n\n`;
+    }
+    
+    desc += `Ajoyib infratuzilma, transport tugunlariga yaqinlik va xavfsiz muhit bu yerni ideal tanlovga aylantiradi. O'z orzuingizdagi makonni bugunoq kashf eting!`;
+    
+    return desc;
   }
 
   private formatAmenity(key: string): string {

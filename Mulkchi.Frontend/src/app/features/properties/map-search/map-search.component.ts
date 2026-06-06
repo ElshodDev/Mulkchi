@@ -6,8 +6,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PropertyService } from '../../../core/services/property.service';
 import { Property } from '../../../core/models';
 import * as L from 'leaflet';
+import 'leaflet-draw';
 import { Router } from '@angular/router';
-
 @Component({
   selector: 'app-map-search',
   standalone: true,
@@ -45,9 +45,14 @@ import { Router } from '@angular/router';
         </div>
       </div>
 
-      <!-- Full Map Area -->
       <div class="map-area">
+        <div class="draw-hints" *ngIf="isDrawMode()">
+          Xaritada hududni belgilang (chizib ko'rsating)
+        </div>
         <div id="full-map"></div>
+        <button mat-raised-button color="warn" class="clear-draw-btn" *ngIf="isFilterActive()" (click)="clearDrawing()">
+          <mat-icon>clear</mat-icon> Qidiruvni tozalash
+        </button>
       </div>
     </div>
   `,
@@ -183,6 +188,30 @@ import { Router } from '@angular/router';
       z-index: 1;
     }
 
+    .draw-hints {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      z-index: 1000;
+      font-weight: 600;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .clear-draw-btn {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      border-radius: 24px;
+      padding: 0 24px;
+    }
+
     /* Custom Map Markers */
     ::ng-deep .zillow-marker {
       background: transparent;
@@ -265,9 +294,13 @@ export class MapSearchComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private map!: L.Map;
   private markers: { [id: string]: L.Marker } = {};
+  private drawnItems!: L.FeatureGroup;
   
   properties = signal<Property[]>([]);
+  allProperties: Property[] = []; // Store original fetched properties
   isLoading = signal(true);
+  isDrawMode = signal(false);
+  isFilterActive = signal(false);
 
   ngOnInit() {
     this.fetchProperties();
@@ -286,9 +319,10 @@ export class MapSearchComponent implements OnInit, AfterViewInit, OnDestroy {
   private fetchProperties() {
     this.isLoading.set(true);
     // Fetch top properties for the map initially
-    this.propertyService.getAllProperties(1, 50).subscribe({
+    this.propertyService.getAllProperties(1, 100).subscribe({
       next: (response) => {
-        this.properties.set(response.items || []);
+        this.allProperties = response.items || [];
+        this.properties.set(this.allProperties);
         this.isLoading.set(false);
         this.addMarkersToMap();
       },
@@ -312,11 +346,97 @@ export class MapSearchComponent implements OnInit, AfterViewInit, OnDestroy {
       maxZoom: 20
     }).addTo(this.map);
 
-    // Re-fetch properties when user stops dragging the map
-    this.map.on('moveend', () => {
-      // In a real app, we would send this.map.getBounds() to API
-      // this.fetchPropertiesByBounds(this.map.getBounds());
+    this.drawnItems = new L.FeatureGroup();
+    this.map.addLayer(this.drawnItems);
+
+    const drawControl = new L.Control.Draw({
+      draw: {
+        polygon: {
+          allowIntersection: false,
+          drawError: { color: '#e1e100', message: '<strong>Xato!</strong> Chiziqlar kesishmasligi kerak!' },
+          shapeOptions: { color: '#006AFF' }
+        },
+        rectangle: { shapeOptions: { color: '#006AFF' } },
+        circle: false,
+        circlemarker: false,
+        marker: false,
+        polyline: false
+      },
+      edit: {
+        featureGroup: this.drawnItems,
+        remove: true
+      }
     });
+
+    this.map.addControl(drawControl);
+
+    this.map.on(L.Draw.Event.DRAWSTART, () => this.isDrawMode.set(true));
+    this.map.on(L.Draw.Event.DRAWSTOP, () => this.isDrawMode.set(false));
+
+    this.map.on(L.Draw.Event.CREATED, (e: any) => {
+      this.drawnItems.clearLayers(); // Only allow one shape at a time
+      const layer = e.layer;
+      this.drawnItems.addLayer(layer);
+      this.filterPropertiesByPolygon(layer);
+      this.isFilterActive.set(true);
+    });
+
+    this.map.on(L.Draw.Event.DELETED, () => {
+      this.clearDrawing();
+    });
+
+    this.map.on('moveend', () => {
+      // API call could happen here
+    });
+  }
+
+  clearDrawing() {
+    this.drawnItems.clearLayers();
+    this.properties.set(this.allProperties);
+    this.isFilterActive.set(false);
+    this.addMarkersToMap();
+  }
+
+  private filterPropertiesByPolygon(layer: any) {
+    if (!layer || !layer.getBounds) return;
+
+    let filtered: Property[] = [];
+    
+    // Simple bounding box check (for rectangle) or point-in-polygon
+    if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
+      filtered = this.allProperties.filter(prop => {
+        const lat = prop.latitude;
+        const lng = prop.longitude;
+        if (!lat || !lng) return false;
+        
+        const pt = L.latLng(lat, lng);
+        
+        if (layer instanceof L.Rectangle) {
+           return layer.getBounds().contains(pt);
+        } else {
+           // For polygon, simple bounds check first, then point-in-polygon algorithm if needed.
+           // Leaflet doesn't have native point-in-polygon, so we approximate with bounds or use a simple ray-casting.
+           if (!layer.getBounds().contains(pt)) return false;
+           return this.isPointInPolygon(pt, layer.getLatLngs()[0] as L.LatLng[]);
+        }
+      });
+    }
+
+    this.properties.set(filtered);
+    this.addMarkersToMap();
+  }
+
+  // Simple Ray-Casting algorithm for Polygon boundaries
+  private isPointInPolygon(pt: L.LatLng, vs: L.LatLng[]): boolean {
+    let x = pt.lng, y = pt.lat;
+    let inside = false;
+    for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+        let xi = vs[i].lng, yi = vs[i].lat;
+        let xj = vs[j].lng, yj = vs[j].lat;
+        let intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+    }
+    return inside;
   }
 
   private addMarkersToMap() {

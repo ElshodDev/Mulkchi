@@ -206,7 +206,12 @@ export interface QuickFilter {
           <button mat-flat-button class="btn-apply-unified" (click)="applyFilters()">
             Filtrni qo'llash
           </button>
-          <button mat-button class="btn-clear" (click)="onReset()">Tozalash</button>
+          <div class="secondary-actions" style="display: flex; gap: 10px; margin-top: 10px;">
+             <button mat-stroked-button color="primary" style="flex: 1;" type="button" (click)="onSaveSearch()">
+               <mat-icon>bookmark_border</mat-icon> Saqlash
+             </button>
+             <button mat-button class="btn-clear" style="flex: 1;" (click)="onReset()">Tozalash</button>
+          </div>
         </div>
       </form>
     </div>
@@ -497,6 +502,7 @@ export class PropertyFiltersComponent implements OnInit, OnChanges {
   @Input() filters: PropertySearchParams = {};
   @Output() filtersChange = new EventEmitter<PropertySearchParams>();
   @Output() filterReset = new EventEmitter<void>();
+  @Output() saveSearch = new EventEmitter<PropertySearchParams>();
 
   filterForm: FormGroup;
   regions = Object.values(UzbekistanRegion);
@@ -634,6 +640,25 @@ export class PropertyFiltersComponent implements OnInit, OnChanges {
     this.filterForm.reset();
     this.selectedAmenities = [];
     this.filterReset.emit();
+  }
+
+  onSaveSearch(): void {
+    const formValues = this.filterForm.value;
+    const searchParams: PropertySearchParams = {
+      ...formValues,
+      amenities: this.selectedAmenities.length > 0 ? this.selectedAmenities : undefined,
+    };
+
+    Object.keys(searchParams).forEach((key) => {
+      if (
+        (searchParams as any)[key] === null ||
+        (searchParams as any)[key] === undefined ||
+        (searchParams as any)[key] === ''
+      ) {
+        delete (searchParams as any)[key];
+      }
+    });
+    this.saveSearch.emit(searchParams);
   }
 
   getPropertyTypeLabel(type: string): string {
