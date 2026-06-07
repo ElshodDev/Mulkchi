@@ -156,7 +156,7 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
                         property.salePrice || property.monthlyRent || property.pricePerNight
                       )
                     }}</span>
-                    <span class="price-currency">UZS</span>
+                    <span class="price-currency">{{ property.currency || 'UZS' }}</span>
                     @if (property.listingType === 'Rent') {
                       <span class="price-period">/oy</span>
                     }
@@ -164,9 +164,15 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
                       <span class="price-period">/kun</span>
                     }
                   </div>
-
-                  <div class="type-pill" [class]="property.listingType.toLowerCase()">
-                    {{ getListingTypeLabel(property.listingType) }}
+                  
+                  <div class="footer-badges">
+                    <div class="time-pill" matTooltip="Qo'shilgan vaqti">
+                      <mat-icon style="font-size: 14px; width: 14px; height: 14px; margin-right: 2px;">schedule</mat-icon>
+                      {{ getRelativeTime(property.createdDate) }}
+                    </div>
+                    <div class="type-pill" [class]="property.listingType.toLowerCase()">
+                      {{ getListingTypeLabel(property.listingType) }}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -444,6 +450,21 @@ import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-
         background: color-mix(in srgb, var(--color-info) 15%, transparent);
         color: var(--color-info);
       }
+      
+      .footer-badges {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+      }
+      
+      .time-pill {
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+      }
 
       .property-grid-modern.list-view .grid-layout {
         grid-template-columns: 1fr;
@@ -580,5 +601,23 @@ export class PropertyGridComponent {
     }
 
     return this.imageService.getOptimizedImage(rawUrl, 600, 400);
+  }
+
+  getRelativeTime(dateString: any): string {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Hozirgina';
+    if (diffMins < 60) return `${diffMins} daqiqa oldin`;
+    if (diffHours < 24) return `${diffHours} soat oldin`;
+    if (diffDays === 1) return 'Kecha';
+    if (diffDays < 7) return `${diffDays} kun oldin`;
+    
+    return date.toLocaleDateString('uz-UZ', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 }

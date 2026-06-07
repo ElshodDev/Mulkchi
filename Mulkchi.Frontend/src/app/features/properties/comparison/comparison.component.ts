@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, effect, SecurityContext } from '@angular/core';
+import { Component, inject, OnInit, signal, effect, SecurityContext, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,6 +8,9 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
+import { BaseChartDirective, provideCharts, withDefaultRegisterables } from 'ng2-charts';
+import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
+
 import {
   ComparisonService,
   ComparisonResult,
@@ -15,7 +18,7 @@ import {
 } from '../../../core/services/comparison.service';
 import { ImageOptimizationService } from '../../../core/services/image-optimization.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { animate, style, transition, trigger, query, stagger } from '@angular/animations';
+import { animate, style, transition, trigger } from '@angular/animations';
 
 @Component({
   selector: 'app-comparison',
@@ -30,29 +33,20 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
     MatChipsModule,
     MatTooltipModule,
     MatProgressSpinnerModule,
+    BaseChartDirective
   ],
+  providers: [provideCharts(withDefaultRegisterables())],
   animations: [
-    trigger('listAnimation', [
-      transition(':enter', [
-        query(
-          '.compare-col',
-          [
-            style({ opacity: 0, transform: 'translateY(20px)' }),
-            stagger(100, [
-              animate(
-                '400ms cubic-bezier(0.16, 1, 0.3, 1)',
-                style({ opacity: 1, transform: 'translateY(0)' }),
-              ),
-            ]),
-          ],
-          { optional: true },
-        ),
-      ]),
-    ]),
     trigger('fadeAnimation', [
       transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(10px)' }),
-        animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' })),
+        style({ opacity: 0, transform: 'translateY(20px)' }),
+        animate('500ms cubic-bezier(0.16, 1, 0.3, 1)', style({ opacity: 1, transform: 'translateY(0)' })),
+      ]),
+    ]),
+    trigger('scaleIn', [
+      transition(':enter', [
+        style({ transform: 'scale(0.8)', opacity: 0 }),
+        animate('500ms cubic-bezier(0.16, 1, 0.3, 1)', style({ transform: 'scale(1)', opacity: 1 })),
       ]),
     ]),
   ],
@@ -62,215 +56,147 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
         <!-- Header -->
         <header class="compare-header">
           <div class="header-titles">
-            <h1 class="page-title">Mulklarni <span class="highlight-text">Solishtirish</span></h1>
-            <p class="page-subtitle">
-              Tanlangan mulklarning texnik va moliyaviy ko'rsatkichlarini yonma-yon taqqoslang
-            </p>
+            <h1 class="page-title">Mulklar <span class="highlight-text">Dueli</span></h1>
+            <p class="page-subtitle">Ikkita uyni barcha ko'rsatkichlar bo'yicha yonma-yon solishtiring</p>
           </div>
           @if (!comparisonService.isEmpty()) {
-            <button
-              mat-stroked-button
-              color="warn"
-              (click)="comparisonService.clear()"
-              class="btn-clear-all"
-            >
+            <button mat-stroked-button color="warn" (click)="comparisonService.clear()" class="btn-clear-all">
               <mat-icon>delete_sweep</mat-icon>
-              <span>Ro'yxatni tozalash</span>
+              <span>Tozalash</span>
             </button>
           }
         </header>
 
         @if (comparisonService.isEmpty()) {
-          <div class="empty-state">
-            <div class="icon-circle">
-              <mat-icon>compare</mat-icon>
-            </div>
-            <h2 class="empty-title">Solishtirish uchun mulk tanlanmagan</h2>
-            <p class="empty-desc">
-              E'lonlar ro'yxatidan o'zingizga ma'qul uylarni solishtirishga qo'shing
-            </p>
+          <div class="empty-state" @fadeAnimation>
+            <div class="icon-circle"><mat-icon>sports_kabaddi</mat-icon></div>
+            <h2 class="empty-title">Duel uchun mulk tanlanmagan</h2>
+            <p class="empty-desc">E'lonlar ro'yxatidan o'zingizga ma'qul uylarni Duelga qo'shing!</p>
             <button mat-flat-button color="primary" routerLink="/properties" class="btn-explore">
               <mat-icon>travel_explore</mat-icon>
-              <span>Mulklarni ko'rish va qidirish</span>
+              <span>Mulklarni qidirish</span>
             </button>
           </div>
         } @else {
-          <!-- AI Summary Alert -->
-          @if (apiResult()) {
-            <div class="ai-summary-alert" @fadeAnimation>
-              <div class="ai-icon"><mat-icon>auto_awesome</mat-icon></div>
-              <div class="ai-content">
-                <h3>Sun'iy intellekt tahlili</h3>
-                <p [innerHTML]="formatSummary(apiResult()!.summary)"></p>
-                <div class="badges-row" style="display: flex; gap: 12px; margin-top: 16px;">
-                  <div class="recommendation-badge">
-                    <mat-icon>verified</mat-icon>
-                    <span>{{ apiResult()!.recommendation }}</span>
+          
+          <!-- VS BATTLE ARENA -->
+          <div class="vs-arena" @fadeAnimation>
+            
+            <!-- LEFT PROPERTY -->
+            <div class="fighter-card left-fighter">
+              @if (leftProperty(); as prop) {
+                <button class="remove-fighter-btn" (click)="removeProperty(prop.id)" matTooltip="Olib tashlash">
+                  <mat-icon>close</mat-icon>
+                </button>
+                <div class="fighter-img" (click)="viewProperty(prop.id)">
+                  <img [src]="getImg(prop)" [alt]="prop.title" (error)="onImgError($event)" />
+                  <div class="listing-badge" [class]="(prop.listingType || '').toLowerCase()">
+                    {{ getListingLabel(prop.listingType) }}
                   </div>
-                  @if (apiResult()!.confidenceScore) {
-                    <div class="confidence-badge" [matTooltip]="'Mulkchi AI ushbu tahlilning to\\'g\\'riligiga ' + apiResult()!.confidenceScore + '% ishonch hosil qilgan.'">
-                      <mat-icon>analytics</mat-icon>
-                      <span>Aniqlik: {{ apiResult()!.confidenceScore }}%</span>
-                    </div>
-                  }
                 </div>
+                <div class="fighter-info">
+                  <h3 class="prop-title" [title]="prop.title" (click)="viewProperty(prop.id)">{{ prop.title }}</h3>
+                  <div class="prop-location"><mat-icon>location_on</mat-icon> {{ prop.city || 'Toshkent' }}, {{ prop.district || 'Markaz' }}</div>
+                  <div class="prop-price text-blue-600">{{ formatPrice(prop.salePrice || prop.monthlyRent || prop.pricePerNight, prop.currency) }}</div>
+                  
+                  <div class="fighter-stats">
+                    <div class="stat"><mat-icon>square_foot</mat-icon> <span>{{ prop.area }} m²</span></div>
+                    <div class="stat"><mat-icon>bed</mat-icon> <span>{{ prop.numberOfBedrooms || 1 }} xona</span></div>
+                    <div class="stat"><mat-icon>shower</mat-icon> <span>{{ prop.numberOfBathrooms || 1 }} hammom</span></div>
+                  </div>
+                  
+                  <button mat-flat-button color="primary" class="btn-view" (click)="viewProperty(prop.id)">Batafsil</button>
+                </div>
+              }
+            </div>
+
+            <!-- VS BADGE -->
+            <div class="vs-divider">
+              <div class="vs-badge" @scaleIn>VS</div>
+            </div>
+
+            <!-- RIGHT PROPERTY -->
+            <div class="fighter-card right-fighter">
+              @if (rightProperty(); as prop) {
+                <button class="remove-fighter-btn" (click)="removeProperty(prop.id)" matTooltip="Olib tashlash">
+                  <mat-icon>close</mat-icon>
+                </button>
+                <div class="fighter-img" (click)="viewProperty(prop.id)">
+                  <img [src]="getImg(prop)" [alt]="prop.title" (error)="onImgError($event)" />
+                  <div class="listing-badge" [class]="(prop.listingType || '').toLowerCase()">
+                    {{ getListingLabel(prop.listingType) }}
+                  </div>
+                </div>
+                <div class="fighter-info">
+                  <h3 class="prop-title" [title]="prop.title" (click)="viewProperty(prop.id)">{{ prop.title }}</h3>
+                  <div class="prop-location"><mat-icon>location_on</mat-icon> {{ prop.city || 'Toshkent' }}, {{ prop.district || 'Markaz' }}</div>
+                  <div class="prop-price text-red-600">{{ formatPrice(prop.salePrice || prop.monthlyRent || prop.pricePerNight, prop.currency) }}</div>
+                  
+                  <div class="fighter-stats">
+                    <div class="stat"><mat-icon>square_foot</mat-icon> <span>{{ prop.area }} m²</span></div>
+                    <div class="stat"><mat-icon>bed</mat-icon> <span>{{ prop.numberOfBedrooms || 1 }} xona</span></div>
+                    <div class="stat"><mat-icon>shower</mat-icon> <span>{{ prop.numberOfBathrooms || 1 }} hammom</span></div>
+                  </div>
+                  
+                  <button mat-flat-button color="warn" class="btn-view" (click)="viewProperty(prop.id)">Batafsil</button>
+                </div>
+              } @else {
+                <div class="waiting-fighter" routerLink="/properties">
+                  <div class="add-circle"><mat-icon>person_add</mat-icon></div>
+                  <h3>Ikkinchi uyni tanlang</h3>
+                  <p>Duelni boshlash uchun yana bitta uy qo'shing</p>
+                </div>
+              }
+            </div>
+            
+          </div>
+
+          <!-- ANALYTICS SECTION (Requires 2 properties) -->
+          @if (comparisonService.count() === 2) {
+            
+            @if (isLoading()) {
+              <div class="ai-loading" @fadeAnimation>
+                <mat-spinner diameter="32"></mat-spinner>
+                <span>AI Hakam jang maydonini o'rganmoqda...</span>
               </div>
-            </div>
-          } @else if (isLoading()) {
-            <div class="ai-loading">
-              <mat-spinner diameter="24"></mat-spinner>
-              <span>Bozor narxlari va tahlillar yuklanmoqda...</span>
-            </div>
+            } @else if (apiResult()) {
+              <div class="duel-analytics" @fadeAnimation>
+                
+                <!-- RADAR CHART -->
+                <div class="radar-box glass-panel">
+                  <h3 class="box-title"><mat-icon>radar</mat-icon> O'rgimchak To'ri Tahlili</h3>
+                  <div class="chart-container">
+                    <canvas baseChart 
+                      [data]="radarChartData" 
+                      [options]="radarChartOptions" 
+                      [type]="radarChartType">
+                    </canvas>
+                  </div>
+                </div>
+
+                <!-- AI ADVICE -->
+                <div class="ai-advocate glass-panel">
+                  <div class="ai-header">
+                    <div class="ai-avatar"><mat-icon>smart_toy</mat-icon></div>
+                    <h3>AI Hakamning Xulosasi</h3>
+                  </div>
+                  <div class="ai-chat-bubble">
+                    <p [innerHTML]="formatSummary(apiResult()!.summary)"></p>
+                    
+                    <div class="verdict-banner">
+                      <mat-icon>emoji_events</mat-icon>
+                      <div class="verdict-text">
+                        <strong>Tavsiya qilingan G'olib:</strong><br/>
+                        <span>{{ apiResult()!.recommendation }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            }
           }
 
-          <div class="compare-grid-wrapper" @listAnimation>
-            <div class="compare-table">
-              <!-- Labels Column (Fixed on Left) -->
-              <div class="labels-col sticky-col">
-                <div class="prop-header-spacer">
-                  <span class="lbl-summary"
-                    >Taqqoslash jadvali ({{ comparisonService.count() }} / 4)</span
-                  >
-                </div>
-                @for (label of compareLabels; track label.key) {
-                  <div
-                    class="label-cell"
-                    [class.highlight-label]="label.key === 'valueRating' || label.key === 'score'"
-                  >
-                    {{ label.title }}
-                  </div>
-                }
-              </div>
-
-              <!-- Property Columns -->
-              <div class="properties-container">
-                @for (prop of comparisonService.selectedProperties(); track prop.id) {
-                  <div class="compare-col">
-                    <!-- Property Card (Header) -->
-                    <div class="prop-header">
-                      <button
-                        class="remove-btn"
-                        (click)="removeProperty(prop.id)"
-                        matTooltip="Solishtirishdan olib tashlash"
-                      >
-                        <mat-icon>close</mat-icon>
-                      </button>
-                      <div class="img-frame" (click)="viewProperty(prop.id)">
-                        <img [src]="getImg(prop)" [alt]="prop.title" (error)="onImgError($event)" />
-                        <!-- WARNING FIXED: prop.listingType?.toLowerCase() replaced with safe check -->
-                        <div class="listing-badge" [class]="(prop.listingType || '').toLowerCase()">
-                          {{ getListingLabel(prop.listingType) }}
-                        </div>
-                      </div>
-                      <h3 class="prop-title" [title]="prop.title" (click)="viewProperty(prop.id)">
-                        {{ prop.title }}
-                      </h3>
-                      <div class="prop-price">
-                        {{ formatPrice(prop.salePrice || prop.monthlyRent || prop.pricePerNight) }}
-                      </div>
-                      <div class="action-wrap">
-                        <button
-                          mat-flat-button
-                          color="primary"
-                          [routerLink]="['/properties', prop.id]"
-                          class="btn-view-prop"
-                        >
-                          Batafsil ko'rish
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- Property Attributes -->
-                    <div class="attr-rows">
-                      <div class="value-cell">
-                        <mat-chip class="custom-chip">{{ getTypeName(prop.type) }}</mat-chip>
-                      </div>
-                      <div class="value-cell highlight">
-                        <span
-                          ><strong>{{ prop.area }}</strong> m²</span
-                        >
-                      </div>
-                      <div class="value-cell font-medium">
-                        <span
-                          ><strong>{{ prop.numberOfBedrooms || 1 }}</strong> ta yotoqxona</span
-                        >
-                      </div>
-                      <div class="value-cell font-medium">
-                        <span
-                          ><strong>{{ prop.numberOfBathrooms || 1 }}</strong> ta hammom</span
-                        >
-                      </div>
-                      <div
-                        class="value-cell location-text"
-                        [title]="prop.city + ', ' + prop.district"
-                      >
-                        <span>{{ prop.city || 'Toshkent' }}, {{ prop.district || 'Markaz' }}</span>
-                      </div>
-                      <div class="value-cell features-wrap">
-                        <div class="feature-icons">
-                          <span [class.active]="prop.hasWifi" matTooltip="Yuqori tezlikdagi WiFi"
-                            ><mat-icon>wifi</mat-icon></span
-                          >
-                          <span [class.active]="prop.hasParking" matTooltip="Avtoturargoh"
-                            ><mat-icon>local_parking</mat-icon></span
-                          >
-                          <span [class.active]="prop.hasElevator" matTooltip="Lift mavjud"
-                            ><mat-icon>elevator</mat-icon></span
-                          >
-                          <span [class.active]="prop.hasAirConditioning" matTooltip="Konditsioner"
-                            ><mat-icon>ac_unit</mat-icon></span
-                          >
-                        </div>
-                      </div>
-
-                      <!-- AI SMART DATA CELLS -->
-                      <div class="value-cell score-cell">
-                        @if (getAiDetail(prop.id); as detail) {
-                          <div
-                            class="score-circle"
-                            [class.high]="detail.score >= 80"
-                            [class.medium]="detail.score >= 60 && detail.score < 80"
-                            [class.low]="detail.score < 60"
-                          >
-                            {{ detail.score }}
-                          </div>
-                        } @else {
-                          <span class="text-gray-400">-</span>
-                        }
-                      </div>
-                      <div class="value-cell value-rating-cell">
-                        @if (getAiDetail(prop.id); as detail) {
-                          <span
-                            class="rating-badge"
-                            [class.great]="detail.valueRating.includes('Arzon')"
-                            [class.premium]="detail.valueRating.includes('Premium')"
-                            [class.avg]="detail.valueRating.includes('rtacha')"
-                          >
-                            {{ detail.valueRating }}
-                          </span>
-                        } @else {
-                          <span class="text-gray-400">-</span>
-                        }
-                      </div>
-                    </div>
-                  </div>
-                }
-
-                <!-- Add More Column (if < 4) -->
-                @if (comparisonService.count() < 4) {
-                  <div class="add-col">
-                    <div class="add-box" routerLink="/properties" matTooltip="Yana mulk qo'shish">
-                      <div class="add-circle"><mat-icon>add</mat-icon></div>
-                      <span class="add-lbl">Yana mulk qo'shish</span>
-                      <span class="add-sub"
-                        >{{ 4 - comparisonService.count() }} ta o'rin bo'sh</span
-                      >
-                    </div>
-                  </div>
-                }
-              </div>
-            </div>
-          </div>
         }
       </div>
     </div>
@@ -280,596 +206,183 @@ import { animate, style, transition, trigger, query, stagger } from '@angular/an
       :host {
         display: block;
         min-height: 100vh;
-        background-color: #f8fafc;
+        background: radial-gradient(circle at top, #f8fafc 0%, #e2e8f0 100%);
         font-family: 'Inter', sans-serif;
         color: #0f172a;
       }
 
-      .container {
-        max-width: 1320px;
-        margin: 0 auto;
-        padding: 40px 24px;
-      }
+      .container { max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
 
       .compare-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        margin-bottom: 30px;
-        flex-wrap: wrap;
-        gap: 20px;
-        padding-bottom: 24px;
-        border-bottom: 1px solid #e2e8f0;
+        display: flex; justify-content: space-between; align-items: flex-end;
+        margin-bottom: 40px; padding-bottom: 24px; border-bottom: 2px dashed #cbd5e1;
       }
-      .header-titles {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-      .page-title {
-        font-size: 2.5rem;
-        font-weight: 900;
-        color: #0f172a;
-        margin: 0;
-        letter-spacing: -0.5px;
-      }
-      .highlight-text {
-        color: #1e40af;
-      }
-      .page-subtitle {
-        font-size: 1.1rem;
-        color: #64748b;
-        margin: 0;
-      }
-
-      .btn-clear-all {
-        border-radius: 16px !important;
-        height: 48px !important;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: 600;
-      }
-
-      .ai-summary-alert {
-        background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
-        border-radius: 20px;
-        padding: 24px;
-        margin-bottom: 32px;
-        display: flex;
-        gap: 20px;
-        border: 1px solid #c7d2fe;
-        box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.1);
-      }
-      .ai-icon {
-        width: 48px;
-        height: 48px;
-        background: #4f46e5;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        flex-shrink: 0;
-      }
-      .ai-content h3 {
-        font-size: 1.2rem;
-        font-weight: 800;
-        color: #1e3a8a;
-        margin: 0 0 12px 0;
-      }
-      .ai-content p {
-        color: #334155;
-        line-height: 1.6;
-        margin: 0 0 16px 0;
-        font-size: 1rem;
-      }
-      .recommendation-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: #10b981;
-        color: white;
-        padding: 8px 16px;
-        border-radius: 30px;
-        font-weight: 700;
-        font-size: 0.95rem;
-      }
-      .recommendation-badge mat-icon {
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
-      }
-      .confidence-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: #3b82f6;
-        color: white;
-        padding: 8px 16px;
-        border-radius: 30px;
-        font-weight: 700;
-        font-size: 0.95rem;
-      }
-      .confidence-badge mat-icon {
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
-      }
-
-      .ai-loading {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        padding: 20px;
-        background: white;
-        border-radius: 16px;
-        margin-bottom: 32px;
-        border: 1px solid #e2e8f0;
-        color: #64748b;
-        font-weight: 600;
-      }
+      .page-title { font-size: 3rem; font-weight: 900; letter-spacing: -1px; margin: 0 0 8px; }
+      .highlight-text { background: linear-gradient(135deg, #ef4444, #f97316); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+      .page-subtitle { font-size: 1.2rem; color: #64748b; margin: 0; }
+      .btn-clear-all { border-radius: 16px !important; height: 48px !important; font-weight: 700; }
 
       .empty-state {
-        background: white;
-        border: 2px dashed #cbd5e1;
-        border-radius: 32px;
-        padding: 80px 32px;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
+        background: white; border: 3px dashed #cbd5e1; border-radius: 32px; padding: 80px 32px;
+        text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;
       }
-      .icon-circle {
-        width: 88px;
-        height: 88px;
-        background: #f1f5f9;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 24px;
+      .icon-circle { width: 100px; height: 100px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
+      .icon-circle mat-icon { font-size: 50px; width: 50px; height: 50px; color: #94a3b8; }
+      .empty-title { font-size: 2rem; font-weight: 900; margin: 0 0 16px; }
+      .empty-desc { font-size: 1.2rem; color: #64748b; margin: 0 0 32px; }
+      .btn-explore { border-radius: 20px !important; height: 56px !important; padding: 0 40px !important; font-size: 1.1rem !important; font-weight: 800 !important; background: #0f172a !important; color: white !important; }
+
+      /* VS ARENA */
+      .vs-arena {
+        display: flex; align-items: stretch; justify-content: space-between; position: relative; margin-bottom: 40px;
+        background: white; border-radius: 32px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); padding: 32px;
+        gap: 20px;
       }
-      .icon-circle mat-icon {
-        font-size: 40px;
-        width: 40px;
-        height: 40px;
-        color: #94a3b8;
-      }
-      .empty-title {
-        font-size: 1.8rem;
-        font-weight: 800;
-        color: #0f172a;
-        margin: 0 0 12px 0;
-      }
-      .empty-desc {
-        font-size: 1.1rem;
-        color: #64748b;
-        margin: 0 0 32px 0;
-        max-width: 450px;
-      }
-      .btn-explore {
-        border-radius: 20px !important;
-        height: 56px !important;
-        padding: 0 32px !important;
-        font-size: 1.1rem !important;
-        font-weight: 700 !important;
+      @media (max-width: 800px) {
+        .vs-arena { flex-direction: column; }
+        .vs-divider { transform: rotate(90deg); margin: 20px 0; }
       }
 
-      .compare-grid-wrapper {
-        background: white;
-        border-radius: 32px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
-        overflow: hidden;
-        overflow-x: auto;
+      .fighter-card {
+        flex: 1; position: relative; display: flex; flex-direction: column;
+        border-radius: 24px; transition: transform 0.3s ease;
       }
+      .left-fighter { background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%); border: 2px solid #bae6fd; }
+      .right-fighter { background: linear-gradient(180deg, #fef2f2 0%, #ffffff 100%); border: 2px solid #fecaca; }
 
-      .compare-table {
-        display: flex;
-        min-width: 960px;
+      .remove-fighter-btn {
+        position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%;
+        background: rgba(0,0,0,0.5); color: white; border: none; z-index: 10; cursor: pointer; backdrop-filter: blur(4px);
+        display: flex; align-items: center; justify-content: center; transition: all 0.2s;
       }
+      .remove-fighter-btn:hover { background: #ef4444; transform: scale(1.1); }
 
-      .labels-col {
-        width: 220px;
-        flex-shrink: 0;
-        background: #f8fafc;
-        border-right: 2px solid #e2e8f0;
-        z-index: 20;
-      }
-      .prop-header-spacer {
-        height: 350px;
-        padding: 24px;
-        display: flex;
-        align-items: flex-end;
-        border-bottom: 1px solid #e2e8f0;
-      }
-      .lbl-summary {
-        font-weight: 800;
-        color: #475569;
-        font-size: 0.95rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
+      .fighter-img { height: 280px; width: 100%; border-radius: 22px 22px 0 0; overflow: hidden; position: relative; cursor: pointer; }
+      .fighter-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+      .fighter-img:hover img { transform: scale(1.05); }
+      
+      .listing-badge { position: absolute; bottom: 16px; left: 16px; padding: 6px 16px; border-radius: 12px; font-weight: 800; color: white; font-size: 0.8rem; backdrop-filter: blur(8px); text-transform: uppercase; }
+      .listing-badge.rent { background: rgba(16, 185, 129, 0.9); }
+      .listing-badge.sale { background: rgba(239, 68, 68, 0.9); }
+      .listing-badge.shorttermrent { background: rgba(59, 130, 246, 0.9); }
 
-      .label-cell {
-        height: 72px;
-        padding: 0 24px;
-        display: flex;
-        align-items: center;
-        font-weight: 700;
-        color: #334155;
-        font-size: 1.05rem;
-        border-bottom: 1px solid #f1f5f9;
-      }
-      .label-cell:last-child {
-        border-bottom: none;
-      }
-      .label-cell.highlight-label {
-        color: #4f46e5;
-        background: #eef2ff;
-      }
+      .fighter-info { padding: 24px; flex: 1; display: flex; flex-direction: column; }
+      .prop-title { font-size: 1.4rem; font-weight: 900; margin: 0 0 8px; cursor: pointer; }
+      .prop-title:hover { text-decoration: underline; }
+      .prop-location { display: flex; align-items: center; gap: 4px; color: #64748b; margin-bottom: 16px; font-weight: 500; }
+      .prop-location mat-icon { font-size: 18px; width: 18px; height: 18px; }
+      .prop-price { font-size: 2rem; font-weight: 900; margin-bottom: 24px; }
+      
+      .fighter-stats { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 32px; }
+      .stat { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.8); padding: 8px 16px; border-radius: 12px; font-weight: 700; color: #334155; border: 1px solid rgba(0,0,0,0.05); }
+      .stat mat-icon { font-size: 20px; width: 20px; height: 20px; color: #64748b; }
 
-      .properties-container {
-        display: flex;
-        flex: 1;
-      }
+      .btn-view { border-radius: 16px !important; height: 50px !important; font-size: 1.1rem !important; font-weight: 800 !important; margin-top: auto; }
 
-      .compare-col {
-        width: 310px;
-        flex-shrink: 0;
-        border-right: 1px solid #e2e8f0;
-        transition: background 0.3s ease;
-        display: flex;
-        flex-direction: column;
-      }
-      .compare-col:hover {
-        background: #fbfcfd;
-      }
+      /* Waiting state */
+      .waiting-fighter { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s; }
+      .waiting-fighter:hover { background: rgba(254, 202, 202, 0.2); }
+      .waiting-fighter .add-circle { width: 80px; height: 80px; background: #fee2e2; border-radius: 50%; color: #ef4444; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; transition: transform 0.3s; }
+      .waiting-fighter .add-circle mat-icon { font-size: 40px; width: 40px; height: 40px; }
+      .waiting-fighter:hover .add-circle { transform: scale(1.1); background: #ef4444; color: white; }
+      .waiting-fighter h3 { font-size: 1.5rem; font-weight: 800; margin: 0 0 8px; color: #0f172a; }
+      .waiting-fighter p { color: #64748b; font-size: 1.1rem; }
 
-      .prop-header {
-        height: 350px;
-        padding: 24px;
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        border-bottom: 1px solid #e2e8f0;
-      }
+      /* VS DIVIDER */
+      .vs-divider { display: flex; align-items: center; justify-content: center; width: 80px; flex-shrink: 0; z-index: 5; }
+      .vs-badge { width: 70px; height: 70px; background: linear-gradient(135deg, #1e1b4b, #312e81); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fbbf24; font-size: 1.8rem; font-weight: 900; font-style: italic; border: 4px solid white; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
 
-      .remove-btn {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        width: 36px;
-        height: 36px;
-        border-radius: 12px;
-        background: #ef4444;
-        color: white;
-        border: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        opacity: 0;
-        transform: scale(0.8);
-        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        z-index: 10;
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-      }
-      .compare-col:hover .remove-btn {
-        opacity: 1;
-        transform: scale(1);
-      }
-      .remove-btn mat-icon {
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
-      }
+      /* ANALYTICS */
+      .duel-analytics { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+      @media (max-width: 900px) { .duel-analytics { grid-template-columns: 1fr; } }
+      
+      .glass-panel { background: white; border-radius: 32px; padding: 32px; box-shadow: 0 20px 40px -15px rgba(0,0,0,0.08); border: 1px solid #f1f5f9; }
+      .box-title { display: flex; align-items: center; gap: 12px; font-size: 1.4rem; font-weight: 900; margin: 0 0 24px; color: #0f172a; }
+      .box-title mat-icon { color: #3b82f6; }
 
-      .img-frame {
-        width: 100%;
-        height: 180px;
-        border-radius: 20px;
-        overflow: hidden;
-        margin-bottom: 16px;
-        cursor: pointer;
-        position: relative;
-        background: #0f172a;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-      }
-      .img-frame img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.6s ease;
-      }
-      .img-frame:hover img {
-        transform: scale(1.08);
-      }
+      .chart-container { position: relative; height: 350px; width: 100%; display: flex; justify-content: center; }
 
-      .listing-badge {
-        position: absolute;
-        bottom: 12px;
-        left: 12px;
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        font-weight: 800;
-        color: white;
-        backdrop-filter: blur(8px);
-        text-transform: uppercase;
-      }
-      .listing-badge.rent {
-        background: rgba(16, 185, 129, 0.9);
-      }
-      .listing-badge.sale {
-        background: rgba(239, 68, 68, 0.9);
-      }
-      .listing-badge.shorttermrent {
-        background: rgba(59, 130, 246, 0.9);
-      }
+      .ai-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+      .ai-avatar { width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3); }
+      .ai-avatar mat-icon { font-size: 32px; width: 32px; height: 32px; }
+      .ai-header h3 { font-size: 1.6rem; font-weight: 900; margin: 0; background: linear-gradient(135deg, #6d28d9, #4c1d95); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+      
+      .ai-chat-bubble { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 24px 24px 24px 4px; padding: 24px; position: relative; font-size: 1.1rem; line-height: 1.7; color: #334155; }
+      
+      .verdict-banner { margin-top: 24px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px; color: white; box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3); }
+      .verdict-banner mat-icon { font-size: 40px; width: 40px; height: 40px; }
+      .verdict-text { flex: 1; }
+      .verdict-text strong { font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
+      .verdict-text span { display: block; font-size: 1.3rem; font-weight: 900; margin-top: 4px; }
 
-      .prop-title {
-        font-size: 1.15rem;
-        font-weight: 800;
-        color: #0f172a;
-        margin: 0 0 6px 0;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        cursor: pointer;
-      }
-      .prop-price {
-        font-size: 1.35rem;
-        font-weight: 900;
-        color: #1e40af;
-        margin-bottom: 16px;
-      }
-
-      .btn-view-prop {
-        width: 100%;
-        border-radius: 14px !important;
-        height: 40px !important;
-        font-weight: 700 !important;
-      }
-
-      .value-cell {
-        height: 72px;
-        padding: 0 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        font-size: 1rem;
-        color: #1e293b;
-        border-bottom: 1px solid #f1f5f9;
-      }
-      .value-cell:last-child {
-        border-bottom: none;
-      }
-      .value-cell.highlight {
-        color: #1e40af;
-        font-size: 1.1rem;
-      }
-      .value-cell.location-text {
-        font-size: 0.95rem;
-        color: #475569;
-        font-weight: 600;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      .custom-chip {
-        background: #eff6ff !important;
-        color: #1e40af !important;
-        font-weight: 800 !important;
-        font-size: 0.85rem !important;
-      }
-
-      .feature-icons {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        justify-content: center;
-      }
-      .feature-icons span {
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        background: #f1f5f9;
-        color: #cbd5e1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s;
-      }
-      .feature-icons span.active {
-        background: #ecfdf5;
-        color: #10b981;
-        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
-      }
-      .feature-icons mat-icon {
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
-      }
-
-      .score-cell {
-        background: #f8fafc;
-      }
-      .score-circle {
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 900;
-        font-size: 1.1rem;
-        color: white;
-      }
-      .score-circle.high {
-        background: #10b981;
-        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
-      }
-      .score-circle.medium {
-        background: #f59e0b;
-        box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
-      }
-      .score-circle.low {
-        background: #ef4444;
-        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
-      }
-
-      .value-rating-cell {
-        background: #f8fafc;
-      }
-      .rating-badge {
-        padding: 6px 16px;
-        border-radius: 20px;
-        font-weight: 800;
-        font-size: 0.9rem;
-      }
-      .rating-badge.great {
-        background: #ecfdf5;
-        color: #059669;
-        border: 1px solid #10b981;
-      }
-      .rating-badge.premium {
-        background: #fff1f2;
-        color: #e11d48;
-        border: 1px solid #f43f5e;
-      }
-      .rating-badge.avg {
-        background: #f1f5f9;
-        color: #475569;
-        border: 1px solid #cbd5e1;
-      }
-
-      .add-col {
-        width: 310px;
-        flex-shrink: 0;
-        padding: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .add-box {
-        width: 100%;
-        height: 100%;
-        min-height: 400px;
-        border: 2px dashed #cbd5e1;
-        border-radius: 24px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s;
-        background: #f8fafc;
-      }
-      .add-box:hover {
-        border-color: #1e40af;
-        background: #eff6ff;
-        transform: translateY(-4px);
-      }
-      .add-circle {
-        width: 64px;
-        height: 64px;
-        border-radius: 50%;
-        background: white;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #64748b;
-        margin-bottom: 16px;
-        transition: all 0.3s;
-      }
-      .add-box:hover .add-circle {
-        color: #1e40af;
-        background: white;
-        box-shadow: 0 12px 24px rgba(30, 64, 175, 0.15);
-      }
-      .add-lbl {
-        font-size: 1.1rem;
-        font-weight: 800;
-        color: #334155;
-        margin-bottom: 4px;
-      }
-      .add-sub {
-        font-size: 0.9rem;
-        color: #94a3b8;
-        font-weight: 600;
-      }
-
-      @media (max-width: 768px) {
-        .container {
-          padding: 24px 16px;
-        }
-        .page-title {
-          font-size: 2rem;
-        }
-        .labels-col {
-          width: 160px;
-        }
-        .label-cell {
-          font-size: 0.95rem;
-          padding: 0 16px;
-        }
-        .compare-col,
-        .add-col {
-          width: 260px;
-        }
-        .value-cell {
-          padding: 0 16px;
-          font-size: 0.95rem;
-        }
-        .ai-summary-alert {
-          flex-direction: column;
-        }
-      }
-    `,
+      .ai-loading { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 60px; background: white; border-radius: 32px; box-shadow: 0 20px 40px -15px rgba(0,0,0,0.08); font-size: 1.2rem; font-weight: 800; color: #4f46e5; text-align: center; }
+    `
   ],
 })
 export class ComparisonComponent implements OnInit {
-  comparisonService = inject(ComparisonService);
-  private imageService = inject(ImageOptimizationService);
-  private sanitizer = inject(DomSanitizer);
+  protected readonly comparisonService = inject(ComparisonService);
+  protected readonly imageService = inject(ImageOptimizationService);
+  private readonly sanitizer = inject(DomSanitizer);
 
-  apiResult = signal<ComparisonResult | null>(null);
-  isLoading = signal<boolean>(false);
+  protected readonly isLoading = signal(false);
+  protected readonly apiResult = signal<ComparisonResult | null>(null);
 
-  compareLabels = [
-    { key: 'type', title: 'Mulk turi' },
-    { key: 'area', title: 'Maydoni' },
-    { key: 'rooms', title: 'Xonalar soni' },
-    { key: 'bathrooms', title: 'Hammom' },
-    { key: 'location', title: 'Joylashuvi' },
-    { key: 'features', title: 'Qulayliklar' },
-    { key: 'score', title: "Sun'iy Intellekt Balli" },
-    { key: 'valueRating', title: 'Bozor bahosi' },
-  ];
+  protected readonly leftProperty = computed(() => {
+    const props = this.comparisonService.selectedProperties();
+    return props.length > 0 ? props[0] : null;
+  });
+
+  protected readonly rightProperty = computed(() => {
+    const props = this.comparisonService.selectedProperties();
+    return props.length > 1 ? props[1] : null;
+  });
+
+  // RADAR CHART CONFIG
+  public radarChartOptions: ChartConfiguration<'radar'>['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      r: {
+        min: 0,
+        max: 100,
+        ticks: { display: false },
+        pointLabels: {
+          font: { size: 13, family: 'Inter', weight: 'bold' },
+          color: '#475569'
+        },
+        grid: { color: '#e2e8f0' },
+        angleLines: { color: '#e2e8f0' }
+      }
+    },
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 13, weight: 'bold' } } },
+      tooltip: {
+        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+        titleFont: { family: 'Inter', size: 14 },
+        bodyFont: { family: 'Inter', size: 13 },
+        padding: 12,
+        cornerRadius: 12
+      }
+    }
+  };
+  public radarChartType: 'radar' = 'radar';
+  public radarChartData: ChartData<'radar'> = {
+    labels: ['Maydon kattaligi', 'Xonalar soni', 'Qulayliklar (Score)', 'Narx qulayligi'],
+    datasets: []
+  };
 
   constructor() {
-    effect(
-      () => {
-        const count = this.comparisonService.count();
-        if (count > 1) {
-          this.fetchSmartComparison();
-        } else {
-          this.apiResult.set(null);
-        }
-      },
-      { allowSignalWrites: true },
-    );
+    effect(() => {
+      if (this.comparisonService.count() === 2) {
+        this.fetchSmartComparison();
+      } else {
+        this.apiResult.set(null);
+      }
+    }, { allowSignalWrites: true });
   }
 
   ngOnInit() {
-    if (this.comparisonService.count() > 1) {
+    if (this.comparisonService.count() === 2) {
       this.fetchSmartComparison();
     }
   }
@@ -879,21 +392,73 @@ export class ComparisonComponent implements OnInit {
     this.comparisonService.getSmartComparison().subscribe({
       next: (res) => {
         this.apiResult.set(res);
+        this.updateRadarChart(res);
         this.isLoading.set(false);
       },
       error: (err) => {
         console.error('Error fetching comparison', err);
         this.isLoading.set(false);
-      },
+      }
     });
+  }
+
+  updateRadarChart(res: ComparisonResult) {
+    if (!res || res.details.length < 2) return;
+
+    const d1 = res.details[0];
+    const d2 = res.details[1];
+
+    // Normalize values to 0-100 scale for Radar
+    const maxArea = Math.max(d1.area, d2.area, 1);
+    const maxBed = Math.max(d1.bedrooms, d2.bedrooms, 1);
+    
+    // Lower price is better, so max score for lowest price
+    const minPrice = Math.min(d1.price, d2.price);
+    const maxPrice = Math.max(d1.price, d2.price, 1);
+    const p1Score = d1.price === minPrice ? 100 : Math.max(20, (minPrice / maxPrice) * 100);
+    const p2Score = d2.price === minPrice ? 100 : Math.max(20, (minPrice / maxPrice) * 100);
+
+    this.radarChartData = {
+      labels: ['Maydon kattaligi', 'Xonalar soni', 'Qulayliklar (Score)', 'Narx qulayligi'],
+      datasets: [
+        {
+          label: d1.title,
+          data: [
+            (d1.area / maxArea) * 100,
+            (d1.bedrooms / maxBed) * 100,
+            d1.score, // AI Score is already 0-100
+            p1Score
+          ],
+          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+          borderColor: '#3b82f6',
+          pointBackgroundColor: '#2563eb',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: '#2563eb',
+          borderWidth: 3
+        },
+        {
+          label: d2.title,
+          data: [
+            (d2.area / maxArea) * 100,
+            (d2.bedrooms / maxBed) * 100,
+            d2.score,
+            p2Score
+          ],
+          backgroundColor: 'rgba(239, 68, 68, 0.2)',
+          borderColor: '#ef4444',
+          pointBackgroundColor: '#dc2626',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: '#dc2626',
+          borderWidth: 3
+        }
+      ]
+    };
   }
 
   removeProperty(id: string) {
     this.comparisonService.removeFromCompare(id);
-  }
-
-  getAiDetail(propertyId: string): PropertyComparisonDetail | undefined {
-    return this.apiResult()?.details.find((d) => d.propertyId === propertyId);
   }
 
   formatSummary(summary: string): SafeHtml {
@@ -903,7 +468,6 @@ export class ComparisonComponent implements OnInit {
       .replace(/\n/g, '<br/>')
       .replace(/- /g, '<br/>• ');
     
-    // Explicit HTML Sanitization to prevent XSS
     const sanitized = this.sanitizer.sanitize(SecurityContext.HTML, formatted) || '';
     return this.sanitizer.bypassSecurityTrustHtml(sanitized);
   }
@@ -918,38 +482,20 @@ export class ComparisonComponent implements OnInit {
   }
 
   viewProperty(id: string): void {
-    window.location.href = `/properties/${id}`;
-  }
-
-  getTypeName(type: string): string {
-    const types: Record<string, string> = {
-      Apartment: 'Kvartira',
-      House: 'Hovli uy',
-      Office: 'Ofis',
-      Land: 'Yer maydoni',
-      Villa: 'Villa',
-      Cottage: 'Dala hovli',
-      Commercial: 'Tijorat mulki',
-    };
-    return types[type] || type || 'Kvartira';
+    window.location.href = '/properties/' + id;
   }
 
   getListingLabel(listingType: string): string {
     switch (listingType) {
-      case 'Rent':
-        return 'Ijaraga';
-      case 'Sale':
-        return 'Sotuvda';
-      case 'ShortTermRent':
-        return 'Kunlik ijara';
-      default:
-        return 'Ijara / Sotuv';
+      case 'Rent': return 'Ijaraga';
+      case 'Sale': return 'Sotuvda';
+      case 'ShortTermRent': return 'Kunlik ijara';
+      default: return 'Ijara / Sotuv';
     }
   }
 
-  formatPrice(price: any): string {
-    if (!price || isNaN(price)) return "0 so'm";
-    const num = Number(price);
-    return Math.round(num).toLocaleString('ru-RU').replace(/,/g, ' ') + " so'm";
+  formatPrice(price: any, currency: string = 'UZS'): string {
+    if (!price) return 'Narx kelishiladi';
+    return Number(price).toLocaleString('ru-RU') + ' ' + (currency || 'UZS');
   }
 }

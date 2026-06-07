@@ -62,9 +62,9 @@ import { SeoService } from '../../core/services/seo.service';
           <div class="max-w-4xl mx-auto">
 
 
-            <h1 class="text-5xl md:text-7xl font-extrabold leading-tight tracking-tight mb-6 animate-slide-up text-white">
+            <h1 class="text-5xl md:text-7xl font-extrabold leading-tight tracking-tight mb-6 animate-slide-up text-white" style="text-shadow: 0 4px 10px rgba(0,0,0,0.3);">
               Ma'lumotlar bazasiga asoslangan <br />
-              <span class="bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">uy joy savdosi va ijarasi</span>
+              <span class="text-gradient">uy joy savdosi va ijarasi</span>
             </h1>
 
             <p class="hero-subtitle animate-slide-up-delay">
@@ -143,22 +143,6 @@ import { SeoService } from '../../core/services/seo.service';
               </div>
             </div>
 
-            <div class="hero-stats animate-fade-in-long">
-              <div class="stat-item">
-                <span class="stat-val">{{ counts.listings }}+</span>
-                <span class="stat-lab">E'lonlar</span>
-              </div>
-              <div class="stat-divider"></div>
-              <div class="stat-item">
-                <span class="stat-val">{{ counts.regions }}</span>
-                <span class="stat-lab">Viloyat</span>
-              </div>
-              <div class="stat-divider"></div>
-              <div class="stat-item">
-                <span class="stat-val">{{ counts.users }}K+</span>
-                <span class="stat-lab">Mijozlar</span>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -196,9 +180,15 @@ import { SeoService } from '../../core/services/seo.service';
                       <mat-icon style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle;">location_on</mat-icon>
                       {{ prop.city }}, {{ prop.district }}
                     </p>
-                    <strong style="color: var(--primary); font-size: 1.2rem;">
-                      {{ (prop.salePrice || prop.monthlyRent || prop.pricePerNight) | number }} {{ prop.currency || 'UZS' }}
-                    </strong>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                      <strong style="color: var(--primary); font-size: 1.2rem;">
+                        {{ (prop.salePrice || prop.monthlyRent || prop.pricePerNight) | number }} {{ prop.currency || 'UZS' }}
+                      </strong>
+                      <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px;" matTooltip="Qo'shilgan vaqti">
+                        <mat-icon style="font-size: 14px; width: 14px; height: 14px;">schedule</mat-icon>
+                        {{ getRelativeTime(prop.createdDate) }}
+                      </div>
+                    </div>
                   </mat-card-content>
                 </mat-card>
               }
@@ -344,12 +334,11 @@ import { SeoService } from '../../core/services/seo.service';
         width: 100%;
         height: 100%;
         object-fit: cover;
-        filter: brightness(0.6) contrast(1.1);
       }
       .hero-overlay {
         position: absolute;
         inset: 0;
-        background: linear-gradient(to bottom, rgba(15, 23, 42, 0.4) 0%, var(--primary) 100%);
+        background: linear-gradient(to bottom, rgba(15, 23, 42, 0.4) 0%, rgba(15, 23, 42, 0.85) 100%);
         z-index: 1;
       }
       .hero-container {
@@ -394,7 +383,9 @@ import { SeoService } from '../../core/services/seo.service';
       }
       .hero-subtitle {
         font-size: 1.25rem;
-        opacity: 0.8;
+        color: #ffffff;
+        font-weight: 500;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.8);
         max-width: 600px;
         margin: 0 auto 48px;
         line-height: 1.6;
@@ -602,10 +593,17 @@ import { SeoService } from '../../core/services/seo.service';
       }
 
       .hero-stats {
-        display: flex;
+        display: inline-flex;
         justify-content: center;
+        align-items: center;
         gap: 40px;
-        margin-top: 20px;
+        margin-top: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(12px);
+        padding: 16px 40px;
+        border-radius: 40px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
       }
       .stat-item {
         display: flex;
@@ -613,14 +611,16 @@ import { SeoService } from '../../core/services/seo.service';
       }
       .stat-val {
         font-size: 2rem;
-        font-weight: var(--font-weight-bold, 700);
+        font-weight: 800;
         color: var(--accent);
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
       }
       .stat-lab {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         text-transform: uppercase;
         letter-spacing: 1px;
-        opacity: 0.6;
+        color: #e2e8f0;
+        font-weight: 500;
       }
       .stat-divider {
         width: 1px;
@@ -644,14 +644,15 @@ import { SeoService } from '../../core/services/seo.service';
       .loading-nearby { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 0; gap: 16px; color: var(--text-muted); }
       .property-card { cursor: pointer; transition: transform 0.3s, box-shadow 0.3s; border-radius: 16px; overflow: hidden; }
       .property-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+      .card-footer { padding: 16px; border-top: 1px solid var(--color-gray-100); display: flex; justify-content: space-between; align-items: center; }
 
       .regions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
       .region-card { position: relative; height: 320px; border-radius: var(--radius-lg); overflow: hidden; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
       .region-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
       .region-card:hover img { transform: scale(1.1); }
-      .region-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(15,23,42,0.9) 0%, transparent 60%); display: flex; flex-direction: column; justify-content: flex-end; padding: 24px; color: var(--white); }
-      .region-overlay h3 { font-size: 1.5rem; font-weight: var(--font-weight-bold, 700); margin: 0; }
-      .region-overlay span { font-size: 0.9rem; opacity: 0.7; }
+      .region-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 40%, transparent 80%); display: flex; flex-direction: column; justify-content: flex-end; padding: 24px; color: #ffffff !important; }
+      .region-overlay h3 { font-size: 1.8rem; font-weight: 800; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.8); color: #ffffff !important; }
+      .region-overlay span { font-size: 1rem; opacity: 0.9; text-shadow: 0 1px 2px rgba(0,0,0,0.8); color: #e2e8f0 !important; font-weight: 500; }
 
       .ai-section {
         padding: 120px 0;
@@ -913,6 +914,7 @@ export class HomeComponent implements OnInit {
   private snackBar = inject(MatSnackBar);
   private geolocationService = inject(GeolocationService);
   private seoService = inject(SeoService);
+  private imageOptimizationService = inject(ImageOptimizationService);
 
   locationSuggestions = signal<string[]>([]);
   counts = { listings: 0, regions: 0, users: 0 };
@@ -1145,14 +1147,28 @@ export class HomeComponent implements OnInit {
   }
 
   onSearch() {
-    this.router.navigate(['/properties'], {
-      queryParams: { search: this.searchQuery.trim(), listingType: this.listingType },
-    });
+    const query = this.searchQuery.trim();
+    const isMultiWord = query.split(' ').length > 1;
+    
+    if (isMultiWord) {
+      this.router.navigate(['/properties'], {
+        queryParams: { search: query, listingType: this.listingType, ai_search: 'true' },
+      });
+    } else {
+      this.router.navigate(['/properties'], {
+        queryParams: { search: query, listingType: this.listingType },
+      });
+    }
   }
 
   onSmartSearch() {
+    const q = this.searchQuery.trim();
+    if (!q) {
+      this.snackBar.open("Iltimos, AI ga nimani izlayotganingizni yozing (Masalan: Chilonzorda 3 xonali uy)", "Yopish", { duration: 5000 });
+      return;
+    }
     this.router.navigate(['/properties'], {
-      queryParams: { search: this.searchQuery.trim() || undefined, ai_search: 'true' },
+      queryParams: { search: q, ai_search: 'true' },
     });
   }
 
@@ -1197,18 +1213,36 @@ export class HomeComponent implements OnInit {
     return 'Kunlik';
   }
 
-  private imageOptimizationService = inject(ImageOptimizationService);
+  getFullImageUrl(url: string | undefined): string {
+    if (!url) return 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop';
+    return this.imageOptimizationService.getOptimizedImage(url, 600, 400);
+  }
 
   getImageUrl(p: any) {
     const rawUrl = p.images?.[0]?.url || p.images?.[0]?.thumbnailUrl;
-    if (rawUrl) {
-      return this.imageOptimizationService.getOptimizedImage(rawUrl, 600, 400);
-    }
-    return 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop';
+    return this.getFullImageUrl(rawUrl);
   }
 
   onImgError(e: any) {
     e.target.src = 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600&auto=format&fit=crop';
+  }
+
+  getRelativeTime(dateString: any): string {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Hozirgina';
+    if (diffMins < 60) return `${diffMins} daqiqa oldin`;
+    if (diffHours < 24) return `${diffHours} soat oldin`;
+    if (diffDays === 1) return 'Kecha';
+    if (diffDays < 7) return `${diffDays} kun oldin`;
+    
+    return date.toLocaleDateString('uz-UZ', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
   navigateToProperty(id: string) {

@@ -124,6 +124,14 @@ import { NotificationService } from '../../core/services/notification.service';
                     <mat-icon color="primary">verified</mat-icon>
                     <span>{{ text().verifiedUser }}</span>
                   </div>
+                  @if (!currentUser()?.isVerified) {
+                    <div class="meta-item verify-action" style="margin-top: 8px;">
+                      <button mat-flat-button color="primary" class="btn-verify" (click)="verifyWithOneId()" [disabled]="isVerifying()" style="width: 100%; border-radius: 12px; font-weight: 700;">
+                        <mat-icon>fingerprint</mat-icon>
+                        {{ isVerifying() ? 'Tasdiqlanmoqda...' : 'OneID orqali tasdiqlash' }}
+                      </button>
+                    </div>
+                  }
                 </div>
               </div>
 
@@ -350,7 +358,6 @@ import { NotificationService } from '../../core/services/notification.service';
         --color-navy: var(--color-primary);
         --color-navy-light: var(--color-primary-light);
         --color-navy-dark: var(--color-primary);
-        --color-gold: var(--color-gold);
         --color-white: var(--color-surface);
         --color-gray-50: var(--color-background);
         --color-gray-100: var(--color-surface);
@@ -811,6 +818,8 @@ export class ProfileComponent implements OnInit {
   currentUser = this.authService.currentUser;
   isEditing = signal(false);
   isSaving = signal(false);
+  isUploadingAvatar = signal(false);
+  isVerifying = signal(false);
   walletBalance = signal(0);
   stats = signal<HostDashboardStats | null>(null);
   readonly lang = computed(() => this.uiStore.language());
@@ -1042,32 +1051,52 @@ export class ProfileComponent implements OnInit {
     if (!this.isEditing()) this.loadUserData();
   }
 
-  saveProfile(): void {
-    if (this.profileForm.invalid) return;
+  saveProfile() {
+    if (this.profileForm.invalid) {
+      this.snackBar.open("Iltimos, ma'lumotlarni to'g'ri kiriting", 'Yopish', { duration: 3000 });
+      return;
+    }
+
     this.isSaving.set(true);
-    const data = {
-      firstName: this.profileForm.value.firstName!,
-      lastName: this.profileForm.value.lastName!,
-      phone: this.profileForm.value.phone || undefined,
-      dateOfBirth: this.profileForm.value.dateOfBirth
-        ? new Date(this.profileForm.value.dateOfBirth)
-        : undefined,
-      gender: this.profileForm.value.gender as Gender,
-    };
-    this.authService.updateProfile(data).subscribe({
-      next: () => {
-        this.isSaving.set(false);
-        this.isEditing.set(false);
-        this.snackBar.open('Profil yangilandi', 'Yopish', { duration: 3000 });
-      },
-      error: () => {
-        this.isSaving.set(false);
-        this.snackBar.open('Xatolik', 'Yopish', { duration: 3000 });
-      },
-    });
+    const formValue = this.profileForm.value;
+
+    this.authStore
+      .updateProfile({
+        firstName: formValue.firstName!,
+        lastName: formValue.lastName!,
+        phone: formValue.phone || undefined,
+        gender: formValue.gender as Gender,
+      })
+      .subscribe({
+        next: () => {
+          this.isSaving.set(false);
+          this.isEditing.set(false);
+          this.snackBar.open("Ma'lumotlar saqlandi", 'Yopish', { duration: 3000 });
+        },
+        error: () => {
+          this.isSaving.set(false);
+          this.snackBar.open("Xatolik yuz berdi", 'Yopish', { duration: 3000 });
+        },
+      });
   }
 
-  isUploadingAvatar = signal(false);
+  verifyWithOneId(): void {
+    this.isVerifying.set(true);
+    // Simulating OneID popup and redirect
+    setTimeout(() => {
+      this.authStore.verifyHost('MOCK_CODE_123').subscribe({
+        next: () => {
+          this.isVerifying.set(false);
+          this.snackBar.open("Tabriklaymiz! Siz OneID orqali muvaffaqiyatli tasdiqlandingiz. Endi siz 'Uy egasi'siz!", "Yopish", { duration: 6000 });
+        },
+        error: (err) => {
+          this.isVerifying.set(false);
+          this.snackBar.open("OneID orqali tasdiqlashda xatolik yuz berdi.", "Yopish", { duration: 4000 });
+        }
+      });
+    }, 1500); // Add a small delay for realistic UX
+  }
+
   uploadAvatar(): void {
     const input = document.createElement('input');
     input.type = 'file';

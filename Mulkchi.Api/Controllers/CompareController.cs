@@ -33,7 +33,7 @@ public class CompareController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            return NotFound(new { message = ex.Message });
+            return BadRequest(new { message = ex.Message });
         }
         catch (Exception ex)
         {
@@ -67,7 +67,7 @@ public class CompareController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            return NotFound(new { message = ex.Message });
+            return BadRequest(new { message = ex.Message });
         }
         catch (Exception ex)
         {

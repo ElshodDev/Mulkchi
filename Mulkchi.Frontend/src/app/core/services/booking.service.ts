@@ -38,18 +38,9 @@ export class BookingService {
       .set('page', page.toString())
       .set('pageSize', pageSize.toString());
 
-    return this.http.get<Booking[]>(`${this.apiUrl}/my`, { params }).pipe(
-      map((bookings) => ({
-        items: bookings,
-        totalCount: bookings.length,
-        page,
-        pageSize,
-        totalPages: 1,
-        hasNextPage: false,
-        hasPreviousPage: false,
-      })),
+    return this.http.get<PagedResult<Booking>>(`${this.apiUrl}/my`, { params }).pipe(
       tap((result) => {
-        this._bookings.set(result.items);
+        this._bookings.set(result.items || []);
         this._loading.set(false);
       }),
       catchError((error) => {
@@ -70,18 +61,9 @@ export class BookingService {
 
     if (status) params = params.set('status', status);
 
-    return this.http.get<Booking[]>(`${this.apiUrl}/host`, { params }).pipe(
-      map((bookings) => ({
-        items: bookings,
-        totalCount: bookings.length,
-        page,
-        pageSize,
-        totalPages: 1,
-        hasNextPage: false,
-        hasPreviousPage: false,
-      })),
+    return this.http.get<PagedResult<Booking>>(`${this.apiUrl}/host`, { params }).pipe(
       tap((result) => {
-        this._bookings.set(result.items);
+        this._bookings.set(result.items || []);
         this._loading.set(false);
       }),
       catchError((error) => {
@@ -139,6 +121,16 @@ export class BookingService {
 
   cancelHold(holdId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/hold/${holdId}`).pipe(
+      tap(() => this._activeHold.set(null)),
+      catchError((error) => throwError(() => error)),
+    );
+  }
+
+  confirmPayment(request: { holdId: string; amount: number; method: string }): Observable<any> {
+    const idempotencyKey = crypto.randomUUID();
+    return this.http.post<any>(`${this.apiUrl}/confirm-payment`, request, {
+      headers: { 'X-Idempotency-Key': idempotencyKey }
+    }).pipe(
       tap(() => this._activeHold.set(null)),
       catchError((error) => throwError(() => error)),
     );

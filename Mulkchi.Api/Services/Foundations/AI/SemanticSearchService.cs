@@ -55,7 +55,7 @@ namespace Mulkchi.Api.Services.Foundations.AI
             {
                 searchParams.PropertyType = PropertyType.House;
             }
-            else if (Regex.IsMatch(query, @"kvartira|kv|dom|ko'p qavatli"))
+            else if (Regex.IsMatch(query, @"kvartira|kv|ko'p qavatli"))
             {
                 searchParams.PropertyType = PropertyType.Apartment;
             }
@@ -67,10 +67,10 @@ namespace Mulkchi.Api.Services.Foundations.AI
             // Whatever is left can be used as the search term or location
             string locationQuery = Regex.Replace(query, @"(\d+)\s*(?:xona|xonali|x)", "");
             locationQuery = Regex.Replace(locationQuery, @"(\d+)\s*(?:ming|m|k)?\s*(?:\$|dollar|usd|sum|so'm).*(?:gacha|gacha bo'lgan|atrofida)?", "");
-            locationQuery = Regex.Replace(locationQuery, @"ijara|rent|ijaraga|sotib|sotiladigan|sotuv|sale|buy|kvartira|hovli|dom|hovlili|uchastka|ofis|biznes|do'kon|noturar", "");
-            locationQuery = Regex.Replace(locationQuery, @"(?:dan|gacha|atrofida|qidir|izla|topib ber|kerak)", "");
+            locationQuery = Regex.Replace(locationQuery, @"ijara|rent|ijaraga|sotib|sotiladigan|sotuv|sale|buy|kvartira|hovli|dom|hovlili|uchastka|ofis|biznes|do'kon|noturar|uy|uylar", "");
+            locationQuery = Regex.Replace(locationQuery, @"(?:dan|gacha|atrofida|qidir|izla|topib ber|kerak|arzon|qimmat|yaxshi)", "");
             
-            searchParams.SearchQuery = locationQuery.Trim().TrimEnd(',').TrimEnd('d', 'a').TrimEnd('d', 'a', 'n');
+            searchParams.SearchQuery = locationQuery.Trim();
             if (string.IsNullOrWhiteSpace(searchParams.SearchQuery))
             {
                 searchParams.SearchQuery = null;

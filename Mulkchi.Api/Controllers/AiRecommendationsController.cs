@@ -354,7 +354,7 @@ public class AiRecommendationsController : ControllerBase
 
     [HttpPost("predict-price")]
     [AllowAnonymous]
-    public IActionResult PredictPriceAsync([FromBody] AIPricePredictionRequest request)
+    public async Task<IActionResult> PredictPriceAsync([FromBody] AIPricePredictionRequest request)
     {
         if (request == null || request.Area <= 0)
             return BadRequest("Noto'g'ri ma'lumotlar kiritildi");
@@ -407,7 +407,7 @@ public class AiRecommendationsController : ControllerBase
             else floorMultiplier = 1.04m;
         }
 
-        decimal ageMultiplier = request.BuildingAge switch
+        decimal ageMultiplier = (request.BuildingAge ?? 0) switch
         {
             <= 0 => 1.18m,
             <= 3 => 1.12m,
@@ -415,6 +415,24 @@ public class AiRecommendationsController : ControllerBase
             <= 25 => 0.95m,
             _ => 0.85m
         };
+
+        decimal districtMultiplier = 1.0m;
+        if (!string.IsNullOrEmpty(request.District)) 
+        {
+            string districtLower = request.District.ToLower();
+            
+            // Toshkent tumanlari uchun maxsus koeffitsientlar
+            if (districtLower.Contains("yakkasaroy") || districtLower.Contains("mirobod") || districtLower.Contains("shayxontohur"))
+                districtMultiplier = 1.25m; // Markaz, qimmat
+            else if (districtLower.Contains("yunusobod") || districtLower.Contains("mirzo ulug'bek") || districtLower.Contains("mirzo ulugbek"))
+                districtMultiplier = 1.15m;
+            else if (districtLower.Contains("chilonzor") || districtLower.Contains("uchtepa") || districtLower.Contains("yashnobod") || districtLower.Contains("olmazor"))
+                districtMultiplier = 1.05m;
+            else if (districtLower.Contains("sergeli") || districtLower.Contains("yangihayot") || districtLower.Contains("bektemir"))
+                districtMultiplier = 0.90m; // Chekka tumanlar
+            else 
+                districtMultiplier = 1.05m; // Boshqa noma'lum tuman ko'rsatilsa ozgina ishonch bonusi
+        }
 
         var factors = new Dictionary<string, decimal>();
         if (request.IsRenovated) { factors["Ta'mirlangan"] = 0.15m; }
@@ -429,24 +447,141 @@ public class AiRecommendationsController : ControllerBase
 
         decimal totalBonus = factors.Values.Sum();
 
-        decimal pricePerSqm = basePricePerSqm
+        decimal mathematicalPricePerSqm = basePricePerSqm
             * typeMultiplier
             * roomMultiplier
             * floorMultiplier
             * ageMultiplier
+            * districtMultiplier
             * (1 + totalBonus);
 
-        decimal recommendedPrice = pricePerSqm * request.Area;
+        // --- BAZADAGI REAL MA'LUMOTLAR BILAN ANALIZ QILISH ---
+        decimal finalPricePerSqm = mathematicalPricePerSqm;
+        double dbConfidencePenalty = 0;
+        decimal? dbRentMedianPerSqm = null;
+        
+        try
+        {
+            var query = this.storageBroker.SelectAllProperties()
+                .Where(p => p.ListingType.ToString() == request.ListingType && 
+                            p.Type.ToString() == request.PropertyType && 
+                            p.Area > 0);
+
+            // Agar viloyat bo'lsa
+            if (!string.IsNullOrEmpty(request.Region))
+            {
+                query = query.Where(p => p.Region.ToString().Contains(request.Region) || 
+                                         request.Region.Contains(p.Region.ToString()));
+            }
+
+            var similarProperties = await query.Take(50).Select(p => new { p.SalePrice, p.MonthlyRent, p.Area, p.Currency, p.ExchangeRate }).ToListAsync();
+            
+            if (similarProperties.Any())
+            {
+                var validPricesPerSqm = new List<decimal>();
+
+                foreach (var prop in similarProperties)
+                {
+                    decimal price = request.ListingType == "Sale" ? (prop.SalePrice ?? 0) : (prop.MonthlyRent ?? 0);
+                    
+                    // Valyuta konvertatsiyasi: Agar bazadagi narx So'mda bo'lsa, USD ga o'giramiz
+                    if (prop.Currency.ToString() == "UZS" || prop.Currency.ToString() == "Sum")
+                    {
+                        decimal rate = prop.ExchangeRate > 1000m ? prop.ExchangeRate : 12600m;
+                        try 
+                        {
+                            if (prop.ExchangeRate <= 1000m) 
+                            {
+                                var exchangeService = HttpContext.RequestServices.GetService<Mulkchi.Api.Services.Foundations.ExchangeRates.IExchangeRateService>();
+                                if (exchangeService != null)
+                                    rate = await exchangeService.GetCurrentUsdRateAsync();
+                            }
+                        } 
+                        catch { /* Xato bo'lsa 12600 da qolaveradi */ }
+                        
+                        price = price / rate;
+                    }
+
+                    if (price > 0 && prop.Area > 0)
+                    {
+                        validPricesPerSqm.Add(price / (decimal)prop.Area);
+                    }
+                }
+
+                if (validPricesPerSqm.Count > 0)
+                {
+                    // Sortlash (Mediana va Outlier filtri uchun)
+                    validPricesPerSqm.Sort();
+
+                    // 1. G'ayritabiiy narxlarni (Outliers) filtrlash (Eng qimmat va eng arzon narxlarni 10% ini olib tashlash)
+                    if (validPricesPerSqm.Count >= 5)
+                    {
+                        int trimCount = (int)(validPricesPerSqm.Count * 0.1);
+                        if (trimCount > 0)
+                        {
+                            validPricesPerSqm = validPricesPerSqm.Skip(trimCount).Take(validPricesPerSqm.Count - 2 * trimCount).ToList();
+                        }
+                    }
+
+                    // 2. Mediana hisoblash (O'rtacha qiymat o'rniga)
+                    decimal dbMedianPricePerSqm;
+                    int mid = validPricesPerSqm.Count / 2;
+                    if (validPricesPerSqm.Count % 2 == 0)
+                        dbMedianPricePerSqm = (validPricesPerSqm[mid - 1] + validPricesPerSqm[mid]) / 2.0m;
+                    else
+                        dbMedianPricePerSqm = validPricesPerSqm[mid];
+
+                    // 3. Ishonchlilikni (Confidence) baholash
+                    decimal minP = validPricesPerSqm.First();
+                    decimal maxP = validPricesPerSqm.Last();
+                    if (minP > 0 && (maxP / minP) > 2.0m)
+                    {
+                        // Agar filtrdan keyin ham eng qimmat va arzon uylar orasida farq juda katta bo'lsa (Variance yuqori)
+                        // Demak bozorda narxlar har xil (stabil emas), ishonchni pasaytiramiz
+                        dbConfidencePenalty = 0.15;
+                    }
+
+                    // Kvartira ijara narxiga o'girilgan bo'lsa
+                    if (request.ListingType == "Rent" || request.ListingType == "ShortTermRent")
+                    {
+                         dbRentMedianPerSqm = dbMedianPricePerSqm;
+                    }
+                    else 
+                    {
+                        // Matematik formula (50%) + Bazadagi Mediana (50%) = Gibrid (Blending)
+                        finalPricePerSqm = (mathematicalPricePerSqm * 0.50m) + (dbMedianPricePerSqm * 0.50m);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error while blending DB prices in PredictPriceAsync");
+        }
+
+        decimal recommendedPrice = finalPricePerSqm * request.Area;
 
         if (request.ListingType == "Rent")
         {
             recommendedPrice = recommendedPrice * 0.007m;
-            pricePerSqm = recommendedPrice / request.Area;
+            finalPricePerSqm = recommendedPrice / request.Area;
+            
+            if (dbRentMedianPerSqm.HasValue)
+            {
+                finalPricePerSqm = (finalPricePerSqm * 0.5m) + (dbRentMedianPerSqm.Value * 0.5m);
+                recommendedPrice = finalPricePerSqm * request.Area;
+            }
         }
         else if (request.ListingType == "ShortTermRent")
         {
             recommendedPrice = (recommendedPrice * 0.007m) * 0.025m;
-            pricePerSqm = recommendedPrice / request.Area;
+            finalPricePerSqm = recommendedPrice / request.Area;
+            
+            if (dbRentMedianPerSqm.HasValue)
+            {
+                finalPricePerSqm = (finalPricePerSqm * 0.5m) + (dbRentMedianPerSqm.Value * 0.5m);
+                recommendedPrice = finalPricePerSqm * request.Area;
+            }
         }
 
         decimal marketAverage = recommendedPrice * 0.98m;
@@ -455,13 +590,17 @@ public class AiRecommendationsController : ControllerBase
         double confidence = 0.85;
         if (request.BuildingAge > 40) confidence -= 0.1;
         if (string.IsNullOrEmpty(request.Region)) confidence -= 0.2;
+        confidence -= dbConfidencePenalty;
+        
+        // Ishonchlilik darajasi hech qachon 0 yoki 1 dan oshmasligi kerak
+        confidence = Math.Max(0.1, Math.Min(0.99, confidence));
 
         return Ok(new AIPricePredictionResponse
         {
             MinPrice = Math.Round(recommendedPrice * 0.9m, 0),
             MaxPrice = Math.Round(recommendedPrice * 1.1m, 0),
             RecommendedPrice = Math.Round(recommendedPrice, 0),
-            PricePerSqm = Math.Round(pricePerSqm, 2),
+            PricePerSqm = Math.Round(finalPricePerSqm, 2),
             Currency = "USD",
             MarketAverage = Math.Round(marketAverage, 0),
             ComparisonPercentage = Math.Round(comparisonPercentage, 1),
@@ -881,11 +1020,12 @@ public class AIPricePredictionRequest
     public string Region { get; set; } = string.Empty;
     public string PropertyType { get; set; } = string.Empty;
     public string ListingType { get; set; } = string.Empty;
+    public string District { get; set; } = string.Empty;
     public decimal Area { get; set; }
     public int Rooms { get; set; }
     public int Floor { get; set; }
     public int TotalFloors { get; set; }
-    public int BuildingAge { get; set; }
+    public int? BuildingAge { get; set; }
     public bool HasFurniture { get; set; }
     public bool HasParking { get; set; }
     public bool HasElevator { get; set; }

@@ -288,7 +288,7 @@ export class ChatService {
         receiverId,
         content,
         propertyId: propertyId!,
-        createdDate: new Date().toISOString(),
+        createdDate: new Date(),
         isRead: true
       };
       this.handleIncomingMessage(mockMsg);
@@ -304,7 +304,7 @@ export class ChatService {
           senderName: 'Mulkchi AI Assistant',
           content: `Assalomu alaykum! Uy egasi hozir onlayn emas, men uning AI yordamchisiman. Siz so'ragan "${content}" bo'yicha uyda hamma sharoitlar mavjud. Batafsil ma'lumot kerak bo'lsa aytishingiz mumkin.`,
           propertyId: propertyId!,
-          createdDate: new Date().toISOString(),
+          createdDate: new Date(),
           isRead: false
         };
         this.handleIncomingMessage(aiMsg);

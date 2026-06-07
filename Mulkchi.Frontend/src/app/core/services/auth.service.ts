@@ -241,6 +241,16 @@ export class AuthService {
     return this.http.post<void>(`${this.apiUrl}/forgot-password`, { email });
   }
 
+  verifyHost(authCode: string): Observable<User> {
+    return this.http.post<User>(`${this.usersUrl}/verify-host`, { AuthCode: authCode }).pipe(
+      tap((updatedUser) => {
+        updatedUser.avatarUrl = this.getAbsoluteUrl(updatedUser.avatarUrl);
+        this._currentUser.set(updatedUser);
+        this._currentMode.set(updatedUser.currentMode ?? updatedUser.role ?? UserRole.Guest);
+      })
+    );
+  }
+
   resetPassword(token: string, newPassword: string): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/reset-password`, { token, newPassword });
   }

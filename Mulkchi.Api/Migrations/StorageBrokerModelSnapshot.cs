@@ -1189,6 +1189,9 @@ namespace Mulkchi.Api.Migrations
                     b.Property<int>("Bathrooms")
                         .HasColumnType("integer");
 
+                    b.Property<int>("BuildingType")
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset?>("BumpedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1360,8 +1363,16 @@ namespace Mulkchi.Api.Migrations
                     b.Property<int>("Region")
                         .HasColumnType("integer");
 
+                    b.Property<int>("RenovationLevel")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Rooms")
                         .HasColumnType("integer");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
 
                     b.Property<decimal?>("SalePrice")
                         .HasPrecision(18, 2)

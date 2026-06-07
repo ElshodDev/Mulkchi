@@ -103,6 +103,8 @@ public partial class PropertyService : IPropertyService
             Category = dto.Category,
             Status = dto.Status,
             ListingType = dto.ListingType,
+            BuildingType = dto.BuildingType,
+            RenovationLevel = dto.RenovationLevel,
             MonthlyRent = dto.MonthlyRent,
             SalePrice = dto.SalePrice,
             PricePerNight = dto.PricePerNight,
@@ -546,6 +548,8 @@ public partial class PropertyService : IPropertyService
             maybeProperty.Type = property.Type;
             maybeProperty.Category = property.Category;
             maybeProperty.ListingType = property.ListingType;
+            maybeProperty.BuildingType = property.BuildingType;
+            maybeProperty.RenovationLevel = property.RenovationLevel;
             maybeProperty.MonthlyRent = property.MonthlyRent;
             maybeProperty.SalePrice = property.SalePrice;
             maybeProperty.PricePerNight = property.PricePerNight;
@@ -665,32 +669,6 @@ public partial class PropertyService : IPropertyService
             return updatedProperty;
         });
 
-    public async ValueTask<PropertyCreateResponse> AddPropertyWithUserUpgradeAsync(PropertyCreateDto dto, ClaimsPrincipal user)
-    {
-        // Auto-upgrade user to Host role if they're creating their first property
-        var userIdClaim = user.FindFirstValue(ClaimTypes.NameIdentifier);
-        AuthResponse? newTokens = null;
-
-        if (userIdClaim is not null && Guid.TryParse(userIdClaim, out Guid userId))
-        {
-            User upgradedUser = await this.userService.UpgradeToHostAsync(userId);
-
-            // If user was upgraded (was Guest), generate new tokens with Host role
-            if (upgradedUser.Role == UserRole.Host && upgradedUser.CurrentMode == UserRole.Host)
-            {
-                newTokens = await this.authService.GenerateTokensForUserAsync(userId);
-            }
-        }
-
-        var addedProperty = await AddPropertyAsync(dto);
-
-        return new PropertyCreateResponse
-        {
-            Property = addedProperty,
-            Tokens = newTokens
-        };
-    }
-
     private static PropertyResponse ToPropertyResponse(Property p)
     {
         return new PropertyResponse
@@ -702,6 +680,8 @@ public partial class PropertyService : IPropertyService
             Category = p.Category,
             Status = p.Status,
             ListingType = p.ListingType,
+            BuildingType = p.BuildingType,
+            RenovationLevel = p.RenovationLevel,
             MonthlyRent = p.MonthlyRent,
             SalePrice = p.SalePrice,
             PricePerNight = p.PricePerNight,
@@ -800,7 +780,6 @@ public partial class PropertyService : IPropertyService
         if (sourceProperty is null) return Enumerable.Empty<PropertyResponse>();
 
         var similar = await this.storageBroker.SelectAllProperties()
-
             .Where(p => p.Id != propertyId &&
                         p.IsVacant &&
                         (p.Type == sourceProperty.Type || p.City == sourceProperty.City))

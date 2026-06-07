@@ -147,6 +147,10 @@ import { UIStore } from '../../stores/ui.store';
                 <mat-icon>business</mat-icon>
                 <span>{{ text().myProperties }}</span>
               </a>
+              <a mat-menu-item routerLink="/host/bookings">
+                <mat-icon>request_quote</mat-icon>
+                <span>Mezbon bronlari</span>
+              </a>
               <a mat-menu-item routerLink="/bookings">
                 <mat-icon>calendar_today</mat-icon>
                 <span>{{ text().bookings }}</span>

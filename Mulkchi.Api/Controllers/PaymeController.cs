@@ -26,6 +26,8 @@ public class PaymeController : ControllerBase
     private const int ErrOrderNotFound = -31050;
     private const int ErrInternalError = -32400;
 
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, System.Threading.SemaphoreSlim> transactionLocks = new();
+
     private readonly IPaymentService paymentService;
     private readonly IConfiguration configuration;
     private readonly IFinalizePaymentWebhookHandler finalizePaymentWebhookHandler;
@@ -84,55 +86,85 @@ public class PaymeController : ControllerBase
         var amount = GetAmount(request.Params);
         var createTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-        if (string.IsNullOrWhiteSpace(orderId) || !Guid.TryParse(orderId, out var paymentId))
-            return Error(request.Id, ErrOrderNotFound, "Order not found.");
-
-        Payment payment = await this.paymentService.RetrievePaymentByIdAsync(paymentId);
-        if (payment is null)
-            return Error(request.Id, ErrOrderNotFound, "Order not found.");
-
-        if (amount != (long)Math.Round(payment.Amount * 100, MidpointRounding.AwayFromZero))
-            return Error(request.Id, ErrInvalidAmount, "Invalid amount.");
-
-        if (payment.ExternalTransactionId == transactionId)
+        var transLock = transactionLocks.GetOrAdd(transactionId ?? orderId ?? "unknown", _ => new System.Threading.SemaphoreSlim(1, 1));
+        await transLock.WaitAsync();
+        try
         {
+            if (string.IsNullOrWhiteSpace(orderId) || !Guid.TryParse(orderId, out var paymentId))
+                return Error(request.Id, ErrOrderNotFound, "Order not found.");
+
+            Payment payment = await this.paymentService.RetrievePaymentByIdAsync(paymentId);
+            if (payment is null)
+                return Error(request.Id, ErrOrderNotFound, "Order not found.");
+
+            if (amount != (long)Math.Round(payment.Amount * 100, MidpointRounding.AwayFromZero))
+                return Error(request.Id, ErrInvalidAmount, "Invalid amount.");
+
+            if (payment.ExternalTransactionId == transactionId)
+            {
+                return Success(request.Id, new
+                {
+                    create_time = payment.CreatedDate.ToUnixTimeMilliseconds(),
+                    transaction = payment.Id.ToString(),
+                    state = PaymeTransactionState(payment.Status)
+                });
+            }
+
+            if (payment.Status == PaymentStatus.Completed || payment.Status == PaymentStatus.Cancelled)
+                return Error(request.Id, ErrTransactionDone, "Transaction already done.");
+
+            payment.ExternalTransactionId = transactionId;
+            payment.Status = PaymentStatus.Processing;
+            payment.Method = PaymentMethod.Payme;
+            payment.UpdatedDate = DateTimeOffset.UtcNow;
+            await this.paymentService.ModifyPaymentAsync(payment);
+
             return Success(request.Id, new
             {
-                create_time = payment.CreatedDate.ToUnixTimeMilliseconds(),
+                create_time = createTime,
                 transaction = payment.Id.ToString(),
-                state = PaymeTransactionState(payment.Status)
+                state = 1 
             });
         }
-
-        if (payment.Status == PaymentStatus.Completed || payment.Status == PaymentStatus.Cancelled)
-            return Error(request.Id, ErrTransactionDone, "Transaction already done.");
-
-        payment.ExternalTransactionId = transactionId;
-        payment.Status = PaymentStatus.Processing;
-        payment.Method = PaymentMethod.Payme;
-        payment.UpdatedDate = DateTimeOffset.UtcNow;
-        await this.paymentService.ModifyPaymentAsync(payment);
-
-        return Success(request.Id, new
+        finally
         {
-            create_time = createTime,
-            transaction = payment.Id.ToString(),
-            state = 1 
-        });
+            transLock.Release();
+        }
     }
 
     private async Task<PaymeResponse> PerformTransactionAsync(PaymeRequest request)
     {
         var transactionId = request.Params?.GetValueOrDefault("id")?.ToString();
-        if (string.IsNullOrWhiteSpace(transactionId))
-            return Error(request.Id, ErrTransactionNotFound, "Transaction not found.");
-
-        var payment = await FindByExternalIdAsync(transactionId);
-        if (payment is null)
-            return Error(request.Id, ErrTransactionNotFound, "Transaction not found.");
-
-        if (payment.Status == PaymentStatus.Completed)
+        var transLock = transactionLocks.GetOrAdd(transactionId ?? "unknown", _ => new System.Threading.SemaphoreSlim(1, 1));
+        await transLock.WaitAsync();
+        try
         {
+            if (string.IsNullOrWhiteSpace(transactionId))
+                return Error(request.Id, ErrTransactionNotFound, "Transaction not found.");
+
+            var payment = await FindByExternalIdAsync(transactionId);
+            if (payment is null)
+                return Error(request.Id, ErrTransactionNotFound, "Transaction not found.");
+
+            if (payment.Status == PaymentStatus.Completed)
+            {
+                return Success(request.Id, new
+                {
+                    perform_time = payment.UpdatedDate.ToUnixTimeMilliseconds(),
+                    transaction = payment.Id.ToString(),
+                    state = 2
+                });
+            }
+
+            if (payment.Status == PaymentStatus.Cancelled)
+                return Error(request.Id, ErrTransactionCancelled, "Transaction cancelled.");
+
+            payment = await this.finalizePaymentWebhookHandler.HandleAsync(
+                new FinalizePaymentWebhookCommand(
+                    transactionId,
+                    PaymentMethod.Payme,
+                    PaymentStatus.Completed));
+
             return Success(request.Id, new
             {
                 perform_time = payment.UpdatedDate.ToUnixTimeMilliseconds(),
@@ -140,39 +172,45 @@ public class PaymeController : ControllerBase
                 state = 2
             });
         }
-
-        if (payment.Status == PaymentStatus.Cancelled)
-            return Error(request.Id, ErrTransactionCancelled, "Transaction cancelled.");
-
-        payment = await this.finalizePaymentWebhookHandler.HandleAsync(
-            new FinalizePaymentWebhookCommand(
-                transactionId,
-                PaymentMethod.Payme,
-                PaymentStatus.Completed));
-
-        return Success(request.Id, new
+        finally
         {
-            perform_time = payment.UpdatedDate.ToUnixTimeMilliseconds(),
-            transaction = payment.Id.ToString(),
-            state = 2
-        });
+            transLock.Release();
+        }
     }
 
     private async Task<PaymeResponse> CancelTransactionAsync(PaymeRequest request)
     {
         var transactionId = request.Params?.GetValueOrDefault("id")?.ToString();
-        if (string.IsNullOrWhiteSpace(transactionId))
-            return Error(request.Id, ErrTransactionNotFound, "Transaction not found.");
-
-        var payment = await FindByExternalIdAsync(transactionId);
-        if (payment is null)
-            return Error(request.Id, ErrTransactionNotFound, "Transaction not found.");
-
-        if (payment.Status == PaymentStatus.Completed)
-            return Error(request.Id, ErrCantCancelTransaction, "Cannot cancel a completed transaction.");
-
-        if (payment.Status == PaymentStatus.Cancelled)
+        var transLock = transactionLocks.GetOrAdd(transactionId ?? "unknown", _ => new System.Threading.SemaphoreSlim(1, 1));
+        await transLock.WaitAsync();
+        try
         {
+            if (string.IsNullOrWhiteSpace(transactionId))
+                return Error(request.Id, ErrTransactionNotFound, "Transaction not found.");
+
+            var payment = await FindByExternalIdAsync(transactionId);
+            if (payment is null)
+                return Error(request.Id, ErrTransactionNotFound, "Transaction not found.");
+
+            if (payment.Status == PaymentStatus.Completed)
+                return Error(request.Id, ErrCantCancelTransaction, "Cannot cancel a completed transaction.");
+
+            if (payment.Status == PaymentStatus.Cancelled)
+            {
+                return Success(request.Id, new
+                {
+                    cancel_time = payment.UpdatedDate.ToUnixTimeMilliseconds(),
+                    transaction = payment.Id.ToString(),
+                    state = -1
+                });
+            }
+
+            payment = await this.finalizePaymentWebhookHandler.HandleAsync(
+                new FinalizePaymentWebhookCommand(
+                    transactionId,
+                    PaymentMethod.Payme,
+                    PaymentStatus.Cancelled));
+
             return Success(request.Id, new
             {
                 cancel_time = payment.UpdatedDate.ToUnixTimeMilliseconds(),
@@ -180,19 +218,10 @@ public class PaymeController : ControllerBase
                 state = -1
             });
         }
-
-        payment = await this.finalizePaymentWebhookHandler.HandleAsync(
-            new FinalizePaymentWebhookCommand(
-                transactionId,
-                PaymentMethod.Payme,
-                PaymentStatus.Cancelled));
-
-        return Success(request.Id, new
+        finally
         {
-            cancel_time = payment.UpdatedDate.ToUnixTimeMilliseconds(),
-            transaction = payment.Id.ToString(),
-            state = -1
-        });
+            transLock.Release();
+        }
     }
 
     private async Task<PaymeResponse> CheckTransactionAsync(PaymeRequest request)

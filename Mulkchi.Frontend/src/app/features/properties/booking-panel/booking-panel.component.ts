@@ -144,32 +144,32 @@ type BookingStep = 'dates' | 'hold' | 'confirm' | 'done';
           <div class="price-sheet">
             @if (nightsCount() > 0 && property().listingType === listingType.ShortTermRent) {
               <div class="price-row">
-                <span>{{ property().pricePerNight | number }} UZS × {{ nightsCount() }} tun</span>
-                <strong>{{ basePrice() | number }} UZS</strong>
+                <span>{{ property().pricePerNight | number }} {{ property().currency || 'UZS' }} × {{ nightsCount() }} tun</span>
+                <strong>{{ basePrice() | number }} {{ property().currency || 'UZS' }}</strong>
               </div>
               <div class="price-row">
                 <span>Xizmat haqi (10%)</span>
-                <strong>{{ serviceFee() | number }} UZS</strong>
+                <strong>{{ serviceFee() | number }} {{ property().currency || 'UZS' }}</strong>
               </div>
               <mat-divider></mat-divider>
               <div class="price-row price-row--total">
                 <span>Jami summa</span>
-                <strong>{{ totalPrice() | number }} UZS</strong>
+                <strong>{{ totalPrice() | number }} {{ property().currency || 'UZS' }}</strong>
               </div>
             } @else if (property().listingType === listingType.Rent && bookingForm.controls.checkInDate.value) {
               <div class="price-row">
                 <span>Oylik ijara</span>
-                <strong>{{ property().monthlyRent | number }} UZS × {{ bookingForm.controls.leaseDurationMonths.value }} oy</strong>
+                <strong>{{ property().monthlyRent | number }} {{ property().currency || 'UZS' }} × {{ bookingForm.controls.leaseDurationMonths.value }} oy</strong>
               </div>
               <mat-divider></mat-divider>
               <div class="price-row price-row--total">
                 <span>Jami muddat uchun (qaytarib beriladigan depozit hisobga olinmagan)</span>
-                <strong>{{ basePrice() | number }} UZS</strong>
+                <strong>{{ basePrice() | number }} {{ property().currency || 'UZS' }}</strong>
               </div>
             } @else if (property().listingType === listingType.Rent) {
               <div class="price-row price-row--total">
                 <span>Oylik ijara</span>
-                <strong>{{ (property().monthlyRent ?? 0) | number }} UZS</strong>
+                <strong>{{ (property().monthlyRent ?? 0) | number }} {{ property().currency || 'UZS' }}</strong>
               </div>
             } @else {
               <div class="empty-state-calc">
@@ -237,7 +237,7 @@ type BookingStep = 'dates' | 'hold' | 'confirm' | 'done';
               <mat-icon>payments</mat-icon>
               <div>
                 <span class="label">Jami to'lov</span>
-                <strong class="total-amount">{{ totalPrice() | number }} UZS</strong>
+                <strong class="total-amount">{{ totalPrice() | number }} {{ property().currency || 'UZS' }}</strong>
               </div>
             </div>
           </div>
@@ -257,11 +257,11 @@ type BookingStep = 'dates' | 'hold' | 'confirm' | 'done';
           <div class="confirm-actions-payment">
             <h4 class="payment-title">To'lov usulini tanlang:</h4>
             <div class="payment-buttons">
-              <button mat-stroked-button class="pay-btn" (click)="onConfirm()">
+              <button mat-stroked-button class="pay-btn" (click)="onConfirm('Click')">
                 <mat-icon style="color: #00a0e9;">credit_card</mat-icon>
                 <span>Click</span>
               </button>
-              <button mat-stroked-button class="pay-btn" (click)="onConfirm()">
+              <button mat-stroked-button class="pay-btn" (click)="onConfirm('Payme')">
                 <mat-icon style="color: #33cccc;">credit_card</mat-icon>
                 <span>Payme</span>
               </button>
@@ -696,7 +696,7 @@ export class BookingPanelComponent implements OnDestroy {
         }),
       );
 
-      this.holdId.set(hold.id);
+      this.holdId.set((hold as any).holdId || hold.id);
       this.holdExpiresAt.set(new Date(hold.expiresAt));
       this.startHoldTimer(new Date(hold.expiresAt));
       this.currentStep.set('confirm');
@@ -709,21 +709,19 @@ export class BookingPanelComponent implements OnDestroy {
   }
 
 
-  protected async onConfirm(): Promise<void> {
-    const { checkInDate, checkOutDate, numberOfGuests, notes } = this.bookingForm.getRawValue();
-    if (!checkInDate || !checkOutDate) return;
+  protected async onConfirm(method: string = 'Cash'): Promise<void> {
+    const hId = this.holdId();
+    if (!hId) return;
 
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
     try {
       await firstValueFrom(
-        this.bookingService.createBooking({
-          propertyId: this.property().id,
-          checkInDate,
-          checkOutDate,
-          numberOfGuests,
-          notes: notes || undefined,
+        this.bookingService.confirmPayment({
+          holdId: hId,
+          amount: this.totalPrice(),
+          method: method,
         }),
       );
 
@@ -753,7 +751,7 @@ export class BookingPanelComponent implements OnDestroy {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         // Smart contract muvaffaqiyatli imzolandi, endi backendga yuboramiz
-        this.onConfirm();
+        this.onConfirm('UsdtWeb3');
       }
     });
   }

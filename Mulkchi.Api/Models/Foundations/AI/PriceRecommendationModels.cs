@@ -42,6 +42,15 @@ public class PropertyPriceInput
     public string DescriptionText { get; set; } = string.Empty; // NLP Feature
 
     [LoadColumn(12)]
+    public string District { get; set; } = string.Empty; // NLP Feature for District
+
+    [LoadColumn(13)]
+    public float BuildingType { get; set; } // 0 = Old, 1 = New
+
+    [LoadColumn(14)]
+    public float RenovationLevel { get; set; } // 0 = Korobka, 1 = Average, 2 = EuroLux
+
+    [LoadColumn(15)]
     public float Label { get; set; }
 }
 
@@ -63,6 +72,9 @@ public class PriceRecommendationRequest
     public bool IsRenovated { get; set; }
     public bool HasElevator { get; set; }
     public float DistanceToCityCenter { get; set; }
+    public string District { get; set; } = string.Empty;
+    public BuildingType BuildingType { get; set; }
+    public RenovationLevel RenovationLevel { get; set; }
     public ListingType ListingType { get; set; }
     public string DescriptionText { get; set; } = string.Empty;
 }

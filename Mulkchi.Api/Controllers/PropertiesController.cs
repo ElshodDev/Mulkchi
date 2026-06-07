@@ -5,6 +5,7 @@ using Mulkchi.Api.Models.Foundations.Common;
 using Mulkchi.Api.Models.Foundations.Properties;
 using Mulkchi.Api.Models.Foundations.Properties.Exceptions;
 using Mulkchi.Api.Services.Foundations.Properties;
+using Mulkchi.Api.Services.Orchestrations.Properties;
 using Mulkchi.Api.Services.Foundations.AI;
 using Microsoft.FeatureManagement;
 using System.Threading.Tasks;
@@ -18,15 +19,18 @@ namespace Mulkchi.Api.Controllers;
 public class PropertiesController : ControllerBase
 {
     private readonly IPropertyService propertyService;
+    private readonly IPropertyOrchestrationService propertyOrchestrationService;
     private readonly ISemanticSearchService semanticSearchService;
     private readonly IFeatureManagerSnapshot featureManager;
 
     public PropertiesController(
         IPropertyService propertyService,
+        IPropertyOrchestrationService propertyOrchestrationService,
         ISemanticSearchService semanticSearchService,
         IFeatureManagerSnapshot featureManager)
     {
         this.propertyService = propertyService;
+        this.propertyOrchestrationService = propertyOrchestrationService;
         this.semanticSearchService = semanticSearchService;
         this.featureManager = featureManager;
     }
@@ -37,7 +41,7 @@ public class PropertiesController : ControllerBase
     {
         try
         {
-            var response = await this.propertyService.AddPropertyWithUserUpgradeAsync(dto, User);
+            var response = await this.propertyOrchestrationService.AddPropertyWithUserUpgradeAsync(dto, User);
             return Created($"api/properties/{response.Property.Id}", response);
         }
         catch (UnauthorizedAccessException ex)
@@ -234,7 +238,7 @@ public class PropertiesController : ControllerBase
         try
         {
             property.Id = id;
-            Property modifiedProperty = await this.propertyService.ModifyPropertyAsync(property);
+            Property modifiedProperty = await this.propertyOrchestrationService.ModifyPropertyAsync(property, User);
             return Ok(modifiedProperty);
         }
         catch (UnauthorizedAccessException ex)
@@ -419,7 +423,7 @@ public class PropertiesController : ControllerBase
             }
 
             property.BumpedAt = DateTimeOffset.UtcNow;
-            await this.propertyService.ModifyPropertyAsync(property);
+            await this.propertyOrchestrationService.ModifyPropertyAsync(property, User);
 
             return Ok(new
             {

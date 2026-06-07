@@ -78,9 +78,37 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
               </mat-form-field>
             </div>
 
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="premium-field full-width">
+                <mat-label>Qurilgan yili</mat-label>
+                <input matInput type="number" formControlName="yearBuilt" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="premium-field full-width">
+                <mat-label>Holati</mat-label>
+                <mat-select formControlName="condition">
+                  <mat-option value="Excellent">A'lo (Yangi)</mat-option>
+                  <mat-option value="Good">Yaxshi</mat-option>
+                  <mat-option value="NeedsRepair">Ta'mirtalab</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="premium-field full-width">
+                <mat-label>Qavat</mat-label>
+                <input matInput type="number" formControlName="floor" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="premium-field full-width">
+                <mat-label>Umumiy qavatlar</mat-label>
+                <input matInput type="number" formControlName="totalFloors" />
+              </mat-form-field>
+            </div>
+
             <div class="checkbox-grid">
               <mat-checkbox formControlName="isRenovated" color="primary">Ta'mirlangan (Yevroremont)</mat-checkbox>
-              <mat-checkbox formControlName="hasFurniture" color="primary">Mebel va jihozlar bilan</mat-checkbox>
+              <mat-checkbox formControlName="hasFurniture" color="primary">Mebel va jihozlar</mat-checkbox>
             </div>
           </form>
 
@@ -419,6 +447,10 @@ export class AiPriceDialogComponent {
       propertyType: [this.data?.propertyType || 'Apartment', Validators.required],
       area: [this.data?.area || 50, [Validators.required, Validators.min(10)]],
       rooms: [this.data?.rooms || 2, [Validators.required, Validators.min(1)]],
+      floor: [this.data?.floor || 1, [Validators.min(1)]],
+      totalFloors: [this.data?.totalFloors || 1, [Validators.min(1)]],
+      yearBuilt: [this.data?.yearBuilt || new Date().getFullYear()],
+      condition: [this.data?.condition || 'Good'],
       isRenovated: [false],
       hasFurniture: [false]
     });
@@ -431,8 +463,7 @@ export class AiPriceDialogComponent {
     
     const request = {
       ...this.form.value,
-      listingType: this.data?.listingType || 'Sale',
-      floor: 1
+      listingType: this.data?.listingType || 'Sale'
     };
     
     this.aiService.predictPrice(request).subscribe();
@@ -445,7 +476,10 @@ export class AiPriceDialogComponent {
   applyPrice() {
     const result = this.priceResult();
     if (result) {
-      this.dialogRef.close(result.recommendedPrice);
+      this.dialogRef.close({
+        price: result.recommendedPrice,
+        inputs: this.form.value
+      });
     }
   }
 

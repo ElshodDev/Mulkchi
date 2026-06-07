@@ -120,8 +120,8 @@ import { AiPriceDialogComponent } from '../components/ai-price-dialog/ai-price-d
           </div>
           
           <ng-container *ngIf="showRoomDetails()">
-            <div class="form-section">
-              <label class="section-label">Xonalar</label>
+            <div class="form-section flex-1">
+              <label class="section-label">Xonalar soni</label>
               <mat-form-field appearance="outline" class="full-width premium-field">
                 <mat-select formControlName="numberOfBedrooms">
                   <mat-option *ngFor="let n of [1,2,3,4,5,6,7,8,9,10]" [value]="n">{{n}} xona</mat-option>
@@ -130,17 +130,53 @@ import { AiPriceDialogComponent } from '../components/ai-price-dialog/ai-price-d
                 <mat-icon matPrefix>bed</mat-icon>
               </mat-form-field>
             </div>
-            <div class="form-section">
-              <label class="section-label">Hammom</label>
-              <mat-form-field appearance="outline" class="full-width premium-field">
-                <mat-select formControlName="numberOfBathrooms">
-                  <mat-option *ngFor="let n of [1,2,3,4,5]" [value]="n">{{n}} ta</mat-option>
-                  <mat-option [value]="6">5+ ta</mat-option>
-                </mat-select>
-                <mat-icon matPrefix>bathtub</mat-icon>
-              </mat-form-field>
-            </div>
           </ng-container>
+        </div>
+
+        <!-- NEW DETAILS FIELDS -->
+        <div class="form-row">
+          <div class="form-section flex-1">
+            <label class="section-label">Qavat</label>
+            <mat-form-field appearance="outline" class="full-width premium-field">
+              <mat-select formControlName="floor">
+                <mat-option *ngFor="let n of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]" [value]="n">{{n}} - qavat</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>stairs</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-section flex-1">
+            <label class="section-label">Umumiy qavatlar</label>
+            <mat-form-field appearance="outline" class="full-width premium-field">
+              <mat-select formControlName="totalFloors">
+                <mat-option *ngFor="let n of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]" [value]="n">{{n}} qavatli bino</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>domain</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-section flex-1">
+            <label class="section-label">Qurilgan yili</label>
+            <mat-form-field appearance="outline" class="full-width premium-field">
+              <input matInput type="number" formControlName="yearBuilt" placeholder="Masalan: 2024" />
+              <mat-icon matPrefix>event</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-section flex-1">
+            <label class="section-label">Holati (Remont)</label>
+            <mat-form-field appearance="outline" class="full-width premium-field">
+              <mat-select formControlName="condition">
+                <mat-option value="Excellent">Yevroremont / Yangi</mat-option>
+                <mat-option value="Good">Yaxshi (O'rtacha)</mat-option>
+                <mat-option value="NeedsRepair">Ta'mirtalab</mat-option>
+                <mat-option value="Rough">Qora suvoq (Karobka)</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>handyman</mat-icon>
+            </mat-form-field>
+          </div>
         </div>
 
 
@@ -426,20 +462,39 @@ export class StepBasicInfoComponent {
         propertyType: this.form.get('type')?.value || 'Apartment',
         listingType: this.form.get('listingType')?.value || 'Sale',
         area: this.form.get('area')?.value || 50,
-        rooms: this.form.get('numberOfBedrooms')?.value || 2
+        rooms: this.form.get('numberOfBedrooms')?.value || 2,
+        floor: this.form.get('floor')?.value || 1,
+        totalFloors: this.form.get('totalFloors')?.value || 1,
+        yearBuilt: this.form.get('yearBuilt')?.value || new Date().getFullYear(),
+        condition: this.form.get('condition')?.value || 'Good'
       }
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        let finalPrice = result;
+      if (result && result.price) {
+        let finalPrice = result.price;
         if (this.form.get('currency')?.value === 'UZS') {
-          finalPrice = result * 12600;
+          finalPrice = result.price * 12600;
         }
+        
+        // Patch the price
         const activeControl = this.getActivePriceControl();
         this.form.patchValue({ [activeControl]: finalPrice });
         this.form.get(activeControl)?.markAsTouched();
         this.form.get(activeControl)?.markAsDirty();
+
+        // Patch the user inputs back into the main form so they don't have to retype them
+        if (result.inputs) {
+          this.form.patchValue({
+            area: result.inputs.area,
+            numberOfBedrooms: result.inputs.rooms,
+            floor: result.inputs.floor,
+            totalFloors: result.inputs.totalFloors,
+            type: result.inputs.propertyType,
+            yearBuilt: result.inputs.yearBuilt,
+            condition: result.inputs.condition
+          });
+        }
       }
     });
   }

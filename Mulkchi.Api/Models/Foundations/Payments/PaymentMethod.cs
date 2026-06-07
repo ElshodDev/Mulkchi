@@ -6,5 +6,6 @@ public enum PaymentMethod
     Click,
     Uzcard,
     Humo,
-    Cash
+    Cash,
+    UsdtWeb3
 }

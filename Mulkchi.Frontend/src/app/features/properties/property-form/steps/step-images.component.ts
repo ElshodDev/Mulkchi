@@ -107,18 +107,6 @@ import { UploadedImage } from '../../../../shared/components/image-upload/image-
           </mat-form-field>
         </div>
 
-        <!-- Virtual tour URL -->
-        <div class="form-section">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Virtual tur URL (ixtiyoriy)</mat-label>
-            <input
-              matInput
-              formControlName="virtualTourUrl"
-              placeholder="https://example.com/virtual-tour"
-            />
-            <mat-hint>Masalan: 360 sanoqli tashqi xizmat yoki ichki iframe havolasi</mat-hint>
-          </mat-form-field>
-        </div>
 
         <!-- Media Upload Zone -->
         <div class="form-section">
@@ -131,6 +119,14 @@ import { UploadedImage } from '../../../../shared/components/image-upload/image-
             type="file"
             multiple
             accept="image/*"
+            class="hidden"
+            (change)="onFilesSelected($event)"
+          />
+          <input
+            #cameraInput
+            type="file"
+            accept="image/*"
+            capture="environment"
             class="hidden"
             (change)="onFilesSelected($event)"
           />
@@ -148,9 +144,14 @@ import { UploadedImage } from '../../../../shared/components/image-upload/image-
                 <div class="hint-chip"><mat-icon>bathtub</mat-icon> Vanna</div>
               </div>
 
-              <button mat-flat-button type="button" class="btn-browse">
-                Kompyuterdan tanlash
-              </button>
+              <div class="upload-buttons">
+                <button mat-flat-button type="button" class="btn-browse" (click)="$event.stopPropagation(); fileInput.click()">
+                  <mat-icon>photo_library</mat-icon> Galereya
+                </button>
+                <button mat-flat-button type="button" class="btn-camera" (click)="$event.stopPropagation(); cameraInput.click()">
+                  <mat-icon>photo_camera</mat-icon> Rasmga olish
+                </button>
+              </div>
             </div>
           </div>
 
@@ -451,7 +452,25 @@ import { UploadedImage } from '../../../../shared/components/image-upload/image-
         color: #64748b;
       }
 
+      .upload-buttons {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 8px;
+      }
+
       .btn-browse {
+        background: white !important;
+        color: #6366f1 !important;
+        border: 2px solid #6366f1 !important;
+        border-radius: 12px !important;
+        padding: 0 24px !important;
+        height: 44px !important;
+        font-weight: 600 !important;
+      }
+
+      .btn-camera {
         background: linear-gradient(135deg, #6366f1, #a855f7) !important;
         color: white !important;
         border-radius: 12px !important;

@@ -10,6 +10,7 @@ using Mulkchi.Api.Brokers.Storages;
 using Mulkchi.Api.Models.Foundations.Users;
 using Mulkchi.Api.Models.Foundations.Users.Exceptions;
 using Mulkchi.Api.Services.Foundations.Auth;
+using Mulkchi.Api.Brokers.OneId;
 
 namespace Mulkchi.Api.Services.Foundations.Users;
 
@@ -20,19 +21,22 @@ public partial class UserService : IUserService
     private readonly IDateTimeBroker dateTimeBroker;
     private readonly ICurrentUserService currentUserService;
     private readonly IFileStorageBroker fileStorageBroker;
+    private readonly IOneIdBroker oneIdBroker;
 
     public UserService(
         IStorageBroker storageBroker,
         ILoggingBroker loggingBroker,
         IDateTimeBroker dateTimeBroker,
         ICurrentUserService currentUserService,
-        IFileStorageBroker fileStorageBroker)
+        IFileStorageBroker fileStorageBroker,
+        IOneIdBroker oneIdBroker)
     {
         this.storageBroker = storageBroker;
         this.loggingBroker = loggingBroker;
         this.dateTimeBroker = dateTimeBroker;
         this.currentUserService = currentUserService;
         this.fileStorageBroker = fileStorageBroker;
+        this.oneIdBroker = oneIdBroker;
     }
 
     public ValueTask<User> AddUserAsync(User user) =>
@@ -170,6 +174,33 @@ public partial class UserService : IUserService
         this.loggingBroker.LogInformation($"User {user.Email} (ID: {userId}) auto-upgraded to Host role.");
 
         return upgradedUser;
+    }
+
+    public async ValueTask<UserResponse> VerifyHostWithOneIdAsync(string authCode)
+    {
+        Guid? userId = this.currentUserService.GetCurrentUserId();
+        if (userId is null) throw new InvalidUserException("User not authenticated.");
+
+        User user = await this.storageBroker.SelectUserByIdAsync(userId.Value);
+        if (user is null) throw new NotFoundUserException(userId.Value);
+
+        var userInfo = await this.oneIdBroker.GetUserInfoAsync(authCode);
+        if (userInfo is null) throw new InvalidUserException("Invalid OneID code.");
+
+        // Real system would compare OneId information with user inputs here
+        // For now, we just mock the verification
+        user.IsVerified = true;
+        user.Role = UserRole.Host;
+        user.CurrentMode = UserRole.Host;
+        if (user.HostSince is null)
+        {
+            user.HostSince = this.dateTimeBroker.GetCurrentDateTimeOffset();
+        }
+
+        user.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
+        User updatedUser = await this.storageBroker.UpdateUserAsync(user);
+
+        return MapToUserResponse(updatedUser);
     }
 
     private void ValidateAvatar(IFormFile file)

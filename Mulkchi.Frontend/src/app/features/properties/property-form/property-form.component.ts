@@ -22,7 +22,6 @@ import { UploadedImage } from '../../../shared/components/image-upload/image-upl
 
 import { StepAmenitiesComponent } from './steps/step-amenities.component';
 import { StepBasicInfoComponent } from './steps/step-basic-info.component';
-import { StepDetailsComponent } from './steps/step-details.component';
 import { StepImagesComponent } from './steps/step-images.component';
 import { StepLocationComponent } from './steps/step-location.component';
 
@@ -39,7 +38,6 @@ import { StepLocationComponent } from './steps/step-location.component';
     MatProgressSpinnerModule,
     StepBasicInfoComponent,
     StepLocationComponent,
-    StepDetailsComponent,
     StepAmenitiesComponent,
     StepImagesComponent,
   ],
@@ -91,22 +89,15 @@ import { StepLocationComponent } from './steps/step-location.component';
               (previous)="prevStep()"
             ></app-step-location>
 
-            <app-step-details
-              *ngSwitchCase="2"
-              [form]="detailsForm"
-              (stepComplete)="nextStep()"
-              (previous)="prevStep()"
-            ></app-step-details>
-
             <app-step-amenities
-              *ngSwitchCase="3"
+              *ngSwitchCase="2"
               [form]="amenitiesForm"
               (stepComplete)="nextStep()"
               (previous)="prevStep()"
             ></app-step-amenities>
 
             <app-step-images
-              *ngSwitchCase="4"
+              *ngSwitchCase="3"
               [form]="descriptionForm"
               [basicInfoForm]="basicInfoForm"
               [locationForm]="locationForm"
@@ -405,27 +396,24 @@ export class PropertyFormComponent implements OnInit {
 
   basicInfoForm = this.fb.group({
     title: ['', Validators.required],
-    type: ['Apartment' as PropertyType, Validators.required],
-    category: ['Residential' as PropertyCategory, Validators.required],
-    listingType: ['Sale' as ListingType, Validators.required],
-    currency: ['UZS' as Currency, Validators.required],
+    type: ['Apartment', Validators.required],
+    category: ['Residential', Validators.required],
+    listingType: ['Sale', Validators.required],
     salePrice: [null as number | null],
     monthlyRent: [null as number | null],
     pricePerNight: [null as number | null],
-    area: [null as number | null, [Validators.required, Validators.min(1)]],
+    currency: ['UZS'],
+    area: [null as number | null, [Validators.required, Validators.min(0)]],
     numberOfBedrooms: [1, [Validators.required, Validators.min(0)]],
     numberOfBathrooms: [1, [Validators.required, Validators.min(0)]],
-  });
-
-  detailsForm = this.fb.group({
-    floor: [0, [Validators.required, Validators.min(0)]],
-    totalFloors: [0, [Validators.required, Validators.min(1)]],
-    yearBuilt: [new Date().getFullYear()],
-    condition: ['Good'],
+    floor: [null as number | null],
+    totalFloors: [null as number | null],
+    yearBuilt: [null as number | null],
+    condition: ['Good', Validators.required]
   });
 
   locationForm = this.fb.group({
-    region: ['Toshkent' as UzbekistanRegion, Validators.required],
+    region: ['', Validators.required],
     city: ['', Validators.required],
     district: ['', Validators.required],
     mahalla: [''],
@@ -520,6 +508,20 @@ export class PropertyFormComponent implements OnInit {
       this.propertyId.set(id);
       this.loadProperty(id);
     }
+
+    // Auto-convert price when currency changes
+    this.basicInfoForm.get('currency')?.valueChanges.subscribe((newCurrency) => {
+      const type = this.basicInfoForm.get('listingType')?.value;
+      const activeControl = type === 'Sale' ? 'salePrice' : (type === 'Rent' ? 'monthlyRent' : 'pricePerNight');
+      const currentVal = this.basicInfoForm.get(activeControl)?.value;
+      if (currentVal) {
+        if (newCurrency === 'USD') {
+          this.basicInfoForm.patchValue({ [activeControl]: Math.round(currentVal / 12600) }, { emitEvent: false });
+        } else if (newCurrency === 'UZS') {
+          this.basicInfoForm.patchValue({ [activeControl]: currentVal * 12600 }, { emitEvent: false });
+        }
+      }
+    });
   }
 
   loadProperty(id: string): void {
@@ -552,7 +554,7 @@ export class PropertyFormComponent implements OnInit {
       numberOfBathrooms: property.numberOfBathrooms || 0,
     });
 
-    this.detailsForm.patchValue({
+    this.basicInfoForm.patchValue({
       floor: (property as any).floor ?? 0,
       totalFloors: (property as any).totalFloors ?? 1,
       yearBuilt: (property as any).yearBuilt ?? new Date().getFullYear(),
@@ -699,10 +701,10 @@ export class PropertyFormComponent implements OnInit {
       area: this.basicInfoForm.value.area ?? 0,
       numberOfBedrooms: this.basicInfoForm.value.numberOfBedrooms ?? 0,
       numberOfBathrooms: this.basicInfoForm.value.numberOfBathrooms ?? 0,
-      floor: this.detailsForm.value.floor ?? 0,
-      totalFloors: this.detailsForm.value.totalFloors ?? 1,
-      yearBuilt: this.detailsForm.value.yearBuilt ?? new Date().getFullYear(),
-      condition: this.detailsForm.value.condition ?? 'Good',
+      floor: this.basicInfoForm.value.floor ?? 0,
+      totalFloors: this.basicInfoForm.value.totalFloors ?? 1,
+      yearBuilt: this.basicInfoForm.value.yearBuilt ?? new Date().getFullYear(),
+      condition: this.basicInfoForm.value.condition ?? 'Good',
       maxGuests: this.descriptionForm.value.maxGuests ?? 0,
       region: selectedRegion ? (regionMap[selectedRegion] ?? 0) : 0,
       city: this.locationForm.value.city!,

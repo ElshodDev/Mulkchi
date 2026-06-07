@@ -41,4 +41,8 @@ export class AuthStore {
   switchMode(request: SwitchModeRequest): Observable<AuthResponse> {
     return this.authService.switchMode({ TargetMode: request.targetMode });
   }
+
+  verifyHost(authCode: string): Observable<User> {
+    return this.authService.verifyHost(authCode);
+  }
 }

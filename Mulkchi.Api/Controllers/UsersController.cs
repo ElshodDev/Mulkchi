@@ -36,6 +36,10 @@ public class UsersController : ControllerBase
         public string? PhoneNumber { get; set; }
         public UserRole? Role { get; set; }
     }
+    public sealed class VerifyHostRequest
+    {
+        public string AuthCode { get; set; } = string.Empty;
+    }
 
     public UsersController(IUserService userService)
     {
@@ -98,6 +102,30 @@ public class UsersController : ControllerBase
         try
         {
             UserResponse userResponse = await this.userService.ModifyUserAvatarAsync(avatarFile);
+            return Ok(userResponse);
+        }
+        catch (UserDependencyValidationException userDependencyValidationException)
+            when (userDependencyValidationException.InnerException is NotFoundUserException)
+        {
+            return NotFound(userDependencyValidationException.InnerException.Message);
+        }
+        catch (UserValidationException userValidationException)
+        {
+            return BadRequest(userValidationException.InnerException.Message);
+        }
+        catch (UserServiceException userServiceException)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, userServiceException.InnerException.Message);
+        }
+    }
+
+    [HttpPost("verify-host")]
+    [Authorize]
+    public async Task<ActionResult<UserResponse>> VerifyHostAsync([FromBody] VerifyHostRequest request)
+    {
+        try
+        {
+            UserResponse userResponse = await this.userService.VerifyHostWithOneIdAsync(request.AuthCode);
             return Ok(userResponse);
         }
         catch (UserDependencyValidationException userDependencyValidationException)

@@ -43,22 +43,19 @@ public sealed class CreateBookingHoldHandler : ICreateBookingHoldHandler
             .SelectActiveBookingHolds(command.PropertyId)
             .AnyAsync(hold =>
                 hold.UserId != currentUserId.Value &&
-                BookingOverlapPolicy.IsOverlapping(
-                    hold.CheckInDate,
-                    hold.CheckOutDate,
-                    command.CheckInDate,
-                    command.CheckOutDate));
+                hold.CheckInDate < command.CheckOutDate &&
+                hold.CheckOutDate > command.CheckInDate);
 
         if (holdConflict)
             throw new InvalidOperationException("Selected dates are currently held by another user.");
 
         bool bookingConflict = await this.storageBroker
             .SelectAllBookings()
-            .AnyAsync(booking => BookingOverlapPolicy.ConflictsWithBooking(
-                booking,
-                command.PropertyId,
-                command.CheckInDate,
-                command.CheckOutDate));
+            .AnyAsync(booking => 
+                booking.PropertyId == command.PropertyId &&
+                booking.Status != BookingStatus.Cancelled &&
+                booking.CheckInDate < command.CheckOutDate &&
+                booking.CheckOutDate > command.CheckInDate);
 
         if (bookingConflict)
             throw new InvalidOperationException("Selected dates are already booked.");

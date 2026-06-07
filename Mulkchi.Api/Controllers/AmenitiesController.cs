@@ -1,7 +1,9 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mulkchi.Api.Models.Foundations.Amenities;
 using Mulkchi.Api.Services.Foundations.Amenities;
+using Mulkchi.Api.Services.Foundations.Properties;
 
 namespace Mulkchi.Api.Controllers;
 
@@ -10,10 +12,12 @@ namespace Mulkchi.Api.Controllers;
 public class AmenitiesController : ControllerBase
 {
     private readonly IAmenityService amenityService;
+    private readonly IPropertyService propertyService;
 
-    public AmenitiesController(IAmenityService amenityService)
+    public AmenitiesController(IAmenityService amenityService, IPropertyService propertyService)
     {
         this.amenityService = amenityService;
+        this.propertyService = propertyService;
     }
 
     [HttpGet]
@@ -134,6 +138,20 @@ public class AmenitiesController : ControllerBase
     {
         try
         {
+            if (!User.IsInRole("Admin") && !User.IsInRole("SuperAdmin"))
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (userIdClaim is null || !Guid.TryParse(userIdClaim, out Guid currentUserId))
+                    return Unauthorized();
+
+                var property = await this.propertyService.RetrievePropertyByIdAsync(propertyId);
+                if (property is null)
+                    return NotFound(new { message = "Property not found." });
+
+                if (property.HostId != currentUserId)
+                    return Forbid();
+            }
+
             await this.amenityService.UpdatePropertyAmenitiesAsync(propertyId, dto.AmenityIds);
             return Ok(new { message = "Property amenities updated successfully." });
         }

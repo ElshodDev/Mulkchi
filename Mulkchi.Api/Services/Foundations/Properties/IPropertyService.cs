@@ -30,5 +30,4 @@ public interface IPropertyService
     ValueTask<PropertyResponse> PublishPropertyAsync(Guid propertyId);
     ValueTask<PropertyResponse> UnpublishPropertyAsync(Guid propertyId);
     ValueTask<Property> VerifyPropertyAsync(Guid propertyId);
-    ValueTask<PropertyCreateResponse> AddPropertyWithUserUpgradeAsync(PropertyCreateDto dto, ClaimsPrincipal user);
 }

@@ -23,6 +23,12 @@ public class PropertyCreateDtoValidator : AbstractValidator<PropertyCreateDto>
         RuleFor(x => x.ListingType)
             .IsInEnum().WithMessage("Noto'g'ri e'lon turi");
 
+        RuleFor(x => x.BuildingType)
+            .IsInEnum().WithMessage("Noto'g'ri bino turi");
+
+        RuleFor(x => x.RenovationLevel)
+            .IsInEnum().WithMessage("Noto'g'ri ta'mirlanish darajasi");
+
         RuleFor(x => x.Area)
             .GreaterThan(0).WithMessage("Maydon 0 dan katta bo'lishi kerak")
             .LessThanOrEqualTo(10000).WithMessage("Maydon juda katta");

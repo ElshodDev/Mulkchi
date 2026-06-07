@@ -13,17 +13,19 @@ using Mulkchi.Api.Models.Foundations.Users;
 using Mulkchi.Api.Models.Foundations.Users.Exceptions;
 using Mulkchi.Api.Services.Foundations.Auth;
 using Mulkchi.Api.Services.Foundations.Users;
+using Mulkchi.Api.Brokers.OneId;
 using Xunit;
 
 namespace Mulkchi.Api.Tests.Application.Services.Users;
 
-public class UserServiceTests
+public partial class UserServiceTests
 {
     private readonly Mock<IStorageBroker> storageBrokerMock;
     private readonly Mock<ILoggingBroker> loggingBrokerMock;
     private readonly Mock<IDateTimeBroker> dateTimeBrokerMock;
     private readonly Mock<ICurrentUserService> currentUserServiceMock;
     private readonly Mock<IFileStorageBroker> fileStorageBrokerMock;
+    private readonly Mock<IOneIdBroker> oneIdBrokerMock;
     private readonly IUserService userService;
 
     public UserServiceTests()
@@ -33,13 +35,15 @@ public class UserServiceTests
         this.dateTimeBrokerMock = new Mock<IDateTimeBroker>();
         this.currentUserServiceMock = new Mock<ICurrentUserService>();
         this.fileStorageBrokerMock = new Mock<IFileStorageBroker>();
+        this.oneIdBrokerMock = new Mock<IOneIdBroker>();
 
         this.userService = new UserService(
             this.storageBrokerMock.Object,
             this.loggingBrokerMock.Object,
             this.dateTimeBrokerMock.Object,
             this.currentUserServiceMock.Object,
-            this.fileStorageBrokerMock.Object);
+            this.fileStorageBrokerMock.Object,
+            this.oneIdBrokerMock.Object);
     }
 
     private static User CreateRandomUser()

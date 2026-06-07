@@ -81,11 +81,10 @@ public sealed class ConfirmBookingPaymentHandler : IConfirmBookingPaymentHandler
                 throw new InvalidOperationException("Hold is missing or expired.");
 
             bool bookingConflict = await this.storageBroker.SelectAllBookings().AnyAsync(booking =>
-                BookingOverlapPolicy.ConflictsWithBooking(
-                    booking,
-                    hold.PropertyId,
-                    hold.CheckInDate,
-                    hold.CheckOutDate));
+                booking.PropertyId == hold.PropertyId &&
+                booking.Status != BookingStatus.Cancelled &&
+                booking.CheckInDate < hold.CheckOutDate &&
+                booking.CheckOutDate > hold.CheckInDate);
 
             if (bookingConflict)
                 throw new InvalidOperationException("Dates are already reserved.");
@@ -133,6 +132,22 @@ public sealed class ConfirmBookingPaymentHandler : IConfirmBookingPaymentHandler
                     paymentId = payment.Id,
                     guestId = booking.GuestId
                 }),
+                CreatedDate = now
+            });
+
+            await this.storageBroker.InsertNotificationAsync(new Models.Foundations.Notifications.Notification
+            {
+                Id = Guid.NewGuid(),
+                UserId = property.HostId,
+                Type = Models.Foundations.Notifications.NotificationType.BookingRequest,
+                TitleUz = "Yangi bron tushdi! 🔔",
+                TitleRu = "Новое бронирование! 🔔",
+                TitleEn = "New booking! 🔔",
+                BodyUz = $"Sizning '{property.Title}' mulkingizga {booking.CheckInDate:dd.MM.yyyy} - {booking.CheckOutDate:dd.MM.yyyy} sanalariga yangi bron tushdi.",
+                BodyRu = $"Новое бронирование для вашего объекта '{property.Title}' с {booking.CheckInDate:dd.MM.yyyy} по {booking.CheckOutDate:dd.MM.yyyy}.",
+                BodyEn = $"New booking for your property '{property.Title}' from {booking.CheckInDate:dd.MM.yyyy} to {booking.CheckOutDate:dd.MM.yyyy}.",
+                ActionUrl = $"/bookings/{booking.Id}",
+                IsRead = false,
                 CreatedDate = now
             });
 

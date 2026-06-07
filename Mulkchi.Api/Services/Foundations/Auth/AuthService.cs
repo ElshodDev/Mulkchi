@@ -562,10 +562,9 @@ public partial class AuthService : IAuthService
             if (existingUser is not null)
             {
                 user = existingUser;
-                if (!user.EmailConfirmed || !user.IsVerified)
+                if (!user.EmailConfirmed)
                 {
                     user.EmailConfirmed = true;
-                    user.IsVerified = true;
                     user.UpdatedDate = now;
                     user = await this.storageBroker.UpdateUserAsync(user);
                 }
@@ -581,7 +580,7 @@ public partial class AuthService : IAuthService
                     Phone = string.Empty,
                     PasswordHash = string.Empty,
                     EmailConfirmed = true,
-                    IsVerified = true,
+                    IsVerified = false,
                     Role = UserRole.Guest,
                     CreatedDate = now,
                     UpdatedDate = now
@@ -646,7 +645,6 @@ public partial class AuthService : IAuthService
             if (user is null)
                 throw new InvalidAuthException("User associated with this OTP no longer exists.");
 
-            user.IsVerified = true;
             user.UpdatedDate = this.dateTimeBroker.GetCurrentDateTimeOffset();
             await this.storageBroker.UpdateUserAsync(user);
 
@@ -702,11 +700,6 @@ public partial class AuthService : IAuthService
                     user.EmailConfirmed = true;
                     user.UpdatedDate = now;
                 }
-                if (!user.IsVerified)
-                {
-                    user.IsVerified = true;
-                    user.UpdatedDate = now;
-                }
                 if (user.UpdatedDate == now)
                 {
                     user = await this.storageBroker.UpdateUserAsync(user);
@@ -723,7 +716,7 @@ public partial class AuthService : IAuthService
                     Phone = string.Empty,
                     AvatarUrl = picture,
                     EmailConfirmed = emailVerified,
-                    IsVerified = emailVerified,
+                    IsVerified = false,
                     Role = UserRole.Guest,
                     CreatedDate = now,
                     UpdatedDate = now

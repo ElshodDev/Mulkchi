@@ -19,6 +19,8 @@ public class Property
     public PropertyCategory Category { get; set; }
     public PropertyStatus Status { get; set; }
     public ListingType ListingType { get; set; }
+    public BuildingType BuildingType { get; set; } = BuildingType.OldBuilding;
+    public RenovationLevel RenovationLevel { get; set; } = RenovationLevel.Average;
     public decimal? MonthlyRent { get; set; }
     public decimal? SalePrice { get; set; }
     public decimal? PricePerNight { get; set; }
@@ -97,4 +99,7 @@ public class Property
     public DateTimeOffset CreatedDate { get; set; }
     public DateTimeOffset UpdatedDate { get; set; }
     public DateTimeOffset? DeletedDate { get; set; }
+
+    [System.ComponentModel.DataAnnotations.Timestamp]
+    public byte[] RowVersion { get; set; }
 }

@@ -66,16 +66,15 @@ export class ComparisonService {
   }
 
   addToCompare(property: PropertyResponse): boolean {
-    if (this.properties().length >= 4) {
-      return false;
-    }
-
     if (this.properties().some((p) => p.id === property.id)) {
       return false;
     }
 
     this.properties.update((prev) => {
-      const updated = [...prev, property];
+      let updated = [...prev, property];
+      if (updated.length > 2) {
+        updated = updated.slice(updated.length - 2); // Faqat oxirgi 2 tasini saqlab qoladi
+      }
       this.saveToStorage(updated);
       return updated;
     });

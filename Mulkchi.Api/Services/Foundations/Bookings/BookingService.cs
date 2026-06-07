@@ -10,11 +10,14 @@ using Mulkchi.Api.Models.Foundations.Bookings;
 using Mulkchi.Api.Brokers.Storages;
 using Mulkchi.Api.Services.Foundations.Auth;
 using Mulkchi.Api.Brokers.Notifications;
+using System.Collections.Concurrent;
+using Mulkchi.Api.Models.Foundations.Bookings.Exceptions;
 
 namespace Mulkchi.Api.Services.Foundations.Bookings
 {
     public partial class BookingService : IBookingService
     {
+        private static readonly ConcurrentDictionary<Guid, SemaphoreSlim> propertyLocks = new();
         private readonly IStorageBroker storageBroker;
         private readonly ICurrentUserService currentUserService;
         private readonly IEmailBroker emailBroker;
@@ -43,50 +46,59 @@ namespace Mulkchi.Api.Services.Foundations.Bookings
             if (property == null)
                 throw new ArgumentException("Property not found.");
 
-            var now = DateTimeOffset.UtcNow;
+            var propertyLock = propertyLocks.GetOrAdd(dto.PropertyId, _ => new SemaphoreSlim(1, 1));
+            await propertyLock.WaitAsync();
 
-            var holdConflict = await this.storageBroker
-                .SelectActiveBookingHolds(dto.PropertyId)
-                .FirstOrDefaultAsync(h =>
-                    h.CheckInDate < dto.CheckOutDate &&
-                    h.CheckOutDate > dto.CheckInDate &&
-                    h.UserId != currentUserId.Value);
-
-            if (holdConflict != null)
-                throw new InvalidOperationException("Ushbu sana boshqa foydalanuvchi tomonidan vaqtincha band qilingan.");
-
-            bool bookingConflict = await this.storageBroker.SelectAllBookings()
-                .AnyAsync(b =>
-                    b.PropertyId == dto.PropertyId &&
-                    b.Status != BookingStatus.Cancelled &&
-                    b.CheckInDate < dto.CheckOutDate &&
-                    b.CheckOutDate > dto.CheckInDate);
-
-            if (bookingConflict)
-                throw new InvalidOperationException("Tanlangan sanalar allaqachon band.");
-
-            decimal totalPrice = CalculateTotalPrice(property, dto.CheckInDate, dto.CheckOutDate);
-
-            var booking = new Booking
+            try
             {
-                Id = Guid.NewGuid(),
-                PropertyId = dto.PropertyId,
-                GuestId = currentUserId.Value,
-                CheckInDate = dto.CheckInDate,
-                CheckOutDate = dto.CheckOutDate,
-                TotalPrice = totalPrice,
-                CreatedDate = now,
-                UpdatedDate = now,
-                Status = property.IsInstantBook ? BookingStatus.Confirmed : BookingStatus.Pending
-            };
+                var holdConflict = await this.storageBroker
+                    .SelectActiveBookingHolds(dto.PropertyId)
+                    .FirstOrDefaultAsync(h =>
+                        h.CheckInDate < dto.CheckOutDate &&
+                        h.CheckOutDate > dto.CheckInDate &&
+                        h.UserId != currentUserId.Value);
 
-            ValidateBookingOnAdd(booking);
-            var addedBooking = await this.storageBroker.InsertBookingAsync(booking);
+                if (holdConflict != null)
+                    throw new InvalidOperationException("Ushbu sana boshqa foydalanuvchi tomonidan vaqtincha band qilingan.");
 
-            await SendBookingConfirmationToGuestAsync(addedBooking, property);
-            await SendNewBookingAlertToHostAsync(addedBooking, property);
+                bool bookingConflict = await this.storageBroker.SelectAllBookings()
+                    .AnyAsync(b =>
+                        b.PropertyId == dto.PropertyId &&
+                        b.Status != BookingStatus.Cancelled &&
+                        b.CheckInDate < dto.CheckOutDate &&
+                        b.CheckOutDate > dto.CheckInDate);
 
-            return ToBookingResponse(addedBooking);
+                if (bookingConflict)
+                    throw new InvalidOperationException("Tanlangan sanalar allaqachon band.");
+
+                decimal totalPrice = CalculateTotalPrice(property, dto.CheckInDate, dto.CheckOutDate);
+                var now = DateTimeOffset.UtcNow;
+
+                var booking = new Booking
+                {
+                    Id = Guid.NewGuid(),
+                    PropertyId = dto.PropertyId,
+                    GuestId = currentUserId.Value,
+                    CheckInDate = dto.CheckInDate,
+                    CheckOutDate = dto.CheckOutDate,
+                    TotalPrice = totalPrice,
+                    CreatedDate = now,
+                    UpdatedDate = now,
+                    Status = property.IsInstantBook ? BookingStatus.Confirmed : BookingStatus.Pending
+                };
+
+                ValidateBookingOnAdd(booking);
+                var addedBooking = await this.storageBroker.InsertBookingAsync(booking);
+
+                await SendBookingConfirmationToGuestAsync(addedBooking, property);
+                await SendNewBookingAlertToHostAsync(addedBooking, property);
+
+                return ToBookingResponse(addedBooking);
+            }
+            finally
+            {
+                propertyLock.Release();
+            }
         }
 
         public ValueTask<Booking> AddBookingAsync(Booking booking) =>
@@ -115,7 +127,10 @@ namespace Mulkchi.Api.Services.Foundations.Bookings
             if (!currentUserId.HasValue && !this.currentUserService.IsInRole("Admin"))
                 throw new UnauthorizedAccessException("Unauthorized.");
 
-            IQueryable<Booking> query = this.storageBroker.SelectAllBookings();
+            IQueryable<Booking> query = this.storageBroker.SelectAllBookings()
+                .Include(b => b.Guest)
+                .Include(b => b.Property)
+                    .ThenInclude(p => p.Images);
 
             if (queryParams.IsHostView)
                 query = query.Where(b => b.Property.HostId == currentUserId.Value);
@@ -237,41 +252,51 @@ namespace Mulkchi.Api.Services.Foundations.Bookings
             if (!currentUserId.HasValue)
                 throw new UnauthorizedAccessException("Foydalanuvchi aniqlanmadi.");
 
-            await this.storageBroker.DeleteExpiredBookingHoldsAsync();
+            var propertyLock = propertyLocks.GetOrAdd(propertyId, _ => new SemaphoreSlim(1, 1));
+            await propertyLock.WaitAsync();
 
-            bool holdConflict = await this.storageBroker
-                .SelectActiveBookingHolds(propertyId)
-                .AnyAsync(h =>
-                    h.CheckInDate < checkOut &&
-                    h.CheckOutDate > checkIn &&
-                    h.UserId != currentUserId.Value);
-
-            if (holdConflict)
-                throw new InvalidOperationException("Ushbu sana boshqa foydalanuvchi tomonidan vaqtincha band qilingan. Iltimos 10 daqiqadan keyin urinib ko'ring.");
-
-            bool bookingConflict = await this.storageBroker.SelectAllBookings()
-                .AnyAsync(b =>
-                    b.PropertyId == propertyId &&
-                    b.Status != BookingStatus.Cancelled &&
-                    b.CheckInDate < checkOut &&
-                    b.CheckOutDate > checkIn);
-
-            if (bookingConflict)
-                throw new InvalidOperationException("Tanlangan sanalar allaqachon band.");
-
-            var now = DateTimeOffset.UtcNow;
-            var hold = new BookingHold
+            try
             {
-                Id = Guid.NewGuid(),
-                PropertyId = propertyId,
-                UserId = currentUserId.Value,
-                CheckInDate = checkIn,
-                CheckOutDate = checkOut,
-                ExpiresAt = now.Add(HoldDuration),
-                CreatedDate = now,
-            };
+                await this.storageBroker.DeleteExpiredBookingHoldsAsync();
 
-            return await this.storageBroker.InsertBookingHoldAsync(hold);
+                bool holdConflict = await this.storageBroker
+                    .SelectActiveBookingHolds(propertyId)
+                    .AnyAsync(h =>
+                        h.CheckInDate < checkOut &&
+                        h.CheckOutDate > checkIn &&
+                        h.UserId != currentUserId.Value);
+
+                if (holdConflict)
+                    throw new InvalidOperationException("Ushbu sana boshqa foydalanuvchi tomonidan vaqtincha band qilingan. Iltimos 10 daqiqadan keyin urinib ko'ring.");
+
+                bool bookingConflict = await this.storageBroker.SelectAllBookings()
+                    .AnyAsync(b =>
+                        b.PropertyId == propertyId &&
+                        b.Status != BookingStatus.Cancelled &&
+                        b.CheckInDate < checkOut &&
+                        b.CheckOutDate > checkIn);
+
+                if (bookingConflict)
+                    throw new InvalidOperationException("Tanlangan sanalar allaqachon band.");
+
+                var now = DateTimeOffset.UtcNow;
+                var hold = new BookingHold
+                {
+                    Id = Guid.NewGuid(),
+                    PropertyId = propertyId,
+                    UserId = currentUserId.Value,
+                    CheckInDate = checkIn,
+                    CheckOutDate = checkOut,
+                    ExpiresAt = now.Add(HoldDuration),
+                    CreatedDate = now,
+                };
+
+                return await this.storageBroker.InsertBookingHoldAsync(hold);
+            }
+            finally
+            {
+                propertyLock.Release();
+            }
         }
 
         public async ValueTask ReleaseBookingHoldAsync(Guid holdId)
@@ -334,10 +359,28 @@ namespace Mulkchi.Api.Services.Foundations.Bookings
             GuestId = b.GuestId,
             CheckInDate = b.CheckInDate,
             CheckOutDate = b.CheckOutDate,
+            NumberOfGuests = b.NumberOfGuests,
             TotalPrice = b.TotalPrice,
             Status = b.Status,
+            Notes = b.Notes,
             CreatedDate = b.CreatedDate,
-            UpdatedDate = b.UpdatedDate
+            UpdatedDate = b.UpdatedDate,
+            Property = b.Property != null ? new PropertySummaryResponse
+            {
+                Id = b.Property.Id,
+                Title = b.Property.Title,
+                MainImageUrl = b.Property.Images?.FirstOrDefault(i => i.IsPrimary)?.Url,
+                City = b.Property.City,
+                District = b.Property.District
+            } : null,
+            Guest = b.Guest != null ? new GuestSummaryResponse
+            {
+                Id = b.Guest.Id,
+                FirstName = b.Guest.FirstName,
+                LastName = b.Guest.LastName,
+                AvatarUrl = b.Guest.AvatarUrl,
+                Phone = b.Guest.Phone
+            } : null
         };
 
 
@@ -474,9 +517,28 @@ namespace Mulkchi.Api.Services.Foundations.Bookings
                         : $"Booking for {booking.CheckInDate:dd.MM.yyyy} – {booking.CheckOutDate:dd.MM.yyyy} has been cancelled.",
                     ActionUrl = $"/bookings/{booking.Id}",
                     IsRead = false,
-                    CreatedDate = DateTimeOffset.UtcNow,
                     UpdatedDate = DateTimeOffset.UtcNow
                 });
+
+                if (!isConfirmed && booking.Property != null)
+                {
+                    await this.storageBroker.InsertNotificationAsync(new Models.Foundations.Notifications.Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = booking.Property.HostId,
+                        Type = Models.Foundations.Notifications.NotificationType.BookingRejected,
+                        TitleUz = "Bron bekor qilindi ❌",
+                        TitleRu = "Бронирование отменено ❌",
+                        TitleEn = "Booking Cancelled ❌",
+                        BodyUz = $"Sizning '{booking.Property.Title}' mulkingizdagi bron ({booking.CheckInDate:dd.MM.yyyy} - {booking.CheckOutDate:dd.MM.yyyy}) bekor qilindi.",
+                        BodyRu = $"Бронирование для '{booking.Property.Title}' ({booking.CheckInDate:dd.MM.yyyy} - {booking.CheckOutDate:dd.MM.yyyy}) отменено.",
+                        BodyEn = $"Booking for '{booking.Property.Title}' ({booking.CheckInDate:dd.MM.yyyy} - {booking.CheckOutDate:dd.MM.yyyy}) has been cancelled.",
+                        ActionUrl = $"/properties/{booking.PropertyId}",
+                        IsRead = false,
+                        CreatedDate = DateTimeOffset.UtcNow,
+                        UpdatedDate = DateTimeOffset.UtcNow
+                    });
+                }
             }
             catch (Exception ex)
             {

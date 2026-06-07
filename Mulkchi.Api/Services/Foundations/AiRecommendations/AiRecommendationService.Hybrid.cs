@@ -166,6 +166,7 @@ public partial class AiRecommendationService
                     Region = x.Property.Region.ToString(),
                     PropertyType = x.Property.Type.ToString(),
                     ListingType = x.Property.ListingType.ToString(),
+                    Currency = x.Property.Currency.ToString(),
                     Area = x.Property.Area,
                     RoomsCount = x.Property.NumberOfBedrooms,
                     BathroomsCount = x.Property.NumberOfBathrooms,

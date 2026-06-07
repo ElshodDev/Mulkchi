@@ -216,8 +216,15 @@ namespace Mulkchi.Api.Controllers
         {
             try
             {
+                // Authorization check: RetrieveBookingByIdAsync will throw UnauthorizedAccessException if not authorized
+                await this.bookingService.RetrieveBookingByIdAsync(booking.Id);
+
                 Booking modifiedBooking = await this.bookingService.ModifyBookingAsync(booking);
                 return Ok(modifiedBooking);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -232,8 +239,15 @@ namespace Mulkchi.Api.Controllers
         {
             try
             {
+                // Authorization check: RetrieveBookingByIdAsync will throw UnauthorizedAccessException if not authorized
+                await this.bookingService.RetrieveBookingByIdAsync(id);
+
                 Booking deletedBooking = await this.bookingService.RemoveBookingAsync(id);
                 return Ok(deletedBooking);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
             }
             catch (Exception ex)
             {

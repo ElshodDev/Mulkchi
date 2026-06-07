@@ -14,6 +14,7 @@ export interface HybridRecommendationProperty {
   region: string;
   propertyType: string;
   listingType: string;
+  currency?: string;
   area: number;
   roomsCount: number;
   bathroomsCount: number;
@@ -61,6 +62,7 @@ export interface AIPriceRequest {
   isRenovated?: boolean;
   hasMetroNearby?: boolean;
   hasPool?: boolean;
+  district?: string;
 }
 
 export interface AIPriceResponse {
@@ -237,7 +239,7 @@ export class AIService {
         ) || [],
       hostId: hybrid.hostId,
       hostName: hybrid.hostName || '',
-      currency: 'UZS' as any,
+      currency: (hybrid.currency || 'UZS') as any,
       exchangeRate: 1,
       createdDate: new Date(),
       updatedDate: new Date(),

@@ -20,6 +20,7 @@ public class HybridRecommendationProperty
     public string Region { get; set; } = string.Empty;
     public string PropertyType { get; set; } = string.Empty;
     public string ListingType { get; set; } = string.Empty;
+    public string Currency { get; set; } = string.Empty;
     public double Area { get; set; }
     public int RoomsCount { get; set; }
     public int BathroomsCount { get; set; }

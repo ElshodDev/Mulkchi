@@ -546,7 +546,7 @@ export class StepLocationComponent implements OnInit, AfterViewInit, OnDestroy {
     const street      = a.road || a.pedestrian || '';
     const houseNumber = a.house_number ? `, ${a.house_number}` : '';
     const suburb      = a.neighbourhood || a.suburb || '';
-    const city        = a.city || a.town || a.village || a.county || '';
+    const city        = a.city || a.town || a.village || a.county || (a as any).state_district || '';
     const state       = a.state || '';
 
     const regionMatch = this.matchRegion(state, city);
@@ -632,7 +632,7 @@ export class StepLocationComponent implements OnInit, AfterViewInit, OnDestroy {
     if (region && this.map) {
       this.map.setView(region.coords, 12);
       this.marker?.setLatLng(region.coords);
-      this.form.patchValue({ latitude: region.coords[0], longitude: region.coords[1] });
+      this.onLocationPicked(region.coords[0], region.coords[1]);
     }
   }
 

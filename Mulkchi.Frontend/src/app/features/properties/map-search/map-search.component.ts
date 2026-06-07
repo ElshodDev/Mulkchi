@@ -29,7 +29,7 @@ import { Router } from '@angular/router';
           } @else {
             @for (prop of properties(); track prop.id) {
               <div class="prop-card" (click)="goToDetail(prop.id)" (mouseenter)="highlightMarker(prop.id)" (mouseleave)="unhighlightMarker(prop.id)">
-                <img [src]="prop.images?.[0]?.url || 'assets/images/placeholder-house.png'" alt="House">
+                <img [src]="prop.images?.[0]?.url || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=400&q=80'" alt="House">
                 <div class="prop-info">
                   <div class="prop-price">{{ formatPrice(prop.salePrice || prop.monthlyRent || prop.pricePerNight) }}</div>
                   <div class="prop-title">{{ prop.title }}</div>

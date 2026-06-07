@@ -34,7 +34,7 @@ import { PropertyGridComponent } from './components/property-grid.component';
 import { PropertyListHeaderComponent } from './components/property-list-header.component';
 import { PropertyMapComponent } from './components/property-map.component';
 import { PropertyPaginationComponent } from './components/property-pagination.component';
-import { SavedSearch } from './components/saved-searches.component';
+import { SavedSearch, SavedSearchesComponent } from './components/saved-searches.component';
 import { UIFeedbackService } from '../../../core/services/ui-feedback.service';
 import { UIStore } from '../../../core/stores/ui.store';
 import { VoiceSearchService } from '../../../core/services/voice-search.service';
@@ -781,7 +781,20 @@ export class PropertyListComponent implements OnInit {
         
         // Show parsed info in UI if you want
         if (res.parsedParams) {
-
+          const paramsObj = res.parsedParams;
+          const details = [];
+          if (paramsObj.City) details.push(`Shahar: ${paramsObj.City}`);
+          if (paramsObj.District) details.push(`Tuman: ${paramsObj.District}`);
+          if (paramsObj.Rooms) details.push(`Xona: ${paramsObj.Rooms}`);
+          if (paramsObj.MaxPrice) details.push(`Max Narx: ${paramsObj.MaxPrice}$`);
+          
+          if (details.length > 0) {
+            this.toast.success(`✨ AI Qidiruv ishga tushdi: ${details.join(' | ')}`);
+          } else {
+            this.toast.success(`✨ AI Qidiruv natijalari tayyor`);
+          }
+        } else {
+            this.toast.success(`✨ AI Qidiruv natijalari tayyor`);
         }
         
         this.loading.set(false);
@@ -895,13 +908,6 @@ export class PropertyListComponent implements OnInit {
 
   resetFilters(): void {
     this.router.navigate([], { relativeTo: this.route, queryParams: {} });
-  }
-
-  onSavedSearchSelected(search: SavedSearch): void {
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { ...(search.query as any), page: 1 },
-    });
   }
 
   onFiltersChange(filters: PropertySearchParams): void {

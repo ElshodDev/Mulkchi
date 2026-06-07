@@ -50,6 +50,9 @@ public class PriceRecommendationService : IPriceRecommendationService
             HasElevator = request.HasElevator ? 1f : 0f,
             DistanceToCityCenter = request.DistanceToCityCenter,
             ListingType = request.ListingType == ListingType.Rent ? 1f : (request.ListingType == ListingType.ShortTermRent ? 2f : 0f),
+            BuildingType = request.BuildingType == BuildingType.NewBuilding ? 1f : 0f,
+            RenovationLevel = (float)request.RenovationLevel,
+            District = request.District ?? string.Empty,
             DescriptionText = request.DescriptionText ?? string.Empty
         };
 
@@ -76,8 +79,8 @@ public class PriceRecommendationService : IPriceRecommendationService
 
     private decimal ApplyDynamicPricing(decimal basePrice, ListingType listingType)
     {
-        // Only apply dynamic pricing to Rent/ShortTermRent
-        if (listingType == ListingType.Sale) return basePrice;
+        // Only apply dynamic pricing to ShortTermRent (Daily Rent)
+        if (listingType != ListingType.ShortTermRent) return basePrice;
 
         var now = DateTime.UtcNow;
         var multiplier = 1.0m;
@@ -101,6 +104,20 @@ public class PriceRecommendationService : IPriceRecommendationService
         }
 
         return basePrice * multiplier;
+    }
+
+    private decimal GetDistrictWeight(string? district, int region)
+    {
+        if (region != 0 || string.IsNullOrWhiteSpace(district)) return 1.0m;
+
+        var d = district.ToLowerInvariant();
+        if (d.Contains("mirabod") || d.Contains("mirobod") || d.Contains("yakkasaroy") || d.Contains("shayxontohur")) return 1.3m;
+        if (d.Contains("yunusobod") || d.Contains("yashnobod")) return 1.1m;
+        if (d.Contains("chilonzor") || d.Contains("uchtepa")) return 1.0m;
+        if (d.Contains("olmazor") || d.Contains("sergeli")) return 0.8m;
+        if (d.Contains("bektemir") || d.Contains("yangihayot")) return 0.7m;
+
+        return 1.0m;
     }
 
     public async Task TrainModelAsync()
@@ -142,7 +159,9 @@ public class PriceRecommendationService : IPriceRecommendationService
     {
         var properties = await storageBroker.Properties
             .Where(p => !p.DeletedDate.HasValue &&
-                       ((p.SalePrice.HasValue && p.SalePrice > 0) || (p.MonthlyRent.HasValue && p.MonthlyRent > 0)) &&
+                       ((p.SalePrice.HasValue && p.SalePrice > 0) || 
+                        (p.MonthlyRent.HasValue && p.MonthlyRent > 0) ||
+                        (p.PricePerNight.HasValue && p.PricePerNight > 0)) &&
                        p.Area > 0)
             .ToListAsync();
 
@@ -153,7 +172,9 @@ public class PriceRecommendationService : IPriceRecommendationService
     {
         return await storageBroker.Properties
             .Where(p => !p.DeletedDate.HasValue &&
-                       ((p.SalePrice.HasValue && p.SalePrice > 0) || (p.MonthlyRent.HasValue && p.MonthlyRent > 0)) &&
+                       ((p.SalePrice.HasValue && p.SalePrice > 0) || 
+                        (p.MonthlyRent.HasValue && p.MonthlyRent > 0) ||
+                        (p.PricePerNight.HasValue && p.PricePerNight > 0)) &&
                        p.Area > 0 &&
                        p.NumberOfBedrooms > 0 &&
                        p.NumberOfBathrooms > 0)
@@ -174,9 +195,16 @@ public class PriceRecommendationService : IPriceRecommendationService
             IsRenovated = p.IsRenovated ? 1f : 0f,
             HasElevator = p.HasElevator ? 1f : 0f,
             DistanceToCityCenter = (float)p.DistanceToCityCenter,
-            ListingType = p.ListingType == ListingType.Rent ? 1f : 0f,
+            ListingType = p.ListingType == ListingType.Rent ? 1f : (p.ListingType == ListingType.ShortTermRent ? 2f : 0f),
+            BuildingType = p.BuildingType == BuildingType.NewBuilding ? 1f : 0f,
+            RenovationLevel = (float)p.RenovationLevel,
+            District = p.District ?? string.Empty,
             DescriptionText = (p.Title + " " + p.Description) ?? string.Empty,
-            Label = (float)(p.ListingType == ListingType.Rent ? p.MonthlyRent.GetValueOrDefault() : p.SalePrice.GetValueOrDefault())
+            Label = (float)(
+                p.ListingType == ListingType.Rent ? p.MonthlyRent.GetValueOrDefault() :
+                p.ListingType == ListingType.ShortTermRent ? p.PricePerNight.GetValueOrDefault() :
+                p.SalePrice.GetValueOrDefault()
+            )
         });
 
         return mlContext.Data.LoadFromEnumerable(trainingData);
@@ -196,10 +224,13 @@ public class PriceRecommendationService : IPriceRecommendationService
             nameof(PropertyPriceInput.IsRenovated),
             nameof(PropertyPriceInput.HasElevator),
             nameof(PropertyPriceInput.DistanceToCityCenter),
-            nameof(PropertyPriceInput.ListingType)
+            nameof(PropertyPriceInput.ListingType),
+            nameof(PropertyPriceInput.BuildingType),
+            nameof(PropertyPriceInput.RenovationLevel)
         )
         .Append(mlContext.Transforms.Text.FeaturizeText("TextFeatures", nameof(PropertyPriceInput.DescriptionText)))
-        .Append(mlContext.Transforms.Concatenate("Features", "Features", "TextFeatures"))
+        .Append(mlContext.Transforms.Categorical.OneHotEncoding("DistrictEncoded", nameof(PropertyPriceInput.District)))
+        .Append(mlContext.Transforms.Concatenate("Features", "Features", "TextFeatures", "DistrictEncoded"))
         .Append(mlContext.Regression.Trainers.FastTree(
             numberOfLeaves: 20,
             numberOfTrees: 100,
@@ -225,10 +256,23 @@ public class PriceRecommendationService : IPriceRecommendationService
         if (request.HasWifi) multiplier *= 1.02m;
         if (request.HasParking) multiplier *= 1.08m;
         if (request.HasPool) multiplier *= 1.15m;
-        if (request.IsRenovated) multiplier *= 1.12m;
         if (request.HasElevator) multiplier *= 1.03m;
 
-        if (request.DistanceToCityCenter < 2) multiplier *= 1.1m;
+        // Building Type & Renovation Multipliers
+        if (request.BuildingType == BuildingType.NewBuilding) multiplier *= 1.25m; // Novostroyka qimmatroq
+        
+        multiplier *= request.RenovationLevel switch
+        {
+            RenovationLevel.ShellAndCore => 0.7m, // Korobka
+            RenovationLevel.Average => 1.0m,      // O'rtacha
+            RenovationLevel.EuroLux => 1.25m,     // Yevro
+            _ => 1.0m
+        };
+
+        // District Weight
+        multiplier *= GetDistrictWeight(request.District, request.Region);
+
+        if (request.DistanceToCityCenter > 0 && request.DistanceToCityCenter < 2) multiplier *= 1.1m;
         else if (request.DistanceToCityCenter > 10) multiplier *= 0.95m;
 
         var predictedPrice = basePrice * multiplier;
@@ -254,10 +298,21 @@ public class PriceRecommendationService : IPriceRecommendationService
         {
             return region switch
             {
-                0 => 10m, // Toshkent shahar $10 per sqm rent
+                0 => 8m, // Toshkent shahar $8 per sqm rent (O'rtacha)
                 1 => 5m,
                 2 => 4.5m,
                 _ => 3m
+            };
+        }
+
+        if (listingType == ListingType.ShortTermRent)
+        {
+            return region switch
+            {
+                0 => 0.5m, // Toshkent shahar $0.5 per sqm per night
+                1 => 0.3m,
+                2 => 0.25m,
+                _ => 0.2m
             };
         }
 

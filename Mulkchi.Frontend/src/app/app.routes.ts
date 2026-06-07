@@ -189,6 +189,26 @@ export const routes: Routes = [
         redirectTo: 'admin',
         pathMatch: 'full',
       },
+      {
+        path: 'about',
+        loadComponent: () => import('./features/info/info-page.component').then(m => m.InfoPageComponent),
+        title: 'Biz haqimizda',
+      },
+      {
+        path: 'support',
+        loadComponent: () => import('./features/info/info-page.component').then(m => m.InfoPageComponent),
+        title: 'Yordam markazi',
+      },
+      {
+        path: 'terms',
+        loadComponent: () => import('./features/info/info-page.component').then(m => m.InfoPageComponent),
+        title: 'Foydalanish shartlari',
+      },
+      {
+        path: 'privacy',
+        loadComponent: () => import('./features/info/info-page.component').then(m => m.InfoPageComponent),
+        title: 'Maxfiylik siyosati',
+      },
     ],
   },
   {

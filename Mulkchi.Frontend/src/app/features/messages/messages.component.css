@@ -494,6 +494,16 @@
   border-bottom-right-radius: 4px;
 }
 
+.message-row.own .message-bubble p.text {
+  color: white;
+  margin: 0;
+}
+
+.message-row:not(.own) .message-bubble p.text {
+  color: var(--text);
+  margin: 0;
+}
+
 .message-row:not(.own) .message-bubble {
   background: white;
   color: var(--text);

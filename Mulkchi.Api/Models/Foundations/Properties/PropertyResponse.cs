@@ -29,6 +29,8 @@ public class PropertyResponse
     public int NumberOfBathrooms { get; set; }
     public int MaxGuests { get; set; }
     public UzbekistanRegion Region { get; set; }
+    public BuildingType BuildingType { get; set; }
+    public RenovationLevel RenovationLevel { get; set; }
     public string City { get; set; }
     public string District { get; set; }
     public string Address { get; set; }

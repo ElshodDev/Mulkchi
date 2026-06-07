@@ -1,6 +1,6 @@
 import { animate, style, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, OnInit, inject, viewChild } from '@angular/core';
+import { AfterViewInit, Component, OnInit, inject, viewChild, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -89,6 +89,7 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
   private propertyService = inject(PropertyService);
   protected imageOptimizationService = inject(ImageOptimizationService);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
 
   chartCanvas = viewChild<any>('chartCanvas');
   private chart: Chart | null = null;
@@ -109,12 +110,13 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
 
   priceForm = this.fb.group({
     region: ['', Validators.required],
+    district: [''],
     propertyType: ['', Validators.required],
     area: [null as any, [Validators.required, Validators.min(1)]],
     rooms: [null as any, [Validators.required, Validators.min(1)]],
     floor: [null as any, [Validators.required, Validators.min(1)]],
     totalFloors: [null as any, [Validators.required, Validators.min(1)]],
-    buildingAge: [null as any, [Validators.required, Validators.min(0)]],
+    buildingAge: [null as any, [Validators.min(0)]],
     isRenovated: [false],
     hasFurniture: [false],
     hasParking: [false],
@@ -194,6 +196,7 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
 
   fetchSimilarProperties(request: AIPriceRequest): void {
     this.isLoadingSimilar = true;
+    this.cdr.detectChanges();
     this.propertyService
       .searchProperties({
         listingType: request.listingType as any,
@@ -204,11 +207,14 @@ export class AiPriceComponent implements OnInit, AfterViewInit {
       })
       .subscribe({
         next: (res: any) => {
-          this.similarRealProperties = res.items || [];
+          this.similarRealProperties = res?.items || [];
           this.isLoadingSimilar = false;
+          this.cdr.detectChanges();
         },
         error: () => {
+          this.similarRealProperties = [];
           this.isLoadingSimilar = false;
+          this.cdr.detectChanges();
         },
       });
   }

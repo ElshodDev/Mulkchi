@@ -138,6 +138,28 @@ public partial class Program
         if (app.Environment.IsDevelopment())
         {
             await DevelopmentDataSeeder.SeedAsync(app);
+            
+            // Randomize existing properties locations to fix straight line bug
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<StorageBroker>();
+                var allProps = await db.Properties.ToListAsync();
+                var random = new Random();
+                foreach (var p in allProps)
+                {
+                    if (p.City == "Toshkent sh." || p.City == "Toshkent")
+                    {
+                        p.Latitude = 41.311081 + (random.NextDouble() - 0.5) * 0.15;
+                        p.Longitude = 69.240562 + (random.NextDouble() - 0.5) * 0.15;
+                    }
+                    
+                    // Fix astronomical prices bug
+                    if (p.SalePrice > 10000000m) p.SalePrice = (p.SalePrice % 10000000m) / 10000m + 50000m;
+                    if (p.MonthlyRent > 100000m) p.MonthlyRent = (p.MonthlyRent % 100000m) / 1000m + 300m;
+                    if (p.PricePerNight > 10000m) p.PricePerNight = (p.PricePerNight % 10000m) / 1000m + 30m;
+                }
+                await db.SaveChangesAsync();
+            }
         }
 
         app.Run();

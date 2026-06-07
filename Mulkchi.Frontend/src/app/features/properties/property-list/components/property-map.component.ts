@@ -332,9 +332,10 @@ export class PropertyMapComponent implements AfterViewInit, OnDestroy, OnChanges
 
   private formatPrice(property: Property): string {
     const p = property as any;
-    if (p.salePrice) return `${p.salePrice.toLocaleString()} UZS`;
-    if (p.monthlyRent) return `${p.monthlyRent.toLocaleString()} UZS/oy`;
-    if (p.pricePerNight) return `${p.pricePerNight.toLocaleString()} UZS/tun`;
+    const curr = p.currency || 'UZS';
+    if (p.salePrice) return `${p.salePrice.toLocaleString()} ${curr}`;
+    if (p.monthlyRent) return `${p.monthlyRent.toLocaleString()} ${curr}/oy`;
+    if (p.pricePerNight) return `${p.pricePerNight.toLocaleString()} ${curr}/tun`;
     return "Narx so'ralmagan";
   }
 

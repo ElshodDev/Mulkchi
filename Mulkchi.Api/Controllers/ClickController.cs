@@ -25,6 +25,7 @@ public class ClickController : ControllerBase
     private static readonly TimeSpan MaxWebhookSkew = TimeSpan.FromMinutes(5);
 
     private const double AmountToleranceUzs = 0.01;
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<long, System.Threading.SemaphoreSlim> transactionLocks = new();
 
     private readonly IPaymentService paymentService;
     private readonly IConfiguration configuration;
@@ -64,45 +65,54 @@ public class ClickController : ControllerBase
             return Ok(response);
         }
 
-        var payment = await this.paymentService.RetrievePaymentByIdAsync(paymentId);
-        if (payment is null)
+        var transLock = transactionLocks.GetOrAdd(request.ClickTransId, _ => new System.Threading.SemaphoreSlim(1, 1));
+        await transLock.WaitAsync();
+        try
         {
-            response.Error = ErrOrderNotFound;
-            response.ErrorNote = "Order not found.";
+            var payment = await this.paymentService.RetrievePaymentByIdAsync(paymentId);
+            if (payment is null)
+            {
+                response.Error = ErrOrderNotFound;
+                response.ErrorNote = "Order not found.";
+                return Ok(response);
+            }
+
+            if (Math.Abs(request.Amount - (double)payment.Amount) > AmountToleranceUzs)
+            {
+                response.Error = ErrInvalidAmount;
+                response.ErrorNote = "Invalid amount.";
+                return Ok(response);
+            }
+
+            if (payment.Status == PaymentStatus.Completed)
+            {
+                response.Error = ErrAlreadyPaid;
+                response.ErrorNote = "Already paid.";
+                return Ok(response);
+            }
+
+            if (payment.Status == PaymentStatus.Cancelled)
+            {
+                response.Error = ErrTransactionCancelled;
+                response.ErrorNote = "Transaction cancelled.";
+                return Ok(response);
+            }
+
+            payment.ExternalTransactionId = request.ClickTransId.ToString();
+            payment.Status = PaymentStatus.Processing;
+            payment.Method = PaymentMethod.Click;
+            payment.UpdatedDate = DateTimeOffset.UtcNow;
+            await this.paymentService.ModifyPaymentAsync(payment);
+
+            response.Error = ErrOk;
+            response.ErrorNote = "Success";
+            response.MerchantPrepareId = (long)payment.CreatedDate.ToUnixTimeMilliseconds();
             return Ok(response);
         }
-
-        if (Math.Abs(request.Amount - (double)payment.Amount) > AmountToleranceUzs)
+        finally
         {
-            response.Error = ErrInvalidAmount;
-            response.ErrorNote = "Invalid amount.";
-            return Ok(response);
+            transLock.Release();
         }
-
-        if (payment.Status == PaymentStatus.Completed)
-        {
-            response.Error = ErrAlreadyPaid;
-            response.ErrorNote = "Already paid.";
-            return Ok(response);
-        }
-
-        if (payment.Status == PaymentStatus.Cancelled)
-        {
-            response.Error = ErrTransactionCancelled;
-            response.ErrorNote = "Transaction cancelled.";
-            return Ok(response);
-        }
-
-        payment.ExternalTransactionId = request.ClickTransId.ToString();
-        payment.Status = PaymentStatus.Processing;
-        payment.Method = PaymentMethod.Click;
-        payment.UpdatedDate = DateTimeOffset.UtcNow;
-        await this.paymentService.ModifyPaymentAsync(payment);
-
-        response.Error = ErrOk;
-        response.ErrorNote = "Success";
-        response.MerchantPrepareId = (long)payment.CreatedDate.ToUnixTimeMilliseconds();
-        return Ok(response);
     }
 
     [HttpPost("complete")]
@@ -129,44 +139,53 @@ public class ClickController : ControllerBase
             return Ok(response);
         }
 
-        var payment = await this.paymentService.RetrievePaymentByIdAsync(paymentId);
-        if (payment is null)
+        var transLock = transactionLocks.GetOrAdd(request.ClickTransId, _ => new System.Threading.SemaphoreSlim(1, 1));
+        await transLock.WaitAsync();
+        try
         {
-            response.Error = ErrOrderNotFound;
-            response.ErrorNote = "Order not found.";
-            return Ok(response);
-        }
+            var payment = await this.paymentService.RetrievePaymentByIdAsync(paymentId);
+            if (payment is null)
+            {
+                response.Error = ErrOrderNotFound;
+                response.ErrorNote = "Order not found.";
+                return Ok(response);
+            }
 
-        if (request.Error > 0)
-        {
+            if (request.Error > 0)
+            {
+                payment = await this.finalizePaymentWebhookHandler.HandleAsync(
+                    new FinalizePaymentWebhookCommand(
+                        request.ClickTransId.ToString(),
+                        PaymentMethod.Click,
+                        PaymentStatus.Cancelled));
+
+                response.Error = ErrOk;
+                response.ErrorNote = "Cancelled";
+                return Ok(response);
+            }
+
+            if (payment.Status == PaymentStatus.Completed)
+            {
+                response.Error = ErrAlreadyPaid;
+                response.ErrorNote = "Already paid.";
+                return Ok(response);
+            }
+
             payment = await this.finalizePaymentWebhookHandler.HandleAsync(
                 new FinalizePaymentWebhookCommand(
                     request.ClickTransId.ToString(),
                     PaymentMethod.Click,
-                    PaymentStatus.Cancelled));
+                    PaymentStatus.Completed));
 
             response.Error = ErrOk;
-            response.ErrorNote = "Cancelled";
+            response.ErrorNote = "Success";
+            response.MerchantConfirmId = (long)payment.UpdatedDate.ToUnixTimeMilliseconds();
             return Ok(response);
         }
-
-        if (payment.Status == PaymentStatus.Completed)
+        finally
         {
-            response.Error = ErrAlreadyPaid;
-            response.ErrorNote = "Already paid.";
-            return Ok(response);
+            transLock.Release();
         }
-
-        payment = await this.finalizePaymentWebhookHandler.HandleAsync(
-            new FinalizePaymentWebhookCommand(
-                request.ClickTransId.ToString(),
-                PaymentMethod.Click,
-                PaymentStatus.Completed));
-
-        response.Error = ErrOk;
-        response.ErrorNote = "Success";
-        response.MerchantConfirmId = (long)payment.UpdatedDate.ToUnixTimeMilliseconds();
-        return Ok(response);
     }
 
 

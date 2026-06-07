@@ -1,5 +1,5 @@
 import { animate, style, transition, trigger } from '@angular/animations';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -7,6 +7,8 @@ import {
   effect,
   inject,
   signal,
+  CUSTOM_ELEMENTS_SCHEMA,
+  PLATFORM_ID,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -63,6 +65,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
       ]),
     ]),
   ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="property-detail-container">
       <ng-container *ngIf="loading(); else checkError">
@@ -210,7 +213,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                 </button>
                 <div class="lightbox-content viewer-ar-content">
                   <model-viewer
-                    src="https://modelviewer.dev/shared-assets/models/Chair.glb"
+                    src="https://cdn.shopify.com/s/files/1/0456/5509/7511/files/Chair.glb?v=1628335986"
                     ios-src="https://modelviewer.dev/shared-assets/models/Chair.usdz"
                     alt="A 3D model of a chair"
                     ar
@@ -283,115 +286,6 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                 </div>
               </div>
 
-              <!-- 360 Virtual Tour -->
-              <div
-                class="tour-section content-card"
-                *ngIf="
-                  property()?.virtualTourUrl ||
-                  (property()?.images && property()!.images!.length > 1)
-                "
-              >
-                <div class="section-top">
-                  <h2 class="section-title">
-                    <mat-icon color="primary" style="vertical-align: middle; margin-right: 8px;"
-                      >360</mat-icon
-                    >
-                    360° Virtual Tur
-                  </h2>
-                  <span class="badge featured">Interaktiv</span>
-                </div>
-                <div class="virtual-tour-container" (click)="startVirtualTour()">
-                  <div class="tour-overlay">
-                    <button mat-fab color="primary" class="play-btn">
-                      <mat-icon>play_arrow</mat-icon>
-                    </button>
-                    <p>Virtual turni boshlash</p>
-                    <span class="tour-hint">
-                      {{
-                        property()?.virtualTourUrl
-                          ? 'Virtual tur mavjud'
-                          : property()!.images!.length + ' ta rasm · Sichqoncha bilan aylantiring'
-                      }}
-                    </span>
-                  </div>
-                  <img
-                    [src]="getFullImageUrl(property()?.images?.[0])"
-                    alt="360 Tour Preview"
-                    class="tour-bg-img"
-                  />
-                </div>
-              </div>
-
-              <!-- Immersive Tour Overlay -->
-              <div class="immersive-tour" *ngIf="isTourActive()" @fadeInUp>
-                <div class="tour-topbar">
-                  <div class="tour-topbar-left">
-                    <mat-icon>360</mat-icon>
-                    <span>360° Virtual Tur</span>
-                    <span class="tour-counter"
-                      >{{ tourCurrentIndex() + 1 }} / {{ property()!.images!.length }}</span
-                    >
-                  </div>
-                  <div class="tour-topbar-right">
-                    <button
-                      mat-icon-button
-                      (click)="toggleTourAutoplay()"
-                      [matTooltip]="isTourAutoplay() ? 'Pauza' : 'Avtomatik'"
-                    >
-                      <mat-icon>{{ isTourAutoplay() ? 'pause' : 'play_arrow' }}</mat-icon>
-                    </button>
-                    <button mat-icon-button (click)="closeTour()" matTooltip="Yopish">
-                      <mat-icon>close</mat-icon>
-                    </button>
-                  </div>
-                </div>
-
-                <div
-                  class="tour-main"
-                  (mousedown)="onTourDragStart($event)"
-                  (mousemove)="onTourDragMove($event)"
-                  (mouseup)="onTourDragEnd()"
-                  (mouseleave)="onTourDragEnd()"
-                  (touchstart)="onTourTouchStart($event)"
-                  (touchmove)="onTourTouchMove($event)"
-                  (touchend)="onTourDragEnd()"
-                >
-                  <img
-                    [src]="getFullImageUrl(property()!.images![tourCurrentIndex()])"
-                    alt="Tour Image"
-                    class="tour-main-img"
-                    [class.dragging]="isTourDragging"
-                  />
-
-                  <button class="tour-nav tour-nav-prev" (click)="tourPrev()">
-                    <mat-icon>chevron_left</mat-icon>
-                  </button>
-                  <button class="tour-nav tour-nav-next" (click)="tourNext()">
-                    <mat-icon>chevron_right</mat-icon>
-                  </button>
-
-                  <div class="tour-progress">
-                    <div
-                      class="tour-progress-bar"
-                      [style.width.%]="
-                        ((tourCurrentIndex() + 1) / property()!.images!.length) * 100
-                      "
-                    ></div>
-                  </div>
-                </div>
-
-                <div class="tour-thumbnails">
-                  @for (img of property()!.images!; track $index) {
-                    <div
-                      class="tour-thumb"
-                      [class.active]="$index === tourCurrentIndex()"
-                      (click)="tourGoTo($index)"
-                    >
-                      <img [src]="getThumbnailUrl(img)" alt="Thumb" />
-                    </div>
-                  }
-                </div>
-              </div>
 
               <!-- Location / Map -->
               <div class="location-section content-card">
@@ -511,7 +405,9 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                           class="btn-edit"
                           [routerLink]="['/host/properties/edit', property()?.id]"
                         >
-                          <mat-icon>edit</mat-icon> Tahrirlash
+                          <div class="edit-content">
+                            <mat-icon>edit</mat-icon> Tahrirlash
+                          </div>
                         </button>
                         <button
                           mat-stroked-button
@@ -621,7 +517,6 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
     `
       :host {
         --color-navy: var(--color-primary);
-        --color-gold: var(--color-gold);
         --color-gold-dark: var(--color-gold);
         --color-blue-accent: var(--color-info);
         --color-blue-dark: var(--color-info);
@@ -1220,7 +1115,19 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         border-radius: 14px !important;
         font-weight: 700 !important;
         background: var(--color-gold) !important;
-        color: var(--color-navy) !important;
+        color: #1b3a6b !important;
+        --mdc-filled-button-label-text-color: #1b3a6b !important;
+      }
+      .edit-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        color: #1b3a6b !important;
+      }
+      .edit-content mat-icon {
+        color: #1b3a6b !important;
       }
       .btn-delete {
         height: 48px !important;
@@ -1694,6 +1601,7 @@ export class PropertyDetailComponent {
   private favoritesService = inject(FavoritesService);
   private dialog = inject(MatDialog);
   private toastService = inject(ToastService);
+  private platformId = inject(PLATFORM_ID);
 
   private imageOptimizationService = inject(ImageOptimizationService);
 
@@ -2056,6 +1964,8 @@ export class PropertyDetailComponent {
   private map: L.Map | undefined;
 
   initMap(prop: any): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     const mapContainer = document.getElementById('property-detail-map');
     if (!mapContainer || !prop.latitude || !prop.longitude) return;
 

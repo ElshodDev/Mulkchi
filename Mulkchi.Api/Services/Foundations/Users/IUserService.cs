@@ -21,4 +21,5 @@ public interface IUserService
     ValueTask<User> RemoveUserByIdAsync(Guid userId);
 
     ValueTask<User> UpgradeToHostAsync(Guid userId);
+    ValueTask<UserResponse> VerifyHostWithOneIdAsync(string authCode);
 }

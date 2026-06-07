@@ -23,7 +23,10 @@ namespace Mulkchi.Api.Brokers.Storages
             this.Bookings.Include(b => b.Property).AsQueryable();
 
         public async ValueTask<Booking> SelectBookingByIdAsync(Guid bookingId)
-            => (await this.Bookings.FindAsync(bookingId))!;
+            => (await this.Bookings
+                .Include(b => b.Property)
+                .Include(b => b.Guest)
+                .FirstOrDefaultAsync(b => b.Id == bookingId))!;
 
         public async ValueTask<Booking> UpdateBookingAsync(Booking booking)
         {

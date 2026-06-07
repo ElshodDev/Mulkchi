@@ -65,6 +65,11 @@
             </mat-form-field>
 
             <mat-form-field appearance="outline">
+              <mat-label>Tuman / Shahar / Manzil</mat-label>
+              <input matInput type="text" formControlName="district" placeholder="Masalan: Chilonzor, 8-kvartal" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
               <mat-label>Mulk turi</mat-label>
               <mat-select formControlName="propertyType" required>
                 @for (type of propertyTypes; track type.value) {
@@ -296,6 +301,11 @@
                     </div>
                   }
                 </div>
+              </div>
+            } @else {
+              <div style="margin-top: 40px; text-align: center; color: #94a3b8; padding: 20px; border-radius: 12px; background: rgba(255, 255, 255, 0.05);">
+                <mat-icon style="font-size: 40px; width: 40px; height: 40px; opacity: 0.5; margin-bottom: 10px;">search_off</mat-icon>
+                <p>Ushbu hudud va parametrlar bo'yicha o'xshash mulklar topilmadi.</p>
               </div>
             }
 

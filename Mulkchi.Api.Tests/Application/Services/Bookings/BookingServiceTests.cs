@@ -17,7 +17,7 @@ using Xunit;
 
 namespace Mulkchi.Api.Tests.Application.Services.Bookings;
 
-public class BookingServiceTests
+public partial class BookingServiceTests
 {
     private readonly Mock<IStorageBroker> storageBrokerMock;
     private readonly Mock<ICurrentUserService> currentUserServiceMock;

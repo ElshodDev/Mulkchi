@@ -186,9 +186,9 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
         gap: var(--space-5);
         min-height: 42rem;
         background:
-          linear-gradient(160deg, color-mix(in srgb, var(--color-primary) 94%, transparent), color-mix(in srgb, var(--color-background) 95%, transparent)),
-          var(--color-surface-inverse);
-        color: var(--color-text-inverse, white);
+          linear-gradient(160deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7)),
+          url('/assets/images/auth-bg.png') center/cover no-repeat;
+        color: white;
       }
 
       .brand-pulse {
@@ -325,12 +325,29 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
       }
 
       @media (max-width: 900px) {
+        .auth-shell {
+          padding: 0;
+        }
+
         .auth-shell__content {
           grid-template-columns: 1fr;
+          border-radius: 0;
+          background:
+            linear-gradient(160deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)),
+            url('/assets/images/auth-bg.png') center/cover no-repeat;
+          min-height: 100dvh;
+          align-content: center;
+        }
+        
+        .auth-card {
+          background: var(--color-surface);
+          margin: var(--space-4);
+          border-radius: var(--radius-lg);
+          padding: var(--space-6);
         }
 
         .auth-shell__panel {
-          min-height: auto;
+          display: none;
         }
       }
 

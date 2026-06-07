@@ -23,6 +23,8 @@ using Mulkchi.Api.Services.Foundations.Payments;
 using Mulkchi.Api.Services.Foundations.Reviews;
 using Mulkchi.Api.Services.Foundations.Messages;
 using Mulkchi.Api.Services.Foundations.Notifications;
+using Mulkchi.Api.Services.Foundations.Verifications;
+using Mulkchi.Api.Services.Foundations.BackgroundJobs;
 using Mulkchi.Api.Services.Foundations.RentalContracts;
 using Mulkchi.Api.Services.Foundations.Favorites;
 using Mulkchi.Api.Services.Foundations.SavedSearches;
@@ -48,6 +50,7 @@ using Mulkchi.Api.Application.Bookings.ConfirmPayment;
 using Mulkchi.Api.Application.Payments.Webhooks;
 using Mulkchi.Api.Services.Background;
 using Mulkchi.Api.Services.Search;
+using Mulkchi.Api.Services.Orchestrations.Properties;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Hosting;
@@ -268,10 +271,15 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAmenityService, AmenityService>();
         services.AddScoped<IChatService, ChatService>();
         services.AddScoped<ICompareService, CompareService>();
+        
+        // Orchestration Services
+        services.AddScoped<IPropertyOrchestrationService, PropertyOrchestrationService>();
+
         services.AddScoped<IAnalyticsService, AnalyticsService>();
         services.AddScoped<IDashboardAnalyticsService, DashboardAnalyticsService>();
         services.AddScoped<IPriceRecommendationService, PriceRecommendationService>();
         services.AddScoped<ISemanticSearchService, SemanticSearchService>();
+        services.AddSingleton<Mulkchi.Api.Services.Foundations.ExchangeRates.IExchangeRateService, Mulkchi.Api.Services.Foundations.ExchangeRates.ExchangeRateService>();
 
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
 
@@ -340,7 +348,7 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddCustomBackgroundServices(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddHostedService<ExpiredBookingHoldCleanupService>();
+        services.AddHostedService<SystemCleanupBackgroundService>();
         services.AddHostedService<OutboxProcessorService>();
         services.AddHostedService<AnalyticsCollectionService>();
 
@@ -388,6 +396,7 @@ public static class ServiceCollectionExtensions
             options.UseNpgsql(connectionString));
 
         services.AddScoped<IStorageBroker, StorageBroker>();
+        services.AddScoped<Mulkchi.Api.Brokers.OneId.IOneIdBroker, Mulkchi.Api.Brokers.OneId.OneIdBrokerMock>();
         return services;
     }
 
@@ -401,7 +410,8 @@ public static class ServiceCollectionExtensions
                     .WithOrigins(
                         "http://localhost:4200",
                         "http://127.0.0.1:4200",
-                        "http://localhost:3000"
+                        "http://localhost:3000",
+                        "http://10.153.99.72:4200"
                     )
                     .AllowAnyHeader()
                     .AllowAnyMethod()
