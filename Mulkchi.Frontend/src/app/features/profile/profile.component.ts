@@ -127,6 +127,21 @@ import { NotificationService } from '../../core/services/notification.service';
                 </div>
               </div>
 
+              <!-- Wallet Card -->
+              <div class="wallet-card">
+                <div class="wallet-header">
+                  <h3>Mening Hamyonim</h3>
+                  <mat-icon>account_balance_wallet</mat-icon>
+                </div>
+                <div class="wallet-balance">
+                  <span class="currency">UZS</span>
+                  <span class="amount">{{ walletBalance() | number }}</span>
+                </div>
+                <button mat-flat-button class="btn-topup" (click)="openTopupModal()">
+                  <mat-icon>add_circle</mat-icon> Hisobni to'ldirish
+                </button>
+              </div>
+
               <!-- Quick Links Card -->
               <div class="quick-links-card">
                 <h3>{{ text().quickActions }}</h3>
@@ -142,6 +157,10 @@ import { NotificationService } from '../../core/services/notification.service';
                   <a routerLink="/favorites" class="link-item">
                     <div class="icon-box"><mat-icon>favorite</mat-icon></div>
                     <span>{{ text().favorites }}</span>
+                  </a>
+                  <a (click)="openBoostModal()" class="link-item" style="cursor: pointer;">
+                    <div class="icon-box" style="background: var(--color-gold-light); color: var(--color-navy);"><mat-icon>rocket_launch</mat-icon></div>
+                    <span>Tezkor Sotish</span>
                   </a>
                 </div>
               </div>
@@ -416,12 +435,56 @@ import { NotificationService } from '../../core/services/notification.service';
       }
 
       .profile-card,
-      .quick-links-card {
+      .quick-links-card,
+      .wallet-card {
         padding: 32px;
         background: white;
         border-radius: var(--radius-xl);
         box-shadow: var(--shadow-lg);
         margin-bottom: 24px;
+      }
+
+      .wallet-card {
+        background: linear-gradient(135deg, #1E1E1E 0%, #2A2A2A 100%);
+        color: white;
+        padding: 24px;
+      }
+      .wallet-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .wallet-header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        color: var(--color-gold);
+      }
+      .wallet-header mat-icon {
+        color: rgba(255, 255, 255, 0.5);
+      }
+      .wallet-balance {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+      .wallet-balance .amount {
+        font-size: 2.2rem;
+        font-weight: 800;
+      }
+      .wallet-balance .currency {
+        font-size: 1rem;
+        opacity: 0.8;
+      }
+      .btn-topup {
+        width: 100%;
+        background: var(--color-gold) !important;
+        color: #1E1E1E !important;
+        font-weight: 700 !important;
+      }
+      .btn-topup mat-icon {
+        margin-right: 8px;
       }
 
       .profile-card {
@@ -748,6 +811,7 @@ export class ProfileComponent implements OnInit {
   currentUser = this.authService.currentUser;
   isEditing = signal(false);
   isSaving = signal(false);
+  walletBalance = signal(0);
   stats = signal<HostDashboardStats | null>(null);
   readonly lang = computed(() => this.uiStore.language());
 
@@ -1047,8 +1111,28 @@ export class ProfileComponent implements OnInit {
     return l[b] || b;
   }
 
+  openTopupModal(): void {
+    const amount = prompt("To'ldirish summasini kiriting (UZS):", "50000");
+    if (amount && !isNaN(Number(amount))) {
+      this.walletBalance.update(b => b + Number(amount));
+      this.snackBar.open(`Hamyoningiz Click orqali ${amount} UZS ga to'ldirildi!`, 'OK', { duration: 3000 });
+    }
+  }
+
+  openBoostModal(): void {
+    if (this.walletBalance() < 25000) {
+      this.snackBar.open("VIP status olish uchun hamyoningizda kamida 25,000 UZS bo'lishi kerak. Iltimos hamyonni to'ldiring.", "OK", { duration: 5000 });
+      return;
+    }
+    const confirm = window.confirm("E'loningizni qidiruvlarda TOP 1 ga chiqish (VIP) uchun hamyoningizdan 25,000 UZS yechiladi. Rozimisiz?");
+    if (confirm) {
+      this.walletBalance.update(b => b - 25000);
+      this.snackBar.open("Tabriklaymiz! E'loningiz VIP statusiga o'tdi va TOP ga chiqdi 🚀", "Ajoyib", { duration: 5000 });
+    }
+  }
+
   onProfileAvatarError(event: any): void {
     const img = event.target as HTMLImageElement;
-    img.style.display = 'none';
+    img.src = 'assets/images/placeholder-avatar.png';
   }
 }

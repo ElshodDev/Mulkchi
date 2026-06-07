@@ -33,36 +33,36 @@ html {
   --color-warning-500: #f59e0b;
   --color-info-500: #3b82f6;
 
-  /* Ultra-Premium Palette (Zillow/Airbnb inspired) */
-  --color-navy: #006AFF; /* Primary Zillow Blue */
-  --color-navy-light: #3388FF;
-  --color-navy-dark: #004BBA;
-  --color-gold: #FF385C; /* Airbnb Rose as secondary/accent */
-  --color-gold-light: #FF5A79;
-  --color-gold-dark: #D41A3C;
+  /* Ultra-Premium Palette (Joymee inspired) */
+  --color-navy: #1E1E1E; /* Primary dark */
+  --color-navy-light: #2A2A2A;
+  --color-navy-dark: #121212;
+  --color-gold: #FACC15; /* Joymee Yellow */
+  --color-gold-light: #FDE047;
+  --color-gold-dark: #EAB308;
 
-  --color-text-primary: #222222; /* Darker, higher contrast */
-  --color-text-secondary: #717171; /* Softer gray */
-  --color-text-muted: #B0B0B0;
+  --color-text-primary: #1F2937; /* Dark gray for high contrast */
+  --color-text-secondary: #6B7280; /* Softer gray */
+  --color-text-muted: #9CA3AF;
   --color-border-soft: rgba(0, 0, 0, 0.04);
   --color-border-strong: rgba(0, 0, 0, 0.12);
-  --color-surface-canvas: #FFFFFF; /* Pure white background */
-  --color-surface-subtle: #F7F7F9;
+  --color-surface-canvas: #F8FAFC; /* Off white background */
+  --color-surface-subtle: #F1F5F9;
   --color-surface-elevated: #FFFFFF;
-  --color-surface-inverse: #222222;
+  --color-surface-inverse: #1E1E1E;
 
   /* Audit Fix Variables */
   --color-text-inverse: #FFFFFF;
-  --color-background: #FFFFFF;
+  --color-background: #F8FAFC;
   --color-surface: #FFFFFF;
   --color-surface-overlay: rgba(0, 0, 0, 0.5);
-  --color-border: #EBEBEB;
-  --color-border-focus: #222222;
-  --color-primary: #006AFF;
-  --color-primary-light: #3388FF;
-  --color-success: #00A699; /* Airbnb Green */
-  --color-error: #FF385C;
-  --color-warning: #FFB400;
+  --color-border: #E2E8F0;
+  --color-border-focus: #FACC15;
+  --color-primary: #FACC15;
+  --color-primary-light: #FDE047;
+  --color-success: #10B981; 
+  --color-error: #EF4444;
+  --color-warning: #F59E0B;
 
   --font-size-1: 0.75rem;
   --font-size-2: 0.875rem;
@@ -137,8 +137,8 @@ html {
   --color-surface-overlay: rgba(15, 23, 42, 0.85);
   --color-border: #334155;
   --color-border-focus: #C9A84C;
-  --color-primary: #2d5a9e;
-  --color-primary-light: #3d6ab0;
+  --color-primary: #EAB308;
+  --color-primary-light: #FACC15;
   --color-success: #4ade80;
   --color-error: #f87171;
   --color-warning: #fbbf24;
@@ -160,11 +160,33 @@ body {
 
 body {
   margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   background-color: var(--color-background);
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Webkit Scrollbar for Premium Feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-surface-canvas); 
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2); 
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.4); 
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2); 
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4); 
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -477,19 +499,52 @@ input:-webkit-autofill:active {
   }
 }
 
-// Modern Aesthetics: Glassmorphism and Micro-Animations
-.glass-panel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-  border-radius: var(--radius-4);
+// Global Micro-animations & Glassmorphism
+button[mat-flat-button], 
+button[mat-stroked-button], 
+button[mat-button], 
+.mat-mdc-button-base {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  font-family: 'Outfit', sans-serif !important;
+  border-radius: 12px !important;
 }
 
-.theme-dark .glass-panel {
-  background: rgba(15, 23, 42, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+button[mat-flat-button]:not([disabled]):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
+}
+
+button[mat-flat-button].mat-primary,
+button[mat-flat-button][color="primary"] {
+  background-color: var(--color-primary) !important;
+  color: #1E1E1E !important; /* Dark text on yellow button */
+  font-weight: 700 !important;
+}
+
+.mat-mdc-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+  border-radius: 20px !important;
+  border: 1px solid var(--color-border-soft);
+}
+
+.mat-mdc-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+}
+[data-theme="dark"] .glass-panel {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .hover-lift {
