@@ -24,10 +24,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatStepperModule } from '@angular/material/stepper';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 import { ListingType, Property } from '../../../core/models';
 import { BookingService } from '../../../core/services/booking.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { SmartContractModalComponent } from '../../../shared/components/smart-contract-modal/smart-contract-modal.component';
 
 type BookingStep = 'dates' | 'hold' | 'confirm' | 'done';
 
@@ -48,6 +50,7 @@ type BookingStep = 'dates' | 'hold' | 'confirm' | 'done';
     MatProgressSpinnerModule,
     MatSelectModule,
     MatStepperModule,
+    MatDialogModule,
   ],
   template: `
     <article class="booking-card glass-panel">
@@ -251,14 +254,20 @@ type BookingStep = 'dates' | 'hold' | 'confirm' | 'done';
             </div>
           }
 
-          <div class="confirm-actions">
-            <button mat-stroked-button type="button" class="back-button" (click)="cancelHold()">
-              <ng-container>
-                <mat-icon>arrow_back</mat-icon>
-                <span>Bekor qilish</span>
-              </ng-container>
-            </button>
-            <button mat-flat-button type="button" class="submit-button" [disabled]="isLoading()" (click)="onConfirm()">
+          <div class="confirm-actions-payment">
+            <h4 class="payment-title">To'lov usulini tanlang:</h4>
+            <div class="payment-buttons">
+              <button mat-stroked-button class="pay-btn" (click)="onConfirm()">
+                <mat-icon style="color: #00a0e9;">credit_card</mat-icon>
+                <span>Click</span>
+              </button>
+              <button mat-stroked-button class="pay-btn" (click)="onConfirm()">
+                <mat-icon style="color: #33cccc;">credit_card</mat-icon>
+                <span>Payme</span>
+              </button>
+            </div>
+            
+            <button mat-flat-button class="submit-button web3-btn" [disabled]="isLoading()" (click)="onConfirmWeb3()">
               @if (isLoading()) {
                 <ng-container>
                   <mat-progress-spinner diameter="20" mode="indeterminate" color="accent"></mat-progress-spinner>
@@ -266,11 +275,12 @@ type BookingStep = 'dates' | 'hold' | 'confirm' | 'done';
                 </ng-container>
               } @else {
                 <ng-container>
-                  <mat-icon>check_circle</mat-icon>
-                  <span>Bron yuborish</span>
+                  <mat-icon>currency_bitcoin</mat-icon>
+                  <span>Smart Contract (USDT Web3)</span>
                 </ng-container>
               }
             </button>
+            <button mat-stroked-button class="back-button" (click)="cancelHold()">Ortga</button>
           </div>
         </div>
       }
@@ -489,16 +499,44 @@ type BookingStep = 'dates' | 'hold' | 'confirm' | 'done';
       }
       .hold-info-box mat-icon { color: #f97316; flex-shrink: 0; }
 
-      .confirm-actions {
+      .confirm-actions-payment {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 10px;
+      }
+      .payment-title {
+        margin: 0 0 4px;
+        font-size: 0.95rem;
+        color: #64748b;
+        font-weight: 700;
+      }
+      .payment-buttons {
         display: flex;
         gap: 12px;
       }
-      .back-button {
-        height: 56px !important;
-        border-radius: 16px !important;
+      .payment-buttons .pay-btn {
+        flex: 1;
+        height: 50px !important;
+        border-radius: 14px !important;
+        border-color: #cbd5e1 !important;
+        color: #0f172a !important;
         font-weight: 700 !important;
       }
-      .confirm-actions .submit-button { flex: 1; }
+      .web3-btn {
+        background: linear-gradient(135deg, #8b5cf6, #6d28d9) !important;
+        margin-top: 4px;
+      }
+      .web3-btn:not(:disabled):hover {
+        box-shadow: 0 15px 25px rgba(139, 92, 246, 0.35) !important;
+      }
+      .back-button {
+        height: 48px !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        margin-top: 8px;
+        color: #64748b !important;
+      }
 
       .success-panel {
         display: flex;
@@ -544,6 +582,7 @@ export class BookingPanelComponent implements OnDestroy {
   private readonly bookingService = inject(BookingService);
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
+  private readonly dialog = inject(MatDialog);
 
   protected readonly isLoading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -696,6 +735,27 @@ export class BookingPanelComponent implements OnDestroy {
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  protected onConfirmWeb3(): void {
+    const usdtPrice = Math.round(this.totalPrice() / 12600);
+    const dialogRef = this.dialog.open(SmartContractModalComponent, {
+      width: '450px',
+      panelClass: 'web3-dialog-panel',
+      data: {
+        propertyName: this.property().title,
+        price: usdtPrice,
+        currency: 'USDT',
+        hostName: this.property().hostName || 'Mulk egasi'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        // Smart contract muvaffaqiyatli imzolandi, endi backendga yuboramiz
+        this.onConfirm();
+      }
+    });
   }
 
 
