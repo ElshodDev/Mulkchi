@@ -37,7 +37,8 @@ public static class DevelopmentDataSeeder
             .CreateLogger("DevelopmentDataSeeder");
         var now = DateTimeOffset.UtcNow;
 
-        List<User> existingUsers = await db.SelectAllUsers().ToListAsync();
+        // Use IncludingDeleted to avoid duplicate email constraint with soft-deleted users
+        List<User> existingUsers = await db.SelectAllUsersIncludingDeleted().ToListAsync();
         var usersToAdd = CreateUsersToAdd(existingUsers, now);
         foreach (User user in usersToAdd)
         {
