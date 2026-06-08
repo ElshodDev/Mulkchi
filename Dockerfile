@@ -6,6 +6,7 @@ WORKDIR /src
 COPY ["Mulkchi.sln", "./"]
 COPY ["Mulkchi.Api/Mulkchi.Api.csproj", "Mulkchi.Api/"]
 COPY ["Mulkchi.Api.Tests/Mulkchi.Api.Tests.csproj", "Mulkchi.Api.Tests/"]
+COPY ["Tools/ApplyMigration/ApplyMigration.csproj", "Tools/ApplyMigration/"]
 
 # Restore dependencies
 RUN dotnet restore "Mulkchi.sln"
