@@ -38,26 +38,21 @@ public class SeedController : ControllerBase
             using var scope = _serviceProvider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<IStorageBroker>();
 
-            // Delete all seeded demo properties (identified by demo description)
-            var seededProperties = await db.SelectAllProperties()
-                .Where(p => p.Description == "Yaxshi joylashuv")
-                .ToListAsync();
+            var dbContext = scope.ServiceProvider.GetRequiredService<StorageBroker>();
 
-            int deletedCount = seededProperties.Count;
-            foreach (var property in seededProperties)
-            {
-                await db.DeletePropertyByIdAsync(property.Id);
-            }
+            // Delete child entities first to avoid FK constraint violations
+            await dbContext.PropertyImages.Where(pi => pi.Property.Description == "Yaxshi joylashuv").ExecuteDeleteAsync();
+            await dbContext.PropertyAmenities.Where(pa => pa.Property.Description == "Yaxshi joylashuv").ExecuteDeleteAsync();
+            await dbContext.PropertyViews.Where(pv => pv.Property.Description == "Yaxshi joylashuv").ExecuteDeleteAsync();
 
-            // Also reset seeded users so they get re-created
-            var seededUsers = await db.SelectAllUsers()
-                .Where(u => u.Email != null && u.Email.EndsWith("@demo.mulkchi.uz"))
-                .ToListAsync();
+            // Now delete properties
+            int deletedProperties = await dbContext.Properties.Where(p => p.Description == "Yaxshi joylashuv").ExecuteDeleteAsync();
 
-            foreach (var user in seededUsers)
-            {
-                await db.DeleteUserByIdAsync(user.Id);
-            }
+            // Delete user subscriptions before users
+            await dbContext.UserSubscriptions.Where(s => s.User.Email != null && s.User.Email.EndsWith("@demo.mulkchi.uz")).ExecuteDeleteAsync();
+
+            // Now delete users
+            int deletedUsers = await dbContext.Users.Where(u => u.Email != null && u.Email.EndsWith("@demo.mulkchi.uz")).ExecuteDeleteAsync();
 
             // Re-seed everything fresh
             await DevelopmentDataSeeder.SeedProductionAsync(_serviceProvider);
@@ -65,8 +60,8 @@ public class SeedController : ControllerBase
             return Ok(new
             {
                 message = "Reset and re-seeding completed successfully.",
-                deletedProperties = deletedCount,
-                deletedUsers = seededUsers.Count
+                deletedProperties = deletedProperties,
+                deletedUsers = deletedUsers
             });
         }
         catch (Exception ex)
