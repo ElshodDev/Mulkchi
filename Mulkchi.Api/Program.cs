@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http.Features;
 using Mulkchi.Api.DataSeed;
 using Mulkchi.Api.Brokers.Storages;
+using Mulkchi.Api.Workers;
 
 namespace Mulkchi.Api;
 
@@ -93,6 +94,9 @@ public partial class Program
         {
             options.LowercaseUrls = true;
         });
+
+        // Register Background Workers
+        builder.Services.AddHostedService<TelegramBotWorker>();
 
         var startup = new Startup(builder.Configuration, builder.Environment);
         startup.ConfigureServices(builder.Services);

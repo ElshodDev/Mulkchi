@@ -177,12 +177,32 @@ public class TelegramAuthService : ITelegramAuthService
         }
         else
         {
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                FirstName = telegramUser.FirstName,
+                LastName = telegramUser.LastName ?? string.Empty,
+                Email = $"tg_{chatId}@mulkchi.uz",
+                TelegramId = chatId,
+                Role = UserRole.Guest,
+                CurrentMode = UserRole.Guest,
+                CreatedDate = DateTimeOffset.UtcNow,
+                UpdatedDate = DateTimeOffset.UtcNow,
+                EmailConfirmed = true
+            };
+
+            await _storageBroker.InsertUserAsync(user);
+
             session.TelegramChatId = chatId;
+            session.IsVerified = true;
+            session.User = user;
 
-            await _telegramBroker.SendOtpCodeAsync(chatId, session.Code);
+            await _telegramBroker.SendMessageAsync(chatId,
+                $"✅ <b>Xush kelibsiz, {telegramUser.FirstName}!</b>\n\n" +
+                "Saytga qaytishingiz mumkin.");
 
-            _logger.LogInformation("Telegram yangi userga OTP yuborildi. SessionId: {SessionId}, TelegramId: {TelegramId}",
-                sessionId, telegramUser.Id);
+            _logger.LogInformation("Telegram orqali yangi user yaratildi. SessionId: {SessionId}, UserId: {UserId}",
+                sessionId, user.Id);
         }
     }
 

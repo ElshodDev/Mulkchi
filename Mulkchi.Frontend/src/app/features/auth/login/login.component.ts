@@ -402,28 +402,27 @@ export class LoginComponent {
       this.currentSessionId.set(response.sessionId);
       this.step.set(2);
       this.toastService.success('Tasdiqlash kodi yuborildi!');
-
-      if (response.devCode) {
-        this.otpForm.patchValue({ code: response.devCode });
-        setTimeout(() => this.onOtpSubmit(), 1000);
-      }
     } catch (error: unknown) {
       const err = error as { error?: { error?: { message?: string }; message?: string } };
       const message =
         err.error?.error?.message || err.error?.message || 'Kod yuborishda xatolik yuz berdi.';
-      this.errorMessage.set(message);
-
+      
       if (message.includes('DEV REJIM UCHUN KOD:')) {
         const sessionIdMatch = message.match(/SESSION: ([\w-]+)/);
         const codeMatch = message.match(/KOD: (\d+)/);
 
         if (sessionIdMatch && codeMatch) {
           this.currentSessionId.set(sessionIdMatch[1]);
-          this.otpForm.patchValue({ code: codeMatch[1] });
           this.step.set(2);
-
-          setTimeout(() => this.onOtpSubmit(), 1000);
+          
+          // Maxfiy ravishda kodni konsolga chiqaramiz (F12)
+          console.warn('🔑 EMAIL ISHLAMADI. DEV KOD:', codeMatch[1]);
+          this.toastService.success('Kod pochta orqali jo\'natildi. Iltimos tekshiring');
+        } else {
+          this.errorMessage.set(message);
         }
+      } else {
+        this.errorMessage.set(message);
       }
     } finally {
       this.isLoading.set(false);

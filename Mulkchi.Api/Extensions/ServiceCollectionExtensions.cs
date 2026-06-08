@@ -230,7 +230,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ILoggingBroker, LoggingBroker>();
         services.AddTransient<IDateTimeBroker, DateTimeBroker>();
         services.AddTransient<Mulkchi.Api.Brokers.Tokens.ITokenBroker, Mulkchi.Api.Brokers.Tokens.TokenBroker>();
-        services.AddSingleton<IFileStorageBroker, LocalFileStorageBroker>();
+        services.AddSingleton<IFileStorageBroker, CloudinaryStorageBroker>();
         services.AddTransient<Mulkchi.Api.Brokers.Payments.IPaymeBroker, Mulkchi.Api.Brokers.Payments.PaymeBroker>();
         services.AddTransient<Mulkchi.Api.Brokers.Payments.IClickBroker, Mulkchi.Api.Brokers.Payments.ClickBroker>();
 

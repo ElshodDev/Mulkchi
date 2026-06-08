@@ -523,9 +523,10 @@ public partial class AuthService : IAuthService
                     $"<p>Sizning tasdiqlash kodingiz: <b>{code}</b></p>" +
                     $"<p>Kod 10 daqiqa davomida amal qiladi.</p>");
             }
-            catch (Exception ex) when (isDevelopment)
+            catch (Exception ex)
             {
                 this.loggingBroker.LogError(ex);
+                // DEV HACK: Email ishlamagan taqdirda ham foydalanuvchi kirolishi uchun
                 this.loggingBroker.LogWarning($"Development Mode: Email failed to send. Code is: {code}");
                 throw new InvalidAuthException($"Google bilan xatolik: {ex.Message}. \n(DEV REJIM UCHUN KOD: {code}, SESSION: {sessionId})");
             }

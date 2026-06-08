@@ -84,7 +84,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           error.error?.message ||
           "So'rovni qayta tekshirib ko'ring.";
 
-        toastService.warning(validationMessage);
+        if (!isRefreshRequest) {
+          toastService.warning(validationMessage);
+        }
       } else if (error.status === 401) {
         authService.clearAuth(false);
         void router.navigate(['/auth/login'], {
