@@ -76,7 +76,13 @@ public class SeedController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = "Error during reset", error = ex.Message });
+            return StatusCode(500, new 
+            { 
+                message = "Error during reset", 
+                error = ex.Message,
+                innerError = ex.InnerException?.Message,
+                stackTrace = ex.StackTrace
+            });
         }
     }
 }
