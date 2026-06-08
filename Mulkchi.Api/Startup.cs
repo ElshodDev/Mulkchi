@@ -159,7 +159,7 @@ public class Startup
             .AddCheck("file-storage", () => HealthCheckResult.Healthy());
     }
 
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IRecurringJobManager recurringJobManager)
     {
         if (env.IsDevelopment())
         {
@@ -225,18 +225,18 @@ public class Startup
             endpoints.MapHub<NotificationHub>("/hubs/notifications");
         });
 
-        ScheduleRecurringJobs();
+        ScheduleRecurringJobs(recurringJobManager);
     }
 
-    private void ScheduleRecurringJobs()
+    private void ScheduleRecurringJobs(IRecurringJobManager recurringJobManager)
     {
-        RecurringJob.AddOrUpdate<SubscriptionRenewalService>(
+        recurringJobManager.AddOrUpdate<SubscriptionRenewalService>(
             "subscription-renewal",
             x => x.RenewExpiredSubscriptionsAsync(),
             "0 2 * * *",
             timeZone: TimeZoneInfo.Utc);
 
-        RecurringJob.AddOrUpdate<SubscriptionRenewalService>(
+        recurringJobManager.AddOrUpdate<SubscriptionRenewalService>(
             "subscription-expiration-reminders",
             x => x.SendExpirationRemindersAsync(),
             "0 8 * * *",
