@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Mulkchi.Api.DataSeed;
 using Mulkchi.Api.Brokers.Storages;
 using Mulkchi.Api.Workers;
+using Hangfire;
 
 namespace Mulkchi.Api;
 
@@ -125,7 +126,8 @@ public partial class Program
             }
         });
 
-        startup.Configure(app, app.Environment);
+        var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
+        startup.Configure(app, app.Environment, recurringJobManager);
 
         var runMigrations = builder.Configuration
             .GetValue<bool>("RunMigrationsOnStartup", false);
