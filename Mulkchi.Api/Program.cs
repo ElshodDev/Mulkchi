@@ -65,6 +65,17 @@ public partial class Program
             builder.Configuration["ConnectionStrings:DefaultConnection"] = connectionString;
         }
 
+        // Convert postgres:// URI to ADO.NET Connection String
+        if (!string.IsNullOrWhiteSpace(connectionString) && (connectionString.StartsWith("postgres://") || connectionString.StartsWith("postgresql://")))
+        {
+            var uri = new Uri(connectionString);
+            var userInfo = uri.UserInfo.Split(':');
+            var dbName = uri.AbsolutePath.TrimStart('/');
+            connectionString = $"Host={uri.Host};Database={dbName};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true;";
+            builder.Configuration["ConnectionStrings:DefaultConnection"] = connectionString;
+            builder.Configuration["MULKCHI_DB_CONNECTION_STRING"] = connectionString;
+        }
+
         builder.Services.Configure<FormOptions>(options =>
         {
             options.MultipartBodyLengthLimit = 10 * 1024 * 1024;
