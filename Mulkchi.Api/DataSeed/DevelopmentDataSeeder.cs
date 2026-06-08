@@ -21,8 +21,17 @@ public static class DevelopmentDataSeeder
     public static async Task SeedAsync(WebApplication app)
     {
         if (!app.Environment.IsDevelopment()) return;
+        await SeedInternalAsync(app.Services);
+    }
 
-        using var scope = app.Services.CreateScope();
+    public static async Task SeedProductionAsync(IServiceProvider services)
+    {
+        await SeedInternalAsync(services);
+    }
+
+    private static async Task SeedInternalAsync(IServiceProvider services)
+    {
+        using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<IStorageBroker>();
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
             .CreateLogger("DevelopmentDataSeeder");
@@ -320,11 +329,11 @@ public static class DevelopmentDataSeeder
                 Category = template.Type == PropertyType.Office ? PropertyCategory.Commercial : PropertyCategory.Residential,
                 Status = PropertyStatus.Active,
                 ListingType = template.ListingType,
-                MonthlyRent = monthlyRent,
-                SalePrice = salePrice,
-                PricePerNight = pricePerNight,
-                Price = salePrice ?? monthlyRent ?? pricePerNight ?? 0,
-                SecurityDeposit = template.ListingType == ListingType.Rent ? monthlyRent * 1.5m : null,
+                MonthlyRent = monthlyRent * 12600m,
+                SalePrice = salePrice * 12600m,
+                PricePerNight = pricePerNight * 12600m,
+                Price = (salePrice ?? monthlyRent ?? pricePerNight ?? 0) * 12600m,
+                SecurityDeposit = template.ListingType == ListingType.Rent ? monthlyRent * 12600m * 1.5m : null,
                 Area = template.Area + (i % 3) * 5,
                 NumberOfBedrooms = template.Beds,
                 NumberOfBathrooms = template.Baths,
@@ -367,7 +376,7 @@ public static class DevelopmentDataSeeder
                 IsAccessible = i % 7 == 0,
                 BuildingType = template.BuildingType,
                 RenovationLevel = template.RenovationLevel,
-                Currency = Currency.USD,
+                Currency = Currency.UZS,
                 ExchangeRate = 1.0m,
                 HostId = hosts[i % hosts.Count].Id,
                 AverageRating = 4.0m + (i % 10) * 0.1m,
