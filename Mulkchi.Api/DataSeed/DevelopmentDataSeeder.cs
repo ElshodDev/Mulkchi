@@ -316,9 +316,47 @@ public static class DevelopmentDataSeeder
             string photoId = validUnsplashIds[i % validUnsplashIds.Length];
             string demoImgUrl = $"https://images.unsplash.com/photo-{photoId}?auto=format&fit=crop&w=800&q=80";
 
-            decimal? monthlyRent = template.ListingType == ListingType.Rent ? template.Price + (i % 5) * 50m : null;
-            decimal? salePrice = template.ListingType == ListingType.Sale ? template.Price + (i % 7) * 2000m : null;
-            decimal? pricePerNight = template.ListingType == ListingType.ShortTermRent ? template.Price + (i % 3) * 5m : null;
+            // Smart dynamic pricing based on user's real-world examples
+            decimal baseRentUsd = template.Beds == 1 ? 250 : template.Beds == 2 ? 350 : 450;
+            decimal baseSaleUsd = template.Beds == 1 ? 35000 : template.Beds == 2 ? 50000 : 70000;
+            decimal baseNightUsd = template.Beds == 1 ? 25 : template.Beds == 2 ? 35 : 50;
+
+            // Premium for central districts
+            if (template.District == "Mirobod" || template.District == "Yakkasaroy" || template.District == "Mirzo Ulug'bek" || template.District == "Shayxontohur")
+            {
+                baseRentUsd *= 1.3m; baseSaleUsd *= 1.3m; baseNightUsd *= 1.3m;
+            }
+            // Discount for periphery
+            else if (template.District == "Sergeli" || template.District == "Uchtepa")
+            {
+                baseRentUsd *= 0.9m; baseSaleUsd *= 0.9m; baseNightUsd *= 0.9m;
+            }
+
+            // New building premium
+            if (template.BuildingType == BuildingType.NewBuilding)
+            {
+                baseRentUsd *= 1.2m; baseSaleUsd *= 1.2m; baseNightUsd *= 1.2m;
+            }
+
+            // User's exact examples:
+            // "Olmazor qoraqamish 3 xonali eski dom $350"
+            if (template.District == "Olmazor" && template.Beds >= 3 && template.BuildingType == BuildingType.OldBuilding)
+            {
+                baseRentUsd = 350m;
+            }
+            // "Sergeli 2 xonali yangi dom 6 kishiga jami 4.8 million (taxminan $380)"
+            if (template.District == "Sergeli" && template.Beds == 2 && template.BuildingType == BuildingType.NewBuilding)
+            {
+                baseRentUsd = 380m;
+            }
+
+            // Convert to UZS and add small random variation
+            decimal? monthlyRent = template.ListingType == ListingType.Rent
+                ? Math.Round((baseRentUsd * 12600m) + (i % 5) * 50_000m) : null;
+            decimal? salePrice = template.ListingType == ListingType.Sale
+                ? Math.Round((baseSaleUsd * 12600m) + (i % 7) * 2_000_000m) : null;
+            decimal? pricePerNight = template.ListingType == ListingType.ShortTermRent
+                ? Math.Round((baseNightUsd * 12600m) + (i % 3) * 10_000m) : null;
 
             properties.Add(new Property
             {
@@ -329,11 +367,11 @@ public static class DevelopmentDataSeeder
                 Category = template.Type == PropertyType.Office ? PropertyCategory.Commercial : PropertyCategory.Residential,
                 Status = PropertyStatus.Active,
                 ListingType = template.ListingType,
-                MonthlyRent = monthlyRent * 12600m,
-                SalePrice = salePrice * 12600m,
-                PricePerNight = pricePerNight * 12600m,
-                Price = (salePrice ?? monthlyRent ?? pricePerNight ?? 0) * 12600m,
-                SecurityDeposit = template.ListingType == ListingType.Rent ? monthlyRent * 12600m * 1.5m : null,
+                MonthlyRent = monthlyRent,
+                SalePrice = salePrice,
+                PricePerNight = pricePerNight,
+                Price = salePrice ?? monthlyRent ?? pricePerNight ?? 0,
+                SecurityDeposit = template.ListingType == ListingType.Rent ? monthlyRent * 1.5m : null,
                 Area = template.Area + (i % 3) * 5,
                 NumberOfBedrooms = template.Beds,
                 NumberOfBathrooms = template.Baths,
