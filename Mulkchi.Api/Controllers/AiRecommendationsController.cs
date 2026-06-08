@@ -359,97 +359,116 @@ public class AiRecommendationsController : ControllerBase
         if (request == null || request.Area <= 0)
             return BadRequest("Noto'g'ri ma'lumotlar kiritildi");
 
+        // --- SOTISH NARXI (USD/m²) ---
         decimal basePricePerSqm = request.Region switch
         {
-            "Toshkent" => 1280m,
-            "ToshkentViloyat" => 620m,
-            "Samarqand" => 580m,
-            "Buxoro" => 510m,
-            "Namangan" => 440m,
-            "Andijon" => 460m,
-            "Fargona" => 450m,
-            "Qashqadaryo" => 390m,
-            "Surxondaryo" => 360m,
-            "Xorazm" => 390m,
-            "Navoiy" => 420m,
-            "Jizzax" => 380m,
-            "Sirdaryo" => 370m,
-            "Qoraqalpogiston" => 340m,
-            _ => 480m
+            "Toshkent" => 750m,
+            "ToshkentViloyat" => 400m,
+            "Samarqand" => 380m,
+            "Buxoro" => 330m,
+            "Namangan" => 280m,
+            "Andijon" => 290m,
+            "Fargona" => 285m,
+            "Qashqadaryo" => 250m,
+            "Surxondaryo" => 230m,
+            "Xorazm" => 250m,
+            "Navoiy" => 270m,
+            "Jizzax" => 240m,
+            "Sirdaryo" => 235m,
+            "Qoraqalpogiston" => 215m,
+            _ => 300m
+        };
+
+        // --- IJARA NARXI (USD/oy, 1 xonali uchun bazaviy) ---
+        decimal baseRentUsd = request.Region switch
+        {
+            "Toshkent" => 180m,
+            "ToshkentViloyat" => 100m,
+            "Samarqand" => 90m,
+            "Buxoro" => 80m,
+            "Namangan" => 70m,
+            "Andijon" => 70m,
+            "Fargona" => 75m,
+            "Qashqadaryo" => 65m,
+            "Surxondaryo" => 60m,
+            "Xorazm" => 65m,
+            "Navoiy" => 70m,
+            "Jizzax" => 65m,
+            "Sirdaryo" => 60m,
+            "Qoraqalpogiston" => 55m,
+            _ => 80m
         };
 
         decimal typeMultiplier = request.PropertyType switch
         {
             "Apartment" => 1.00m,
-            "House" => 1.12m,
-            "Villa" => 1.85m,
-            "Office" => 1.45m,
-            "Commercial" => 1.75m,
-            "Studio" => 1.15m,
+            "House" => 1.10m,
+            "Villa" => 1.70m,
+            "Office" => 1.40m,
+            "Commercial" => 1.60m,
+            "Studio" => 0.85m,
             _ => 1.00m
         };
 
+        // Xona soni uchun: har qo'shimcha xona +40-60% qo'shadi (lekin har xona uchun kamroq)
         decimal roomMultiplier = request.Rooms switch
         {
-            1 => 1.22m,
-            2 => 1.10m,
-            3 => 1.00m,
-            4 => 0.95m,
-            5 => 0.90m,
-            _ => 0.85m
+            1 => 1.00m,
+            2 => 1.45m,
+            3 => 1.85m,
+            4 => 2.20m,
+            5 => 2.50m,
+            _ => 2.80m
         };
 
         decimal floorMultiplier = 1.0m;
         if (request.TotalFloors > 0)
         {
-            if (request.Floor == 1) floorMultiplier = 0.92m;
-            else if (request.Floor == request.TotalFloors) floorMultiplier = 0.96m;
-            else floorMultiplier = 1.04m;
+            if (request.Floor == 1) floorMultiplier = 0.94m;
+            else if (request.Floor == request.TotalFloors) floorMultiplier = 0.97m;
+            else floorMultiplier = 1.02m;
         }
 
         decimal ageMultiplier = (request.BuildingAge ?? 0) switch
         {
-            <= 0 => 1.18m,
-            <= 3 => 1.12m,
+            <= 0 => 1.15m,
+            <= 3 => 1.10m,
             <= 10 => 1.05m,
             <= 25 => 0.95m,
-            _ => 0.85m
+            _ => 0.88m
         };
 
         decimal districtMultiplier = 1.0m;
-        if (!string.IsNullOrEmpty(request.District)) 
+        if (!string.IsNullOrEmpty(request.District))
         {
             string districtLower = request.District.ToLower();
-            
-            // Toshkent tumanlari uchun maxsus koeffitsientlar
             if (districtLower.Contains("yakkasaroy") || districtLower.Contains("mirobod") || districtLower.Contains("shayxontohur"))
-                districtMultiplier = 1.25m; // Markaz, qimmat
+                districtMultiplier = 1.30m;
             else if (districtLower.Contains("yunusobod") || districtLower.Contains("mirzo ulug'bek") || districtLower.Contains("mirzo ulugbek"))
-                districtMultiplier = 1.15m;
+                districtMultiplier = 1.18m;
             else if (districtLower.Contains("chilonzor") || districtLower.Contains("uchtepa") || districtLower.Contains("yashnobod") || districtLower.Contains("olmazor"))
                 districtMultiplier = 1.05m;
             else if (districtLower.Contains("sergeli") || districtLower.Contains("yangihayot") || districtLower.Contains("bektemir"))
-                districtMultiplier = 0.90m; // Chekka tumanlar
-            else 
-                districtMultiplier = 1.05m; // Boshqa noma'lum tuman ko'rsatilsa ozgina ishonch bonusi
+                districtMultiplier = 0.88m;
+            else
+                districtMultiplier = 1.00m;
         }
 
         var factors = new Dictionary<string, decimal>();
-        if (request.IsRenovated) { factors["Ta'mirlangan"] = 0.15m; }
-        if (request.HasMetroNearby) { factors["Metro yaqin"] = 0.12m; }
+        if (request.IsRenovated) { factors["Ta'mirlangan"] = 0.12m; }
+        if (request.HasMetroNearby) { factors["Metro yaqin"] = 0.10m; }
         if (request.HasFurniture) { factors["Mebel"] = 0.08m; }
-        if (request.HasParking) { factors["Avtoturargoh"] = 0.06m; }
-        if (request.HasPool) { factors["Hovuz"] = 0.10m; }
-        if (request.HasSecurity) { factors["Qo'riqlash"] = 0.05m; }
-        if (request.HasAirConditioning) { factors["Konditsioner"] = 0.04m; }
-        if (request.HasElevator) { factors["Lift"] = 0.03m; }
+        if (request.HasParking) { factors["Avtoturargoh"] = 0.05m; }
+        if (request.HasPool) { factors["Hovuz"] = 0.08m; }
+        if (request.HasSecurity) { factors["Qo'riqlash"] = 0.04m; }
+        if (request.HasAirConditioning) { factors["Konditsioner"] = 0.03m; }
+        if (request.HasElevator) { factors["Lift"] = 0.02m; }
         if (request.HasWifi) { factors["WiFi"] = 0.02m; }
 
         decimal totalBonus = factors.Values.Sum();
 
         decimal mathematicalPricePerSqm = basePricePerSqm
             * typeMultiplier
-            * roomMultiplier
             * floorMultiplier
             * ageMultiplier
             * districtMultiplier
@@ -559,29 +578,54 @@ public class AiRecommendationsController : ControllerBase
             _logger.LogError(ex, "Error while blending DB prices in PredictPriceAsync");
         }
 
-        decimal recommendedPrice = finalPricePerSqm * request.Area;
+        decimal recommendedPrice;
 
         if (request.ListingType == "Rent")
         {
-            recommendedPrice = recommendedPrice * 0.007m;
-            finalPricePerSqm = recommendedPrice / request.Area;
-            
+            // To'g'ridan-to'g'ri ijara narxini hisoblash (sotish narxidan emas)
+            recommendedPrice = baseRentUsd
+                * roomMultiplier
+                * typeMultiplier
+                * floorMultiplier
+                * ageMultiplier
+                * districtMultiplier
+                * (1 + totalBonus);
+
             if (dbRentMedianPerSqm.HasValue)
             {
-                finalPricePerSqm = (finalPricePerSqm * 0.5m) + (dbRentMedianPerSqm.Value * 0.5m);
-                recommendedPrice = finalPricePerSqm * request.Area;
+                decimal dbRentTotal = dbRentMedianPerSqm.Value * (decimal)request.Area;
+                recommendedPrice = (recommendedPrice * 0.6m) + (dbRentTotal * 0.4m);
             }
+
+            // Olmazor eski dom 3 xona — $350, Sergeli yangi dom 1 xona — ~$150 ni tekshirish
+            // Minimum: $80, Maximum: $1500
+            recommendedPrice = Math.Max(80m, Math.Min(1500m, recommendedPrice));
+            finalPricePerSqm = recommendedPrice / (decimal)request.Area;
         }
         else if (request.ListingType == "ShortTermRent")
         {
-            recommendedPrice = (recommendedPrice * 0.007m) * 0.025m;
-            finalPricePerSqm = recommendedPrice / request.Area;
-            
+            // Kunlik ijara: oylik narxning ~3.5% i
+            decimal monthlyEquivalent = baseRentUsd
+                * roomMultiplier
+                * typeMultiplier
+                * floorMultiplier
+                * ageMultiplier
+                * districtMultiplier
+                * (1 + totalBonus);
+            recommendedPrice = Math.Round(monthlyEquivalent * 0.035m, 0);
+            recommendedPrice = Math.Max(15m, Math.Min(300m, recommendedPrice));
+            finalPricePerSqm = recommendedPrice / (decimal)request.Area;
+
             if (dbRentMedianPerSqm.HasValue)
             {
                 finalPricePerSqm = (finalPricePerSqm * 0.5m) + (dbRentMedianPerSqm.Value * 0.5m);
-                recommendedPrice = finalPricePerSqm * request.Area;
+                recommendedPrice = finalPricePerSqm * (decimal)request.Area;
             }
+        }
+        else
+        {
+            // Sotish
+            recommendedPrice = finalPricePerSqm * (decimal)request.Area * roomMultiplier;
         }
 
         decimal marketAverage = recommendedPrice * 0.98m;
