@@ -40,13 +40,23 @@ public class SeedController : ControllerBase
 
             var dbContext = scope.ServiceProvider.GetRequiredService<StorageBroker>();
 
-            // Delete child entities first to avoid FK constraint violations
+            // Delete Bookings, Reviews, Favorites, Discounts related to demo properties
+            await dbContext.Bookings.Where(b => b.Property.Description == "Yaxshi joylashuv").ExecuteDeleteAsync();
+            await dbContext.Reviews.Where(r => r.Property.Description == "Yaxshi joylashuv").ExecuteDeleteAsync();
+            await dbContext.Favorites.Where(f => f.Property.Description == "Yaxshi joylashuv").ExecuteDeleteAsync();
+            await dbContext.Discounts.Where(d => d.Code.StartsWith("DEMO")).ExecuteDeleteAsync();
+
+            // Delete child entities of properties
             await dbContext.PropertyImages.Where(pi => pi.Property.Description == "Yaxshi joylashuv").ExecuteDeleteAsync();
             await dbContext.PropertyAmenities.Where(pa => pa.Property.Description == "Yaxshi joylashuv").ExecuteDeleteAsync();
             await dbContext.PropertyViews.Where(pv => pv.Property.Description == "Yaxshi joylashuv").ExecuteDeleteAsync();
 
             // Now delete properties
             int deletedProperties = await dbContext.Properties.Where(p => p.Description == "Yaxshi joylashuv").ExecuteDeleteAsync();
+
+            // Delete Bookings and Reviews related to demo users
+            await dbContext.Bookings.Where(b => b.Guest.Email != null && b.Guest.Email.EndsWith("@demo.mulkchi.uz")).ExecuteDeleteAsync();
+            await dbContext.Reviews.Where(r => r.Reviewer.Email != null && r.Reviewer.Email.EndsWith("@demo.mulkchi.uz")).ExecuteDeleteAsync();
 
             // Delete user subscriptions before users
             await dbContext.UserSubscriptions.Where(s => s.User.Email != null && s.User.Email.EndsWith("@demo.mulkchi.uz")).ExecuteDeleteAsync();
