@@ -338,10 +338,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IUserConnectionTracker, RedisUserConnectionTracker>();
         services.AddSingleton<IRefreshTokenGuard, RedisRefreshTokenGuard>();
 
-        signalRBuilder.AddStackExchangeRedis(redisConnection, options =>
-        {
-            options.Configuration.ChannelPrefix = "mulkchi:signalr";
-        });
+        // signalRBuilder.AddStackExchangeRedis(redisConnection, options =>
+        // {
+        //     options.Configuration.ChannelPrefix = "mulkchi:signalr";
+        // });
 
         return services;
     }

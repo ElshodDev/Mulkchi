@@ -76,7 +76,7 @@ public class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
-        var redisConnection = Environment.GetEnvironmentVariable("MULKCHI_REDIS_URL") ?? this.configuration["Redis:ConnectionString"];
+        string? redisConnection = null;
 
         services.AddControllers()
             .AddJsonOptions(options =>
@@ -133,7 +133,7 @@ public class Startup
 
         services.AddResponseCaching();
         services.AddMemoryCache();
-        services.AddCustomDistributedCache(redisConnection);
+        services.AddDistributedMemoryCache();
 
         services.AddFluentValidationAutoValidation();
         services.AddFluentValidationClientsideAdapters();

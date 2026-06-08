@@ -38,6 +38,16 @@ public class GlobalExceptionMiddleware
 
     private static Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
+        Console.WriteLine($"[DEBUG] EXCEPTION THROWN: {exception.GetType().FullName}");
+        Console.WriteLine($"[DEBUG] MESSAGE: {exception.Message}");
+        Console.WriteLine($"[DEBUG] STACKTRACE: {exception.StackTrace}");
+        if (exception.InnerException != null)
+        {
+            Console.WriteLine($"[DEBUG] INNER EXCEPTION: {exception.InnerException.GetType().FullName}");
+            Console.WriteLine($"[DEBUG] INNER MESSAGE: {exception.InnerException.Message}");
+            Console.WriteLine($"[DEBUG] INNER STACKTRACE: {exception.InnerException.StackTrace}");
+        }
+
         context.Response.Clear();
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = GetStatusCode(exception);
@@ -67,7 +77,6 @@ public class GlobalExceptionMiddleware
             UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
             KeyNotFoundException => StatusCodes.Status404NotFound,
             ArgumentException => StatusCodes.Status400BadRequest,
-            InvalidOperationException => StatusCodes.Status400BadRequest,
             _ when innermostException is UnauthorizedAccessException =>
                 StatusCodes.Status401Unauthorized,
             _ when innermostException is KeyNotFoundException ||
@@ -88,20 +97,10 @@ public class GlobalExceptionMiddleware
 
     private static string GetErrorMessage(Exception exception)
     {
-        var statusCode = GetStatusCode(exception);
-        if (statusCode >= StatusCodes.Status500InternalServerError)
-        {
-            return "So'rov bajarilmadi.";
-        }
-
         var innermostException = GetInnermostException(exception);
-        if (exception.GetType().Name.EndsWith("ValidationException") ||
-            innermostException.GetType().Name.StartsWith("Invalid"))
-        {
-            return innermostException.Message;
-        }
-
-        return GetSafeErrorMessage(statusCode);
+        
+        // Vaqtincha xatoni topish uchun barcha ma'lumotlarni qaytaramiz (DEBUG uchun)
+        return $"{exception.GetType().Name}: {exception.Message} | Inner: {innermostException.GetType().Name}: {innermostException.Message}";
     }
 
     private static string GetSafeErrorMessage(int statusCode) => statusCode switch

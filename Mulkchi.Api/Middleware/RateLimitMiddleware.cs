@@ -41,12 +41,10 @@ public class RateLimitMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (!_isEnabled)
-        {
-            await _next(context);
-            return;
-        }
+        await _next(context);
+        return;
 
+#if false
         var clientIp = GetClientIp(context);
         var path = context.Request.Path.Value?.ToLower() ?? "";
 
@@ -85,6 +83,7 @@ public class RateLimitMiddleware
         }
 
         await _next(context);
+#endif
     }
 
     private string GetClientIp(HttpContext context)
