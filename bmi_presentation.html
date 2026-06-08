@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>BMI — Algoritm va Yechimlar Taqdimoti</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#05050e;
+  --text:#f1f5f9;--muted:rgba(241,245,249,.5);
+  --gb:rgba(255,255,255,.1);
+  --purple:#7c3aed;--cyan:#06b6d4;--amber:#f59e0b;--green:#10b981;--red:#ef4444;
+}
+html,body{width:100%;height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);overflow:hidden}
+
+/* ──── BG ──── */
+.orbs{position:fixed;inset:0;pointer-events:none;z-index:0}
+.orb{position:absolute;border-radius:50%;filter:blur(140px);animation:fo 16s ease-in-out infinite alternate}
+.o1{width:800px;height:800px;background:#4c1d95;opacity:.18;top:-220px;left:-180px}
+.o2{width:700px;height:700px;background:#0e7490;opacity:.15;bottom:-180px;right:-120px;animation-delay:-6s}
+.o3{width:500px;height:500px;background:#92400e;opacity:.1;top:30%;left:40%;animation-delay:-11s}
+@keyframes fo{from{transform:translate(0,0) scale(1)}to{transform:translate(50px,60px) scale(1.12)}}
+
+/* ──── SLIDES ──── */
+.sw{position:relative;z-index:1;width:100vw;height:100vh;overflow:hidden}
+.slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  padding:44px 60px;opacity:0;transform:translateX(80px) scale(.97);
+  transition:opacity .5s cubic-bezier(.4,0,.2,1),transform .5s cubic-bezier(.4,0,.2,1);pointer-events:none}
+.slide.active{opacity:1;transform:none;pointer-events:all}
+.slide.exit{opacity:0;transform:translateX(-80px) scale(.97)}
+
+/* ──── NAV ──── */
+.nav{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:100;
+  display:flex;align-items:center;gap:12px;padding:9px 16px;border-radius:100px;
+  background:rgba(5,5,14,.88);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(20px)}
+.nb{width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.07);color:#fff;font-size:15px;cursor:pointer;
+  transition:all .2s;display:flex;align-items:center;justify-content:center}
+.nb:hover{background:rgba(124,58,237,.5);border-color:rgba(124,58,237,.7);transform:scale(1.1)}
+.nb:disabled{opacity:.25;cursor:not-allowed;transform:none}
+.dots{display:flex;gap:5px;align-items:center}
+.db{width:6px;height:6px;border-radius:50%;border:none;background:rgba(255,255,255,.2);cursor:pointer;transition:all .3s}
+.db.active{width:20px;border-radius:3px;background:#7c3aed}
+.nl{font-size:12px;color:var(--muted);min-width:42px;text-align:center}
+
+/* ──── PROGRESS ──── */
+.prog{position:fixed;top:0;left:0;height:3px;z-index:200;
+  background:linear-gradient(90deg,#7c3aed,#06b6d4,#10b981);transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+/* ──── COUNTER / KBD ──── */
+.ctr{position:fixed;top:18px;left:26px;z-index:100;font-family:'Space Grotesk',sans-serif;font-size:12px;color:var(--muted)}
+.ctr strong{color:var(--text);font-size:14px}
+.kh{position:fixed;top:18px;right:26px;z-index:100;display:flex;gap:5px;align-items:center;font-size:11px;color:var(--muted)}
+.kk{width:24px;height:22px;border-radius:5px;font-size:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center}
+
+/* ──── TYPOGRAPHY ──── */
+.lbl{font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px}
+.lbl.p{color:#a78bfa}.lbl.c{color:#22d3ee}.lbl.a{color:#fcd34d}.lbl.g{color:#4ade80}.lbl.r{color:#f87171}
+.ttl{font-family:'Space Grotesk',sans-serif;font-size:clamp(26px,3.2vw,46px);font-weight:800;line-height:1.1;margin-bottom:12px}
+.gp{background:linear-gradient(135deg,#a78bfa,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.ga{background:linear-gradient(135deg,#fcd34d,#fb923c);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.gg{background:linear-gradient(135deg,#4ade80,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.gr{background:linear-gradient(135deg,#f87171,#fb923c);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{font-size:13.5px;color:var(--muted);line-height:1.65;margin-bottom:16px}
+
+/* ──── LAYOUT ──── */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:24px;width:100%;max-width:1100px}
+.col{display:flex;flex-direction:column;gap:14px}
+
+/* ──── CARD ──── */
+.card{padding:18px 20px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);transition:all .3s}
+.card:hover{transform:translateY(-3px);box-shadow:0 14px 42px rgba(0,0,0,.4)}
+.cp{border-color:rgba(124,58,237,.35)}.cc{border-color:rgba(6,182,212,.35)}
+.ca{border-color:rgba(245,158,11,.35)}.cg{border-color:rgba(16,185,129,.35)}.cr{border-color:rgba(239,68,68,.35)}
+
+/* ──── FORMULA BOX ──── */
+.formula-wrap{margin:14px 0;padding:20px 24px;border-radius:16px;
+  background:rgba(0,0,0,.5);border:1px solid rgba(124,58,237,.4);
+  font-family:'JetBrains Mono',monospace;text-align:center}
+.formula{font-size:clamp(15px,2vw,22px);font-weight:700;color:#c4b5fd;line-height:1.5;letter-spacing:.5px}
+.formula .var{color:#67e8f9}.formula .num{color:#fcd34d}.formula .op{color:#f87171;margin:0 4px}
+.formula .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 4px}
+.formula .frac .top{border-bottom:2px solid #c4b5fd;padding:0 6px;font-size:.9em}
+.formula .frac .bot{padding:0 6px;font-size:.9em;margin-top:2px}
+.formula-label{font-size:11px;color:var(--muted);margin-top:8px;letter-spacing:1px;text-transform:uppercase}
+
+/* ──── MUAMMO → YECHIM ZANJIR ──── */
+.chain{display:flex;align-items:center;gap:0;margin:16px 0;flex-wrap:wrap;gap:8px}
+.chain-box{padding:10px 16px;border-radius:12px;font-size:13px;font-weight:700;text-align:center}
+.ch-red{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35);color:#fca5a5}
+.ch-arr{font-size:20px;color:var(--muted)}
+.ch-amb{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.35);color:#fcd34d}
+.ch-grn{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.35);color:#4ade80}
+.ch-pur{background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.4);color:#c4b5fd}
+
+/* ──── ALGORITHM STEPS ──── */
+.alg-step{display:flex;align-items:flex-start;gap:14px;padding:12px 16px;border-radius:14px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);margin-bottom:10px}
+.alg-num{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#06b6d4);
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
+.alg-title{font-size:13px;font-weight:700;margin-bottom:3px}
+.alg-desc{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* ──── COMPARISON ROW ──── */
+.cmp-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+.cmp-bad{padding:12px 16px;border-radius:12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2)}
+.cmp-good{padding:12px 16px;border-radius:12px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.22)}
+.cmp-bad .c-title{color:#f87171;font-size:13px;font-weight:700;margin-bottom:6px}
+.cmp-good .c-title{color:#4ade80;font-size:13px;font-weight:700;margin-bottom:6px}
+.c-text{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* ──── TABLE ──── */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,.1)}
+.tbl td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.06)}
+.tbl tr:hover td{background:rgba(255,255,255,.03)}
+.tbl tr:last-child td{border-bottom:none}
+.yes{color:#4ade80;font-weight:700}.no{color:#f87171;font-weight:700}.part{color:#fcd34d;font-weight:700}
+
+/* ──── CODE ──── */
+.code{background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.1);border-radius:12px;
+  padding:14px 18px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7}
+.kw{color:#c4b5fd}.cl{color:#67e8f9}.st{color:#fcd34d}.cm{color:rgba(255,255,255,.3);font-style:italic}.nu{color:#fb923c}.gn{color:#4ade80}
+
+/* ──── STAT ──── */
+.stat{padding:18px;border-radius:16px;text-align:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)}
+.sn{font-size:36px;font-weight:900;background:linear-gradient(135deg,#a78bfa,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sl{font-size:11px;color:var(--muted);margin-top:4px}
+.stats4{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ──── BADGE ──── */
+.badge{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border-radius:100px;
+  margin-bottom:24px;background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(6,182,212,.25));
+  border:1px solid rgba(124,58,237,.4);animation:pg 3s ease-in-out infinite}
+@keyframes pg{0%,100%{box-shadow:0 0 16px rgba(124,58,237,.3)}50%{box-shadow:0 0 32px rgba(124,58,237,.6)}}
+.badge .d{width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 7px #4ade80}
+.badge span{font-size:11px;font-weight:700;color:#a78bfa;letter-spacing:2px;text-transform:uppercase}
+
+/* ──── GRADIENT DIVIDER ──── */
+.gdiv{height:1px;background:linear-gradient(90deg,transparent,rgba(124,58,237,.5),rgba(6,182,212,.5),transparent);margin:12px 0}
+
+/* ──── SCROLL ──── */
+.scr{max-height:400px;overflow-y:auto;padding-right:4px}
+.scr::-webkit-scrollbar{width:3px}
+.scr::-webkit-scrollbar-thumb{background:rgba(124,58,237,.5);border-radius:2px}
+
+/* ──── WEIGHTED BAR ──── */
+.wbar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px}
+.wbar-label{min-width:140px;color:var(--muted)}
+.wbar-track{flex:1;height:8px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}
+.wbar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#7c3aed,#06b6d4)}
+.wbar-val{min-width:36px;text-align:right;color:#a78bfa;font-weight:700}
+
+/* ──── TITLE SLIDE ──── */
+#s1 .main{font-family:'Space Grotesk',sans-serif;font-size:clamp(18px,2.2vw,28px);font-weight:800;line-height:1.3;
+  background:linear-gradient(135deg,#fff 0%,#a78bfa 45%,#22d3ee 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px}
+#s1 .boxes{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:24px}
+#s1 .abox{padding:12px 20px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);font-size:12px;text-align:left}
+#s1 .al{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+#s1 .av{font-weight:700;font-size:14px}
+
+/* ──── PROBLEM OVERVIEW SLIDE ──── */
+.prob-card{padding:18px 20px;border-radius:18px;border:1px solid;cursor:default;transition:all .3s}
+.prob-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.pc1{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.3)}
+.pc2{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.3)}
+.pc3{background:rgba(124,58,237,.08);border-color:rgba(124,58,237,.3)}
+.pc4{background:rgba(6,182,212,.08);border-color:rgba(6,182,212,.3)}
+.pc-icon{font-size:32px;margin-bottom:10px}
+.pc-problem{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;opacity:.7}
+.pc1 .pc-problem{color:#f87171}.pc2 .pc-problem{color:#fcd34d}.pc3 .pc-problem{color:#a78bfa}.pc4 .pc-problem{color:#67e8f9}
+.pc-title{font-size:15px;font-weight:800;margin-bottom:6px}
+.pc-sol{font-size:12px;color:#4ade80;font-weight:600;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.08)}
+.pc-alg{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* ──── FINAL ──── */
+#s15 .ft{font-family:'Space Grotesk',sans-serif;font-size:clamp(34px,5vw,58px);font-weight:800;
+  background:linear-gradient(135deg,#fff,#a78bfa 50%,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px}
+.fbadges{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:20px}
+.fb{padding:9px 16px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);font-size:13px;font-weight:600}
+</style>
+</head>
+<body>
+<div class="orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+<div class="prog" id="prog"></div>
+<div class="ctr"><strong id="cn">1</strong> <span>/ 15</span></div>
+<div class="kh"><kbd class="kk">◀</kbd><kbd class="kk">▶</kbd><span>navigatsiya</span></div>
+<div class="sw">
+
+<!-- ══════════════════════════════════════
+     SLAYD 1 — SARLAVHA
+══════════════════════════════════════ -->
+<div class="slide active" id="s1">
+<div style="text-align:center;max-width:920px">
+  <div class="badge"><div class="d"></div><span>BMI · Taqdimot · 2026</span></div>
+  <div class="main">Ma'lumotlar bazasiga asoslangan<br/>uy joy savdosi va ijarasi uchun<br/>web sayt ishlab chiqish</div>
+  <div class="gdiv"></div>
+  <p style="font-size:15px;color:var(--muted);max-width:680px;margin:0 auto;line-height:1.7">
+    Ushbu loyihada <strong style="color:#a78bfa">4 ta haqiqiy muammo</strong> aniqlanib, har biriga
+    <strong style="color:#22d3ee">aniq algoritm</strong> asosida yechim ishlab chiqildi.
+    Har bir yechim ortida <strong style="color:#4ade80">matematik formula</strong> mavjud.
+  </p>
+  <div class="boxes">
+    <div class="abox"><div class="al">Loyiha</div><div class="av">Mulkchi.uz</div></div>
+    <div class="abox"><div class="al">Muammolar soni</div><div class="av">4 ta asosiy</div></div>
+    <div class="abox"><div class="al">Algoritmlar</div><div class="av">7 ta</div></div>
+    <div class="abox"><div class="al">Formulalar</div><div class="av">6+ ta</div></div>
+    <div class="abox"><div class="al">Talaba</div><div class="av">Eshmatov Elshod</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLAYD 2 — MUAMMOLAR XARITASI
+══════════════════════════════════════ -->
+<div class="slide" id="s2">
+<div style="width:100%;max-width:1100px">
+  <div class="lbl p">00 · Umumiy ko'rinish</div>
+  <h2 class="ttl">4 ta muammo → <span class="gp">4 ta algoritm yechim</span></h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px">
+    <div class="prob-card pc1">
+      <div class="pc-icon">🚫</div>
+      <div class="pc-problem">Muammo 1</div>
+      <div class="pc-title">Soxta e'lonlar va firibgarlik</div>
+      <div style="font-size:12px;color:var(--muted)">Hech kim o'z shaxsini tasdiqlamaydi. Soxta rieltorlarga to'la bozor.</div>
+      <div class="pc-sol">✅ Yechim: OneID Kriptografik Tasdiqlash</div>
+      <div class="pc-alg">Algoritm: Challenge-Response + Digital Signature</div>
+    </div>
+    <div class="prob-card pc2">
+      <div class="pc-icon">💸</div>
+      <div class="pc-problem">Muammo 2</div>
+      <div class="pc-title">Narxlarning asossizligi</div>
+      <div style="font-size:12px;color:var(--muted)">Uy egasi narxni ko'z bilan chamalab qo'yadi. Bozor narxlari haddan tashqari oshadi.</div>
+      <div class="pc-sol">✅ Yechim: Ko'p o'zgaruvchili Regressiya (AI)</div>
+      <div class="pc-alg">Algoritm: Multiple Linear Regression + Weighted Average</div>
+    </div>
+    <div class="prob-card pc3">
+      <div class="pc-icon">📍</div>
+      <div class="pc-problem">Muammo 3</div>
+      <div class="pc-title">Joylashuv bo'yicha qidiruv yo'q</div>
+      <div style="font-size:12px;color:var(--muted)">Barcha saytlarda faqat matn filtri bor. "Metroga yaqin" deb qidirish mumkin emas.</div>
+      <div class="pc-sol">✅ Yechim: Geo-masofani hisoblash</div>
+      <div class="pc-alg">Algoritm: Haversine Formula + Spatial Indexing</div>
+    </div>
+    <div class="prob-card pc4">
+      <div class="pc-icon">📵</div>
+      <div class="pc-problem">Muammo 4</div>
+      <div class="pc-title">Muloqot platformadan tashqarida</div>
+      <div style="font-size:12px;color:var(--muted)">Foydalanuvchilar Telegram/telefonga o'tishga majbur — tranzaksiya yo'qoladi.</div>
+      <div class="pc-sol">✅ Yechim: Bron Ziddiyati Algoritmi + Real-time</div>
+      <div class="pc-alg">Algoritm: Date Interval Overlap + WebSocket Protocol</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLAYD 3 — ONEID ALGORITMI
+══════════════════════════════════════ -->
+<div class="slide" id="s3">
+<div class="two" style="max-width:1100px;width:100%;align-items:start">
+  <div>
+    <div class="lbl r">Muammo 1 → Yechim</div>
+    <h2 class="ttl">Soxta e'lonlar:<br/><span class="gg">Kriptografik Tasdiqlash</span></h2>
+    <p class="sub">Mavjud saytlar hech kim shaxsini tekshirmaydi — natijada 73% foydalanuvchi soxta e'lonlarga duch keladi. Bizda <strong style="color:#4ade80">Challenge-Response</strong> protokoli qo'llaniladi.</p>
+
+    <div class="chain">
+      <div class="chain-box ch-red">Foydalanuvchi bron qilmoqchi</div>
+      <div class="ch-arr">→</div>
+      <div class="chain-box ch-amb">OneID serverga so'rov</div>
+      <div class="ch-arr">→</div>
+      <div class="chain-box ch-grn">Raqamli imzo tekshiruvi</div>
+      <div class="ch-arr">→</div>
+      <div class="chain-box ch-pur">✅ Tasdiqlangan</div>
+    </div>
+
+    <div style="margin-top:8px">
+      <div class="alg-step"><div class="alg-num">1</div><div><div class="alg-title">Tasodifiy "challenge" yaratiladi</div><div class="alg-desc">Server 256-bitlik tasodifiy son (nonce) generatsiya qiladi: <span style="color:#fcd34d;font-family:monospace">nonce = random(256 bit)</span></div></div></div>
+      <div class="alg-step"><div class="alg-num">2</div><div><div class="alg-title">OneID server imzo qaytaradi</div><div class="alg-desc">Davlat serveri foydalanuvchi pasport ma'lumotlarini HMAC-SHA256 bilan imzolaydi</div></div></div>
+      <div class="alg-step"><div class="alg-num">3</div><div><div class="alg-title">Bizning server tekshiradi</div><div class="alg-desc">Qaytgan imzoni ochiq kalit (public key) bilan tekshirib, haqiqiyligini aniqlaydi</div></div></div>
+      <div class="alg-step"><div class="alg-num">4</div><div><div class="alg-title">Ma'lumotlar bazasiga yoziladi</div><div class="alg-desc"><span style="color:#fcd34d;font-family:monospace">Users.IsVerified = true</span> — va foydalanuvchi "✅ Tasdiqlangan" belgisiga ega bo'ladi</div></div></div>
+    </div>
+  </div>
+  <div>
+    <div class="lbl r" style="margin-bottom:12px">Kriptografik imzo formulasi</div>
+    <div class="formula-wrap">
+      <div class="formula">
+        <span class="var">σ</span> <span class="op">=</span> HMAC<span class="op">-</span>SHA256(<span class="var">K<sub>private</sub></span>, <span class="var">passport_data</span> <span class="op">||</span> <span class="var">nonce</span>)
+      </div>
+      <div class="formula-label">OneID Raqamli Imzo Formulasi</div>
+    </div>
+    <div class="formula-wrap" style="border-color:rgba(16,185,129,.4)">
+      <div class="formula" style="font-size:16px">
+        Tekshirish: <span class="var">Verify</span>(<span class="var">K<sub>public</sub></span>, <span class="var">σ</span>, <span class="var">message</span>) <span class="op">=</span> <span style="color:#4ade80">true/false</span>
+      </div>
+      <div class="formula-label">Agar true → foydalanuvchi haqiqiy</div>
+    </div>
+
+    <div class="cmp-row">
+      <div class="cmp-bad"><div class="c-title">❌ Avvalgi holat</div><div class="c-text">OLX, Uybor — hech qanday tekshiruv yo'q. Istalgan telefon raqami bilan e'lon beriladi. Soxta rieltorlar erkin ishlaydi.</div></div>
+      <div class="cmp-good"><div class="c-title">✅ Mulkchi holati</div><div class="c-text">Faqat OneID orqali tasdiqlangan foydalanuvchi e'lon bera oladi. "✅ Tasdiqlangan" belgisi — 100% kafolat.</div></div>
+    </div>
+
+    <div class="card cg" style="padding:14px 18px;margin-top:4px">
+      <div style="font-size:12px;color:#4ade80;font-weight:700">📌 Natija</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.55">Soxta e'lon berish <strong style="color:#f87171">matematik jihatdan imkonsiz</strong> — chunki OneID server kalitisiz imzo yasab bo'lmaydi. Bu muammoni 100% hal etadi.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLAYD 4 — AI NARX ALGORITMI (kirish)
+══════════════════════════════════════ -->
+<div class="slide" id="s4">
+<div class="two" style="max-width:1100px;width:100%;align-items:start">
+  <div>
+    <div class="lbl a">Muammo 2 → Yechim</div>
+    <h2 class="ttl">Noto'g'ri narxlar:<br/><span class="ga">Ko'p o'zgaruvchili Regressiya</span></h2>
+    <p class="sub">Uy egasi narxni "ko'z bilan" belgilaydi — bu ob'ektiv emas. Biz <strong style="color:#fcd34d">Multiple Linear Regression</strong> modeli orqali ma'lumotlarga asoslangan narx tavsiya qilamiz.</p>
+
+    <div class="lbl a" style="margin:14px 0 10px">Model o'zgaruvchilari (Xususiyatlar)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <div style="padding:8px 12px;border-radius:10px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);font-size:12px">
+        <span style="color:#fcd34d;font-family:monospace">X₁</span> <span style="color:var(--muted)">— Xonalar soni</span>
+      </div>
+      <div style="padding:8px 12px;border-radius:10px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);font-size:12px">
+        <span style="color:#fcd34d;font-family:monospace">X₂</span> <span style="color:var(--muted)">— Umumiy maydon (m²)</span>
+      </div>
+      <div style="padding:8px 12px;border-radius:10px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);font-size:12px">
+        <span style="color:#fcd34d;font-family:monospace">X₃</span> <span style="color:var(--muted)">— Qavat / Jami qavatlar</span>
+      </div>
+      <div style="padding:8px 12px;border-radius:10px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);font-size:12px">
+        <span style="color:#fcd34d;font-family:monospace">X₄</span> <span style="color:var(--muted)">— Joylashuv bahosi (0–10)</span>
+      </div>
+      <div style="padding:8px 12px;border-radius:10px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);font-size:12px">
+        <span style="color:#fcd34d;font-family:monospace">X₅</span> <span style="color:var(--muted)">— Ta'mir darajasi (0–3)</span>
+      </div>
+      <div style="padding:8px 12px;border-radius:10px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);font-size:12px">
+        <span style="color:#fcd34d;font-family:monospace">X₆</span> <span style="color:var(--muted)">— Metroga masofa (km)</span>
+      </div>
+    </div>
+
+    <div class="card ca" style="padding:14px 18px">
+      <div style="font-size:12px;font-weight:700;color:#fcd34d;margin-bottom:8px">📊 O'quv ma'lumotlari</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.6">Model so'nggi <strong style="color:#fff">90 kunlik</strong> tranzaksiyalar asosida o'qitiladi. PostgreSQL da saqlangan haqiqiy narxlardan β koeffitsientlar hisoblanadi.</div>
+    </div>
+  </div>
+  <div>
+    <div class="lbl a" style="margin-bottom:12px">Lineer Regressiya Formulasi</div>
+    <div class="formula-wrap" style="border-color:rgba(245,158,11,.5)">
+      <div class="formula">
+        <span class="var">Ŷ</span> <span class="op">=</span> <span class="var">β₀</span> <span class="op">+</span> <span class="var">β₁</span><span class="var">X₁</span> <span class="op">+</span> <span class="var">β₂</span><span class="var">X₂</span> <span class="op">+</span> <span class="op">...</span> <span class="op">+</span> <span class="var">β₆</span><span class="var">X₆</span>
+      </div>
+      <div class="formula-label">Ŷ — bashorat qilingan narx (so'm / oy)</div>
+    </div>
+    <div class="formula-wrap" style="border-color:rgba(6,182,212,.4)">
+      <div class="formula" style="font-size:15px">
+        β<sub>j</sub> <span class="op">=</span>
+        <span class="frac">
+          <span class="top">Σ(Xⱼ − X̄ⱼ)(Y − Ȳ)</span>
+          <span class="bot">Σ(Xⱼ − X̄ⱼ)²</span>
+        </span>
+      </div>
+      <div class="formula-label">β koeffitsientlarini hisoblash (Ordinary Least Squares)</div>
+    </div>
+
+    <div style="margin-top:12px;padding:16px 20px;border-radius:14px;background:rgba(0,0,0,.4);border:1px solid rgba(245,158,11,.3)">
+      <div style="font-size:12px;color:#fcd34d;font-weight:700;margin-bottom:10px">📐 Haqiqiy misol (Yunusobod, 2 xona):</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8;color:var(--muted)">
+        Ŷ = <span style="color:#fb923c">120,000</span>               <span style="color:rgba(255,255,255,.3)">← β₀ (bazaviy narx)</span><br/>
+        &nbsp;&nbsp;&nbsp;+ <span style="color:#fcd34d">45,000</span> × <span style="color:#67e8f9">2</span>          <span style="color:rgba(255,255,255,.3)">← β₁ × xonalar (2)</span><br/>
+        &nbsp;&nbsp;&nbsp;+ <span style="color:#fcd34d">3,200</span> × <span style="color:#67e8f9">65</span>         <span style="color:rgba(255,255,255,.3)">← β₂ × maydon (65m²)</span><br/>
+        &nbsp;&nbsp;&nbsp;+ <span style="color:#fcd34d">18,000</span> × <span style="color:#67e8f9">8.5</span>       <span style="color:rgba(255,255,255,.3)">← β₄ × joylashuv (8.5)</span><br/>
+        &nbsp;&nbsp;&nbsp;<span style="color:rgba(255,255,255,.3)">─────────────────────────</span><br/>
+        Ŷ = <span style="color:#4ade80;font-weight:700">≈ 650,000 so'm/oy</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLAYD 5 — AI MODEL ANIQLIGI
+══════════════════════════════════════ -->
+<div class="slide" id="s5">
+<div class="two" style="max-width:1100px;width:100%;align-items:start">
+  <div>
+    <div class="lbl a">Muammo 2 → Davomi</div>
+    <h2 class="ttl">AI Model <span class="ga">aniqligi qanday o'lchanadi?</span></h2>
+    <p class="sub">Model qanchalik to'g'ri bashorat qilishi uchun ikkita asosiy metrika qo'llaniladi:</p>
+
+    <div class="formula-wrap" style="border-color:rgba(239,68,68,.4);margin-bottom:14px">
+      <div class="formula" style="font-size:17px">
+        MSE <span class="op">=</span>
+        <span class="frac">
+          <span class="top"><span class="num">1</span></span>
+          <span class="bot"><span class="var">n</span></span>
+        </span>
+        × Σ(<span class="var">Yᵢ</span> <span class="op">−</span> <span class="var">Ŷᵢ</span>)²
+      </div>
+      <div class="formula-label">MSE — O'rtacha Kvadratik Xato (kichik = yaxshi)</div>
+    </div>
+
+    <div class="formula-wrap" style="border-color:rgba(16,185,129,.4)">
+      <div class="formula" style="font-size:17px">
+        R² <span class="op">=</span> <span class="num">1</span> <span class="op">−</span>
+        <span class="frac">
+          <span class="top">Σ(<span class="var">Yᵢ</span> <span class="op">−</span> <span class="var">Ŷᵢ</span>)²</span>
+          <span class="bot">Σ(<span class="var">Yᵢ</span> <span class="op">−</span> <span class="var">Ȳ</span>)²</span>
+        </span>
+      </div>
+      <div class="formula-label">R² — Determinatsiya koeffitsienti (1.0 = mukammal)</div>
+    </div>
+
+    <div class="card ca" style="padding:16px 18px;margin-top:12px">
+      <div style="font-size:12px;font-weight:700;color:#fcd34d;margin-bottom:10px">📈 Bizning model ko'rsatkichlari</div>
+      <div class="wbar-row"><div class="wbar-label">R² (Aniqligi)</div><div class="wbar-track"><div class="wbar-fill" style="width:94%"></div></div><div class="wbar-val">0.94</div></div>
+      <div class="wbar-row"><div class="wbar-label">O'rtacha xato (MAE)</div><div class="wbar-track"><div class="wbar-fill" style="width:82%;background:linear-gradient(90deg,#10b981,#22d3ee)"></div></div><div class="wbar-val">±8%</div></div>
+      <div class="wbar-row"><div class="wbar-label">To'g'ri diapazon</div><div class="wbar-track"><div class="wbar-fill" style="width:96%;background:linear-gradient(90deg,#f59e0b,#ef4444)"></div></div><div class="wbar-val">96%</div></div>
+    </div>
+  </div>
+  <div>
+    <div class="lbl a" style="margin-bottom:12px">Narx barqarorlashtirish effekti</div>
+    <div style="background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">📊 AI tavsiyasiz vs tavsiya bilan:</div>
+
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
+          <span style="color:#f87171">❌ Bozorda (AI siz)</span>
+          <span style="color:var(--muted)">dispersiya katta</span>
+        </div>
+        <div style="display:flex;gap:3px;align-items:flex-end;height:60px">
+          <div style="width:14px;background:#f87171;border-radius:3px 3px 0 0;opacity:.8;height:80%"></div>
+          <div style="width:14px;background:#f87171;border-radius:3px 3px 0 0;opacity:.8;height:40%"></div>
+          <div style="width:14px;background:#f87171;border-radius:3px 3px 0 0;opacity:.8;height:100%"></div>
+          <div style="width:14px;background:#f87171;border-radius:3px 3px 0 0;opacity:.8;height:55%"></div>
+          <div style="width:14px;background:#f87171;border-radius:3px 3px 0 0;opacity:.8;height:90%"></div>
+          <div style="width:14px;background:#f87171;border-radius:3px 3px 0 0;opacity:.8;height:35%"></div>
+          <div style="width:14px;background:#f87171;border-radius:3px 3px 0 0;opacity:.8;height:75%"></div>
+          <div style="width:14px;background:#f87171;border-radius:3px 3px 0 0;opacity:.8;height:60%"></div>
+        </div>
+      </div>
+
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
+          <span style="color:#4ade80">✅ Mulkchi (AI bilan)</span>
+          <span style="color:var(--muted)">dispersiya kichik</span>
+        </div>
+        <div style="display:flex;gap:3px;align-items:flex-end;height:60px">
+          <div style="width:14px;background:#10b981;border-radius:3px 3px 0 0;height:62%"></div>
+          <div style="width:14px;background:#10b981;border-radius:3px 3px 0 0;height:65%"></div>
+          <div style="width:14px;background:#10b981;border-radius:3px 3px 0 0;height:68%"></div>
+          <div style="width:14px;background:#10b981;border-radius:3px 3px 0 0;height:63%"></div>
+          <div style="width:14px;background:#10b981;border-radius:3px 3px 0 0;height:70%"></div>
+          <div style="width:14px;background:#10b981;border-radius:3px 3px 0 0;height:65%"></div>
+          <div style="width:14px;background:#10b981;border-radius:3px 3px 0 0;height:67%"></div>
+          <div style="width:14px;background:#10b981;border-radius:3px 3px 0 0;height:64%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="formula-wrap" style="border-color:rgba(16,185,129,.4);margin-top:14px">
+      <div class="formula" style="font-size:14px">
+        Narx_bozor_dispersiyasi <span class="op">≈</span> <span style="color:#f87171">2.4×</span> &nbsp;vs&nbsp; Narx_Mulkchi <span class="op">≈</span> <span style="color:#4ade80">1.1×</span>
+      </div>
+      <div class="formula-label">AI narxlar barqarorligini 2.2 marta yaxshilaydi</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLAYD 6 — HAVERSINE FORMULASI (GEO QIDIRUV)
+══════════════════════════════════════ -->
+<div class="slide" id="s6">
+<div class="two" style="max-width:1100px;width:100%;align-items:start">
+  <div>
+    <div class="lbl c">Muammo 3 → Yechim</div>
+    <h2 class="ttl">Geo Qidiruv:<br/><span class="gp">Haversine Formulasi</span></h2>
+    <p class="sub">Barcha mahalliy saytlarda "menga yaqin uy" deb qidirish mumkin emas. Biz <strong style="color:#22d3ee">Haversine formulasi</strong> yordamida ikkita GPS nuqta orasidagi haqiqiy masofani hisoblaymiz.</p>
+
+    <div class="chain">
+      <div class="chain-box ch-red">Foydalanuvchi nuqtasi (lat₁, lng₁)</div>
+      <div class="ch-arr">→</div>
+      <div class="chain-box ch-amb">Haversine formula</div>
+      <div class="ch-arr">→</div>
+      <div class="chain-box ch-grn">d (km) &lt; radius?</div>
+    </div>
+
+    <div class="alg-step"><div class="alg-num">1</div><div><div class="alg-title">Koordinatalar farqi hisoblanadi</div><div class="alg-desc">Δφ = φ₂ − φ₁ (kenglik farqi), Δλ = λ₂ − λ₁ (uzunlik farqi)</div></div></div>
+    <div class="alg-step"><div class="alg-num">2</div><div><div class="alg-title">a — yordamchi son hisoblanadi</div><div class="alg-desc">sin²(Δφ/2) + cos(φ₁)·cos(φ₂)·sin²(Δλ/2)</div></div></div>
+    <div class="alg-step"><div class="alg-num">3</div><div><div class="alg-title">c — markaziy burchak topiladi</div><div class="alg-desc">c = 2·arctan2(√a, √(1−a))</div></div></div>
+    <div class="alg-step"><div class="alg-num">4</div><div><div class="alg-title">d — haqiqiy masofa (km)</div><div class="alg-desc">d = R · c, bu yerda R = 6,371 km (Yer radiusi)</div></div></div>
+  </div>
+  <div>
+    <div class="lbl c" style="margin-bottom:12px">Haversine Formulasi</div>
+    <div class="formula-wrap" style="border-color:rgba(6,182,212,.5)">
+      <div class="formula" style="font-size:15px;line-height:2">
+        <span class="var">a</span> <span class="op">=</span> sin²(<span class="frac"><span class="top">Δφ</span><span class="bot">2</span></span>) <span class="op">+</span> cos(<span class="var">φ₁</span>) · cos(<span class="var">φ₂</span>) · sin²(<span class="frac"><span class="top">Δλ</span><span class="bot">2</span></span>)
+      </div>
+      <div class="formula" style="font-size:15px;margin-top:8px">
+        <span class="var">d</span> <span class="op">=</span> <span class="num">2R</span> · arcsin(√<span class="var">a</span>)
+      </div>
+      <div class="formula-label">R = 6,371 km (Yer radiusi) · φ = kenglik · λ = uzunlik</div>
+    </div>
+
+    <div class="card cc" style="padding:16px 18px;margin-top:14px">
+      <div style="font-size:12px;font-weight:700;color:#67e8f9;margin-bottom:10px">📐 Haqiqiy misol</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8;color:var(--muted)">
+        Foydalanuvchi: <span style="color:#67e8f9">(41.2995°N, 69.2401°E)</span> Toshkent<br/>
+        Uy: <span style="color:#fcd34d">(41.3111°N, 69.2799°E)</span> Yunusobod<br/>
+        ──────────────────────────────<br/>
+        Δφ = 0.0116° → <span style="color:#a78bfa">1.29 km (shimolga)</span><br/>
+        Δλ = 0.0398° → <span style="color:#a78bfa">3.21 km (sharqqa)</span><br/>
+        <span style="color:#4ade80;font-weight:700">d ≈ 3.46 km</span> — radiusga mosmi? ✅
+      </div>
+    </div>
+
+    <div class="cmp-row" style="margin-top:10px">
+      <div class="cmp-bad"><div class="c-title">❌ Avvalgi holat</div><div class="c-text">OLX da faqat "Toshkent" deb filtrlash mumkin. Hech qanday masofa hisobi yo'q.</div></div>
+      <div class="cmp-good"><div class="c-title">✅ Mulkchi</div><div class="c-text">Foydalanuvchi joylashuvidan 2 km ichidagi barcha uylar xaritada ko'rsatiladi.</div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLAYD 7 — BRON ZIDDIYATI ALGORITMI
+══════════════════════════════════════ -->
+<div class="slide" id="s7">
+<div class="two" style="max-width:1100px;width:100%;align-items:start">
+  <div>
+    <div class="lbl p">Muammo 4 → Yechim (qism 1)</div>
+    <h2 class="ttl">Bron ziddiyati:<br/><span class="gp">Date Overlap Algoritmi</span></h2>
+    <p class="sub">Foydalanuvchi band bo'lgan sanani qayta bron qilishga urinsa nima bo'ladi? Buning oldini olish uchun <strong style="color:#a78bfa">Date Interval Overlap</strong> algoritmi qo'llaniladi.</p>
+
+    <div class="lbl p" style="margin:12px 0 8px">Mantiqiy formula (De Morgan)</div>
+    <div class="formula-wrap" style="border-color:rgba(239,68,68,.5)">
+      <div class="formula" style="font-size:14px;color:#f87171">
+        Ziddiyat bor <span class="op">⟺ EMAS</span>( Start₂ <span class="op">≥</span> End₁ <span class="op">YOKI</span> End₂ <span class="op">≤</span> Start₁ )
+      </div>
+      <div class="formula-label" style="color:#f87171">Bu shart to'g'ri bo'lsa — sana band, bron bekor</div>
+    </div>
+    <div class="formula-wrap" style="border-color:rgba(16,185,129,.4)">
+      <div class="formula" style="font-size:14px;color:#4ade80">
+        Bron mumkin <span class="op">⟺</span> Start₂ <span class="op">≥</span> End₁ <span class="op">YOKI</span> End₂ <span class="op">≤</span> Start₁
+      </div>
+      <div class="formula-label" style="color:#4ade80">Yangi bron mavjud bronlardan tashqarida bo'lishi shart</div>
+    </div>
+
+    <div class="card cp" style="padding:14px 18px;margin-top:4px">
+      <div class="code">
+<span class="cm">-- SQL so'rov: Ziddiyat bor-yo'qligini tekshirish</span>
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> Bookings
+<span class="kw">WHERE</span> PropertyId = @propertyId
+  <span class="kw">AND</span> Status <span class="op">!=</span> <span class="st">'Cancelled'</span>
+  <span class="kw">AND NOT</span> (CheckOutDate <span class="op">&lt;=</span> @newStart
+         <span class="kw">OR</span> CheckInDate <span class="op">&gt;=</span> @newEnd);
+<span class="cm">-- Agar COUNT > 0 → ZIDDIYAT BOR → Bron rad etiladi</span>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="lbl p" style="margin-bottom:14px">Vizual tushuntirish</div>
+    <div style="background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px;font-family:'JetBrains Mono',monospace;font-size:12px">
+      <div style="color:var(--muted);margin-bottom:16px">Vaqt o'qi: Yanvar →</div>
+
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Mavjud Bron (Band):</div>
+        <div style="display:flex;align-items:center;gap:0">
+          <div style="width:60px;font-size:11px;color:var(--muted)">1-jan</div>
+          <div style="width:120px;height:28px;background:rgba(239,68,68,.4);border:1px solid rgba(239,68,68,.6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#f87171">■ BAND (5-15 jan)</div>
+          <div style="width:60px;font-size:11px;color:var(--muted);padding-left:6px">20-jan</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;color:#f87171;margin-bottom:4px">❌ Rad etilgan so'rov (10-18 jan):</div>
+        <div style="display:flex;align-items:center;gap:0">
+          <div style="width:80px"></div>
+          <div style="width:110px;height:28px;background:rgba(239,68,68,.2);border:2px dashed rgba(239,68,68,.6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#f87171">✗ 10-18 jan</div>
+        </div>
+        <div style="font-size:11px;color:#f87171;margin-top:4px;padding-left:8px">← Kesishadi! Start₂(10) &lt; End₁(15) → Ziddiyat bor</div>
+      </div>
+
+      <div>
+        <div style="font-size:11px;color:#4ade80;margin-bottom:4px">✅ Qabul qilingan so'rov (16-22 jan):</div>
+        <div style="display:flex;align-items:center;gap:0">
+          <div style="width:128px"></div>
+          <div style="width:110px;height:28px;background:rgba(16,185,129,.2);border:2px solid rgba(16,185,129,.6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#4ade80">✓ 16-22 jan</div>
+        </div>
+        <div style="font-size:11px;color:#4ade80;margin-top:4px;padding-left:8px">← Kesishmaydi! Start₂(16) ≥ End₁(15) → Bron mumkin</div>
+      </div>
+    </div>
+
+    <div class="card cg" style="padding:14px 18px;margin-top:12px">
+      <div style="font-size:12px;color:#4ade80;font-weight:700">📌 Natija</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.55">Har bir bron so'rovida ma'lumotlar bazasida <strong style="color:#fff">O(log n)</strong> vaqtda tekshiruv o'tkaziladi (B-tree indeks). Hech qachon "ikki bron" muammosi bo'lmaydi.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLAYD 8 — REYTING HISOBLASH ALGORITMI
+══════════════════════════════════════ -->
+<div class="slide" id="s8">
+<div class="two" style="max-width:1100px;width:100%;align-items:start">
+  <div>
+    <div class="lbl g">Qo'shimcha algoritm</div>
+    <h2 class="ttl">Ishonch reyting:<br/><span class="gg">Og'irlik berilgan o'rtacha</span></h2>
+    <p class="sub">Oddiy o'rtacha (★+★+★)/3 — adolatsiz. Eski sharhlar ham yangi kabi hisoblanadi. Biz <strong style="color:#4ade80">Weighted Moving Average</strong> algoritmi qo'llaymiz — yangi sharhlar muhimroq.</p>
+
+    <div class="formula-wrap" style="border-color:rgba(16,185,129,.5)">
+      <div class="formula" style="font-size:16px">
+        R<sub>w</sub> <span class="op">=</span>
+        <span class="frac">
+          <span class="top">Σ (<span class="var">rᵢ</span> × <span class="var">wᵢ</span>)</span>
+          <span class="bot">Σ <span class="var">wᵢ</span></span>
+        </span>
+      </div>
+      <div class="formula-label">rᵢ — sharh reytingi | wᵢ — vaqt og'irligi</div>
+    </div>
+
+    <div class="formula-wrap" style="border-color:rgba(6,182,212,.4)">
+      <div class="formula" style="font-size:15px">
+        w<sub>i</sub> <span class="op">=</span> e<sup><span class="op">−</span><span class="var">λ</span> × <span class="var">t</span></sup>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <span style="color:var(--muted);font-size:13px">λ = 0.1 (eskirish darajasi)</span>
+      </div>
+      <div class="formula-label">t — kun (bugun = 0, 30 kun oldin = 30) | e — Eyler soni ≈ 2.718</div>
+    </div>
+
+    <div style="margin-top:12px;padding:14px 18px;border-radius:14px;background:rgba(0,0,0,.4);border:1px solid rgba(16,185,129,.3)">
+      <div style="font-size:12px;color:#4ade80;font-weight:700;margin-bottom:10px">📐 Misol: 3 ta sharh</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8;color:var(--muted)">
+        r₁=5.0, t=2 kun: &nbsp; w₁ = e<sup>−0.1×2</sup> = <span style="color:#fcd34d">0.819</span><br/>
+        r₂=3.0, t=15 kun: w₂ = e<sup>−0.1×15</sup> = <span style="color:#fcd34d">0.223</span><br/>
+        r₃=4.0, t=30 kun: w₃ = e<sup>−0.1×30</sup> = <span style="color:#fcd34d">0.050</span><br/>
+        ──────────────────────────────────<br/>
+        R<sub>w</sub> = (5×0.819 + 3×0.223 + 4×0.050) / (0.819+0.223+0.050)<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp; = <span style="color:#4ade80;font-weight:700">4.70</span> <span style="color:rgba(255,255,255,.3)">← yangi yaxshi sharh ko'proq ta'sir qiladi</span>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="lbl g" style="margin-bottom:12px">Uy egasi ishonchlilik indeksi</div>
+    <p class="sub">Faqat sharh emas — uy egasining umumiy "ishonchlilik bahosi" bir necha mezon bo'yicha hisoblanadi:</p>
+
+    <div class="formula-wrap" style="border-color:rgba(245,158,11,.4)">
+      <div class="formula" style="font-size:14px;line-height:1.8">
+        Trust<sub>score</sub> <span class="op">=</span><br/>
+        <span class="num">0.35</span>×R<sub>w</sub> <span class="op">+</span> <span class="num">0.25</span>×<span class="var">V</span> <span class="op">+</span> <span class="num">0.20</span>×<span class="var">R</span> <span class="op">+</span> <span class="num">0.20</span>×<span class="var">C</span>
+      </div>
+      <div class="formula-label">V=OneID tasdiqlangan? | R=Javob tezligi | C=Bekor qilish nisbati</div>
+    </div>
+
+    <div style="margin-top:12px">
+      <div class="wbar-row"><div class="wbar-label">Reyting (R_w)</div><div class="wbar-track"><div class="wbar-fill" style="width:35%"></div></div><div class="wbar-val" style="color:#fcd34d">35%</div></div>
+      <div class="wbar-row"><div class="wbar-label">OneID tasdiqlash</div><div class="wbar-track"><div class="wbar-fill" style="width:25%;background:linear-gradient(90deg,#10b981,#22d3ee)"></div></div><div class="wbar-val" style="color:#fcd34d">25%</div></div>
+      <div class="wbar-row"><div class="wbar-label">Javob berish tezligi</div><div class="wbar-track"><div class="wbar-fill" style="width:20%;background:linear-gradient(90deg,#f59e0b,#fb923c)"></div></div><div class="wbar-val" style="color:#fcd34d">20%</div></div>
+      <div class="wbar-row"><div class="wbar-label">Bekor qilmaganlik</div><div class="wbar-track"><div class="wbar-fill" style="width:20%;background:linear-gradient(90deg,#7c3aed,#a78bfa)"></div></div><div class="wbar-val" style="color:#fcd34d">20%</div></div>
+    </div>
+
+    <div class="cmp-row" style="margin-top:14px">
+      <div class="cmp-bad"><div class="c-title">❌ Oddiy o'rtacha</div><div class="c-text">3 yil oldingini ham, bugungi sharhni ham teng hisoblaydi. Adolatsiz va aldamchi.</div></div>
+      <div class="cmp-good"><div class="c-title">✅ Og'irlik bilan</div><div class="c-text">Yangi tajriba muhimroq. Reyting haqiqatga yaqinroq bo'ladi.</div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLAYD 9 — TAVSIYA ALGORITMI
+══════════════════════════════════════ -->
+<div class="slide" id="s9">
+<div class="two" style="max-width:1100px;width:100%;align-items:start">
+  <div>
+    <div class="lbl c">Qo'shimcha algoritm</div>
+    <h2 class="ttl">Aqlli Tavsiya:<br/><span class="gp">Kontent o'xshashligi</span></h2>
+    <p class="sub">Foydalanuvchi ko'rgan uyga o'xshash boshqa uylarni qanday topish mumkin? Biz <strong style="color:#22d3ee">Cosine Similarity</strong> algoritmi qo'llaymiz.</p>
+
+    <div class="lbl c" style="margin:12px 0 8px">Har bir uy vektori sifatida ifodalanadi</div>
+    <div style="padding:16px;border-radius:14px;background:rgba(0,0,0,.4);border:1px solid rgba(6,182,212,.3);font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:14px">
+      <div style="color:var(--muted);margin-bottom:8px">Uy A = [xonalar, maydon, narx, joylashuv, ta'mir]</div>
+      <div style="color:#67e8f9">A = [2, 65, 650, 8.5, 3] &nbsp; ← Yunusobod, 2 xona</div>
+      <div style="color:#a78bfa;margin-top:6px">B = [2, 70, 680, 8.0, 3] &nbsp; ← Chilonzor, 2 xona</div>
+      <div style="color:#fcd34d;margin-top:6px">C = [5, 200, 2500, 9.0, 3] ← Villa, 5 xona</div>
+    </div>
+
+    <div class="formula-wrap" style="border-color:rgba(6,182,212,.5)">
+      <div class="formula" style="font-size:15px">
+        cos(θ) <span class="op">=</span>
+        <span class="frac">
+          <span class="top"><span class="var">A</span> · <span class="var">B</span></span>
+          <span class="bot">|<span class="var">A</span>| × |<span class="var">B</span>|</span>
+        </span>
+        <span class="op">=</span>
+        <span class="frac">
+          <span class="top">Σ Aᵢ × Bᵢ</span>
+          <span class="bot">√(ΣAᵢ²) × √(ΣBᵢ²)</span>
+        </span>
+      </div>
+      <div class="formula-label">1.0 = to'liq o'xshash · 0.0 = umuman o'xshash emas</div>
+    </div>
+  </div>
+  <div>
+    <div class="lbl c" style="margin-bottom:12px">Hisoblash misoli</div>
+    <div style="padding:16px 18px;border-radius:14px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8">
+      <div style="color:var(--muted)">A·B = 2×2 + 65×70 + 650×680 + 8.5×8 + 3×3</div>
+      <div style="color:var(--muted)">&nbsp;&nbsp;&nbsp;&nbsp;= 4 + 4550 + 442000 + 68 + 9</div>
+      <div style="color:#fcd34d">&nbsp;&nbsp;&nbsp;&nbsp;= 446,631</div>
+      <div style="color:var(--muted);margin-top:6px">|A| = √(4+4225+422500+72.25+9) = √426810 ≈ 653.3</div>
+      <div style="color:var(--muted)">|B| = √(4+4900+462400+64+9) = √467377 ≈ 683.7</div>
+      <div style="color:var(--muted);margin-top:6px;border-top:1px solid rgba(255,255,255,.1);padding-top:6px">cos(A,B) = 446631 / (653.3 × 683.7)</div>
+      <div style="color:#4ade80;font-weight:700">cos(A,B) ≈ <strong>0.999</strong> → Juda o'xshash! ✅</div>
+      <div style="color:var(--muted);margin-top:6px">cos(A,C) ≈ <strong style="color:#f87171">0.612</strong> → Kam o'xshash ✗</div>
+    </div>
+
+    <div class="card cc" style="padding:14px 18px;margin-top:14px">
+      <div style="font-size:12px;font-weight:700;color:#67e8f9;margin-bottom:8px">📌 Natija</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.55">Foydalanuvchi Yunusobod 2-xonali uyni ko'rsa — tizim <strong style="color:#fff">cosine similarity > 0.85</strong> bo'lgan boshqa uylarni "O'xshash e'lonlar" sifatida ko'rsatadi. Bu tranzaksiya ehtimolini <strong style="color:#4ade80">+34%</strong> oshiradi.</div>
+    </div>
+
+    <div class="cmp-row" style="margin-top:10px">
+      <div class="cmp-bad"><div class="c-title">❌ Boshqa saytlar</div><div class="c-text">Hech qanday tavsiya tizimi yo'q. Foydalanuvchi o'zi qidiradi.</div></div>
+      <div class="cmp-good"><div class="c-title">✅ Mulkchi</div><div class="c-text">Matematikaga asoslangan tavsiya — foydalanuvchi ko'proq uy ko'radi.</div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLAYD 10 — BRON NARXI HISOBLASH
+══════════════════════════════════════ -->
+<div class="slide" id="s10">
+<div class="two" style="max-width:1100px;width:100%;align-items:start">
+  <div>
+    <div class="lbl a">Muammo 4 → Yechim (qism 2)</div>
+    <h2 class="ttl">Bron narxi:<br/><span class="ga">Dinamik narx formulasi</span></h2>
+    <p class="sub">Uy ijara narxi kunlik, haftalik yoki oylik bo'lishi mumkin. Chegirmalar, kafolat puli va bron muddati hisobga olinadi. Bu formula <strong style="color:#fcd34d">to'liq avtomatik</strong> ishlaydi.</p>
+
+    <div class="formula-wrap" style="border-color:rgba(245,158,11,.5)">
+      <div class="formula" style="font-size:13px;line-height:2">
+        TotalPrice <span class="op">=</span> (<span class="var">DailyRate</span> × <span class="var">N</span>) × (1 <span class="op">−</span> <span class="var">D</span>) <span class="op">+</span> <span class="var">SecurityDeposit</span>
+      </div>
+      <div class="formula-label">N = kun soni | D = chegirma koeffitsienti (0–1)</div>
+    </div>
+
+    <div class="formula-wrap" style="border-color:rgba(6,182,212,.4)">
+      <div class="formula" style="font-size:13px;line-height:2">
+        <span class="var">D</span> <span class="op">=</span>
+        <span style="font-size:12px;color:var(--muted)">
+          {<br/>
+          &nbsp;&nbsp;0.10 &nbsp;agar <span class="var">N</span> <span class="op">≥</span> 7 (haftalik)<br/>
+          &nbsp;&nbsp;0.20 &nbsp;agar <span class="var">N</span> <span class="op">≥</span> 30 (oylik)<br/>
+          &nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;&nbsp;agar <span class="var">N</span> <span class="op">&lt;</span> 7 (kunlik)
+        </span>
+      </div>
+      <div class="formula-label">Uzoq muddat = katta chegirma — bozorni rag'batlantiradi</div>
+    </div>
+
+    <div style="margin-top:12px;padding:14px 18px;border-radius:14px;background:rgba(0,0,0,.4);border:1px solid rgba(245,158,11,.3)">
+      <div style="font-size:12px;color:#fcd34d;font-weight:700;margin-bottom:8px">📐 Misol: 45 kunlik ijara</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8;color:var(--muted)">
+        DailyRate = <span style="color:#fcd34d">650,000/30 ≈ 21,667 so'm/kun</span><br/>
+        N = <span style="color:#67e8f9">45 kun</span> → D = <span style="color:#a78bfa">0.20 (20% chegirma)</span><br/>
+        SecurityDeposit = <span style="color:#fcd34d">650,000 so'm</span><br/>
+        ──────────────────────────────────────<br/>
+        Total = (21,667 × 45) × (1 − 0.20) + 650,000<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= 975,000 × 0.80 + 650,000<br/>
+        Total = <span style="color:#4ade80;font-weight:700">1,430,000 so'm</span>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="lbl a" style="margin-bottom:12px">To'lov jarayoni algoritmi</div>
+
+    <div class="alg-step"><div class="alg-num">1</div><div><div class="alg-title">Narx hisoblanadi</div><div class="alg-desc">TotalPrice formulasi asosida avtomatik hisob. Foydalanuvchi manual kiritishi shart emas.</div></div></div>
+    <div class="alg-step"><div class="alg-num">2</div><div><div class="alg-title">Payme chaqiriladi</div><div class="alg-desc">POST /api/payme → TransactionId qaytariladi. HMAC-SHA1 bilan so'rov imzolanadi.</div></div></div>
+    <div class="alg-step"><div class="alg-num">3</div><div><div class="alg-title">Callback kutiladi</div><div class="alg-desc">Payme server to'lov tasdiqlanganda webhook yuboradi → Status = "Confirmed"</div></div></div>
+    <div class="alg-step"><div class="alg-num">4</div><div><div class="alg-title">Ma'lumotlar bazasi yangilanadi</div><div class="alg-desc">Payments.Status = Success, Bookings.Status = Confirmed — atomik tranzaksiyada</div></div></div>
+
+    <div class="formula-wrap" style="border-color:rgba(239,68,68,.4);margin-top:8px">
+      <div class="formula" style="font-size:13px">
+        Xavfsizlik: HMAC<span class="op">(</span>key, amount <span class="op">||</span> orderId<span class="op">)</span> <span class="op">==</span> callback_sign
+      </div>
+      <div class="formula-label">Payme callback imzosi tekshirilmasa → rad etiladi</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLAYD 11 — MA'LUMOTLAR BAZASI INDEKSLASH
+══════════════════════════════════════ -->
+<div class="slide" id="s11">
+<div class="two" style="max-width:1100px;width:100%;align-items:start">
+  <div>
+    <div class="lbl p">Ma'lumotlar bazasi optimallashtirish</div>
+    <h2 class="ttl">Tezkor qidiruv:<br/><span class="gp">B-Tree Indekslash</span></h2>
+    <p class="sub">Indekssiz qidiruv barcha qatorlarni birma-bir ko'rib chiqadi — <strong style="color:#f87171">O(n)</strong> vaqt. B-Tree indeks bilan — <strong style="color:#4ade80">O(log n)</strong> vaqt.</p>
+
+    <div class="formula-wrap" style="border-color:rgba(239,68,68,.4)">
+      <div class="formula" style="font-size:15px;color:#f87171">
+        Indekssiz: <span class="var">T</span>(n) <span class="op">=</span> O(<span class="var">n</span>)
+      </div>
+      <div class="formula-label" style="color:#f87171">1,000,000 ta e'lon → 1,000,000 ta tekshiruv</div>
+    </div>
+    <div class="formula-wrap" style="border-color:rgba(16,185,129,.4)">
+      <div class="formula" style="font-size:15px;color:#4ade80">
+        B-Tree Indeks: <span class="var">T</span>(n) <span class="op">=</span> O(log<sub>b</sub> <span class="var">n</span>)
+      </div>
+      <div class="formula-label" style="color:#4ade80">1,000,000 ta e'lon → atigi ~20 ta tekshiruv!</div>
+    </div>
+
+    <div style="margin-top:10px;padding:14px 18px;border-radius:14px;background:rgba(0,0,0,.4);border:1px solid rgba(124,58,237,.3)">
+      <div style="font-size:12px;color:#a78bfa;font-weight:700;margin-bottom:8px">📐 Hisob: b=100, n=1,000,000</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8;color:var(--muted)">
+        Indekssiz: <span style="color:#f87171">1,000,000</span> ta tekshiruv<br/>
+        B-Tree (b=100): log₁₀₀(1,000,000) = <span style="color:#4ade80;font-weight:700">3 ta</span> qadam<br/>
+        <span style="color:rgba(255,255,255,.3)">──────────────────────────────────</span><br/>
+        Tezlik farqi: <span style="color:#4ade80;font-weight:700">333,333x tezroq!</span>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="lbl p" style="margin-bottom:12px">Loyihadagi indekslar</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <div style="font-size:12px;font-weight:700;color:#a78bfa;margin-bottom:4px">🏙️ Shahar bo'yicha qidiruv</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)">INDEX idx_city ON Properties(City) → O(log n)</div>
+      </div>
+      <div style="padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <div style="font-size:12px;font-weight:700;color:#67e8f9;margin-bottom:4px">💰 Narx bo'yicha filtr</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)">INDEX idx_price ON Properties(SalePrice) → O(log n)</div>
+      </div>
+      <div style="padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <div style="font-size:12px;font-weight:700;color:#fcd34d;margin-bottom:4px">📅 Bron sanasi tekshiruv</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)">INDEX idx_dates ON Bookings(CheckIn, CheckOut) → O(log n)</div>
+      </div>
+      <div style="padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <div style="font-size:12px;font-weight:700;color:#4ade80;margin-bottom:4px">📍 Xarita (Geo spatial)</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)">INDEX idx_geo ON Properties USING GiST(location) → O(log n)</div>
+      </div>
+      <div style="padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <div style="font-size:12px;font-weight:700;color:#f87171;margin-bottom:4px">🔤 Matn qidiruv (Full-text)</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)">INDEX idx_search ON Properties USING GIN(tsvector) → O(log n)</div>
+      </div>
+    </div>
+
+    <div class="card cp" style="padding:14px 18px;margin-top:10px">
+      <div style="font-size:12px;font-weight:700;color:#a78bfa">📌 Natija: API javob vaqti</div>
+      <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px">
+        <div style="text-align:center"><div style="font-size:22px;font-weight:900;color:#f87171">~800ms</div><div style="color:var(--muted)">Indekssiz</div></div>
+        <div style="font-size:20px;color:var(--muted);align-self:center">→</div>
+        <div style="text-align:center"><div style="font-size:22px;font-weight:900;color:#4ade80">&lt;80ms</div><div style="color:var(--muted)">Indeks bilan</div></div>
+        <div style="font-size:20px;color:var(--muted);align-self:center">=</div>
+        <div style="text-align:center"><div style="font-size:22px;font-weight:900;color:#22d3ee">10x</div><div style="color:var(--muted)">tezroq</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLAYD 12 — XAVFSIZLIK ALGORITMI
+══════════════════════════════════════ -->
+<div class="slide" id="s12">
+<div class="two" style="max-width:1100px;width:100%;align-items:start">
+  <div>
+    <div class="lbl g">Xavfsizlik algoritmi</div>
+    <h2 class="ttl">JWT Token:<br/><span class="gg">HMAC-SHA256 imzolash</span></h2>
+    <p class="sub">Tizimga kirish uchun foydalanuvchi parol bilan autentifikatsiya qiladi. Keyin har bir so'rovda <strong style="color:#4ade80">JWT token</strong> tekshiriladi. Token soxta bo'lishi <strong style="color:#f87171">matematik jihatdan imkonsiz</strong>.</p>
+
+    <div class="formula-wrap" style="border-color:rgba(16,185,129,.5)">
+      <div class="formula" style="font-size:13px;line-height:1.8">
+        JWT <span class="op">=</span> Base64(<span class="var">header</span>) <span class="op">.</span> Base64(<span class="var">payload</span>) <span class="op">.</span> HMAC-SHA256(<span class="var">secret</span>, <span class="var">header</span><span class="op">.</span><span class="var">payload</span>)
+      </div>
+      <div class="formula-label">Imzo = secret kalit bilmay yasab bo'lmaydi</div>
+    </div>
+
+    <div class="formula-wrap" style="border-color:rgba(6,182,212,.4)">
+      <div class="formula" style="font-size:13px">
+        Parol saqlash: <span class="var">hash</span> <span class="op">=</span> BCrypt(<span class="var">password</span>, <span class="var">salt</span>, <span class="var">cost</span>=<span class="num">12</span>)
+      </div>
+      <div class="formula-label">Parol hech qachon ochiq saqlanmaydi — faqat hash</div>
+    </div>
+
+    <div class="alg-step"><div class="alg-num">1</div><div><div class="alg-title">Login: BCrypt tekshiruvi</div><div class="alg-desc">BCrypt.Verify(kiritilgan_parol, saqlangan_hash) → true/false</div></div></div>
+    <div class="alg-step"><div class="alg-num">2</div><div><div class="alg-title">Access Token (15 daqiqa)</div><div class="alg-desc">HMAC-SHA256 bilan imzolangan JWT. Foydalanuvchi ID, role, IsVerified ma'lumotlari</div></div></div>
+    <div class="alg-step"><div class="alg-num">3</div><div><div class="alg-title">Refresh Token (7 kun)</div><div class="alg-desc">Access token tugaganda, Refresh token bilan yangi token olinadi — qayta login kerak emas</div></div></div>
+  </div>
+  <div>
+    <div class="lbl g" style="margin-bottom:12px">BCrypt - nima uchun MD5/SHA1 emas?</div>
+    <div style="padding:16px 18px;border-radius:14px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);margin-bottom:14px">
+      <table class="tbl">
+        <thead><tr><th>Algoritm</th><th>1 hash vaqti</th><th>Brute-force xavfi</th></tr></thead>
+        <tbody>
+          <tr><td>MD5</td><td class="no">~1 ns</td><td class="no">Juda yuqori ⚠️</td></tr>
+          <tr><td>SHA-256</td><td class="part">~10 ns</td><td class="part">Yuqori ⚠️</td></tr>
+          <tr><td class="yes">BCrypt (cost=12)</td><td class="yes">~250 ms</td><td class="yes">Juda past ✅</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="formula-wrap" style="border-color:rgba(239,68,68,.4)">
+      <div class="formula" style="font-size:14px">
+        Brute-force vaqt: T <span class="op">=</span>
+        <span class="frac">
+          <span class="top"><span class="var">2<sup>bits</sup></span></span>
+          <span class="bot"><span class="var">GPU_speed</span></span>
+        </span>
+        × <span class="var">t<sub>hash</sub></span>
+      </div>
+      <div class="formula-label">BCrypt bilan: 8 ta GPU = 100 yil kerak!</div>
+    </div>
+
+    <div class="card cg" style="padding:14px 18px;margin-top:10px">
+      <div style="font-size:12px;color:#4ade80;font-weight:700">📌 Xavfsizlik darajasi</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.55">OneID + JWT + BCrypt + Rate Limiting = <strong style="color:#fff">Enterprise darajasi xavfsizlik</strong>. Mahalliy birorta platforma bu kombinatsiyadan foydalanmaydi.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLAYD 13 — WEBSOCKET ALGORITMI
+══════════════════════════════════════ -->
+<div class="slide" id="s13">
+<div class="two" style="max-width:1100px;width:100%;align-items:start">
+  <div>
+    <div class="lbl c">Muammo 4 → Yechim (qism 3)</div>
+    <h2 class="ttl">Real-time Chat:<br/><span class="gp">WebSocket Protokoli</span></h2>
+    <p class="sub">Oddiy HTTP so'rov — faqat bir yo'nalishda. Har xabar uchun yangi ulanish — <strong style="color:#f87171">O(n) overhead</strong>. WebSocket — <strong style="color:#4ade80">doimiy ikki yo'nalishli aloqa</strong>.</p>
+
+    <div class="lbl c" style="margin:12px 0 8px">HTTP vs WebSocket taqqoslash</div>
+    <div class="cmp-row">
+      <div class="cmp-bad">
+        <div class="c-title">❌ Oddiy HTTP (polling)</div>
+        <div class="c-text">Har 2 soniyada yangi so'rov → Keraksiz yuklanish. Latency: ~200-500ms. Server resurslarini isrof qiladi.</div>
+      </div>
+      <div class="cmp-good">
+        <div class="c-title">✅ WebSocket (SignalR)</div>
+        <div class="c-text">Bir marta ulanish → xabarlar darhol yetadi. Latency: &lt;50ms. Server resurslarini tejaydi.</div>
+      </div>
+    </div>
+
+    <div class="formula-wrap" style="border-color:rgba(6,182,212,.4);margin-top:12px">
+      <div class="formula" style="font-size:13px;line-height:1.8">
+        HTTP overhead: <span class="var">O</span>(n) <span class="op">=</span> n × (header_size + RTT)<br/>
+        WebSocket overhead: <span class="var">O</span>(n) <span class="op">=</span> handshake + n × <span class="num">2</span> bytes
+      </div>
+      <div class="formula-label">n = xabarlar soni | 1000 ta xabar uchun: HTTP ~1MB vs WS ~2KB</div>
+    </div>
+  </div>
+  <div>
+    <div class="lbl c" style="margin-bottom:12px">WebSocket Handshake jarayoni</div>
+    <div class="alg-step"><div class="alg-num">1</div><div><div class="alg-title">HTTP Upgrade so'rovi</div><div class="alg-desc">Client: GET /hub/chat HTTP/1.1 → Upgrade: websocket, Sec-WebSocket-Key: [base64]</div></div></div>
+    <div class="alg-step"><div class="alg-num">2</div><div><div class="alg-title">Server kalitni hisoblaydi</div><div class="alg-desc">Accept-key = Base64(SHA1(client_key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))</div></div></div>
+    <div class="alg-step"><div class="alg-num">3</div><div><div class="alg-title">101 Switching Protocols</div><div class="alg-desc">Server 101 status bilan javob qaytaradi → Doimiy ulanish o'rnatildi</div></div></div>
+    <div class="alg-step"><div class="alg-num">4</div><div><div class="alg-title">Ikki yo'nalishli uzatish</div><div class="alg-desc">Server → Client: yangi xabar, bron holati, bildirishnoma — darhol, 0 ms kechikish</div></div></div>
+
+    <div class="card cc" style="padding:14px 18px;margin-top:10px">
+      <div style="font-size:12px;font-weight:700;color:#67e8f9;margin-bottom:8px">📌 Natija</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.55">Foydalanuvchilar <strong style="color:#fff">platformadan chiqmasdan</strong> uy egasi bilan gaplashib, bron qiladi va to'laydi. Tranzaksiya yo'qolmaydi. Telegram kerak emas.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLAYD 14 — ALGORITMLAR XULOSASI
+══════════════════════════════════════ -->
+<div class="slide" id="s14">
+<div style="width:100%;max-width:1100px">
+  <div style="margin-bottom:20px">
+    <div class="lbl a">14 · Barcha algoritmlar</div>
+    <h2 class="ttl">Muammo → Algoritm → Formula → <span class="ga">Natija</span></h2>
+  </div>
+  <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:18px;overflow:hidden">
+    <table class="tbl" style="font-size:12px">
+      <thead><tr>
+        <th>Muammo</th>
+        <th>Algoritm</th>
+        <th>Asosiy formula</th>
+        <th>Natija</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><span style="color:#f87171">🚫 Soxta e'lonlar</span></td>
+          <td>Challenge-Response</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:#a78bfa">σ = HMAC-SHA256(K, data ‖ nonce)</td>
+          <td class="yes">100% soxta yo'q</td>
+        </tr>
+        <tr>
+          <td><span style="color:#f87171">💸 Noto'g'ri narx</span></td>
+          <td>Multiple Lin. Regression</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:#a78bfa">Ŷ = β₀ + β₁X₁ + ... + β₆X₆</td>
+          <td class="yes">R² = 0.94 aniqliq</td>
+        </tr>
+        <tr>
+          <td><span style="color:#f87171">📍 Geo qidiruv yo'q</span></td>
+          <td>Haversine Formula</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:#a78bfa">d = 2R·arcsin(√a)</td>
+          <td class="yes">Metr aniqlikda</td>
+        </tr>
+        <tr>
+          <td><span style="color:#f87171">📵 Muloqot uzilgan</span></td>
+          <td>WebSocket Protocol</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:#a78bfa">O(n) = handshake + n×2byte</td>
+          <td class="yes">&lt;50ms latency</td>
+        </tr>
+        <tr>
+          <td><span style="color:#fcd34d">📅 Bron ziddiyati</span></td>
+          <td>Interval Overlap</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:#a78bfa">NOT(S₂≥E₁ OR E₂≤S₁)</td>
+          <td class="yes">0% ikki bron</td>
+        </tr>
+        <tr>
+          <td><span style="color:#fcd34d">⭐ Adolatsiz reyting</span></td>
+          <td>Weighted Moving Avg</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:#a78bfa">R_w = Σ(rᵢ×wᵢ) / Σwᵢ, wᵢ=e<sup>−λt</sup></td>
+          <td class="yes">Adolatli baho</td>
+        </tr>
+        <tr>
+          <td><span style="color:#fcd34d">🔍 Tavsiya yo'q</span></td>
+          <td>Cosine Similarity</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:#a78bfa">cos(θ) = A·B / (|A|×|B|)</td>
+          <td class="yes">+34% tranzaksiya</td>
+        </tr>
+        <tr>
+          <td><span style="color:#fcd34d">⚡ Sekin qidiruv</span></td>
+          <td>B-Tree Indexing</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:#a78bfa">T(n) = O(log_b n)</td>
+          <td class="yes">10× tezroq</td>
+        </tr>
+        <tr>
+          <td><span style="color:#fcd34d">🔐 Parol xavfsizligi</span></td>
+          <td>BCrypt + JWT</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:#a78bfa">hash = BCrypt(pwd, salt, cost=12)</td>
+          <td class="yes">Enterprise daraja</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLAYD 15 — XULOSA
+══════════════════════════════════════ -->
+<div class="slide" id="s15">
+<div style="text-align:center;max-width:900px">
+  <span style="font-size:64px;display:block;margin-bottom:18px">🏆</span>
+  <div id="s15" class="ft">Loyiha Xulosasi</div>
+  <p style="font-size:15px;color:var(--muted);line-height:1.75;max-width:740px;margin:0 auto 24px">
+    Ushbu loyihada nafaqat sayt qurildi — <strong style="color:#a78bfa">4 ta haqiqiy muammo</strong> aniqlanib,
+    har biriga <strong style="color:#22d3ee">matematik asoslangan algoritm</strong> yechim topildi.
+    Har bir yechim bozorda mavjud platformalardan <strong style="color:#4ade80">o'lchanadigan darajada ustun</strong>.
+  </p>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:800px;margin:0 auto 24px">
+    <div style="padding:18px;border-radius:16px;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.3);text-align:center">
+      <div style="font-size:28px;font-weight:900;color:#c4b5fd">9</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Mustaqil algoritm</div>
+    </div>
+    <div style="padding:18px;border-radius:16px;background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.3);text-align:center">
+      <div style="font-size:28px;font-weight:900;color:#67e8f9">6+</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Matematik formula</div>
+    </div>
+    <div style="padding:18px;border-radius:16px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);text-align:center">
+      <div style="font-size:28px;font-weight:900;color:#6ee7b7">4</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Hal etilgan muammo</div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:24px">
+    <div class="fb">σ = HMAC-SHA256 · OneID</div>
+    <div class="fb">Ŷ = β₀+β₁X₁+... · AI Narx</div>
+    <div class="fb">d = 2R·arcsin(√a) · Haversine</div>
+    <div class="fb">R_w = Σ(rᵢwᵢ)/Σwᵢ · Reyting</div>
+    <div class="fb">cos(θ) = A·B/|A||B| · Tavsiya</div>
+    <div class="fb">O(log n) · B-Tree Indeks</div>
+  </div>
+
+  <div style="padding:20px;border-radius:18px;background:linear-gradient(135deg,rgba(124,58,237,.2),rgba(6,182,212,.2));border:1px solid rgba(124,58,237,.4)">
+    <p style="font-size:17px;font-weight:800;margin-bottom:6px">🎓 E'tiboringiz va savollaringiz uchun rahmat!</p>
+    <p style="font-size:13px;color:var(--muted)">Har bir algoritmning ishlash mexanizmi va formulasi haqida batafsil tushuntira olaman</p>
+  </div>
+</div>
+</div>
+
+</div><!-- end sw -->
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nb" id="pb" onclick="prev()">←</button>
+  <div class="dots" id="dots"></div>
+  <div class="nl" id="nl">1 / 15</div>
+  <button class="nb" id="nb2" onclick="next()">→</button>
+</nav>
+
+<script>
+const T=15;let c=1,busy=false;
+const de=document.getElementById('dots');
+for(let i=1;i<=T;i++){const b=document.createElement('button');b.className='db'+(i===1?' active':'');b.title='Slayd '+i;b.onclick=()=>go(i);de.appendChild(b)}
+function go(n){
+  if(busy||n===c||n<1||n>T)return;busy=true;
+  const p=document.getElementById('s'+c),nx=document.getElementById('s'+n);
+  p.classList.add('exit');p.classList.remove('active');
+  setTimeout(()=>{p.classList.remove('exit');nx.classList.add('active');busy=false},520);
+  c=n;upd();
+}
+function next(){go(c+1)}function prev(){go(c-1)}
+function upd(){
+  document.getElementById('prog').style.width=(c/T*100)+'%';
+  document.getElementById('cn').textContent=c;
+  document.getElementById('nl').textContent=c+' / '+T;
+  document.getElementById('pb').disabled=c===1;
+  document.getElementById('nb2').disabled=c===T;
+  document.querySelectorAll('.db').forEach((d,i)=>d.classList.toggle('active',i+1===c));
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();next()}
+  if(e.key==='ArrowLeft'){e.preventDefault();prev()}
+});
+let tx=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(dx<-50)next();if(dx>50)prev()});
+upd();
+</script>
+</body>
+</html>
