@@ -36,8 +36,6 @@ public class SeedController : ControllerBase
         try
         {
             using var scope = _serviceProvider.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<IStorageBroker>();
-
             var dbContext = scope.ServiceProvider.GetRequiredService<StorageBroker>();
 
             // Delete Bookings, Reviews, Favorites, Discounts related to demo properties
