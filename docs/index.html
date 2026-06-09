@@ -39,7 +39,6 @@ body{font-family:'Inter',sans-serif;background:#0A0F1E;color:#F1F5F9;overflow:hi
 .st{position:absolute;top:28px;right:50px;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:700;z-index:10;}
 .se{background:rgba(30,58,138,.8);color:#BAE6FD;border:1px solid rgba(59,130,246,.4);}
 .sf{background:rgba(139,92,246,.7);color:#E9D5FF;border:1px solid rgba(139,92,246,.4);}
-.sj{background:rgba(16,185,129,.6);color:#A7F3D0;border:1px solid rgba(16,185,129,.4);}
 
 /* glass card */
 .card{background:rgba(255,255,255,.07);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:26px;}
@@ -98,7 +97,6 @@ ul.li.rd li::before{color:var(--r);}
 /* title slide specific */
 .title-wrap{width:100%;max-width:1060px;display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:center;}
 .tag-chip{display:inline-block;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.35);color:#60A5FA;margin-bottom:16px;}
-/* S1 sarlavha slaydini vertikal markazlash */
 #s1{align-items:center;}
 </style>
 </head>
@@ -106,13 +104,16 @@ ul.li.rd li::before{color:var(--r);}
 <div class="bg-anim"></div>
 <div class="wrap" id="W">
 
-<!-- ====== S1: SARLAVHA ====== -->
+<!-- ======================= -->
+<!-- QISM 1: ELSHOD (1-8)    -->
+<!-- ======================= -->
+
+<!-- S1: SARLAVHA -->
 <div class="slide active" id="s1">
   <div class="st se">🗣 Elshod</div>
   <div class="title-wrap">
     <div>
       <div class="tag-chip">BITIRUV MALAKAVIY ISHI · 2026</div>
-
       <h1 style="font-size:36px;font-weight:900;line-height:1.25;margin-bottom:24px;color:#fff;">Berilganlar bazasiga asoslangan uy joy savdosi va ijarasi uchun web sayt ishlab chiqish</h1>
       <div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid rgba(255,255,255,.08);padding-top:20px;">
         <div style="display:flex;justify-content:space-between;">
@@ -135,9 +136,9 @@ ul.li.rd li::before{color:var(--r);}
   </div>
 </div>
 
-<!-- ====== S2: MUAMMO ====== -->
+<!-- S2: MUAMMO -->
 <div class="slide" id="s2">
-  <div class="st sf">🗣 Firdavs</div>
+  <div class="st se">🗣 Elshod</div>
   <div style="width:100%;max-width:1080px;">
     <div class="h1">2. Muammo va Dolzarblik</div>
     <div class="h2">Nima uchun bu loyiha zarur edi?</div>
@@ -170,9 +171,9 @@ ul.li.rd li::before{color:var(--r);}
   </div>
 </div>
 
-<!-- ====== S3: TAQQOSLASH ====== -->
+<!-- S3: TAQQOSLASH -->
 <div class="slide" id="s3">
-  <div class="st sf">🗣 Firdavs</div>
+  <div class="st se">🗣 Elshod</div>
   <div style="width:100%;max-width:1080px;">
     <div class="h1">3. Boshqa Platformalar Bilan Taqqoslash</div>
     <div class="h2">OLX.uz, Uybor.uz va bizning yechim</div>
@@ -217,9 +218,9 @@ ul.li.rd li::before{color:var(--r);}
   </div>
 </div>
 
-<!-- ====== S4: TEXNOLOGIYALAR ====== -->
+<!-- S4: TEXNOLOGIYALAR -->
 <div class="slide" id="s4">
-  <div class="st sj">🗣 Jamoa</div>
+  <div class="st se">🗣 Elshod</div>
   <div style="width:100%;max-width:1080px;">
     <div class="h1">4. Texnologiyalar va Jamoa</div>
     <div class="h2">Kim nima qildi?</div>
@@ -255,7 +256,7 @@ ul.li.rd li::before{color:var(--r);}
         <ul class="li">
           <li>40+ qayta ishlatiladigan UI komponentlar</li>
           <li>SPA + Lazy Loading — brauzer qayta yuklanmaydi</li>
-          <li>Leaflet.js xarita (Toshkent real narx ko'rsatiladi ↓)</li>
+          <li>Leaflet.js xarita integratsiyasi</li>
         </ul>
       </div>
     </div>
@@ -265,120 +266,11 @@ ul.li.rd li::before{color:var(--r);}
   </div>
 </div>
 
-<!-- ====== S5: XARITA ====== -->
+<!-- S5: POSTGRESQL (Oldin S8 edi) -->
 <div class="slide" id="s5">
-  <div class="st sf">🗣 Firdavs</div>
-  <div style="width:100%;max-width:1080px;">
-    <div class="h1">5. Interaktiv Xarita va Baza Aloqasi</div>
-    <div class="h2">Real ma'lumotlar — real xaritada</div>
-    <div class="sep"></div>
-    <div class="g-img">
-      <div>
-        <div class="card-sm" style="margin-bottom:14px;border-color:rgba(16,185,129,.3);">
-          <div style="font-size:15px;font-weight:700;color:#34D399;margin-bottom:10px;">🗺️ Leaflet.js Xarita</div>
-          <ul class="li gr" style="font-size:14px;">
-            <li>Toshkentdagi barcha e'lonlar <b>koordinatalar</b> bo'yicha xaritada ko'rsatiladi</li>
-            <li><b>Bounding Box</b>: faqat ekranda ko'ringan hudud yuklanadi</li>
-            <li>Narxlarga qarab rangli marker (arzon → qimmat)</li>
-          </ul>
-        </div>
-        <div class="card-sm" style="border-color:rgba(59,130,246,.3);">
-          <div style="font-size:15px;font-weight:700;color:#60A5FA;margin-bottom:10px;">🔥 Narx Issiqlik Xaritasi</div>
-          <ul class="li" style="font-size:14px;">
-            <li>14 viloyat bo'yicha o'rtacha narxlar rangli heatmap ko'rinishida</li>
-            <li>Admin CSV/Excel/PDF ko'rinishida export qila oladi</li>
-            <li>GeoController orqali tuman koordinatalari boshqariladi</li>
-          </ul>
-        </div>
-      </div>
-      <div class="img-box">
-        <img src="img/map.png" alt="Xarita" style="width:100%;display:block;">
-        <div style="padding:8px 12px;background:rgba(0,0,0,.5);font-size:12px;color:#64748B;text-align:center;">Real vaqtdagi interaktiv xarita dizayni</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ====== S6: AI MODELLAR ====== -->
-<div class="slide" id="s6">
   <div class="st se">🗣 Elshod</div>
   <div style="width:100%;max-width:1080px;">
-    <div class="h1">6. Sun'iy Intellekt — Aniq Modellar</div>
-    <div class="h2">Qaysi model ishlatildi va nima uchun?</div>
-    <div class="sep"></div>
-    <div class="g-img">
-      <div>
-        <div class="card-sm" style="border-color:rgba(139,92,246,.4);margin-bottom:14px;">
-          <div style="font-size:15px;font-weight:700;color:#C4B5FD;margin-bottom:12px;">🔬 Narx Bashorati Modeli</div>
-          <div style="margin-bottom:10px;">
-            <div class="mchip">🌲 FastTree Regression</div>
-            <div class="mchip2" style="margin-left:8px;">Gradient Boosting</div>
-          </div>
-          <p style="font-size:14px;color:#94A3B8;line-height:1.6;">Nega bu model? Ko'chmas mulk narxi <b>chiziqli emas</b>: maydon 2x bo'lsa narx 2x bo'lmaydi — tuman, qavat, ta'mir ham ta'sir qiladi. FastTree bu nochiziqlilikni yaxshi ushlaydi.</p>
-        </div>
-        <div class="card-sm" style="border-color:rgba(16,185,129,.4);">
-          <div style="font-size:15px;font-weight:700;color:#6EE7B7;margin-bottom:10px;">🧮 Gibrid Formula (Blending)</div>
-          <div style="font-size:28px;font-weight:900;color:#fff;text-align:center;padding:10px;background:rgba(16,185,129,.1);border-radius:8px;margin-bottom:8px;">
-            50% Matematik + 50% DB Mediana
-          </div>
-          <p style="font-size:13px;color:#94A3B8;">Bazadagi real e'lonlardan <b>outlier</b>lar tozalanib, mediana hisob qilinadi. Matematik formula bilan aralashtiriladi.</p>
-        </div>
-      </div>
-      <div class="img-box">
-        <img src="img/ai.png" alt="AI Dashboard" style="width:100%;display:block;">
-        <div style="padding:8px 12px;background:rgba(0,0,0,.5);font-size:12px;color:#64748B;text-align:center;">AI narx bashorat interfeysi</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ====== S7: OVOZLI AI ====== -->
-<div class="slide" id="s7">
-  <div class="st sf">🗣 Firdavs</div>
-  <div style="width:100%;max-width:1080px;">
-    <div class="h1">7. AI Funksiyalar — 5 ta Modul</div>
-    <div class="h2">Oddiy saytdan farq qiladigan texnologik ustunlik</div>
-    <div class="sep"></div>
-    <div class="g-img">
-      <div class="g2" style="grid-template-columns:1fr 1fr;align-content:start;">
-        <div class="card-sm" style="border-color:rgba(139,92,246,.35);">
-          <div style="font-size:24px;margin-bottom:6px;">🎯</div>
-          <div style="font-size:14px;font-weight:700;color:#C4B5FD;margin-bottom:6px;">Narx Bashorati</div>
-          <div style="font-size:13px;color:#94A3B8;">14 viloyat, 9+ parametr. FastTree + Gibrid model.</div>
-        </div>
-        <div class="card-sm" style="border-color:rgba(16,185,129,.35);">
-          <div style="font-size:24px;margin-bottom:6px;">🔍</div>
-          <div style="font-size:14px;font-weight:700;color:#6EE7B7;margin-bottom:6px;">Aqlli Qidiruv</div>
-          <div style="font-size:13px;color:#94A3B8;">O'zbek tilida yozilgan so'rov avtomatik tahlil qilinadi.</div>
-        </div>
-        <div class="card-sm" style="border-color:rgba(245,158,11,.35);">
-          <div style="font-size:24px;margin-bottom:6px;">🎤</div>
-          <div style="font-size:14px;font-weight:700;color:#FCD34D;margin-bottom:6px;">Ovozli E'lon Berish</div>
-          <div style="font-size:13px;color:#94A3B8;">Foydalanuvchi ovoz orqali e'lon beradi. <b>Web Speech API</b> orqali ovoz matnga aylantiriladi, AI matn strukturasini tahlil qilib e'lonni avtomatik to'ldiradi.</div>
-        </div>
-        <div class="card-sm" style="border-color:rgba(59,130,246,.35);">
-          <div style="font-size:24px;margin-bottom:6px;">💬</div>
-          <div style="font-size:14px;font-weight:700;color:#60A5FA;margin-bottom:6px;">AI Chatbot</div>
-          <div style="font-size:13px;color:#94A3B8;">24/7 yordamchi. Kontekstni esda tutib mulk va qonuniy savollarga javob beradi.</div>
-        </div>
-        <div class="card-sm" style="border-color:rgba(244,63,94,.35);grid-column:1/-1;">
-          <div style="font-size:14px;font-weight:700;color:#FB7185;margin-bottom:6px;">✍️ AI Tavsif Yozuvchi (generate-description)</div>
-          <div style="font-size:13px;color:#94A3B8;">Host mulk parametrlarini kiritsa, AI avtomatik professional e'lon matni yozib beradi. 3 xil shablon — Random tanlanadi. Vaqt tejaladi.</div>
-        </div>
-      </div>
-      <div class="img-box">
-        <img src="img/voice.png" alt="Voice AI" style="width:100%;display:block;">
-        <div style="padding:8px 12px;background:rgba(0,0,0,.5);font-size:12px;color:#64748B;text-align:center;">🎤 Ovozli AI — Web Speech API</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ====== S8: POSTGRESQL ====== -->
-<div class="slide" id="s8">
-  <div class="st se">🗣 Elshod</div>
-  <div style="width:100%;max-width:1080px;">
-    <div class="h1">8. PostgreSQL — Jadvallar Tuzilmasi</div>
+    <div class="h1">5. PostgreSQL — Jadvallar Tuzilmasi</div>
     <div class="h2">Nima uchun "Berilganlar bazasiga asoslangan" deyilgan?</div>
     <div class="sep"></div>
     <div class="g-img">
@@ -410,11 +302,11 @@ ul.li.rd li::before{color:var(--r);}
   </div>
 </div>
 
-<!-- ====== S9: API ====== -->
-<div class="slide" id="s9">
+<!-- S6: API ENDPOINTLAR (Oldin S9 edi) -->
+<div class="slide" id="s6">
   <div class="st se">🗣 Elshod</div>
   <div style="width:100%;max-width:1080px;">
-    <div class="h1">9. Asosiy API Endpointlar</div>
+    <div class="h1">6. Asosiy API Endpointlar</div>
     <div class="h2">33 Controller · 100+ RESTful API</div>
     <div class="sep"></div>
     <table style="width:100%;border-collapse:separate;border-spacing:0 5px;">
@@ -462,11 +354,44 @@ ul.li.rd li::before{color:var(--r);}
   </div>
 </div>
 
-<!-- ====== S10: TO'LOV + XAVFSIZLIK ====== -->
-<div class="slide" id="s10">
+<!-- S7: AI MODELLAR (Oldin S6 edi) -->
+<div class="slide" id="s7">
   <div class="st se">🗣 Elshod</div>
   <div style="width:100%;max-width:1080px;">
-    <div class="h1">10. To'lov Tizimi va Xavfsizlik</div>
+    <div class="h1">7. Sun'iy Intellekt — Aniq Modellar</div>
+    <div class="h2">Qaysi model ishlatildi va nima uchun?</div>
+    <div class="sep"></div>
+    <div class="g-img">
+      <div>
+        <div class="card-sm" style="border-color:rgba(139,92,246,.4);margin-bottom:14px;">
+          <div style="font-size:15px;font-weight:700;color:#C4B5FD;margin-bottom:12px;">🔬 Narx Bashorati Modeli</div>
+          <div style="margin-bottom:10px;">
+            <div class="mchip">🌲 FastTree Regression</div>
+            <div class="mchip2" style="margin-left:8px;">Gradient Boosting</div>
+          </div>
+          <p style="font-size:14px;color:#94A3B8;line-height:1.6;">Nega bu model? Ko'chmas mulk narxi <b>chiziqli emas</b>: maydon 2x bo'lsa narx 2x bo'lmaydi — tuman, qavat, ta'mir ham ta'sir qiladi. FastTree bu nochiziqlilikni yaxshi ushlaydi.</p>
+        </div>
+        <div class="card-sm" style="border-color:rgba(16,185,129,.4);">
+          <div style="font-size:15px;font-weight:700;color:#6EE7B7;margin-bottom:10px;">🧮 Gibrid Formula (Blending)</div>
+          <div style="font-size:28px;font-weight:900;color:#fff;text-align:center;padding:10px;background:rgba(16,185,129,.1);border-radius:8px;margin-bottom:8px;">
+            50% Matematik + 50% DB Mediana
+          </div>
+          <p style="font-size:13px;color:#94A3B8;">Bazadagi real e'lonlardan <b>outlier</b>lar tozalanib, mediana hisob qilinadi. Matematik formula bilan aralashtiriladi.</p>
+        </div>
+      </div>
+      <div class="img-box">
+        <img src="img/ai.png" alt="AI Dashboard" style="width:100%;display:block;">
+        <div style="padding:8px 12px;background:rgba(0,0,0,.5);font-size:12px;color:#64748B;text-align:center;">AI narx bashorat interfeysi</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S8: TO'LOV + XAVFSIZLIK (Oldin S10 edi) -->
+<div class="slide" id="s8">
+  <div class="st se">🗣 Elshod</div>
+  <div style="width:100%;max-width:1080px;">
+    <div class="h1">8. To'lov Tizimi va Xavfsizlik</div>
     <div class="h2">Pul oqimi va himoyalangan arxitektura</div>
     <div class="sep"></div>
     <div class="g3">
@@ -508,11 +433,15 @@ ul.li.rd li::before{color:var(--r);}
   </div>
 </div>
 
-<!-- ====== S11: FRONTEND ====== -->
-<div class="slide" id="s11">
+<!-- ======================= -->
+<!-- QISM 2: FIRDAVS (9-15)  -->
+<!-- ======================= -->
+
+<!-- S9: FRONTEND (Oldin S11 edi) -->
+<div class="slide" id="s9">
   <div class="st sf">🗣 Firdavs</div>
   <div style="width:100%;max-width:1080px;">
-    <div class="h1">11. Frontend (Angular 18) — Interaktivlik</div>
+    <div class="h1">9. Frontend (Angular 18) — Interaktivlik</div>
     <div class="h2">40+ komponent · SPA · Responsive</div>
     <div class="sep"></div>
     <div class="g-img">
@@ -550,7 +479,83 @@ ul.li.rd li::before{color:var(--r);}
   </div>
 </div>
 
-<!-- ====== S12: MAXSUS FUNKSIYALAR ====== -->
+<!-- S10: XARITA (Oldin S5 edi) -->
+<div class="slide" id="s10">
+  <div class="st sf">🗣 Firdavs</div>
+  <div style="width:100%;max-width:1080px;">
+    <div class="h1">10. Interaktiv Xarita va Baza Aloqasi</div>
+    <div class="h2">Real ma'lumotlar — real xaritada</div>
+    <div class="sep"></div>
+    <div class="g-img">
+      <div>
+        <div class="card-sm" style="margin-bottom:14px;border-color:rgba(16,185,129,.3);">
+          <div style="font-size:15px;font-weight:700;color:#34D399;margin-bottom:10px;">🗺️ Leaflet.js Xarita</div>
+          <ul class="li gr" style="font-size:14px;">
+            <li>Toshkentdagi barcha e'lonlar <b>koordinatalar</b> bo'yicha xaritada ko'rsatiladi</li>
+            <li><b>Bounding Box</b>: faqat ekranda ko'ringan hudud yuklanadi</li>
+            <li>Narxlarga qarab rangli marker (arzon → qimmat)</li>
+          </ul>
+        </div>
+        <div class="card-sm" style="border-color:rgba(59,130,246,.3);">
+          <div style="font-size:15px;font-weight:700;color:#60A5FA;margin-bottom:10px;">🔥 Narx Issiqlik Xaritasi</div>
+          <ul class="li" style="font-size:14px;">
+            <li>14 viloyat bo'yicha o'rtacha narxlar rangli heatmap ko'rinishida</li>
+            <li>Admin CSV/Excel/PDF ko'rinishida export qila oladi</li>
+            <li>GeoController orqali tuman koordinatalari boshqariladi</li>
+          </ul>
+        </div>
+      </div>
+      <div class="img-box">
+        <img src="img/map.png" alt="Xarita" style="width:100%;display:block;">
+        <div style="padding:8px 12px;background:rgba(0,0,0,.5);font-size:12px;color:#64748B;text-align:center;">Real vaqtdagi interaktiv xarita dizayni</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S11: AI FUNKSIYALAR (Oldin S7 edi) -->
+<div class="slide" id="s11">
+  <div class="st sf">🗣 Firdavs</div>
+  <div style="width:100%;max-width:1080px;">
+    <div class="h1">11. AI Funksiyalar — 5 ta Modul</div>
+    <div class="h2">Oddiy saytdan farq qiladigan texnologik ustunlik</div>
+    <div class="sep"></div>
+    <div class="g-img">
+      <div class="g2" style="grid-template-columns:1fr 1fr;align-content:start;">
+        <div class="card-sm" style="border-color:rgba(139,92,246,.35);">
+          <div style="font-size:24px;margin-bottom:6px;">🎯</div>
+          <div style="font-size:14px;font-weight:700;color:#C4B5FD;margin-bottom:6px;">Narx Bashorati</div>
+          <div style="font-size:13px;color:#94A3B8;">14 viloyat, 9+ parametr. FastTree + Gibrid model.</div>
+        </div>
+        <div class="card-sm" style="border-color:rgba(16,185,129,.35);">
+          <div style="font-size:24px;margin-bottom:6px;">🔍</div>
+          <div style="font-size:14px;font-weight:700;color:#6EE7B7;margin-bottom:6px;">Aqlli Qidiruv</div>
+          <div style="font-size:13px;color:#94A3B8;">O'zbek tilida yozilgan so'rov avtomatik tahlil qilinadi.</div>
+        </div>
+        <div class="card-sm" style="border-color:rgba(245,158,11,.35);">
+          <div style="font-size:24px;margin-bottom:6px;">🎤</div>
+          <div style="font-size:14px;font-weight:700;color:#FCD34D;margin-bottom:6px;">Ovozli E'lon Berish</div>
+          <div style="font-size:13px;color:#94A3B8;">Foydalanuvchi ovoz orqali e'lon beradi. <b>Web Speech API</b> orqali ovoz matnga aylantiriladi, AI matn strukturasini tahlil qilib e'lonni avtomatik to'ldiradi.</div>
+        </div>
+        <div class="card-sm" style="border-color:rgba(59,130,246,.35);">
+          <div style="font-size:24px;margin-bottom:6px;">💬</div>
+          <div style="font-size:14px;font-weight:700;color:#60A5FA;margin-bottom:6px;">AI Chatbot</div>
+          <div style="font-size:13px;color:#94A3B8;">24/7 yordamchi. Kontekstni esda tutib mulk va qonuniy savollarga javob beradi.</div>
+        </div>
+        <div class="card-sm" style="border-color:rgba(244,63,94,.35);grid-column:1/-1;">
+          <div style="font-size:14px;font-weight:700;color:#FB7185;margin-bottom:6px;">✍️ AI Tavsif Yozuvchi (generate-description)</div>
+          <div style="font-size:13px;color:#94A3B8;">Host mulk parametrlarini kiritsa, AI avtomatik professional e'lon matni yozib beradi. 3 xil shablon — Random tanlanadi. Vaqt tejaladi.</div>
+        </div>
+      </div>
+      <div class="img-box">
+        <img src="img/voice.png" alt="Voice AI" style="width:100%;display:block;">
+        <div style="padding:8px 12px;background:rgba(0,0,0,.5);font-size:12px;color:#64748B;text-align:center;">🎤 Ovozli AI — Web Speech API</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S12: MAXSUS FUNKSIYALAR -->
 <div class="slide" id="s12">
   <div class="st sf">🗣 Firdavs</div>
   <div style="width:100%;max-width:1080px;">
@@ -599,9 +604,9 @@ ul.li.rd li::before{color:var(--r);}
   </div>
 </div>
 
-<!-- ====== S13: ANALITIKA ====== -->
+<!-- S13: ANALITIKA -->
 <div class="slide" id="s13">
-  <div class="st se">🗣 Elshod</div>
+  <div class="st sf">🗣 Firdavs</div>
   <div style="width:100%;max-width:1080px;">
     <div class="h1">13. Kengaytirilgan Analitika</div>
     <div class="h2">Bozorni "ko'rish" qobiliyati — Dashboard</div>
@@ -637,7 +642,7 @@ ul.li.rd li::before{color:var(--r);}
   </div>
 </div>
 
-<!-- ====== S14: KELAJAK ====== -->
+<!-- S14: KELAJAK -->
 <div class="slide" id="s14">
   <div class="st sf">🗣 Firdavs</div>
   <div style="width:100%;max-width:1080px;">
@@ -671,9 +676,9 @@ ul.li.rd li::before{color:var(--r);}
   </div>
 </div>
 
-<!-- ====== S15: XULOSA ====== -->
+<!-- S15: XULOSA -->
 <div class="slide" id="s15">
-  <div class="st se">🗣 Elshod</div>
+  <div class="st sf">🗣 Firdavs</div>
   <div style="width:100%;max-width:1060px;text-align:center;">
     <div style="font-size:13px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;">Loyiha Natijalari</div>
     <h1 style="font-size:40px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:28px;">O'zbekiston ko'chmas mulk bozori uchun<br><span style="color:#60A5FA;">to'liq raqamlashtirilgan</span> platforma</h1>
