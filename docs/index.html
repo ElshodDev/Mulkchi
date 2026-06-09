@@ -49,6 +49,7 @@
     width: 100%;
     height: 100vh;
     z-index: 1;
+    overflow: hidden;
   }
 
   .slide {
@@ -60,21 +61,58 @@
     justify-content: center;
     padding: 60px 100px;
     opacity: 0;
-    transform: translateY(30px);
-    transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+    visibility: hidden;
     pointer-events: none;
+    transition: opacity 0.45s ease, transform 0.45s ease;
+    transform: translateX(60px);
   }
 
   .slide.active {
     opacity: 1;
-    transform: translateY(0);
+    visibility: visible;
     pointer-events: all;
+    transform: translateX(0);
   }
 
-  .slide.exit {
+  .slide.exit-left {
     opacity: 0;
-    transform: translateY(-30px);
+    visibility: visible;
+    pointer-events: none;
+    transform: translateX(-60px);
+    transition: opacity 0.45s ease, transform 0.45s ease;
   }
+
+  .slide.exit-right {
+    opacity: 0;
+    visibility: visible;
+    pointer-events: none;
+    transform: translateX(60px);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+
+  /* NAV DOTS */
+  .dots {
+    position: fixed;
+    bottom: 88px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 100;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(30,58,138,0.2);
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+  .dot.active-dot {
+    background: var(--primary);
+    width: 22px;
+    border-radius: 4px;
+  }
+
 
   /* GLASSMORPHISM CARDS */
   .glass-card {
@@ -591,6 +629,9 @@
 
 </div>
 
+<!-- DOTS -->
+<div class="dots" id="dots"></div>
+
 <!-- NAVIGATION -->
 <nav class="nav">
   <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← Oldingi</button>
@@ -603,56 +644,86 @@
   let current = 1;
   let animating = false;
 
+  // Build dots
+  const dotsContainer = document.getElementById('dots');
+  for (let i = 1; i <= totalSlides; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 1 ? ' active-dot' : '');
+    d.onclick = () => goToSlide(i);
+    dotsContainer.appendChild(d);
+  }
+
   function updateUI() {
     document.getElementById('slideCounter').textContent = current + ' / ' + totalSlides;
     document.getElementById('prevBtn').style.opacity = current === 1 ? '0.3' : '1';
-    
     const nextBtn = document.getElementById('nextBtn');
-    if (current === totalSlides) {
-      nextBtn.textContent = 'Yakun';
-      nextBtn.style.opacity = '0.5';
-    } else {
-      nextBtn.textContent = 'Keyingi →';
-      nextBtn.style.opacity = '1';
-    }
+    nextBtn.textContent = current === totalSlides ? 'Yakun' : 'Keyingi →';
+    nextBtn.style.opacity = current === totalSlides ? '0.5' : '1';
+    // update dots
+    document.querySelectorAll('.dot').forEach((d, i) => {
+      d.classList.toggle('active-dot', i + 1 === current);
+    });
+  }
+
+  function goToSlide(target) {
+    if (animating || target === current) return;
+    const dir = target > current ? 1 : -1;
+    const fromSlide = document.getElementById('s' + current);
+    const toSlide = document.getElementById('s' + target);
+
+    animating = true;
+
+    // Set incoming slide starting position (off screen)
+    toSlide.style.transition = 'none';
+    toSlide.classList.remove('exit-left', 'exit-right', 'active');
+    toSlide.style.transform = dir > 0 ? 'translateX(60px)' : 'translateX(-60px)';
+    toSlide.style.opacity = '0';
+    toSlide.style.visibility = 'visible';
+
+    // Force reflow
+    toSlide.getBoundingClientRect();
+
+    // Animate outgoing
+    fromSlide.classList.remove('active');
+    fromSlide.classList.add(dir > 0 ? 'exit-left' : 'exit-right');
+
+    // Animate incoming
+    toSlide.style.transition = '';
+    toSlide.style.transform = 'translateX(0)';
+    toSlide.style.opacity = '1';
+    toSlide.classList.add('active');
+
+    setTimeout(() => {
+      fromSlide.classList.remove('exit-left', 'exit-right');
+      fromSlide.style.visibility = '';
+      toSlide.style.transform = '';
+      toSlide.style.opacity = '';
+      toSlide.style.visibility = '';
+      toSlide.style.transition = '';
+      current = target;
+      updateUI();
+      animating = false;
+    }, 480);
   }
 
   function changeSlide(dir) {
-    if (animating) return;
     const next = current + dir;
-    if (next < 1 || next > totalSlides) return;
-    animating = true;
-
-    const currentSlide = document.getElementById('s' + current);
-    const nextSlide = document.getElementById('s' + next);
-
-    currentSlide.classList.add('exit');
-    currentSlide.classList.remove('active');
-
-    nextSlide.style.transform = dir > 0 ? 'translateY(30px)' : 'translateY(-30px)';
-    nextSlide.style.opacity = '0';
-    nextSlide.classList.add('active');
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        nextSlide.style.transform = 'translateY(0)';
-        nextSlide.style.opacity = '1';
-      });
-    });
-
-    setTimeout(() => {
-      currentSlide.classList.remove('exit');
-      current = next;
-      updateUI();
-      animating = false;
-    }, 600);
+    if (next >= 1 && next <= totalSlides) goToSlide(next);
   }
 
   document.addEventListener('keydown', e => {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
     if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); changeSlide(-1); }
   });
-  
+
+  // Touch/swipe support
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', e => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) changeSlide(diff > 0 ? 1 : -1);
+  });
+
   updateUI();
 </script>
 
