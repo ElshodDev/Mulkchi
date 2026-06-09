@@ -3,612 +3,705 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BMI Taqdimoti — Berilganlar Bazasiga Asoslangan Uy Joy Savdosi va Ijarasi</title>
+<title>BMI Taqdimoti — Uy Joy Savdosi va Ijarasi</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-  :root{
-    --blue:#1E3A8A; --blue2:#3B82F6; --red:#F43F5E; --green:#10B981;
-    --yellow:#F59E0B; --purple:#8B5CF6;
-    --dark:#0F172A; --muted:#475569; --light:#F8FAFC;
-    --bg:linear-gradient(135deg,#EEF2FF 0%,#E0E7FF 40%,#F0FDF4 100%);
-  }
-  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--dark);overflow:hidden;height:100vh;width:100vw;user-select:none;}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --b:#1E3A8A;--b2:#3B82F6;--r:#F43F5E;--g:#10B981;
+  --y:#F59E0B;--p:#8B5CF6;--dk:#0F172A;--mt:#64748B;
+}
+body{font-family:'Inter',sans-serif;background:#0A0F1E;color:#F1F5F9;overflow:hidden;height:100vh;width:100vw;}
 
-  /* BG BLOBS */
-  .blob{position:fixed;border-radius:50%;filter:blur(80px);z-index:0;opacity:.5;pointer-events:none;}
-  .blob1{top:-15%;left:-10%;width:55vw;height:55vw;background:rgba(59,130,246,.25);}
-  .blob2{bottom:-20%;right:-10%;width:60vw;height:60vw;background:rgba(139,92,246,.18);}
-  .blob3{top:30%;left:40%;width:25vw;height:25vw;background:rgba(16,185,129,.12);}
+/* animated bg */
+.bg-anim{position:fixed;inset:0;z-index:0;overflow:hidden;}
+.bg-anim::before{content:'';position:absolute;top:-30%;left:-20%;width:70vw;height:70vw;background:radial-gradient(circle,rgba(59,130,246,.25),transparent 60%);animation:pulse1 8s ease-in-out infinite;}
+.bg-anim::after{content:'';position:absolute;bottom:-20%;right:-10%;width:60vw;height:60vw;background:radial-gradient(circle,rgba(139,92,246,.18),transparent 60%);animation:pulse2 10s ease-in-out infinite;}
+@keyframes pulse1{0%,100%{transform:scale(1);}50%{transform:scale(1.15);}}
+@keyframes pulse2{0%,100%{transform:scale(1.1);}50%{transform:scale(.9);}}
 
-  /* SLIDES */
-  .wrap{position:relative;width:100%;height:100vh;z-index:1;overflow:hidden;}
-  .slide{
-    position:absolute;inset:0;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:50px 80px;
-    opacity:0;visibility:hidden;pointer-events:none;
-    transition:opacity .45s ease,transform .45s ease;
-    transform:translateX(60px);
-  }
-  .slide.active{opacity:1;visibility:visible;pointer-events:all;transform:translateX(0);}
-  .slide.exit-l{opacity:0;visibility:visible;pointer-events:none;transform:translateX(-60px);transition:opacity .45s ease,transform .45s ease;}
-  .slide.exit-r{opacity:0;visibility:visible;pointer-events:none;transform:translateX(60px);transition:opacity .45s ease,transform .45s ease;}
+/* slides */
+.wrap{position:relative;z-index:1;width:100%;height:100vh;overflow:hidden;}
+.slide{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .45s ease,transform .45s ease;
+  transform:translateX(60px);
+  padding:40px 60px;
+}
+.slide.active{opacity:1;visibility:visible;pointer-events:all;transform:translateX(0);}
+.slide.xl{opacity:0;visibility:visible;pointer-events:none;transform:translateX(-60px);transition:opacity .45s ease,transform .45s ease;}
+.slide.xr{opacity:0;visibility:visible;pointer-events:none;transform:translateX(60px);transition:opacity .45s ease,transform .45s ease;}
 
-  /* SPEAKER TAG */
-  .stag{position:absolute;top:30px;right:55px;padding:7px 18px;border-radius:25px;font-weight:700;font-size:14px;color:#fff;z-index:10;box-shadow:0 4px 15px rgba(0,0,0,.15);}
-  .stag.e{background:var(--blue);}
-  .stag.f{background:var(--blue2);}
-  .stag.b{background:var(--purple);}
+/* speaker tag */
+.st{position:absolute;top:28px;right:50px;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:700;z-index:10;}
+.se{background:rgba(30,58,138,.8);color:#BAE6FD;border:1px solid rgba(59,130,246,.4);}
+.sf{background:rgba(139,92,246,.7);color:#E9D5FF;border:1px solid rgba(139,92,246,.4);}
+.sj{background:rgba(16,185,129,.6);color:#A7F3D0;border:1px solid rgba(16,185,129,.4);}
 
-  /* GLASS */
-  .g{background:rgba(255,255,255,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.6);box-shadow:0 8px 32px rgba(15,23,42,.06);border-radius:20px;padding:35px;width:100%;max-width:1120px;}
-  .gi{background:rgba(255,255,255,.9);border-radius:12px;padding:22px;box-shadow:0 2px 8px rgba(0,0,0,.03);border:1px solid rgba(226,232,240,.8);position:relative;overflow:hidden;}
-  .gi::before{content:'';position:absolute;top:0;left:0;width:100%;height:4px;background:var(--blue);}
-  .gi.ra::before{background:var(--red);}
-  .gi.gr::before{background:var(--green);}
-  .gi.pu::before{background:var(--purple);}
-  .gi.ye::before{background:var(--yellow);}
+/* glass card */
+.card{background:rgba(255,255,255,.07);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:32px;}
+.card-sm{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:20px;}
 
-  /* NAV */
-  .nav{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;z-index:200;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);box-shadow:0 8px 28px rgba(0,0,0,.08);border-radius:40px;padding:9px 18px;border:1px solid rgba(255,255,255,.5);}
-  .nb{background:transparent;border:none;color:var(--blue);cursor:pointer;padding:9px 18px;border-radius:25px;font-size:14px;font-weight:700;transition:background .2s;}
-  .nb:hover{background:rgba(30,58,138,.06);}
-  .nb.p{background:var(--blue);color:#fff;}
-  .nb.p:hover{background:var(--blue2);}
-  .sc{font-size:14px;color:var(--muted);font-weight:600;min-width:65px;text-align:center;}
-  .dots{position:fixed;bottom:75px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:200;}
-  .dot{width:7px;height:7px;border-radius:50%;background:rgba(30,58,138,.2);transition:all .3s;cursor:pointer;}
-  .dot.on{background:var(--blue);width:20px;border-radius:4px;}
+/* nav */
+.nav{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;z-index:200;background:rgba(15,23,42,.85);backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,.4);border-radius:40px;padding:8px 16px;border:1px solid rgba(255,255,255,.1);}
+.nb{background:transparent;border:none;color:#94A3B8;cursor:pointer;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:700;transition:all .2s;}
+.nb:hover{background:rgba(255,255,255,.08);color:#fff;}
+.nb.p{background:var(--b2);color:#fff;}
+.sc{font-size:13px;color:#64748B;font-weight:600;min-width:60px;text-align:center;}
+.dots{position:fixed;bottom:68px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:200;}
+.dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);transition:all .3s;cursor:pointer;}
+.dot.on{background:var(--b2);width:18px;border-radius:3px;}
 
-  /* TYPOGRAPHY */
-  .h1{font-size:34px;font-weight:900;color:var(--blue);text-transform:uppercase;margin-bottom:8px;}
-  .h2{font-size:18px;color:var(--blue2);font-weight:700;letter-spacing:.5px;text-transform:uppercase;}
-  .ct{font-size:21px;font-weight:800;color:var(--blue);margin-bottom:14px;}
-  .ch{margin-bottom:30px;}
+/* text */
+.h1{font-size:30px;font-weight:900;letter-spacing:-.3px;line-height:1.2;margin-bottom:6px;}
+.h2{font-size:14px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:1px;margin-bottom:22px;}
+.sep{width:100%;height:1px;background:linear-gradient(90deg,var(--b2),var(--p),transparent);margin-bottom:22px;}
 
-  /* GRID */
-  .g2{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
-  .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;}
-  .g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;}
+/* grid */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.g-img{display:grid;grid-template-columns:1fr 1.3fr;gap:20px;align-items:start;}
 
-  /* LIST */
-  ul.li li{position:relative;padding-left:26px;margin-bottom:14px;font-size:17px;line-height:1.55;color:var(--dark);}
-  ul.li li::before{content:'✓';position:absolute;left:0;color:var(--green);font-weight:bold;font-size:16px;}
-  ul.li.ar li::before{content:'→';color:var(--blue2);}
-  ul.li.xx li::before{content:'✕';color:var(--red);}
+/* badge */
+.bd{display:inline-block;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;}
+.bdg{background:rgba(16,185,129,.15);color:#34D399;}
+.bdr{background:rgba(244,63,94,.15);color:#FB7185;}
+.bdb{background:rgba(59,130,246,.15);color:#60A5FA;}
+.bdp{background:rgba(139,92,246,.15);color:#A78BFA;}
+.bdy{background:rgba(245,158,11,.15);color:#FCD34D;}
 
-  /* TABLE */
-  table{width:100%;border-collapse:separate;border-spacing:0;border-radius:12px;overflow:hidden;border:1px solid #E2E8F0;}
-  th,td{padding:14px 16px;text-align:left;border-bottom:1px solid #E2E8F0;font-size:15px;}
-  th{background:rgba(30,58,138,.06);color:var(--blue);font-weight:800;text-transform:uppercase;font-size:13px;}
-  tr:last-child td{border-bottom:none;}
+/* list */
+ul.li li{padding-left:22px;margin-bottom:11px;font-size:15px;line-height:1.5;color:#CBD5E1;position:relative;}
+ul.li li::before{content:'▸';position:absolute;left:0;color:var(--b2);}
+ul.li.gr li::before{color:var(--g);}
+ul.li.rd li::before{color:var(--r);}
 
-  /* BADGES */
-  .bd{display:inline-block;padding:4px 12px;border-radius:15px;font-size:13px;font-weight:700;}
-  .bdr{background:rgba(244,63,94,.1);color:var(--red);}
-  .bdg{background:rgba(16,185,129,.1);color:var(--green);}
-  .bdb{background:rgba(59,130,246,.1);color:var(--blue2);}
-  .bdp{background:rgba(139,92,246,.1);color:var(--purple);}
-  .bdy{background:rgba(245,158,11,.1);color:var(--yellow);}
+/* code */
+.code{font-family:monospace;font-size:13px;background:rgba(30,58,138,.4);color:#BAE6FD;padding:2px 8px;border-radius:5px;border:1px solid rgba(59,130,246,.3);}
 
-  /* CODE */
-  .code{font-family:monospace;font-size:14px;background:#0F172A;color:#E2E8F0;padding:2px 8px;border-radius:4px;}
-  .hl{color:var(--blue);font-weight:700;}
+/* img */
+.img-box{border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.1);box-shadow:0 4px 20px rgba(0,0,0,.5);}
+.img-box img{width:100%;display:block;object-fit:cover;}
 
-  /* MISC */
-  .hbox{background:rgba(30,58,138,.05);border-left:4px solid var(--blue);padding:14px 18px;border-radius:0 8px 8px 0;margin:12px 0;font-size:17px;}
-  .mini{font-size:13px;color:var(--muted);}
-  .big{font-size:42px;font-weight:900;color:var(--blue);}
-  .sep{width:100%;height:2px;background:linear-gradient(90deg,var(--blue),var(--blue2),transparent);border-radius:2px;margin-bottom:22px;}
+/* pill stat */
+.stat{text-align:center;padding:16px 12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;}
+.stat-n{font-size:36px;font-weight:900;color:var(--b2);}
+.stat-l{font-size:12px;color:#64748B;margin-top:4px;}
 
-  /* TITLE SLIDE */
-  .tuni{font-size:22px;font-weight:900;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;text-align:center;}
-  .tbmi{font-size:15px;font-weight:700;color:var(--blue2);text-transform:uppercase;letter-spacing:3px;margin-bottom:28px;text-align:center;}
-  .tmain{font-size:38px;font-weight:900;color:var(--dark);line-height:1.25;text-align:center;margin-bottom:36px;}
-  .tfoot{display:flex;justify-content:space-between;align-items:flex-end;width:100%;border-top:1px solid rgba(0,0,0,.1);padding-top:24px;}
-  .tlbl{font-size:12px;font-weight:700;color:var(--blue2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
-  .tname{font-size:17px;font-weight:700;color:var(--dark);margin-bottom:4px;}
+/* model chip */
+.mchip{display:inline-flex;align-items:center;gap:6px;background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.35);border-radius:8px;padding:6px 14px;font-size:14px;font-weight:600;color:#C4B5FD;}
+.mchip2{display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);border-radius:8px;padding:6px 14px;font-size:14px;font-weight:600;color:#6EE7B7;}
+
+/* title slide specific */
+.title-wrap{width:100%;max-width:1060px;display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:center;}
+.tag-chip{display:inline-block;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.35);color:#60A5FA;margin-bottom:16px;}
 </style>
 </head>
 <body>
-<div class="blob blob1"></div>
-<div class="blob blob2"></div>
-<div class="blob blob3"></div>
-
+<div class="bg-anim"></div>
 <div class="wrap" id="W">
 
-<!-- ===== S1: SARLAVHA ===== -->
+<!-- ====== S1: SARLAVHA ====== -->
 <div class="slide active" id="s1">
-  <div class="stag e">🗣 Elshod</div>
-  <div class="g" style="max-width:980px;">
-    <div class="tuni">MIRZO ULUG'BEK NOMIDAGI O'ZBEKISTON MILLIY UNIVERSITETI</div>
-    <div class="tbmi">BITIRUV MALAKAVIY ISHI</div>
-    <div class="tmain">BERILGANLAR BAZASIGA ASOSLANGAN<br>UY JOY SAVDOSI VA IJARASI UCHUN<br>WEB SAYT ISHLAB CHIQISH</div>
-    <div class="tfoot">
-      <div>
-        <div class="tlbl">Tuzuvchilar:</div>
-        <div class="tname">1. Ibodullayev Elshod — Backend</div>
-        <div class="tname">2. Mengniyozov Firdavs — Frontend</div>
+  <div class="st se">🗣 Elshod</div>
+  <div class="title-wrap">
+    <div>
+      <div class="tag-chip">BITIRUV MALAKAVIY ISHI · 2026</div>
+      <div style="font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;">MIRZO ULUG'BEK NOMIDAGI OMU</div>
+      <h1 style="font-size:36px;font-weight:900;line-height:1.25;margin-bottom:24px;color:#fff;">Berilganlar bazasiga asoslangan uy joy savdosi va ijarasi uchun web sayt ishlab chiqish</h1>
+      <div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid rgba(255,255,255,.08);padding-top:20px;">
+        <div style="display:flex;justify-content:space-between;">
+          <div>
+            <div style="font-size:11px;color:#64748B;font-weight:700;text-transform:uppercase;margin-bottom:6px;">Tuzuvchilar</div>
+            <div style="font-size:16px;font-weight:700;color:#E2E8F0;">1. Ibodullayev Elshod <span style="color:#60A5FA;font-size:13px;">(Backend)</span></div>
+            <div style="font-size:16px;font-weight:700;color:#E2E8F0;">2. Mengniyozov Firdavs <span style="color:#A78BFA;font-size:13px;">(Frontend)</span></div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px;color:#64748B;font-weight:700;text-transform:uppercase;margin-bottom:6px;">Ilmiy Rahbar</div>
+            <div style="font-size:16px;font-weight:700;color:#E2E8F0;">Murodullayev Mo'minjon</div>
+            <div style="font-size:14px;color:#64748B;margin-top:6px;">Toshkent — 2026</div>
+          </div>
+        </div>
       </div>
-      <div style="text-align:right;">
-        <div class="tlbl">Ilmiy Rahbar:</div>
-        <div class="tname">Murodullayev Mo'minjon</div>
-        <div style="margin-top:12px;color:var(--muted);font-weight:600;font-size:15px;">Toshkent — 2026</div>
-      </div>
+    </div>
+    <div class="img-box" style="height:320px;">
+      <img src="img/ui.png" alt="Platform UI" style="height:100%;width:100%;object-fit:cover;">
     </div>
   </div>
 </div>
 
-<!-- ===== S2: MUAMMO ===== -->
+<!-- ====== S2: MUAMMO ====== -->
 <div class="slide" id="s2">
-  <div class="stag e">🗣 Elshod</div>
-  <div class="g">
-    <div class="ch"><div class="h1">2. MUAMMO VA DOLZARBLIK</div><div class="h2">O'zbekiston ko'chmas mulk bozorining hozirgi holati</div></div>
+  <div class="st se">🗣 Elshod</div>
+  <div style="width:100%;max-width:1080px;">
+    <div class="h1">2. Muammo va Dolzarblik</div>
+    <div class="h2">Nima uchun bu loyiha zarur edi?</div>
     <div class="sep"></div>
     <div class="g2">
-      <div class="gi ra">
-        <div class="ct" style="color:var(--red);">⚠️ Bozordagi 3 ta asosiy muammo</div>
-        <ul class="li xx">
-          <li><b>Narx shaffofligi yo'q:</b> Vositachilar narxlarni xohishicha oshiradi, bozor narxi noma'lum.</li>
-          <li><b>Xavfsizlik kafolati yo'q:</b> Anonim e'lonlar, soxta murojaatlar va hujjatsiz bitimlar ko'p.</li>
-          <li><b>Ma'lumotlar tarqoq:</b> Yagona raqamli baza yo'q — har kimning o'z "daftari" bor.</li>
-        </ul>
+      <div>
+        <div class="card-sm" style="border-color:rgba(244,63,94,.3);margin-bottom:14px;">
+          <div style="font-size:16px;font-weight:700;color:#FB7185;margin-bottom:12px;">❌ Hozirgi muammolar</div>
+          <ul class="li rd">
+            <li>Narxlar vositachilar tomonidan asossiz oshiriladi</li>
+            <li>Soxta e'lonlar va tasdiqlanmagan shaxslar</li>
+            <li>Shartnomalar hujjatsiz, og'zaki tuziladi</li>
+            <li>Yagona raqamli baza va statistika yo'q</li>
+          </ul>
+        </div>
+        <div class="card-sm" style="border-color:rgba(16,185,129,.3);">
+          <div style="font-size:16px;font-weight:700;color:#34D399;margin-bottom:12px;">✅ Bizning yechim</div>
+          <ul class="li gr">
+            <li><b>OneID</b> orqali 100% tasdiqlangan foydalanuvchilar</li>
+            <li><b>AI</b> orqali obyektiv narx bashorati</li>
+            <li><b>Elektron shartnomalar</b> yuridik kuchga ega</li>
+            <li><b>Click + Payme</b> onlayn to'lovlar</li>
+          </ul>
+        </div>
       </div>
-      <div class="gi gr">
-        <div class="ct" style="color:var(--green);">✅ Bizning yechimimiz</div>
-        <ul class="li">
-          <li>OneID orqali <b>100% tasdiqlangan</b> foydalanuvchi bazasi.</li>
-          <li>AI algoritmi orqali <b>obyektiv narx bashorati</b> (14 viloyat, 9+ parametr).</li>
-          <li>Barcha tranzaksiyalar <b>PostgreSQL</b> da qat'iy nazorat ostida saqlanadi.</li>
-          <li>Elektron shartnomalar, to'lov tizimi va bron taqvimi <b>yagona platformada.</b></li>
-        </ul>
+      <div class="img-box" style="height:280px;">
+        <img src="img/ui.png" alt="Platform" style="height:100%;object-fit:cover;">
       </div>
     </div>
   </div>
 </div>
 
-<!-- ===== S3: TAQQOSLASH ===== -->
+<!-- ====== S3: TAQQOSLASH ====== -->
 <div class="slide" id="s3">
-  <div class="stag e">🗣 Elshod</div>
-  <div class="g">
-    <div class="ch"><div class="h1">3. BOSHQA PLATFORMALAR BILAN TAQQOSLASH</div><div class="h2">OLX.uz, Uybor.uz va yangi platforma</div></div>
+  <div class="st se">🗣 Elshod</div>
+  <div style="width:100%;max-width:1080px;">
+    <div class="h1">3. Boshqa Platformalar Bilan Taqqoslash</div>
+    <div class="h2">OLX.uz, Uybor.uz va bizning yechim</div>
     <div class="sep"></div>
-    <table>
-      <tr><th>Xususiyat</th><th>OLX / Uybor kabi platformalar</th><th style="background:rgba(16,185,129,.08);color:var(--green);">Yangi Platforma</th></tr>
-      <tr><td><b>Narx baholash</b></td><td><span class="bd bdr">Ixtiyoriy, beqaror</span></td><td><span class="bd bdg">AI Gibrid formula (50%+50%)</span></td></tr>
-      <tr><td><b>Foydalanuvchi tasdiq</b></td><td><span class="bd bdr">Shart emas</span></td><td><span class="bd bdg">OneID + Telegram Auth</span></td></tr>
-      <tr><td><b>Bron qilish</b></td><td><span class="bd bdr">Telefon orqali</span></td><td><span class="bd bdg">Saytda + To'lov tizimi</span></td></tr>
-      <tr><td><b>Analitika</b></td><td><span class="bd bdr">Mavjud emas</span></td><td><span class="bd bdg">Hududiy narx issiqlik xaritasi</span></td></tr>
-      <tr><td><b>E'lon reklama</b></td><td><span class="bd bdy">Oddiy banner</span></td><td><span class="bd bdg">Bronze/Silver/Gold Boost tizimi</span></td></tr>
-      <tr><td><b>Chegirmalar</b></td><td><span class="bd bdr">Yo'q</span></td><td><span class="bd bdg">Promo-kod va chegirma tizimi</span></td></tr>
+    <table style="width:100%;border-collapse:separate;border-spacing:0 6px;">
+      <tr>
+        <th style="padding:10px 16px;text-align:left;font-size:12px;color:#64748B;text-transform:uppercase;font-weight:700;">Xususiyat</th>
+        <th style="padding:10px 16px;text-align:center;font-size:12px;color:#64748B;text-transform:uppercase;font-weight:700;">OLX / Uybor</th>
+        <th style="padding:10px 16px;text-align:center;font-size:12px;color:#34D399;text-transform:uppercase;font-weight:700;">Yangi Platforma ✓</th>
+      </tr>
+      <tr style="background:rgba(255,255,255,.04);border-radius:8px;">
+        <td style="padding:12px 16px;font-size:15px;color:#CBD5E1;">Narx baholash</td>
+        <td style="padding:12px 16px;text-align:center;"><span class="bd bdr">Ixtiyoriy</span></td>
+        <td style="padding:12px 16px;text-align:center;"><span class="bd bdg">AI Gibrid (50%+50%)</span></td>
+      </tr>
+      <tr style="background:rgba(255,255,255,.03);">
+        <td style="padding:12px 16px;font-size:15px;color:#CBD5E1;">Foydalanuvchi tasdiq</td>
+        <td style="padding:12px 16px;text-align:center;"><span class="bd bdr">Yo'q</span></td>
+        <td style="padding:12px 16px;text-align:center;"><span class="bd bdg">OneID + Telegram Auth</span></td>
+      </tr>
+      <tr style="background:rgba(255,255,255,.04);">
+        <td style="padding:12px 16px;font-size:15px;color:#CBD5E1;">Bron & To'lov</td>
+        <td style="padding:12px 16px;text-align:center;"><span class="bd bdr">Telefon orqali</span></td>
+        <td style="padding:12px 16px;text-align:center;"><span class="bd bdg">Onlayn (Click/Payme)</span></td>
+      </tr>
+      <tr style="background:rgba(255,255,255,.03);">
+        <td style="padding:12px 16px;font-size:15px;color:#CBD5E1;">Narx xaritasi</td>
+        <td style="padding:12px 16px;text-align:center;"><span class="bd bdr">Yo'q</span></td>
+        <td style="padding:12px 16px;text-align:center;"><span class="bd bdg">Heatmap (14 viloyat)</span></td>
+      </tr>
+      <tr style="background:rgba(255,255,255,.04);">
+        <td style="padding:12px 16px;font-size:15px;color:#CBD5E1;">E'lon reklama</td>
+        <td style="padding:12px 16px;text-align:center;"><span class="bd bdy">Oddiy banner</span></td>
+        <td style="padding:12px 16px;text-align:center;"><span class="bd bdg">Bronze/Silver/Gold Boost</span></td>
+      </tr>
+      <tr style="background:rgba(255,255,255,.03);">
+        <td style="padding:12px 16px;font-size:15px;color:#CBD5E1;">Promo-kod & Chegirma</td>
+        <td style="padding:12px 16px;text-align:center;"><span class="bd bdr">Yo'q</span></td>
+        <td style="padding:12px 16px;text-align:center;"><span class="bd bdg">To'liq tizim mavjud</span></td>
+      </tr>
     </table>
   </div>
 </div>
 
-<!-- ===== S4: TEXNOLOGIYALAR ===== -->
+<!-- ====== S4: TEXNOLOGIYALAR ====== -->
 <div class="slide" id="s4">
-  <div class="stag b">🗣 Jamoa</div>
-  <div class="g">
-    <div class="ch"><div class="h1">4. TEXNOLOGIYALAR VA JAMOA TAQSIMOTI</div><div class="h2">Kimning vazifasi nima?</div></div>
+  <div class="st sj">🗣 Jamoa</div>
+  <div style="width:100%;max-width:1080px;">
+    <div class="h1">4. Texnologiyalar va Jamoa</div>
+    <div class="h2">Kim nima qildi?</div>
     <div class="sep"></div>
     <div class="g2">
-      <div class="gi">
-        <div class="ct">⚙️ Elshod — Backend (.NET 9)</div>
-        <ul class="li ar">
-          <li><b>Arxitektura:</b> Clean Architecture (4 qatlam)</li>
-          <li><b>Baza:</b> PostgreSQL + Entity Framework Core</li>
-          <li><b>Xavfsizlik:</b> JWT, Role-based (Admin/Host/Mehmon)</li>
-          <li><b>AI/ML:</b> FastTree Regression modeli, Gibrid formula</li>
-          <li><b>To'lov:</b> Click va Payme integratsiyasi</li>
-          <li><b>Fayllar:</b> Cloudinary CDN, Feature Flags</li>
+      <div class="card-sm">
+        <div style="font-size:16px;font-weight:700;color:#60A5FA;margin-bottom:14px;">⚙️ Elshod — Backend</div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;">
+          <span class="bd bdb">.NET 9 / C#</span>
+          <span class="bd bdb">PostgreSQL</span>
+          <span class="bd bdp">ML.NET</span>
+          <span class="bd bdb">JWT Auth</span>
+          <span class="bd bdy">Click & Payme</span>
+          <span class="bd bdg">Cloudinary</span>
+          <span class="bd bdp">Feature Flags</span>
+        </div>
+        <ul class="li">
+          <li>33 ta Controller, 100+ RESTful API endpoint</li>
+          <li>Clean Architecture — 4 qatlam</li>
+          <li>20+ jadval o'zaro bog'langan PostgreSQL baza</li>
         </ul>
       </div>
-      <div class="gi">
-        <div class="ct">🖥️ Firdavs — Frontend (Angular 18)</div>
-        <ul class="li ar">
-          <li><b>Framework:</b> Angular 18, TypeScript, RxJS</li>
-          <li><b>Dizayn:</b> Tailwind CSS, 40+ komponent</li>
-          <li><b>Xarita:</b> Leaflet.js + GeoJSON integratsiyasi</li>
-          <li><b>Grafik:</b> Chart.js narx dinamikasi</li>
-          <li><b>Ishlash:</b> SPA + Lazy Loading (tez yuklash)</li>
-          <li><b>Mobil:</b> Responsive — telefon, planshet, kompyuter</li>
+      <div class="card-sm">
+        <div style="font-size:16px;font-weight:700;color:#A78BFA;margin-bottom:14px;">🖥️ Firdavs — Frontend</div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;">
+          <span class="bd bdp">Angular 18</span>
+          <span class="bd bdp">TypeScript</span>
+          <span class="bd bdp">RxJS</span>
+          <span class="bd bdb">Tailwind CSS</span>
+          <span class="bd bdg">Leaflet.js</span>
+          <span class="bd bdy">Chart.js</span>
+        </div>
+        <ul class="li">
+          <li>40+ qayta ishlatiladigan UI komponentlar</li>
+          <li>SPA + Lazy Loading — brauzer qayta yuklanmaydi</li>
+          <li>Leaflet.js xarita (Toshkent real narx ko'rsatiladi ↓)</li>
         </ul>
       </div>
+    </div>
+    <div class="img-box" style="height:120px;margin-top:10px;">
+      <img src="img/ui.png" alt="Map screenshot" style="height:100%;width:100%;object-fit:cover;object-position:0% 50%;">
     </div>
   </div>
 </div>
 
-<!-- ===== S5: MA'LUMOTLAR BAZASI ===== -->
+<!-- ====== S5: XARITA ====== -->
 <div class="slide" id="s5">
-  <div class="stag e">🗣 Elshod</div>
-  <div class="g">
-    <div class="ch"><div class="h1">5. POSTGRESQL — JADVALAR TUZILMASI</div><div class="h2">20+ jadval, qat'iy Foreign Key bog'liqliklari</div></div>
+  <div class="st sf">🗣 Firdavs</div>
+  <div style="width:100%;max-width:1080px;">
+    <div class="h1">5. Interaktiv Xarita va Baza Aloqasi</div>
+    <div class="h2">Real ma'lumotlar — real xaritada</div>
     <div class="sep"></div>
-    <div class="g3">
-      <div class="gi">
-        <div class="ct">👤 Foydalanuvchilar</div>
-        <ul class="li ar" style="font-size:15px;">
-          <li><b>Users</b> — asosiy jadval</li>
-          <li><b>Verifications</b> — tasdiqlash</li>
-          <li><b>Subscriptions</b> — obuna</li>
-          <li><b>Notifications</b> — xabarlar</li>
-        </ul>
-      </div>
-      <div class="gi">
-        <div class="ct">🏠 Mulk va E'lonlar</div>
-        <ul class="li ar" style="font-size:15px;">
-          <li><b>Properties</b> — mulklar</li>
-          <li><b>Amenities</b> — qulayliklar</li>
-          <li><b>PropertyImages</b> — rasmlar</li>
-          <li><b>PropertyViews</b> — ko'rishlar</li>
-          <li><b>Boosts</b> — reklama</li>
-          <li><b>Favorites</b> — sevimlilar</li>
-        </ul>
-      </div>
-      <div class="gi">
-        <div class="ct">💳 Moliya va Ijara</div>
-        <ul class="li ar" style="font-size:15px;">
-          <li><b>Bookings</b> — bronlar</li>
-          <li><b>Payments</b> — to'lovlar</li>
-          <li><b>Discounts</b> — chegirmalar</li>
-          <li><b>RentalContracts</b> — shartnomalar</li>
-          <li><b>Reviews</b> — izohlar</li>
-          <li><b>Messages</b> — xabarlar</li>
-        </ul>
-      </div>
-    </div>
-    <div class="hbox" style="margin-top:14px;font-size:16px;">
-      🔗 Barcha jadvallar <b>Foreign Key</b> orqali bog'langan. <b>Soft Delete</b> qo'llanilgan — o'chirilgan ma'lumotlar saqlanib qoladi va analitika uchun ishlatiladi.
-    </div>
-  </div>
-</div>
-
-<!-- ===== S6: AI TIZIMI ===== -->
-<div class="slide" id="s6">
-  <div class="stag e">🗣 Elshod</div>
-  <div class="g">
-    <div class="ch"><div class="h1">6. SUN'IY INTELLEKT (AI) MODULI</div><div class="h2">5 ta alohida AI funksiya — loyihaning yuragi</div></div>
-    <div class="sep"></div>
-    <div class="g2">
+    <div class="g-img">
       <div>
-        <div class="gi gr" style="margin-bottom:14px;">
-          <div class="ct" style="color:var(--green);">🎯 Narx Bashorati (predict-price)</div>
-          <p style="font-size:15px;line-height:1.55;">Model turi: <b>FastTree Regression</b> (Gradient Boosting). Hisoblash formulasi: <br><br>
-          <b>50% Matematik</b> (viloyat × tur × xona × qavat × yosh × tuman × qulaylik) + <br>
-          <b>50% Bazaviy Mediana</b> (bazadagi real e'lonlar o'rtacha narxi, outlier lar tozalangan).</p>
-        </div>
-        <div class="gi pu">
-          <div class="ct" style="color:var(--purple);">🤖 Shaxsiy Tavsiyalar (personalized)</div>
-          <p style="font-size:15px;">Har bir foydalanuvchining xatti-harakati (ko'rgan, sevimli qo'shgan) tahlil qilinib, unga <b>Score</b> asosida mos uylar taklif qilinadi.</p>
-        </div>
-      </div>
-      <div>
-        <div class="gi ye" style="margin-bottom:14px;">
-          <div class="ct" style="color:var(--yellow);">🔍 Aqlli Qidiruv (smart-search)</div>
-          <p style="font-size:15px;">O'zbek tilida yozilgan so'rov (<i>"Toshkentda 2 xonali ijara"</i>) avtomatik parchalanib, bazadan mos natijalar topiladi.</p>
-        </div>
-        <div class="gi ra" style="margin-bottom:14px;">
-          <div class="ct" style="color:var(--red);">💬 AI Chatbot (chat)</div>
-          <p style="font-size:15px;">24/7 virtual yordamchi. Kontekstni (oldingi savollarni) esda tutib, mulk izlash va qonuniy savollarga javob beradi.</p>
-        </div>
-        <div class="gi">
-          <div class="ct">✍️ AI Tavsif Yozuvchi (generate-description)</div>
-          <p style="font-size:15px;">Host parametrlarni kiritsa, AI avtomatik ravishda professional e'lon matni yozib beradi (3 xil shablon).</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== S7: ANALITIKA ===== -->
-<div class="slide" id="s7">
-  <div class="stag e">🗣 Elshod</div>
-  <div class="g">
-    <div class="ch"><div class="h1">7. KENGAYTIRILGAN ANALITIKA TIZIMI</div><div class="h2">Bozorni "ko'rish" qobiliyati</div></div>
-    <div class="sep"></div>
-    <div class="g2">
-      <div class="gi gr">
-        <div class="ct" style="color:var(--green);">📊 Bozor Analitikasi</div>
-        <ul class="li ar" style="font-size:15px;">
-          <li><b>Narx Issiqlik Xaritasi (Heatmap):</b> Barcha hududlardagi o'rtacha narxlar rangli xaritada ko'rsatiladi.</li>
-          <li><b>Viloyat bo'yicha tahlil:</b> O'zbekistonning 14 viloyati bo'yicha narx prognozi.</li>
-          <li><b>Tuman taqqoslash:</b> Bir nechta tumanlarni ayni vaqtda solishtirish.</li>
-          <li><b>Narx Prognozi:</b> Hududga ko'ra kelgusi 6 oylik narx o'zgarishi.</li>
-        </ul>
-      </div>
-      <div>
-        <div class="gi pu" style="margin-bottom:14px;">
-          <div class="ct" style="color:var(--purple);">💡 "Aqlli Filtr" tizimi</div>
-          <ul class="li ar" style="font-size:15px;">
-            <li><b>Eng Yaxshi Takliflar</b> (best-deals): AI yordamida eng foyda keltiruvchi uylar.</li>
-            <li><b>Yuqori ROI</b> (high-roi): Investitsiya uchun eng mos obyektlar.</li>
-            <li><b>Tez sotiladigan</b> (fast-selling): Bozorda eng talab yuqori mulklar.</li>
+        <div class="card-sm" style="margin-bottom:14px;border-color:rgba(16,185,129,.3);">
+          <div style="font-size:15px;font-weight:700;color:#34D399;margin-bottom:10px;">🗺️ Leaflet.js Xarita</div>
+          <ul class="li gr" style="font-size:14px;">
+            <li>Toshkentdagi barcha e'lonlar <b>koordinatalar</b> bo'yicha xaritada ko'rsatiladi</li>
+            <li><b>Bounding Box</b>: faqat ekranda ko'ringan hudud yuklanadi</li>
+            <li>Narxlarga qarab rangli marker (arzon → qimmat)</li>
           </ul>
         </div>
-        <div class="gi">
-          <div class="ct">📤 Ma'lumotlarni Export qilish</div>
-          <p style="font-size:15px;">Admin paneldan barcha analitika ma'lumotlarini <b>CSV, Excel yoki PDF</b> formatda yuklab olish imkoniyati.</p>
+        <div class="card-sm" style="border-color:rgba(59,130,246,.3);">
+          <div style="font-size:15px;font-weight:700;color:#60A5FA;margin-bottom:10px;">🔥 Narx Issiqlik Xaritasi</div>
+          <ul class="li" style="font-size:14px;">
+            <li>14 viloyat bo'yicha o'rtacha narxlar rangli heatmap ko'rinishida</li>
+            <li>Admin CSV/Excel/PDF ko'rinishida export qila oladi</li>
+            <li>GeoController orqali tuman koordinatalari boshqariladi</li>
+          </ul>
         </div>
+      </div>
+      <div class="img-box">
+        <img src="img/erd.png" alt="Xarita" style="width:100%;display:block;">
+        <div style="padding:8px 12px;background:rgba(0,0,0,.5);font-size:12px;color:#64748B;text-align:center;">PostgreSQL jadvallar bog'liqligi (ERD)</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ===== S8: API ENDPOINTLAR ===== -->
-<div class="slide" id="s8">
-  <div class="stag e">🗣 Elshod</div>
-  <div class="g">
-    <div class="ch"><div class="h1">8. API ENDPOINTLAR — ASOSIY MODULLAR</div><div class="h2">33 ta Controller, 100+ RESTful API yo'nalishi</div></div>
+<!-- ====== S6: AI MODELLAR ====== -->
+<div class="slide" id="s6">
+  <div class="st se">🗣 Elshod</div>
+  <div style="width:100%;max-width:1080px;">
+    <div class="h1">6. Sun'iy Intellekt — Aniq Modellar</div>
+    <div class="h2">Qaysi model ishlatildi va nima uchun?</div>
     <div class="sep"></div>
-    <table>
-      <tr><th>Modul</th><th>Asosiy Endpoint</th><th>Vazifasi</th></tr>
-      <tr><td><span class="bd bdb">Properties</span></td><td><span class="code">GET/POST /api/Properties</span></td><td>Mulk qidirish, filtrlash, xarita uchun koordinatalar</td></tr>
-      <tr><td><span class="bd bdp">AI</span></td><td><span class="code">POST /api/AiRecommendations/predict-price</span></td><td>Gibrid AI narx bashorati (9+ parametr)</td></tr>
-      <tr><td><span class="bd bdp">AI</span></td><td><span class="code">POST /api/AiRecommendations/smart-search</span></td><td>O'zbek tilida tabiiy qidiruv</td></tr>
-      <tr><td><span class="bd bdg">Analytics</span></td><td><span class="code">GET /api/Analytics/price-heatmap</span></td><td>Barcha hududlar narxi issiqlik xaritasi</td></tr>
-      <tr><td><span class="bd bdy">Bookings</span></td><td><span class="code">POST /api/Bookings</span></td><td>Mulkni onlayn bron qilish va to'lov</td></tr>
-      <tr><td><span class="bd bdr">Discounts</span></td><td><span class="code">POST /api/Discounts/validate</span></td><td>Promo-kod tekshirish va qo'llash</td></tr>
-      <tr><td><span class="bd bdb">Boosts</span></td><td><span class="code">POST /api/Boosts</span></td><td>E'lonni Bronze/Silver/Gold rejalari bilan ko'tarish</td></tr>
+    <div class="g-img">
+      <div>
+        <div class="card-sm" style="border-color:rgba(139,92,246,.4);margin-bottom:14px;">
+          <div style="font-size:15px;font-weight:700;color:#C4B5FD;margin-bottom:12px;">🔬 Narx Bashorati Modeli</div>
+          <div style="margin-bottom:10px;">
+            <div class="mchip">🌲 FastTree Regression</div>
+            <div class="mchip2" style="margin-left:8px;">Gradient Boosting</div>
+          </div>
+          <p style="font-size:14px;color:#94A3B8;line-height:1.6;">Nega bu model? Ko'chmas mulk narxi <b>chiziqli emas</b>: maydon 2x bo'lsa narx 2x bo'lmaydi — tuman, qavat, ta'mir ham ta'sir qiladi. FastTree bu nochiziqlilikni yaxshi ushlaydi.</p>
+        </div>
+        <div class="card-sm" style="border-color:rgba(16,185,129,.4);">
+          <div style="font-size:15px;font-weight:700;color:#6EE7B7;margin-bottom:10px;">🧮 Gibrid Formula (Blending)</div>
+          <div style="font-size:28px;font-weight:900;color:#fff;text-align:center;padding:10px;background:rgba(16,185,129,.1);border-radius:8px;margin-bottom:8px;">
+            50% Matematik + 50% DB Mediana
+          </div>
+          <p style="font-size:13px;color:#94A3B8;">Bazadagi real e'lonlardan <b>outlier</b>lar tozalanib, mediana hisob qilinadi. Matematik formula bilan aralashtiriladi.</p>
+        </div>
+      </div>
+      <div class="img-box">
+        <img src="img/ai.png" alt="AI Dashboard" style="width:100%;display:block;">
+        <div style="padding:8px 12px;background:rgba(0,0,0,.5);font-size:12px;color:#64748B;text-align:center;">AI narx bashorat interfeysi</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== S7: OVOZLI AI ====== -->
+<div class="slide" id="s7">
+  <div class="st se">🗣 Elshod</div>
+  <div style="width:100%;max-width:1080px;">
+    <div class="h1">7. AI Funksiyalar — 5 ta Modul</div>
+    <div class="h2">Oddiy saytdan farq qiladigan texnologik ustunlik</div>
+    <div class="sep"></div>
+    <div class="g-img">
+      <div class="g2" style="grid-template-columns:1fr 1fr;align-content:start;">
+        <div class="card-sm" style="border-color:rgba(139,92,246,.35);">
+          <div style="font-size:24px;margin-bottom:6px;">🎯</div>
+          <div style="font-size:14px;font-weight:700;color:#C4B5FD;margin-bottom:6px;">Narx Bashorati</div>
+          <div style="font-size:13px;color:#94A3B8;">14 viloyat, 9+ parametr. FastTree + Gibrid model.</div>
+        </div>
+        <div class="card-sm" style="border-color:rgba(16,185,129,.35);">
+          <div style="font-size:24px;margin-bottom:6px;">🔍</div>
+          <div style="font-size:14px;font-weight:700;color:#6EE7B7;margin-bottom:6px;">Aqlli Qidiruv</div>
+          <div style="font-size:13px;color:#94A3B8;">O'zbek tilida yozilgan so'rov avtomatik tahlil qilinadi.</div>
+        </div>
+        <div class="card-sm" style="border-color:rgba(245,158,11,.35);">
+          <div style="font-size:24px;margin-bottom:6px;">🎤</div>
+          <div style="font-size:14px;font-weight:700;color:#FCD34D;margin-bottom:6px;">Ovozli E'lon Berish</div>
+          <div style="font-size:13px;color:#94A3B8;">Foydalanuvchi ovoz orqali e'lon beradi. <b>Web Speech API</b> orqali ovoz matnga aylantiriladi, AI matn strukturasini tahlil qilib e'lonni avtomatik to'ldiradi.</div>
+        </div>
+        <div class="card-sm" style="border-color:rgba(59,130,246,.35);">
+          <div style="font-size:24px;margin-bottom:6px;">💬</div>
+          <div style="font-size:14px;font-weight:700;color:#60A5FA;margin-bottom:6px;">AI Chatbot</div>
+          <div style="font-size:13px;color:#94A3B8;">24/7 yordamchi. Kontekstni esda tutib mulk va qonuniy savollarga javob beradi.</div>
+        </div>
+        <div class="card-sm" style="border-color:rgba(244,63,94,.35);grid-column:1/-1;">
+          <div style="font-size:14px;font-weight:700;color:#FB7185;margin-bottom:6px;">✍️ AI Tavsif Yozuvchi (generate-description)</div>
+          <div style="font-size:13px;color:#94A3B8;">Host mulk parametrlarini kiritsa, AI avtomatik professional e'lon matni yozib beradi. 3 xil shablon — Random tanlanadi. Vaqt tejaladi.</div>
+        </div>
+      </div>
+      <div class="img-box">
+        <img src="img/voice.png" alt="Voice AI" style="width:100%;display:block;">
+        <div style="padding:8px 12px;background:rgba(0,0,0,.5);font-size:12px;color:#64748B;text-align:center;">🎤 Ovozli AI — Web Speech API</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== S8: POSTGRESQL ====== -->
+<div class="slide" id="s8">
+  <div class="st se">🗣 Elshod</div>
+  <div style="width:100%;max-width:1080px;">
+    <div class="h1">8. PostgreSQL — Jadvallar Tuzilmasi</div>
+    <div class="h2">Nima uchun "Berilganlar bazasiga asoslangan" deyilgan?</div>
+    <div class="sep"></div>
+    <div class="g-img">
+      <div>
+        <div class="card-sm" style="margin-bottom:14px;border-color:rgba(59,130,246,.3);">
+          <div style="font-size:15px;font-weight:700;color:#60A5FA;margin-bottom:10px;">🔗 Asosiy bog'liqliklar</div>
+          <div style="font-size:14px;color:#94A3B8;line-height:1.7;">
+            <span style="color:#E2E8F0;font-weight:600;">Users</span> → Properties → Amenities, PropertyImages<br>
+            <span style="color:#E2E8F0;font-weight:600;">Users + Properties</span> → Bookings → Payments<br>
+            <span style="color:#E2E8F0;font-weight:600;">Bookings</span> → RentalContracts → Reviews<br>
+            <span style="color:#E2E8F0;font-weight:600;">Users</span> → Notifications, Messages, Favorites
+          </div>
+        </div>
+        <div class="card-sm" style="border-color:rgba(16,185,129,.3);">
+          <div style="font-size:15px;font-weight:700;color:#34D399;margin-bottom:10px;">⚙️ Texnik xususiyatlar</div>
+          <ul class="li gr" style="font-size:14px;">
+            <li><b>Soft Delete:</b> O'chirilgan ma'lumotlar analitika uchun saqlanib qoladi</li>
+            <li><b>Audit Log:</b> Har o'zgarish uchun CreatedDate/UpdatedDate</li>
+            <li><b>Foreign Key:</b> Barcha bog'liqliklar qat'iy nazorat ostida</li>
+            <li><b>AI + DB:</b> Narx bashorati bazadagi real mediana bilan blending</li>
+          </ul>
+        </div>
+      </div>
+      <div class="img-box">
+        <img src="img/erd.png" alt="ERD" style="width:100%;display:block;">
+        <div style="padding:8px 12px;background:rgba(0,0,0,.5);font-size:12px;color:#64748B;text-align:center;">ERD — jadvallar o'zaro bog'liqligi</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== S9: API ====== -->
+<div class="slide" id="s9">
+  <div class="st se">🗣 Elshod</div>
+  <div style="width:100%;max-width:1080px;">
+    <div class="h1">9. Asosiy API Endpointlar</div>
+    <div class="h2">33 Controller · 100+ RESTful API</div>
+    <div class="sep"></div>
+    <table style="width:100%;border-collapse:separate;border-spacing:0 5px;">
+      <tr>
+        <th style="padding:8px 14px;font-size:12px;color:#64748B;text-transform:uppercase;font-weight:700;">Metod</th>
+        <th style="padding:8px 14px;font-size:12px;color:#64748B;text-transform:uppercase;font-weight:700;">Endpoint</th>
+        <th style="padding:8px 14px;font-size:12px;color:#64748B;text-transform:uppercase;font-weight:700;">Vazifasi</th>
+      </tr>
+      <tr style="background:rgba(255,255,255,.04);">
+        <td style="padding:10px 14px;"><span class="bd bdg">GET</span></td>
+        <td style="padding:10px 14px;"><span class="code">/api/Properties</span></td>
+        <td style="padding:10px 14px;font-size:14px;color:#94A3B8;">Mulk qidirish, filtrlash, xarita uchun koordinatalar</td>
+      </tr>
+      <tr style="background:rgba(255,255,255,.03);">
+        <td style="padding:10px 14px;"><span class="bd bdr">POST</span></td>
+        <td style="padding:10px 14px;"><span class="code">/api/AiRecommendations/predict-price</span></td>
+        <td style="padding:10px 14px;font-size:14px;color:#94A3B8;">FastTree + Gibrid AI narx bashorati</td>
+      </tr>
+      <tr style="background:rgba(255,255,255,.04);">
+        <td style="padding:10px 14px;"><span class="bd bdr">POST</span></td>
+        <td style="padding:10px 14px;"><span class="code">/api/AiRecommendations/smart-search</span></td>
+        <td style="padding:10px 14px;font-size:14px;color:#94A3B8;">O'zbek tilida tabiiy til qidiruvi</td>
+      </tr>
+      <tr style="background:rgba(255,255,255,.03);">
+        <td style="padding:10px 14px;"><span class="bd bdg">GET</span></td>
+        <td style="padding:10px 14px;"><span class="code">/api/Analytics/price-heatmap</span></td>
+        <td style="padding:10px 14px;font-size:14px;color:#94A3B8;">Narx issiqlik xaritasi ma'lumotlari</td>
+      </tr>
+      <tr style="background:rgba(255,255,255,.04);">
+        <td style="padding:10px 14px;"><span class="bd bdr">POST</span></td>
+        <td style="padding:10px 14px;"><span class="code">/api/Analytics/train-model</span></td>
+        <td style="padding:10px 14px;font-size:14px;color:#94A3B8;">Admin tomonidan AI modelini qayta o'qitish</td>
+      </tr>
+      <tr style="background:rgba(255,255,255,.03);">
+        <td style="padding:10px 14px;"><span class="bd bdr">POST</span></td>
+        <td style="padding:10px 14px;"><span class="code">/api/Discounts/validate</span></td>
+        <td style="padding:10px 14px;font-size:14px;color:#94A3B8;">Promo-kod tekshirish va qo'llash</td>
+      </tr>
+      <tr style="background:rgba(255,255,255,.04);">
+        <td style="padding:10px 14px;"><span class="bd bdy">POST</span></td>
+        <td style="padding:10px 14px;"><span class="code">/api/Boosts</span></td>
+        <td style="padding:10px 14px;font-size:14px;color:#94A3B8;">Bronze/Silver/Gold e'lon ko'tarish</td>
+      </tr>
     </table>
   </div>
 </div>
 
-<!-- ===== S9: TO'LOV VA XAVFSIZLIK ===== -->
-<div class="slide" id="s9">
-  <div class="stag e">🗣 Elshod</div>
-  <div class="g">
-    <div class="ch"><div class="h1">9. TO'LOV TIZIMI VA XAVFSIZLIK</div><div class="h2">Pul oqimi va himoyalangan arxitektura</div></div>
-    <div class="sep"></div>
-    <div class="g2">
-      <div class="gi ra">
-        <div class="ct">💳 To'lov Integratsiyalari</div>
-        <ul class="li ar">
-          <li><b>Click (ClickController):</b> O'zbekistonning eng katta onlayn to'lov tizimi to'liq ulangan.</li>
-          <li><b>Payme (PaymeController):</b> JSONRPC protokoli orqali ishlaydigan ikkinchi milliy to'lov tizimi.</li>
-          <li><b>Payments jadvali:</b> Barcha tranzaksiyalar bazada saqlanib, audit uchun tarixda qoladi.</li>
-        </ul>
-      </div>
-      <div class="gi">
-        <div class="ct">🛡️ Xavfsizlik Qatlamlari</div>
-        <ul class="li ar">
-          <li><b>OneID:</b> Foydalanuvchi davlat tizimi orqali tasdiqlanadi.</li>
-          <li><b>Telegram Auth:</b> Muqobil kirish usuli (TelegramAuthController).</li>
-          <li><b>JWT:</b> Tokenli himoya, har bir API so'rovi nazorat ostida.</li>
-          <li><b>Role-based:</b> Admin / Host / Mehmon — har biri faqat o'z qismiga kiradi.</li>
-          <li><b>Feature Flags:</b> AI xizmatlar alohida yoqib/o'chirilib boshqariladi.</li>
-        </ul>
-      </div>
-    </div>
-    <div class="hbox" style="margin-top:14px;font-size:15px;">
-      🔐 Arxitektura ta'minoti: <b>Verifications</b> jadvali mulk egalari hujjatlarini, <b>Subscriptions</b> esa obuna statusini saqlaydi. Har ikki tizim bir-biriga bog'liq.
-    </div>
-  </div>
-</div>
-
-<!-- ===== S10: KENGAYTIRILGAN FUNKSIYALAR ===== -->
+<!-- ====== S10: TO'LOV + XAVFSIZLIK ====== -->
 <div class="slide" id="s10">
-  <div class="stag f">🗣 Firdavs</div>
-  <div class="g">
-    <div class="ch"><div class="h1">10. KENGAYTIRILGAN MAXSUS FUNKSIYALAR</div><div class="h2">Oddiy saytdan farq qiladigan qismlar</div></div>
+  <div class="st se">🗣 Elshod</div>
+  <div style="width:100%;max-width:1080px;">
+    <div class="h1">10. To'lov Tizimi va Xavfsizlik</div>
+    <div class="h2">Pul oqimi va himoyalangan arxitektura</div>
     <div class="sep"></div>
     <div class="g3">
-      <div class="gi">
-        <div class="ct">📅 Bron Taqvimi</div>
-        <p style="font-size:14px;line-height:1.5;">CalendarController orqali qaysi kunlar band ekanligini ko'rish va online bron qilish tizimi. Host taqvimni o'zi boshqaradi.</p>
+      <div class="card-sm" style="border-color:rgba(245,158,11,.3);">
+        <div style="font-size:32px;margin-bottom:8px;">💳</div>
+        <div style="font-size:15px;font-weight:700;color:#FCD34D;margin-bottom:10px;">Click to'lov</div>
+        <p style="font-size:14px;color:#94A3B8;">O'zbekistonning eng keng tarqalgan onlayn to'lov tizimi. ClickController orqali to'liq ulangan.</p>
       </div>
-      <div class="gi ra">
-        <div class="ct" style="color:var(--red);">⚖️ Mulk Taqqoslash</div>
-        <p style="font-size:14px;line-height:1.5;">CompareController: Foydalanuvchi bir vaqtning o'zida bir nechta uyni parametrlari bo'yicha yon-yoniga solishtira oladi.</p>
+      <div class="card-sm" style="border-color:rgba(16,185,129,.3);">
+        <div style="font-size:32px;margin-bottom:8px;">💚</div>
+        <div style="font-size:15px;font-weight:700;color:#34D399;margin-bottom:10px;">Payme to'lov</div>
+        <p style="font-size:14px;color:#94A3B8;">JSONRPC protokoli orqali Payme integratsiyasi. Barcha tranzaksiyalar bazada audit uchun saqlanadi.</p>
       </div>
-      <div class="gi pu">
-        <div class="ct" style="color:var(--purple);">🔔 Saved Searches + Alert</div>
-        <p style="font-size:14px;line-height:1.5;">SavedSearchesController: Foydalanuvchi o'z qidiruv parametrlarini saqlaydi va yangi mos e'lon chiqqanda avtomatik bildirishnoma oladi.</p>
+      <div class="card-sm" style="border-color:rgba(59,130,246,.3);">
+        <div style="font-size:32px;margin-bottom:8px;">🛡️</div>
+        <div style="font-size:15px;font-weight:700;color:#60A5FA;margin-bottom:10px;">Xavfsizlik qatlamlari</div>
+        <ul class="li" style="font-size:13px;">
+          <li><b>OneID</b> — davlat tasdiq</li>
+          <li><b>Telegram Auth</b> — muqobil kirish</li>
+          <li><b>JWT</b> — tokenli himoya</li>
+          <li><b>Feature Flags</b> — AI on/off</li>
+        </ul>
       </div>
-      <div class="gi gr">
-        <div class="ct" style="color:var(--green);">🏠 Xaridor So'rovlari</div>
-        <p style="font-size:14px;line-height:1.5;">HomeRequestsController: "Men shunday uy izlayapman" degan so'rovlar tizimi. Hostlar xaridorlar bilan to'g'ridan-to'g'ri bog'lanadi.</p>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;">
+      <div class="card-sm" style="flex:1;border-color:rgba(244,63,94,.3);">
+        <div style="font-size:14px;font-weight:700;color:#FB7185;margin-bottom:8px;">👥 Role-based tizim</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="bd bdr">Admin — to'liq nazorat</span>
+          <span class="bd bdy">Host — o'z e'lonlari</span>
+          <span class="bd bdb">Mehmon — qidirish + bron</span>
+        </div>
       </div>
-      <div class="gi ye">
-        <div class="ct" style="color:var(--yellow);">🚀 Boost Tizimi</div>
-        <p style="font-size:14px;line-height:1.5;">BoostsController: E'lonni <b>Bronze, Silver, Gold</b> rejalari bilan boshqalar e'lonlaridan yuqoriga ko'tarish imkoniyati (pullik xizmat).</p>
-      </div>
-      <div class="gi">
-        <div class="ct">💬 Real-time Xabarlar</div>
-        <p style="font-size:14px;line-height:1.5;">MessagesController (18KB) + ChatController: Xaridor va host o'rtasida sayt ichida to'g'ridan-to'g'ri muloqot qilish tizimi.</p>
+      <div class="card-sm" style="flex:1;border-color:rgba(139,92,246,.3);">
+        <div style="font-size:14px;font-weight:700;color:#C4B5FD;margin-bottom:8px;">🤖 AI Model Nazorati</div>
+        <div style="font-size:13px;color:#94A3B8;">Admin <span class="code">/train-model</span> API orqali yangi ma'lumotlar bilan FastTree modelini qayta o'qitadi. Model aniqligi statistikasi kuzatiladi.</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ===== S11: FRONTEND ARXITEKTURA ===== -->
+<!-- ====== S11: FRONTEND ====== -->
 <div class="slide" id="s11">
-  <div class="stag f">🗣 Firdavs</div>
-  <div class="g">
-    <div class="ch"><div class="h1">11. FRONTEND ARXITEKTURASI (ANGULAR 18)</div><div class="h2">Tezlik, qulaylik va modullilik</div></div>
+  <div class="st sf">🗣 Firdavs</div>
+  <div style="width:100%;max-width:1080px;">
+    <div class="h1">11. Frontend (Angular 18) — Interaktivlik</div>
+    <div class="h2">40+ komponent · SPA · Responsive</div>
     <div class="sep"></div>
-    <div class="g2">
-      <div>
-        <div class="gi gr" style="margin-bottom:16px;">
-          <div class="ct" style="color:var(--green);">⚡ SPA — Bir sahifalik ilova</div>
-          <ul class="li ar" style="font-size:15px;">
-            <li><b>Lazy Loading:</b> Sahifalar faqat ochilganda yuklanadi — boshlang'ich yuklanish minimal.</li>
-            <li><b>RxJS Observables:</b> Backend dan kelayotgan ma'lumot oqimlari asinxron va xatosiz.</li>
-            <li><b>Angular Router:</b> Sahifalar o'rtasida brauzerni qayta yuklamasdan o'tish.</li>
-          </ul>
+    <div class="g-img">
+      <div class="g2" style="align-content:start;">
+        <div class="card-sm" style="border-color:rgba(139,92,246,.35);">
+          <div style="font-size:14px;font-weight:700;color:#C4B5FD;margin-bottom:8px;">⚡ SPA + Lazy Loading</div>
+          <p style="font-size:13px;color:#94A3B8;">Sahifalar brauzerni qayta yuklamasdan tez ochiladi. Faqat kerakli modular yuklanadi.</p>
         </div>
-        <div class="gi">
-          <div class="ct">🗺️ Interaktiv Xarita</div>
-          <ul class="li ar" style="font-size:15px;">
-            <li>Leaflet.js + GeoJSON: Ko'chmas mulklar xaritada ko'rsatiladi.</li>
-            <li><b>Bounding Box:</b> Faqat ko'rinib turgan hududdagi uylar yuklanadi — brauzer qotmaydi.</li>
-            <li>Narx Issiqlik Xaritasi (Heatmap) vizual ko'rinishi.</li>
-          </ul>
+        <div class="card-sm" style="border-color:rgba(16,185,129,.35);">
+          <div style="font-size:14px;font-weight:700;color:#6EE7B7;margin-bottom:8px;">🔄 RxJS Observables</div>
+          <p style="font-size:13px;color:#94A3B8;">Katta ma'lumot oqimlari (xarita, narxlar) asinxron va xatosiz boshqariladi.</p>
+        </div>
+        <div class="card-sm" style="border-color:rgba(59,130,246,.35);">
+          <div style="font-size:14px;font-weight:700;color:#60A5FA;margin-bottom:8px;">🏦 Ipoteka Kalkulyatori</div>
+          <p style="font-size:13px;color:#94A3B8;">Foiz stavkasi va oylik to'lovlarni real vaqtda hisoblash widgeti.</p>
+        </div>
+        <div class="card-sm" style="border-color:rgba(245,158,11,.35);">
+          <div style="font-size:14px;font-weight:700;color:#FCD34D;margin-bottom:8px;">📅 Bron Taqvimi</div>
+          <p style="font-size:13px;color:#94A3B8;">Band sanalar taqvimi. Host boshqaradi, mehmon ko'radi va onlayn bron qiladi.</p>
+        </div>
+        <div class="card-sm" style="border-color:rgba(244,63,94,.35);">
+          <div style="font-size:14px;font-weight:700;color:#FB7185;margin-bottom:8px;">⚖️ Mulk Taqqoslash</div>
+          <p style="font-size:13px;color:#94A3B8;">Bir vaqtda bir nechta uyni parametrlari bo'yicha yon-yoniga solishtirish.</p>
+        </div>
+        <div class="card-sm" style="border-color:rgba(139,92,246,.35);">
+          <div style="font-size:14px;font-weight:700;color:#C4B5FD;margin-bottom:8px;">🔔 Saved Search + Alert</div>
+          <p style="font-size:13px;color:#94A3B8;">Yangi mos e'lon chiqqanda avtomatik bildirishnoma yuboriladi.</p>
         </div>
       </div>
-      <div>
-        <div class="gi pu" style="margin-bottom:16px;">
-          <div class="ct" style="color:var(--purple);">🎨 Dizayn tizimi</div>
-          <ul class="li ar" style="font-size:15px;">
-            <li><b>40+ qayta ishlatiladigan komponent</b> yaratildi.</li>
-            <li>Tailwind CSS — barcha ekran o'lchamlariga moslashadigan responsive dizayn.</li>
-            <li>Ipoteka kalkulyatori, bron taqvimi, narx taqqoslash widgetlari.</li>
-          </ul>
-        </div>
-        <div class="gi ra">
-          <div class="ct" style="color:var(--red);">📊 Vizualizatsiya</div>
-          <ul class="li ar" style="font-size:15px;">
-            <li>Chart.js: Narxlar dinamikasi grafiklari.</li>
-            <li>Host Dashboard: Ko'rilishlar, bronlar, daromad statistikasi.</li>
-            <li>Bozor tahlili: Hudud bo'yicha o'rtacha narxlar diagrammasi.</li>
-          </ul>
-        </div>
+      <div class="img-box">
+        <img src="img/ui.png" alt="Frontend UI" style="width:100%;display:block;">
+        <div style="padding:8px 12px;background:rgba(0,0,0,.5);font-size:12px;color:#64748B;text-align:center;">Angular 18 · Tailwind CSS · Leaflet.js</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ===== S12: IJARA SHARTNOMALAR ===== -->
+<!-- ====== S12: MAXSUS FUNKSIYALAR ====== -->
 <div class="slide" id="s12">
-  <div class="stag f">🗣 Firdavs</div>
-  <div class="g">
-    <div class="ch"><div class="h1">12. ELEKTRON IJARA SHARTNOMALAR</div><div class="h2">O'zbekistonda raqamli yuridik hujjat</div></div>
-    <div class="sep"></div>
-    <div class="g2">
-      <div class="gi gr">
-        <div class="ct" style="color:var(--green);">📝 RentalContractsController (22KB)</div>
-        <ul class="li">
-          <li>Sayt ichida to'liq elektron ijara shartnomasi tuziladi — notarial tasdiqlashsiz.</li>
-          <li>Shartnomada ijara muddati, oylik to'lov, kafolat puli va shartlar aniq belgilanadi.</li>
-          <li>To'lov tarixi va barcha o'zgarishlar <b>bazada saqlanib</b> qoladi (Audit log).</li>
-          <li>Tomonlardan biri shartlarni buzsa — tizim avtomatik ogoh qiladi.</li>
-        </ul>
-      </div>
-      <div>
-        <div class="gi pu" style="margin-bottom:14px;">
-          <div class="ct" style="color:var(--purple);">🔔 Bildirishnoma tizimi</div>
-          <p style="font-size:15px;line-height:1.55;">NotificationsController (12KB): Bron tasdiqlandi, to'lov amalga oshdi, shartnoma muddati tugayapti — barcha voqealar uchun foydalanuvchiga <b>real vaqtda</b> bildirishnoma yuboriladi.</p>
-        </div>
-        <div class="gi ye">
-          <div class="ct" style="color:var(--yellow);">📢 E'lonlar (Announcements)</div>
-          <p style="font-size:15px;line-height:1.55;">AnnouncementsController: Admin barcha foydalanuvchilarga sayt yangiliklari va muhim xabarlarni broadcast qiladi. Har bir foydalanuvchi o'z e'lonlar tarixini ko'radi.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== S13: BOSHQARUV PANELLARI ===== -->
-<div class="slide" id="s13">
-  <div class="stag f">🗣 Firdavs</div>
-  <div class="g">
-    <div class="ch"><div class="h1">13. BOSHQARUV PANELLARI (3 DARAJA)</div><div class="h2">Har bir rol — o'z kabineti</div></div>
+  <div class="st sf">🗣 Firdavs</div>
+  <div style="width:100%;max-width:1080px;">
+    <div class="h1">12. Maxsus Funksiyalar</div>
+    <div class="h2">Boshqaruv panellari va kengaytirilgan imkoniyatlar</div>
     <div class="sep"></div>
     <div class="g3">
-      <div class="gi ra">
-        <div class="ct" style="color:var(--red);">🛡️ Admin Panel</div>
-        <ul class="li" style="font-size:14px;">
-          <li>Barcha foydalanuvchilar va e'lonlarni bloklash.</li>
-          <li>Kunlik tranzaksiyalar monitoringi.</li>
-          <li>Analytics dashboard: CSV/Excel/PDF export.</li>
-          <li>AI modelini qayta o'qitish (train-model API).</li>
-          <li>AI tavsiyalar aniqligi (accuracy) statistikasi.</li>
-          <li>Announcements — barcha foydalanuvchilarga xabar.</li>
+      <div class="card-sm" style="border-color:rgba(244,63,94,.3);">
+        <div style="font-size:13px;font-weight:700;color:#FB7185;margin-bottom:8px;">🛡️ Admin Panel</div>
+        <ul class="li" style="font-size:13px;">
+          <li>Foydalanuvchilarni bloklash</li>
+          <li>CSV/Excel/PDF export</li>
+          <li>AI modelni qayta o'qitish</li>
+          <li>Broadcast xabarlari</li>
         </ul>
       </div>
-      <div class="gi gr">
-        <div class="ct" style="color:var(--green);">💼 Host Kabineti</div>
-        <ul class="li" style="font-size:14px;">
-          <li>O'z e'lonlarining ko'rilish statistikasi.</li>
-          <li>Bron taqvimini shaxsan boshqarish.</li>
-          <li>Daromad grafigi va bronlar tarixi.</li>
-          <li>AI tavsiya: "Narxni -5% tushiring".</li>
-          <li>Chegirma va Promo-kod yaratish.</li>
-          <li>E'lonni Boost (Bronze/Silver/Gold) bilan ko'tarish.</li>
+      <div class="card-sm" style="border-color:rgba(16,185,129,.3);">
+        <div style="font-size:13px;font-weight:700;color:#34D399;margin-bottom:8px;">💼 Host Kabineti</div>
+        <ul class="li" style="font-size:13px;">
+          <li>Ko'rishlar statistikasi</li>
+          <li>AI narx maslahati</li>
+          <li>Bron taqvimi boshqaruvi</li>
+          <li>Promo-kod yaratish</li>
         </ul>
       </div>
-      <div class="gi">
-        <div class="ct">🏃 Mehmon (Xaridor)</div>
-        <ul class="li" style="font-size:14px;">
-          <li>Xarita va AI qidiruv orqali uy topish.</li>
-          <li>Sevimlilar ro'yxati (Favorites).</li>
-          <li>Saqlangan qidiruvlar + avtomatik alert.</li>
-          <li>Bron qilish va to'lov (Click/Payme).</li>
-          <li>Shartnomalar tarixi va izoh yozish.</li>
-          <li>Personalized AI tavsiyalar.</li>
+      <div class="card-sm" style="border-color:rgba(59,130,246,.3);">
+        <div style="font-size:13px;font-weight:700;color:#60A5FA;margin-bottom:8px;">🏃 Mehmon Kabineti</div>
+        <ul class="li" style="font-size:13px;">
+          <li>Sevimlilar (Favorites)</li>
+          <li>Saqlangan qidiruvlar</li>
+          <li>Shartnomalar tarixi</li>
+          <li>Personalized AI tavsiyalar</li>
         </ul>
+      </div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;">
+      <div class="card-sm" style="flex:1;border-color:rgba(139,92,246,.3);">
+        <div style="font-size:14px;font-weight:700;color:#C4B5FD;margin-bottom:8px;">🚀 Bronze / Silver / Gold Boost</div>
+        <p style="font-size:13px;color:#94A3B8;">Host pullik xizmat orqali e'lonini boshqalar e'lonlaridan yuqoriga ko'taradi. Daromad modeli.</p>
+      </div>
+      <div class="card-sm" style="flex:1;border-color:rgba(245,158,11,.3);">
+        <div style="font-size:14px;font-weight:700;color:#FCD34D;margin-bottom:8px;">📝 Elektron Ijara Shartnomasi</div>
+        <p style="font-size:13px;color:#94A3B8;">Sayt ichida yuridik kuchga ega shartnoma tuziladi. To'lov tarixi va audit log saqlanadi.</p>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ===== S14: KELAJAK ===== -->
-<div class="slide" id="s14">
-  <div class="stag f">🗣 Firdavs</div>
-  <div class="g">
-    <div class="ch"><div class="h1">14. KELAJAKDAGI RIVOJLANTIRISH (SCALE)</div><div class="h2">Poydevor tayyor — endi qurilish boshlansa bo'ladi</div></div>
+<!-- ====== S13: ANALITIKA ====== -->
+<div class="slide" id="s13">
+  <div class="st se">🗣 Elshod</div>
+  <div style="width:100%;max-width:1080px;">
+    <div class="h1">13. Kengaytirilgan Analitika</div>
+    <div class="h2">Bozorni "ko'rish" qobiliyati — Dashboard</div>
     <div class="sep"></div>
-    <div class="g2">
-      <div>
-        <div class="gi pu" style="margin-bottom:14px;">
-          <div class="ct" style="color:var(--purple);">🥽 3D Tur (Virtual Reality)</div>
-          <p style="font-size:15px;line-height:1.55;">Uyni masofadan turib 360° aylanib ko'rish. Baza tuzilmasida buning uchun <span class="code">VirtualTourUrl</span> maydoni allaqachon tayyorlanib qo'yilgan.</p>
+    <div class="g-img">
+      <div class="g2" style="align-content:start;">
+        <div class="card-sm" style="border-color:rgba(16,185,129,.35);">
+          <div style="font-size:14px;font-weight:700;color:#34D399;margin-bottom:8px;">💡 Best Deals</div>
+          <p style="font-size:13px;color:#94A3B8;">AI yordamida bozor narxidan past — eng foyda keltiruvchi uylar topiladi.</p>
         </div>
-        <div class="gi ra">
-          <div class="ct" style="color:var(--red);">📱 Mebel AR (Augmented Reality)</div>
-          <p style="font-size:15px;line-height:1.55;">Xaridor bo'sh xonaga telefon kamerasi orqali har xil mebellarni vizual joylashtirib ko'radi. Angular muhitida <b>AR.js</b> orqali amalga oshiriladi.</p>
+        <div class="card-sm" style="border-color:rgba(245,158,11,.35);">
+          <div style="font-size:14px;font-weight:700;color:#FCD34D;margin-bottom:8px;">📈 Yuqori ROI</div>
+          <p style="font-size:13px;color:#94A3B8;">Investitsiya daromadliligi yuqori bo'lgan mulklar avtomatik ajratiladi.</p>
+        </div>
+        <div class="card-sm" style="border-color:rgba(244,63,94,.35);">
+          <div style="font-size:14px;font-weight:700;color:#FB7185;margin-bottom:8px;">⚡ Tez Sotiladigan</div>
+          <p style="font-size:13px;color:#94A3B8;">Ko'rishlar va bron soni bo'yicha bozorda talab yuqori mulklar aniqlanadi.</p>
+        </div>
+        <div class="card-sm" style="border-color:rgba(139,92,246,.35);">
+          <div style="font-size:14px;font-weight:700;color:#C4B5FD;margin-bottom:8px;">📤 Export</div>
+          <p style="font-size:13px;color:#94A3B8;">Admin barcha statistikani <b>CSV, Excel, PDF</b> formatda yuklab oladi.</p>
+        </div>
+        <div class="card-sm" style="grid-column:1/-1;border-color:rgba(59,130,246,.35);">
+          <div style="font-size:14px;font-weight:700;color:#60A5FA;margin-bottom:8px;">🔥 Narx Issiqlik Xaritasi + 6 oylik Prognoz</div>
+          <p style="font-size:13px;color:#94A3B8;">Viloyat va tuman bo'yicha narxlar xaritada rangli ko'rsatiladi. Kelgusi 6 oy uchun narx prognozi ham mavjud.</p>
         </div>
       </div>
-      <div>
-        <div class="gi gr" style="margin-bottom:14px;">
-          <div class="ct" style="color:var(--green);">🤖 AI Modelini Yangilash</div>
-          <p style="font-size:15px;line-height:1.55;">Hozir <b>FastTree Regression</b> ishlatilmoqda. Baza to'lsa, <b>XGBoost</b> yoki <b>Neural Network</b> (Deep Learning) modeliga o'tish rejasi bor. Admin "Train Model" API orqali qayta o'qitadi.</p>
-        </div>
-        <div class="gi ye">
-          <div class="ct" style="color:var(--yellow);">📱 Mobil Ilova</div>
-          <p style="font-size:15px;line-height:1.55;">Kengroq auditoriya uchun iOS va Android platformalarida ishlaydigan cross-platform mobil ilova (React Native yoki Flutter) yaratish.</p>
-        </div>
+      <div class="img-box">
+        <img src="img/ai.png" alt="Analytics" style="width:100%;display:block;">
+        <div style="padding:8px 12px;background:rgba(0,0,0,.5);font-size:12px;color:#64748B;text-align:center;">Analytics Dashboard</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ===== S15: XULOSA ===== -->
+<!-- ====== S14: KELAJAK ====== -->
+<div class="slide" id="s14">
+  <div class="st sf">🗣 Firdavs</div>
+  <div style="width:100%;max-width:1080px;">
+    <div class="h1">14. Kelajakdagi Rivojlantirish</div>
+    <div class="h2">Poydevor tayyor — qurilish davom etadi</div>
+    <div class="sep"></div>
+    <div class="g-img">
+      <div>
+        <div class="card-sm" style="margin-bottom:12px;border-color:rgba(139,92,246,.4);">
+          <div style="font-size:15px;font-weight:700;color:#C4B5FD;margin-bottom:8px;">🥽 3D Tur (Virtual Reality)</div>
+          <p style="font-size:14px;color:#94A3B8;">Uyni 360° masofadan ko'rish. Bazada <span class="code">VirtualTourUrl</span> maydoni allaqachon tayyorlangan.</p>
+        </div>
+        <div class="card-sm" style="margin-bottom:12px;border-color:rgba(244,63,94,.4);">
+          <div style="font-size:15px;font-weight:700;color:#FB7185;margin-bottom:8px;">📱 Mebel AR (Augmented Reality)</div>
+          <p style="font-size:14px;color:#94A3B8;">Telefon kamerasi orqali bo'sh xonaga mebel joylashtirib ko'rish. Angular + AR.js.</p>
+        </div>
+        <div class="card-sm" style="margin-bottom:12px;border-color:rgba(16,185,129,.4);">
+          <div style="font-size:15px;font-weight:700;color:#34D399;margin-bottom:8px;">🤖 AI Model Yangilash</div>
+          <p style="font-size:14px;color:#94A3B8;">FastTree → <b>XGBoost</b> yoki <b>Neural Network</b> (Deep Learning). Baza katta bo'lgach o'tiladi.</p>
+        </div>
+        <div class="card-sm" style="border-color:rgba(245,158,11,.4);">
+          <div style="font-size:15px;font-weight:700;color:#FCD34D;margin-bottom:8px;">📱 Mobil Ilova</div>
+          <p style="font-size:14px;color:#94A3B8;">iOS + Android uchun React Native / Flutter cross-platform ilova.</p>
+        </div>
+      </div>
+      <div class="img-box">
+        <img src="img/voice.png" alt="Future" style="width:100%;display:block;">
+        <div style="padding:8px 12px;background:rgba(0,0,0,.5);font-size:12px;color:#64748B;text-align:center;">Kelajak texnologiyalari</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== S15: XULOSA ====== -->
 <div class="slide" id="s15">
-  <div class="stag e">🗣 Elshod</div>
-  <div class="g" style="text-align:center;background:transparent;border:none;box-shadow:none;">
-    <div class="h1" style="font-size:38px;margin-bottom:10px;">15. LOYIHA NATIJALARI VA XULOSA</div>
-    <div class="h2" style="margin-bottom:28px;">Nima qildik? Nima erishdik?</div>
-    <div class="gi gr" style="margin-bottom:24px;text-align:left;">
-      <p style="font-size:19px;line-height:1.6;font-weight:500;">Platforma O'zbekiston ko'chmas mulk bozori uchun yagona, xavfsiz va aqlli raqamli ekotizim sifatida isbotlandi.</p>
+  <div class="st se">🗣 Elshod</div>
+  <div style="width:100%;max-width:1060px;text-align:center;">
+    <div style="font-size:13px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;">Loyiha Natijalari</div>
+    <h1 style="font-size:40px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:28px;">O'zbekiston ko'chmas mulk bozori uchun<br><span style="color:#60A5FA;">to'liq raqamlashtirilgan</span> platforma</h1>
+    
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:28px;">
+      <div class="stat"><div class="stat-n">20+</div><div class="stat-l">PostgreSQL jadval</div></div>
+      <div class="stat"><div class="stat-n" style="color:#A78BFA;">33</div><div class="stat-l">Controller</div></div>
+      <div class="stat"><div class="stat-n" style="color:#34D399;">5</div><div class="stat-l">AI Funksiya</div></div>
+      <div class="stat"><div class="stat-n" style="color:#FCD34D;">2</div><div class="stat-l">To'lov tizimi</div></div>
+      <div class="stat"><div class="stat-n" style="color:#FB7185;">14</div><div class="stat-l">Viloyat AI'da</div></div>
     </div>
-    <div class="g4" style="margin-bottom:28px;">
-      <div class="gi" style="text-align:center;padding:18px;">
-        <div class="big">20+</div>
-        <div class="mini">PostgreSQL jadvali bog'landi</div>
-      </div>
-      <div class="gi gr" style="text-align:center;padding:18px;">
-        <div class="big" style="color:var(--green);">33</div>
-        <div class="mini">Controller, 100+ API</div>
-      </div>
-      <div class="gi pu" style="text-align:center;padding:18px;">
-        <div class="big" style="color:var(--purple);">5</div>
-        <div class="mini">Alohida AI funksiya</div>
-      </div>
-      <div class="gi ra" style="text-align:center;padding:18px;">
-        <div class="big" style="color:var(--red);">2</div>
-        <div class="mini">Milliy to'lov tizimi</div>
-      </div>
+
+    <div style="margin-bottom:28px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <div class="mchip">🌲 FastTree Regression</div>
+      <div class="mchip2">🧮 Gibrid Formula (50%+50%)</div>
+      <span class="bd bdb" style="padding:8px 16px;font-size:14px;">Click + Payme</span>
+      <span class="bd bdp" style="padding:8px 16px;font-size:14px;">OneID + Telegram Auth</span>
+      <span class="bd bdy" style="padding:8px 16px;font-size:14px;">🎤 Ovozli AI</span>
     </div>
-    <h1 style="font-size:54px;font-weight:900;color:var(--blue);margin-bottom:14px;">E'TIBORINGIZ UCHUN RAHMAT!</h1>
-    <p style="font-size:20px;color:var(--muted);">Savollaringiz bo'lsa, bajonidil javob beramiz.</p>
-    <div style="margin-top:18px;background:white;border:1px solid #E2E8F0;padding:14px 28px;border-radius:40px;display:inline-block;box-shadow:0 4px 12px rgba(0,0,0,.05);">
-      <span style="font-weight:700;color:var(--blue);">Ibodullayev Elshod</span> &nbsp;|&nbsp; <span style="font-weight:700;color:var(--blue2);">Mengniyozov Firdavs</span>
+
+    <h2 style="font-size:52px;font-weight:900;color:#fff;margin-bottom:14px;text-shadow:0 0 40px rgba(59,130,246,.4);">E'TIBORINGIZ UCHUN RAHMAT!</h2>
+    <p style="font-size:18px;color:#64748B;margin-bottom:20px;">Savollaringiz bo'lsa, bajonidil javob beramiz</p>
+    <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);padding:14px 30px;border-radius:40px;display:inline-block;">
+      <span style="font-weight:700;color:#60A5FA;">Ibodullayev Elshod</span>
+      <span style="color:#64748B;margin:0 12px;">|</span>
+      <span style="font-weight:700;color:#A78BFA;">Mengniyozov Firdavs</span>
     </div>
   </div>
 </div>
 
-</div><!-- end wrap -->
+</div>
 
 <div class="dots" id="dots"></div>
 <nav class="nav">
@@ -618,10 +711,9 @@
 </nav>
 
 <script>
-const N=15; let cur=1,busy=false;
+const N=15;let cur=1,busy=false;
 const dotsEl=document.getElementById('dots');
 for(let i=1;i<=N;i++){const d=document.createElement('div');d.className='dot'+(i===1?' on':'');d.onclick=()=>jump(i);dotsEl.appendChild(d);}
-
 function ui(){
   document.getElementById('sc').textContent=cur+' / '+N;
   document.getElementById('prevBtn').style.opacity=cur===1?'.3':'1';
@@ -629,24 +721,19 @@ function ui(){
   nb.textContent=cur===N?'Yakun':'Keyingi →';nb.style.opacity=cur===N?'.5':'1';
   document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('on',i+1===cur));
 }
-
 function jump(to){
-  if(busy||to===cur)return;
-  const dir=to>cur?1:-1;
-  const from=document.getElementById('s'+cur);
-  const next=document.getElementById('s'+to);
+  if(busy||to===cur)return;const dir=to>cur?1:-1;
+  const from=document.getElementById('s'+cur);const next=document.getElementById('s'+to);
   busy=true;
-  next.style.transition='none';
-  next.classList.remove('exit-l','exit-r','active');
+  next.style.transition='none';next.classList.remove('xl','xr','active');
   next.style.transform=dir>0?'translateX(60px)':'translateX(-60px)';
   next.style.opacity='0';next.style.visibility='visible';
   next.getBoundingClientRect();
-  from.classList.remove('active');from.classList.add(dir>0?'exit-l':'exit-r');
-  next.style.transition='';next.style.transform='translateX(0)';next.style.opacity='1';
-  next.classList.add('active');
+  from.classList.remove('active');from.classList.add(dir>0?'xl':'xr');
+  next.style.transition='';next.style.transform='translateX(0)';next.style.opacity='1';next.classList.add('active');
   setTimeout(()=>{
-    from.classList.remove('exit-l','exit-r');
-    from.style.visibility='';next.style.transform='';next.style.opacity='';next.style.visibility='';next.style.transition='';
+    from.classList.remove('xl','xr');from.style.visibility='';
+    next.style.transform='';next.style.opacity='';next.style.visibility='';next.style.transition='';
     cur=to;ui();busy=false;
   },470);
 }
