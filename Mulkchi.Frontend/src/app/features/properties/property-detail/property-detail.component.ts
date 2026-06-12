@@ -507,6 +507,7 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                   </div>
                 </div>
               }
+            </div>
           </div>
           
           <!-- Mobile Sticky Action Bar -->
