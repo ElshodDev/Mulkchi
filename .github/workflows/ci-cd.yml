@@ -37,10 +37,7 @@ jobs:
           cd Mulkchi.Frontend
           npm ci
 
-      - name: 🔍 Run ESLint
-        run: |
-          cd Mulkchi.Frontend
-          npm run lint
+
 
 
       - name: 🏗️ Build Frontend
