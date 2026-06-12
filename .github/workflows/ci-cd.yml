@@ -170,19 +170,7 @@ jobs:
           echo "🔄 Updating containers..."
           echo "✅ Deployment completed!"
 
-      - name: 📧 Send Deployment Notification
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          channel: '#deployments'
-          text: |
-            🚀 **Mulkchi Production Deployment**
-            📦 **Version:** ${{ github.sha }}
-            🌿 **Branch:** ${{ github.ref_name }}
-            👤 **By:** ${{ github.actor }}
-            ✅ **Status:** ${{ job.status }}
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
 
   # 📊 Security Scan
   security-scan:
