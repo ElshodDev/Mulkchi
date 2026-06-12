@@ -884,6 +884,9 @@ import { SeoService } from '../../core/services/seo.service';
         .hero-title {
           font-size: 2.8rem;
         }
+        .hero-subtitle {
+          display: none;
+        }
         .search-main {
           flex-direction: column;
           padding: 12px;
