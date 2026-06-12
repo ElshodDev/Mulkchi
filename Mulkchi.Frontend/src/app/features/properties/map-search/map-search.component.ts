@@ -449,9 +449,10 @@ export class MapSearchComponent implements OnInit, AfterViewInit, OnDestroy {
     const bounds = L.latLngBounds([]);
 
     this.properties().forEach(prop => {
-      // Fake coordinates for demo if missing
-      const lat = prop.latitude || (41.311081 + (Math.random() - 0.5) * 0.1);
-      const lng = prop.longitude || (69.240562 + (Math.random() - 0.5) * 0.1);
+      if (!prop.latitude || !prop.longitude) return;
+      
+      const lat = prop.latitude;
+      const lng = prop.longitude;
 
       const priceStr = this.formatShortPrice(prop.salePrice || prop.monthlyRent || prop.pricePerNight);
       

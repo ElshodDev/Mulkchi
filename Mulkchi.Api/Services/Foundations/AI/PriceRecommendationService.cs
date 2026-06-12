@@ -10,7 +10,7 @@ namespace Mulkchi.Api.Services.Foundations.AI;
 
 public class PriceRecommendationService : IPriceRecommendationService
 {
-    private readonly StorageBroker storageBroker;
+    private readonly IStorageBroker storageBroker;
     private readonly ILogger<PriceRecommendationService> logger;
     private readonly MLContext mlContext;
     private ITransformer? model;
@@ -157,7 +157,7 @@ public class PriceRecommendationService : IPriceRecommendationService
 
     public async Task<int> GetTrainingDataCountAsync()
     {
-        var properties = await storageBroker.Properties
+        var properties = await storageBroker.SelectAllProperties()
             .Where(p => !p.DeletedDate.HasValue &&
                        ((p.SalePrice.HasValue && p.SalePrice > 0) || 
                         (p.MonthlyRent.HasValue && p.MonthlyRent > 0) ||
@@ -170,7 +170,7 @@ public class PriceRecommendationService : IPriceRecommendationService
 
     private async Task<List<Property>> GetTrainingDataAsync()
     {
-        return await storageBroker.Properties
+        return await storageBroker.SelectAllProperties()
             .Where(p => !p.DeletedDate.HasValue &&
                        ((p.SalePrice.HasValue && p.SalePrice > 0) || 
                         (p.MonthlyRent.HasValue && p.MonthlyRent > 0) ||
@@ -369,3 +369,4 @@ public class PriceRecommendationService : IPriceRecommendationService
         };
     }
 }
+

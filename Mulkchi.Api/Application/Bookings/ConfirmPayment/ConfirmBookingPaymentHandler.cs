@@ -19,7 +19,7 @@ public interface IConfirmBookingPaymentHandler
 public sealed class ConfirmBookingPaymentHandler : IConfirmBookingPaymentHandler
 {
     private readonly IValidator<ConfirmBookingPaymentCommand> validator;
-    private readonly StorageBroker storageBroker;
+    private readonly IStorageBroker storageBroker;
     private readonly ICurrentUserService currentUserService;
 
     public ConfirmBookingPaymentHandler(
@@ -71,8 +71,7 @@ public sealed class ConfirmBookingPaymentHandler : IConfirmBookingPaymentHandler
         var property = await this.storageBroker.SelectPropertyByIdAsync(hold.PropertyId)
             ?? throw new InvalidOperationException("Property not found.");
 
-        await using var transaction = await this.storageBroker.Database
-            .BeginTransactionAsync(IsolationLevel.Serializable);
+        await using var transaction = await this.storageBroker.BeginTransactionAsync(IsolationLevel.Serializable);
 
         try
         {
@@ -122,7 +121,7 @@ public sealed class ConfirmBookingPaymentHandler : IConfirmBookingPaymentHandler
                 UpdatedDate = now
             });
 
-            await this.storageBroker.OutboxMessages.AddAsync(new OutboxMessage
+            await this.storageBroker.InsertOutboxMessageAsync(new OutboxMessage
             {
                 Id = Guid.NewGuid(),
                 Type = "booking.pending-payment-created",
@@ -170,3 +169,6 @@ public sealed class ConfirmBookingPaymentHandler : IConfirmBookingPaymentHandler
         }
     }
 }
+
+
+

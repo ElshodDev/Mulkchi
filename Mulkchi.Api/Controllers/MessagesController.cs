@@ -136,7 +136,7 @@ public class MessagesController : ControllerBase
 
     [HttpGet("conversations")]
     [Authorize]
-    public ActionResult<IEnumerable<object>> GetConversations()
+    public async ValueTask<ActionResult<IEnumerable<object>>> GetConversations()
     {
         try
         {
@@ -144,30 +144,51 @@ public class MessagesController : ControllerBase
             if (userIdClaim is null || !Guid.TryParse(userIdClaim, out Guid currentUserId))
                 return Unauthorized();
 
-            var users = this.storageBroker.SelectAllUsers().ToList();
-            var properties = this.storageBroker.SelectAllProperties().ToList();
-
-            var conversations = this.messageService
+            var messagesQuery = this.messageService
                 .RetrieveAllMessages()
-                .Where(message => message.SenderId == currentUserId || message.ReceiverId == currentUserId)
-                .ToList()
+                .Where(message => message.SenderId == currentUserId || message.ReceiverId == currentUserId);
+
+            var conversationData = await messagesQuery
                 .GroupBy(message => new
                 {
                     OtherUserId = message.SenderId == currentUserId ? message.ReceiverId : message.SenderId,
                     PropertyId = message.PropertyId
                 })
-                .Select(group =>
+                .Select(group => new
                 {
-                    Message latestMessage = group.OrderByDescending(message => message.CreatedDate).First();
-                    var otherUser = users.FirstOrDefault(user => user.Id == group.Key.OtherUserId);
-                    var property = group.Key.PropertyId.HasValue
-                        ? properties.FirstOrDefault(p => p.Id == group.Key.PropertyId.Value)
-                        : null;
+                    OtherUserId = group.Key.OtherUserId,
+                    PropertyId = group.Key.PropertyId,
+                    LatestMessage = group.OrderByDescending(m => m.CreatedDate).FirstOrDefault(),
+                    UnreadCount = group.Count(m => m.ReceiverId == currentUserId && !m.IsRead)
+                })
+                .ToListAsync();
+
+            var otherUserIds = conversationData.Select(c => c.OtherUserId).Distinct().ToList();
+            var propertyIds = conversationData.Where(c => c.PropertyId.HasValue).Select(c => c.PropertyId!.Value).Distinct().ToList();
+
+            var users = await this.storageBroker.SelectAllUsers()
+                .Where(u => otherUserIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id);
+
+            var propertiesQuery = this.storageBroker.SelectAllProperties()
+                .Include(p => p.Images)
+                .Where(p => propertyIds.Contains(p.Id));
+            
+            var properties = await propertiesQuery.ToDictionaryAsync(p => p.Id);
+
+            var conversations = conversationData
+                .Select(c =>
+                {
+                    users.TryGetValue(c.OtherUserId, out var otherUser);
+                    
+                    Models.Foundations.Properties.Property? property = null;
+                    if (c.PropertyId.HasValue)
+                        properties.TryGetValue(c.PropertyId!.Value, out property);
 
                     return new
                     {
-                        otherUserId = group.Key.OtherUserId,
-                        propertyId = group.Key.PropertyId,
+                        otherUserId = c.OtherUserId,
+                        propertyId = c.PropertyId,
                         propertyTitle = property?.Title,
                         propertyImage = property?.Images?.FirstOrDefault(i => i.IsPrimary)?.Url
                                         ?? property?.Images?.FirstOrDefault()?.Url,
@@ -175,9 +196,9 @@ public class MessagesController : ControllerBase
                             ? "Foydalanuvchi"
                             : $"{otherUser.FirstName} {otherUser.LastName}".Trim(),
                         otherUserAvatar = otherUser?.AvatarUrl,
-                        lastMessage = latestMessage.Content,
-                        lastMessageDate = latestMessage.CreatedDate,
-                        unreadCount = group.Count(message => message.ReceiverId == currentUserId && !message.IsRead)
+                        lastMessage = c.LatestMessage?.Content,
+                        lastMessageDate = c.LatestMessage?.CreatedDate,
+                        unreadCount = c.UnreadCount
                     };
                 })
                 .OrderByDescending(conversation => conversation.lastMessageDate)
@@ -193,7 +214,7 @@ public class MessagesController : ControllerBase
 
     [HttpGet("conversation/{otherUserId}")]
     [Authorize]
-    public ActionResult<IEnumerable<object>> GetConversationMessages(Guid otherUserId, [FromQuery] Guid? propertyId = null)
+    public async ValueTask<ActionResult<IEnumerable<object>>> GetConversationMessages(Guid otherUserId, [FromQuery] Guid? propertyId = null)
     {
         try
         {
@@ -201,19 +222,25 @@ public class MessagesController : ControllerBase
             if (userIdClaim is null || !Guid.TryParse(userIdClaim, out Guid currentUserId))
                 return Unauthorized();
 
-            var users = this.storageBroker.SelectAllUsers().ToList();
-
-            var messages = this.messageService
+            var messages = await this.messageService
                 .RetrieveAllMessages()
                 .Where(message =>
                     ((message.SenderId == currentUserId && message.ReceiverId == otherUserId) ||
                     (message.SenderId == otherUserId && message.ReceiverId == currentUserId)) &&
                     message.PropertyId == propertyId)
                 .OrderBy(message => message.CreatedDate)
-                .ToList()
+                .ToListAsync();
+
+            var senderIds = messages.Select(m => m.SenderId).Distinct().ToList();
+            
+            var users = await this.storageBroker.SelectAllUsers()
+                .Where(u => senderIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id);
+
+            var result = messages
                 .Select(message =>
                 {
-                    var sender = users.FirstOrDefault(user => user.Id == message.SenderId);
+                    users.TryGetValue(message.SenderId, out var sender);
 
                     return new
                     {
@@ -235,7 +262,7 @@ public class MessagesController : ControllerBase
                 })
                 .ToList();
 
-            return Ok(messages);
+            return Ok(result);
         }
         catch (Exception ex)
         {

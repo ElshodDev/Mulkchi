@@ -2,7 +2,6 @@ using Serilog;
 using Serilog.Events;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http.Features;
-using Mulkchi.Api.DataSeed;
 using Mulkchi.Api.Brokers.Storages;
 using Mulkchi.Api.Workers;
 using Hangfire;
@@ -154,8 +153,6 @@ public partial class Program
 
         if (app.Environment.IsDevelopment())
         {
-            await DevelopmentDataSeeder.SeedAsync(app);
-            
             // Randomize existing properties locations to fix straight line bug
             using (var scope = app.Services.CreateScope())
             {

@@ -507,6 +507,31 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                   </div>
                 </div>
               }
+          </div>
+          
+          <!-- Mobile Sticky Action Bar -->
+          <div class="mobile-action-bar">
+            <div class="mobile-price">
+              <span *ngIf="property()?.listingType === ListingType.Sale && property()?.salePrice" class="price-amount">
+                {{ property()?.salePrice | number }} <span class="currency">{{ property()?.currency }}</span>
+              </span>
+              <span *ngIf="property()?.listingType === ListingType.Rent && property()?.monthlyRent" class="price-amount">
+                {{ property()?.monthlyRent | number }} <span class="currency">{{ property()?.currency }}</span>/oy
+              </span>
+              <span *ngIf="property()?.listingType === ListingType.ShortTermRent && property()?.pricePerNight" class="price-amount">
+                {{ property()?.pricePerNight | number }} <span class="currency">{{ property()?.currency }}</span>/tun
+              </span>
+            </div>
+            
+            <div class="mobile-actions">
+              <ng-container *ngIf="isAuthenticated() && !isOwner()">
+                <button *ngIf="property()?.listingType === ListingType.Sale" mat-flat-button class="btn-main-action" (click)="handleMainAction()">
+                  {{ getMainActionLabel() }}
+                </button>
+              </ng-container>
+              <ng-container *ngIf="!isAuthenticated()">
+                <button mat-flat-button class="btn-main-action" (click)="handleMainAction()">Kirish</button>
+              </ng-container>
             </div>
           </div>
         </div>
@@ -1540,16 +1565,8 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         border-radius: 16px;
       }
       
-      .no-image-placeholder {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        color: var(--color-text-muted);
-        background: var(--color-surface);
-        min-height: 300px;
+      .mobile-action-bar {
+        display: none;
       }
 
       @media (max-width: 1024px) {
@@ -1586,6 +1603,42 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
         .content-card {
           padding: 24px;
           border-radius: 20px;
+        }
+        .mobile-action-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          position: fixed;
+          bottom: 64px; /* Above bottom nav */
+          left: 0;
+          right: 0;
+          background: var(--color-surface-elevated);
+          padding: 12px 16px;
+          box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+          border-top: 1px solid var(--color-border-soft);
+          z-index: 100;
+        }
+        .mobile-price {
+          display: flex;
+          flex-direction: column;
+        }
+        .mobile-price .price-amount {
+          font-size: 1.2rem;
+          font-weight: 800;
+          color: var(--color-text-primary);
+        }
+        .mobile-price .currency {
+          font-size: 0.9rem;
+          color: var(--color-text-secondary);
+        }
+        .mobile-actions .btn-main-action {
+          height: 44px !important;
+          border-radius: 22px !important;
+          padding: 0 20px !important;
+          font-size: 0.9rem !important;
+        }
+        .property-content {
+          padding-bottom: 120px; /* Space for both mobile bars */
         }
       }
     `,

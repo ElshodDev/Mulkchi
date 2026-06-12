@@ -1,6 +1,6 @@
 # 🏠 Mulkchi – Premium Ko'chmas Mulk va Ijaralar Platformasi
 
-> **Bitiruv Malakaviy Ishi (BMI) Taqdimoti uchun Maxsus Qo'llanma**
+> **Mulkchi - Ko'chmas Mulk Boshqaruvi tizimi**
 > Ushbu loyiha zamonaviy dasturlash arxitekturasi (Clean Architecture) va sun'iy intellekt (AI) texnologiyalaridan foydalangan holda, O'zbekiston ko'chmas mulk bozoridagi asosiy muammolarga innovatsion yechim taklif etish maqsadida ishlab chiqilgan.
 
 ![Mulkchi Platform](https://img.shields.io/badge/Status-Production_Ready-success?style=for-the-badge) ![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4?logo=dotnet&style=for-the-badge) ![Angular 20](https://img.shields.io/badge/Angular-20-DD0031?logo=angular&style=for-the-badge) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&style=for-the-badge)

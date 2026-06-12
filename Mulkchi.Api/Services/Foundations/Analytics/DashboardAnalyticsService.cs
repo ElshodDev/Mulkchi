@@ -238,3 +238,4 @@ public class DashboardAnalyticsService : IDashboardAnalyticsService
         return dashboard;
     }
 }
+

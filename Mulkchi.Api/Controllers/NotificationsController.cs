@@ -6,6 +6,10 @@ using Mulkchi.Api.Models.Foundations.Common;
 using Mulkchi.Api.Models.Foundations.Notifications;
 using Mulkchi.Api.Models.Foundations.Notifications.Exceptions;
 using Mulkchi.Api.Services.Foundations.Notifications;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Mulkchi.Api.Controllers;
 
@@ -26,51 +30,25 @@ public class NotificationsController : ControllerBase
 
     [HttpPost]
     [Authorize]
-    public async ValueTask<ActionResult<Notification>> PostNotificationAsync(Notification notification)
+    public async ValueTask<ActionResult<NotificationDto>> PostNotificationAsync(Notification notification)
     {
         try
         {
             Notification addedNotification = await this.notificationService.AddNotificationAsync(notification);
 
             await this.notificationHub.Clients.User(notification.UserId.ToString())
-                .SendAsync("ReceiveNotification", new
-                {
-                    addedNotification.Id,
-                    addedNotification.TitleUz,
-                    addedNotification.TitleRu,
-                    addedNotification.TitleEn,
-                    addedNotification.BodyUz,
-                    addedNotification.BodyRu,
-                    addedNotification.BodyEn,
-                    addedNotification.Type,
-                    addedNotification.IsRead,
-                    addedNotification.CreatedDate,
-                    Timestamp = DateTime.UtcNow
-                });
+                .SendAsync("ReceiveNotification", MapToDto(addedNotification));
 
-            return Created("notification", addedNotification);
+            return Created("notification", MapToDto(addedNotification));
         }
-        catch (NotificationValidationException notificationValidationException)
-        {
-            return BadRequest(new { message = notificationValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (NotificationDependencyValidationException notificationDependencyValidationException)
-        {
-            return BadRequest(new { message = notificationDependencyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (NotificationDependencyException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (NotificationServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
+        catch (NotificationValidationException ex) { return BadRequest(new { message = ex.InnerException?.Message ?? "An error occurred." }); }
+        catch (NotificationDependencyValidationException ex) { return BadRequest(new { message = ex.InnerException?.Message ?? "An error occurred." }); }
+        catch (Exception) { return StatusCode(500, new { message = "Internal server error." }); }
     }
 
     [HttpGet]
     [Authorize]
-    public ActionResult<PagedResult<Notification>> GetAllNotifications([FromQuery] PaginationParams pagination)
+    public ActionResult<PagedResult<NotificationDto>> GetAllNotifications([FromQuery] PaginationParams pagination)
     {
         try
         {
@@ -80,90 +58,51 @@ public class NotificationsController : ControllerBase
             var items = query
                 .Skip((pagination.Page - 1) * pagination.PageSize)
                 .Take(pagination.PageSize)
+                .ToList()
+                .Select(MapToDto)
+                .Where(dto => dto != null)
+                .Select(dto => dto!)
                 .ToList();
 
-            var result = new PagedResult<Notification>
+            return Ok(new PagedResult<NotificationDto>
             {
                 Items = items,
                 TotalCount = totalCount,
                 Page = pagination.Page,
                 PageSize = pagination.PageSize
-            };
-
-            return Ok(result);
+            });
         }
-        catch (NotificationDependencyException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (NotificationServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
+        catch (Exception) { return StatusCode(500, new { message = "Internal server error." }); }
     }
 
     [HttpGet("{id}")]
     [Authorize]
-    public async ValueTask<ActionResult<Notification>> GetNotificationByIdAsync(Guid id)
+    public async ValueTask<ActionResult<NotificationDto>> GetNotificationByIdAsync(Guid id)
     {
         try
         {
             Notification notification = await this.notificationService.RetrieveNotificationByIdAsync(id);
-            return Ok(notification);
+            return Ok(MapToDto(notification));
         }
-        catch (NotificationValidationException notificationValidationException)
-        {
-            return BadRequest(new { message = notificationValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (NotificationDependencyValidationException notificationDependencyValidationException)
-            when (notificationDependencyValidationException.InnerException is NotFoundNotificationException)
-        {
-            return NotFound(new { message = notificationDependencyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (NotificationDependencyValidationException notificationDependencyValidationException)
-        {
-            return BadRequest(new { message = notificationDependencyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (NotificationDependencyException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (NotificationServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
+        catch (NotificationValidationException ex) { return BadRequest(new { message = ex.InnerException?.Message ?? "An error occurred." }); }
+        catch (NotificationDependencyValidationException ex) when (ex.InnerException is NotFoundNotificationException) { return NotFound(new { message = ex.InnerException?.Message ?? "An error occurred." }); }
+        catch (NotificationDependencyValidationException ex) { return BadRequest(new { message = ex.InnerException?.Message ?? "An error occurred." }); }
+        catch (Exception) { return StatusCode(500, new { message = "Internal server error." }); }
     }
 
     [HttpPut]
     [Authorize]
-    public async ValueTask<ActionResult<Notification>> PutNotificationAsync(Notification notification)
+    public async ValueTask<ActionResult<NotificationDto>> PutNotificationAsync(Notification notification)
     {
         try
         {
             Notification modifiedNotification = await this.notificationService.ModifyNotificationAsync(notification);
-            return Ok(modifiedNotification);
+            return Ok(MapToDto(modifiedNotification));
         }
-        catch (NotificationValidationException notificationValidationException)
-        {
-            return BadRequest(new { message = notificationValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (NotificationDependencyValidationException notificationDependencyValidationException)
-            when (notificationDependencyValidationException.InnerException is NotFoundNotificationException)
-        {
-            return NotFound(new { message = notificationDependencyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (NotificationDependencyValidationException notificationDependencyValidationException)
-        {
-            return BadRequest(new { message = notificationDependencyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (NotificationDependencyException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (NotificationServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
+        catch (NotificationValidationException ex) { return BadRequest(new { message = ex.InnerException?.Message ?? "An error occurred." }); }
+        catch (NotificationDependencyValidationException ex) when (ex.InnerException is NotFoundNotificationException) { return NotFound(new { message = ex.InnerException?.Message ?? "An error occurred." }); }
+        catch (NotificationDependencyValidationException ex) { return BadRequest(new { message = ex.InnerException?.Message ?? "An error occurred." }); }
+        catch (Exception) { return StatusCode(500, new { message = "Internal server error." }); }
     }
 
     [HttpPut("{id}/read")]
@@ -175,32 +114,11 @@ public class NotificationsController : ControllerBase
             Notification notification = await this.notificationService.RetrieveNotificationByIdAsync(id);
             notification.IsRead = true;
             notification.ReadAt = DateTimeOffset.UtcNow;
-
             await this.notificationService.ModifyNotificationAsync(notification);
-
             return NoContent();
         }
-        catch (NotificationValidationException notificationValidationException)
-        {
-            return BadRequest(new { message = notificationValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (NotificationDependencyValidationException notificationDependencyValidationException)
-            when (notificationDependencyValidationException.InnerException is NotFoundNotificationException)
-        {
-            return NotFound(new { message = notificationDependencyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (NotificationDependencyValidationException notificationDependencyValidationException)
-        {
-            return BadRequest(new { message = notificationDependencyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (NotificationDependencyException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (NotificationServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
+        catch (NotificationDependencyValidationException ex) when (ex.InnerException is NotFoundNotificationException) { return NotFound(new { message = ex.InnerException?.Message ?? "An error occurred." }); }
+        catch (Exception) { return BadRequest(new { message = "An error occurred." }); }
     }
 
     [HttpPut("read-all")]
@@ -211,65 +129,71 @@ public class NotificationsController : ControllerBase
         {
             var unreadNotifications = this.notificationService
                 .RetrieveAllNotifications()
-                .Where(notification => !notification.IsRead)
+                .Where(n => !n.IsRead)
                 .ToList();
 
-            foreach (Notification notification in unreadNotifications)
+            foreach (Notification n in unreadNotifications)
             {
-                notification.IsRead = true;
-                notification.ReadAt = DateTimeOffset.UtcNow;
-                await this.notificationService.ModifyNotificationAsync(notification);
+                n.IsRead = true;
+                n.ReadAt = DateTimeOffset.UtcNow;
+                await this.notificationService.ModifyNotificationAsync(n);
             }
-
             return NoContent();
         }
-        catch (NotificationValidationException notificationValidationException)
-        {
-            return BadRequest(new { message = notificationValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (NotificationDependencyValidationException notificationDependencyValidationException)
-        {
-            return BadRequest(new { message = notificationDependencyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (NotificationDependencyException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (NotificationServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
+        catch (Exception) { return StatusCode(500, new { message = "Internal server error." }); }
     }
 
     [HttpDelete("{id}")]
     [Authorize]
-    public async ValueTask<ActionResult<Notification>> DeleteNotificationByIdAsync(Guid id)
+    public async ValueTask<ActionResult<NotificationDto>> DeleteNotificationByIdAsync(Guid id)
     {
         try
         {
             Notification deletedNotification = await this.notificationService.RemoveNotificationByIdAsync(id);
-            return Ok(deletedNotification);
+            return Ok(MapToDto(deletedNotification));
         }
-        catch (NotificationValidationException notificationValidationException)
+        catch (NotificationDependencyValidationException ex) when (ex.InnerException is NotFoundNotificationException) { return NotFound(new { message = ex.InnerException?.Message ?? "An error occurred." }); }
+        catch (Exception) { return StatusCode(500, new { message = "Internal server error." }); }
+    }
+
+    private NotificationDto? MapToDto(Notification? notification)
+    {
+        if (notification == null) return null;
+        
+        return new NotificationDto
         {
-            return BadRequest(new { message = notificationValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (NotificationDependencyValidationException notificationDependencyValidationException)
-            when (notificationDependencyValidationException.InnerException is NotFoundNotificationException)
-        {
-            return NotFound(new { message = notificationDependencyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (NotificationDependencyValidationException notificationDependencyValidationException)
-        {
-            return BadRequest(new { message = notificationDependencyValidationException.InnerException?.Message ?? "An error occurred." });
-        }
-        catch (NotificationDependencyException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
-        catch (NotificationServiceException)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error." });
-        }
+            Id = notification.Id,
+            UserId = notification.UserId,
+            Title = notification.TitleUz ?? notification.TitleRu ?? notification.TitleEn ?? string.Empty,
+            Message = notification.BodyUz ?? notification.BodyRu ?? notification.BodyEn ?? string.Empty,
+            Type = notification.Type switch
+            {
+                NotificationType.BookingRequest => "booking",
+                NotificationType.BookingApproved => "success",
+                NotificationType.BookingRejected => "error",
+                NotificationType.PaymentReceived => "success",
+                NotificationType.NewMessage => "message",
+                NotificationType.ReviewReceived => "info",
+                NotificationType.SystemAlert => "system",
+                _ => "info"
+            },
+            Category = notification.Type switch
+            {
+                NotificationType.BookingRequest => "Booking",
+                NotificationType.BookingApproved => "Booking",
+                NotificationType.BookingRejected => "Booking",
+                NotificationType.PaymentReceived => "Payment",
+                NotificationType.NewMessage => "Message",
+                NotificationType.ReviewReceived => "Review",
+                NotificationType.SystemAlert => "System",
+                _ => "System"
+            },
+            Data = !string.IsNullOrEmpty(notification.ActionUrl) 
+                ? new Dictionary<string, object> { { "url", notification.ActionUrl } } 
+                : null,
+            IsRead = notification.IsRead,
+            CreatedAt = notification.CreatedDate,
+            ReadAt = notification.ReadAt
+        };
     }
 }

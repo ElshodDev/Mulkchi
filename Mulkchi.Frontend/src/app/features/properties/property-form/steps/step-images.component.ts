@@ -782,7 +782,7 @@ export class StepImagesComponent {
       const originalFile = files[i];
       if (!originalFile.type.startsWith('image/')) continue;
 
-      // HIMOYA: Katta hajmli rasmni client-side (brauzer) o'zida WebP formatiga siqish!
+      // Katta hajmli rasmni client-side (brauzer) o'zida WebP formatiga siqish!
       const file = await this.compressImage(originalFile);
 
       const reader = new FileReader();

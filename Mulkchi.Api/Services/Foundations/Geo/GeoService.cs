@@ -67,8 +67,18 @@ public class GeoService : IGeoService
 
     public async Task<IEnumerable<PropertyMapDto>> GetPropertiesByLocationAsync(double lat, double lng, double radiusKm)
     {
+        double latDelta = radiusKm / 111.32;
+        double lngDelta = radiusKm / (111.32 * Math.Cos(lat * (Math.PI / 180.0)));
+
+        double minLat = lat - latDelta;
+        double maxLat = lat + latDelta;
+        double minLng = lng - lngDelta;
+        double maxLng = lng + lngDelta;
+
         var properties = await this.storageBroker.SelectAllProperties()
-            .Where(p => p.Latitude.HasValue && p.Longitude.HasValue && p.Status == PropertyStatus.Active)
+            .Where(p => p.Latitude.HasValue && p.Longitude.HasValue && p.Status == PropertyStatus.Active
+                     && p.Latitude >= minLat && p.Latitude <= maxLat
+                     && p.Longitude >= minLng && p.Longitude <= maxLng)
             .ToListAsync();
 
         var nearbyProperties = properties

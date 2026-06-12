@@ -282,6 +282,42 @@ import { StepLocationComponent } from './steps/step-location.component';
           padding: 40px 24px;
         }
       }
+      @media (max-width: 768px) {
+        .wizard-header {
+          padding: 0 16px;
+        }
+        .logo-box span {
+          display: none;
+        }
+        .stepper-visual {
+          margin: 0 16px;
+        }
+        .step-item {
+          width: 40px;
+        }
+        .step-circle {
+          width: 32px;
+          height: 32px;
+        }
+        .step-circle mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+        .step-label-text {
+          display: none;
+        }
+        .step-line {
+          margin: 0 -12px 16px -12px;
+        }
+        .wizard-content {
+          padding: 24px 16px;
+        }
+        .btn-exit {
+          min-width: unset;
+          padding: 0 8px;
+        }
+      }
     `,
   ],
 })

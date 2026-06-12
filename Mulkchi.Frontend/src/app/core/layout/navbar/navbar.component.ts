@@ -217,6 +217,20 @@ import { UIStore } from '../../stores/ui.store';
           </div>
         </div>
       }
+
+      <nav class="bottom-nav">
+        @for (item of mobileNavItems().slice(0, 5); track item.link) {
+          <a
+            class="bottom-nav-item"
+            [routerLink]="item.link"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: item.exact === true }"
+          >
+            <mat-icon>{{ item.icon }}</mat-icon>
+            <span>{{ item.label }}</span>
+          </a>
+        }
+      </nav>
     </header>
   `,
   styles: [
@@ -519,6 +533,59 @@ import { UIStore } from '../../stores/ui.store';
         .profile-chip {
           min-width: auto;
           padding: 4px;
+        }
+        .menu-toggle {
+          display: none; /* Hide hamburger menu in favor of bottom nav */
+        }
+      }
+
+      .bottom-nav {
+        display: none;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 64px;
+        background: var(--color-surface-elevated);
+        border-top: 1px solid var(--color-border-soft);
+        padding-bottom: env(safe-area-inset-bottom);
+        z-index: var(--z-navbar);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+      }
+
+      .bottom-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-text-secondary);
+        font-size: 0.65rem;
+        font-weight: 500;
+        gap: 2px;
+        transition: all var(--transition-normal);
+        text-decoration: none;
+      }
+
+      .bottom-nav-item mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .bottom-nav-item.active {
+        color: var(--color-primary);
+        font-weight: 700;
+      }
+
+      .bottom-nav-item.active mat-icon {
+        transform: translateY(-2px);
+      }
+
+      @media (max-width: 768px) {
+        .bottom-nav {
+          display: flex;
         }
       }
     `,

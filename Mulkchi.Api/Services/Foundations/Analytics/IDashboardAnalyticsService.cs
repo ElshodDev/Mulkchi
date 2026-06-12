@@ -7,3 +7,4 @@ public interface IDashboardAnalyticsService
 {
     Task<object> GetDashboardAsync(DateTimeOffset? startDate, DateTimeOffset? endDate);
 }
+

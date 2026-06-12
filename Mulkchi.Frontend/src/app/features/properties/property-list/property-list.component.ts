@@ -498,6 +498,36 @@ import { AIService } from '../../../core/services/ai.service';
         height: fit-content;
       }
 
+      @media (max-width: 1024px) {
+        .layout-grid {
+          flex-direction: column;
+        }
+        .filters-sidebar-column {
+          width: 100%;
+          position: static;
+          max-height: none;
+        }
+        .main-content-wrapper {
+          padding: 24px 16px 80px;
+        }
+        .results-area-plate {
+          padding: 0 16px 24px;
+        }
+        .hero-title-group h1 {
+          font-size: 2.2rem;
+        }
+      }
+      @media (max-width: 768px) {
+        .search-main {
+          flex-direction: column;
+          border-radius: 20px;
+          padding: 16px;
+        }
+        .search-trigger-btn {
+          width: 100%;
+        }
+      }
+
       .sidebar-ad-card {
         margin-top: 24px;
         padding: 24px;

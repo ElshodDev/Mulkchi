@@ -169,6 +169,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+@media (max-width: 768px) {
+  body {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+}
+
 /* Custom Webkit Scrollbar for Premium Feel */
 ::-webkit-scrollbar {
   width: 8px;

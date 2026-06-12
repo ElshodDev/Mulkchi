@@ -4,10 +4,10 @@ namespace Mulkchi.Api.Services.Foundations.Analytics;
 
 public interface IAnalyticsService
 {
-    Task<object> GetMarketOverviewAsync();
-    Task<object> GetAnalyticsByRegionAsync();
-    Task<object> GetAnalyticsByDistrictAsync();
-    Task<object> GetPriceTrendsAsync();
+    Task<Mulkchi.Api.Models.Foundations.Analytics.MarketOverview> GetMarketOverviewAsync();
+    Task<System.Collections.Generic.IEnumerable<Mulkchi.Api.Models.Foundations.Analytics.RegionAnalytics>> GetAnalyticsByRegionAsync();
+    Task<System.Collections.Generic.IEnumerable<Mulkchi.Api.Models.Foundations.Analytics.DistrictAnalytics>> GetAnalyticsByDistrictAsync();
+    Task<System.Collections.Generic.IEnumerable<Mulkchi.Api.Models.Foundations.Analytics.PriceTrend>> GetPriceTrendsAsync();
     Task<object> GetDistrictPriceRangesAsync();
     Task<object> GetAiRecommendationAccuracyAsync();
     Task<object> GetPropertyPriceHeatmapAsync();
@@ -24,3 +24,5 @@ public interface IAnalyticsService
     Task<PricePrediction> PredictPriceAsync(Guid propertyId);
     Task<PriceTrendForecast> GetPriceForecastAsync(string region, string district, int months = 6);
 }
+
+

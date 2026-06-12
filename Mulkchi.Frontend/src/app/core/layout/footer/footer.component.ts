@@ -15,10 +15,6 @@ import { MatIconModule } from '@angular/material/icon';
               <span class="logo-icon">🏢</span>
               <span class="logo-text">Mulkchi</span>
             </div>
-            <p class="thesis-title">
-              <strong>Bitiruv Malakaviy Ishi (BMI)</strong><br>
-              "Ma'lumotlar bazasiga asoslangan uy joy savdosi va ijarasi uchun web sayt ishlab chiqish"
-            </p>
           </div>
           
           <div class="links-section">

@@ -14,9 +14,9 @@ public interface IFinalizePaymentWebhookHandler
 
 public sealed class FinalizePaymentWebhookHandler : IFinalizePaymentWebhookHandler
 {
-    private readonly StorageBroker storageBroker;
+    private readonly IStorageBroker storageBroker;
 
-    public FinalizePaymentWebhookHandler(StorageBroker storageBroker)
+    public FinalizePaymentWebhookHandler(IStorageBroker storageBroker)
     {
         this.storageBroker = storageBroker;
     }
@@ -26,7 +26,7 @@ public sealed class FinalizePaymentWebhookHandler : IFinalizePaymentWebhookHandl
         if (string.IsNullOrWhiteSpace(command.ExternalTransactionId))
             throw new ArgumentException("External transaction id is required.", nameof(command.ExternalTransactionId));
 
-        await using var tx = await this.storageBroker.Database.BeginTransactionAsync();
+        await using var tx = await this.storageBroker.BeginTransactionAsync();
 
         try
         {
@@ -73,7 +73,7 @@ public sealed class FinalizePaymentWebhookHandler : IFinalizePaymentWebhookHandl
                 }
             }
 
-            await this.storageBroker.OutboxMessages.AddAsync(new OutboxMessage
+            await this.storageBroker.InsertOutboxMessageAsync(new OutboxMessage
             {
                 Id = Guid.NewGuid(),
                 Type = "payment.webhook-finalized",
@@ -98,3 +98,6 @@ public sealed class FinalizePaymentWebhookHandler : IFinalizePaymentWebhookHandl
         }
     }
 }
+
+
+

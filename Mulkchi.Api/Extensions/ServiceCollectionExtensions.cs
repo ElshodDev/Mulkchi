@@ -393,7 +393,12 @@ public static class ServiceCollectionExtensions
             ?? configuration.GetConnectionString("DefaultConnection");
 
         services.AddDbContext<StorageBroker>(options =>
-            options.UseNpgsql(connectionString));
+        {
+            if (Environment.GetEnvironmentVariable("USE_IN_MEMORY_DB") != "true")
+            {
+                options.UseNpgsql(connectionString);
+            }
+        });
 
         services.AddScoped<IStorageBroker, StorageBroker>();
         services.AddScoped<Mulkchi.Api.Brokers.OneId.IOneIdBroker, Mulkchi.Api.Brokers.OneId.OneIdBrokerMock>();
