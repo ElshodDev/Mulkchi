@@ -882,7 +882,8 @@ import { SeoService } from '../../core/services/seo.service';
       }
       @media (max-width: 768px) {
         .hero-title {
-          font-size: 2.8rem;
+          font-size: 1.8rem;
+          margin-bottom: 12px;
         }
         .hero-subtitle {
           display: none;
