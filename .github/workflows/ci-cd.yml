@@ -29,8 +29,6 @@ jobs:
         uses: actions/setup-node@39370e3970a6d050c480ff24fba451214041d44c # v4.0.4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: Mulkchi.Frontend/package-lock.json
 
       - name: 📦 Install dependencies
         run: |
@@ -198,16 +196,9 @@ jobs:
         with:
           scan-type: 'fs'
           scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+          format: 'table'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
-
-      - name: 📤 Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@df40e1b23fb2cd05d63ba42468d6ff2bda36e92c # v3.28.3
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
 
   # 📈 Performance Test
   performance-test:
