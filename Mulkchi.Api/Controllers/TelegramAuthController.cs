@@ -11,6 +11,8 @@ namespace Mulkchi.Api.Controllers;
 [Route("api/auth/telegram")]
 public class TelegramAuthController : ControllerBase
 {
+    private const int SessionIdLength = 32;
+
     private readonly ITelegramAuthService _telegramAuthService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<TelegramAuthController> _logger;
@@ -43,22 +45,14 @@ public class TelegramAuthController : ControllerBase
     [HttpGet("status/{sessionId}")]
     public async Task<ActionResult<TelegramSessionStatus>> CheckStatus(string sessionId)
     {
-        if (string.IsNullOrWhiteSpace(sessionId) || sessionId.Length != 32)
+        if (IsInvalidSessionId(sessionId))
             return BadRequest(new { message = "Noto'g'ri session ID" });
 
         try
         {
             var status = await _telegramAuthService.CheckSessionStatusAsync(sessionId);
 
-            if (status.Status == "verified" &&
-                status.AccessToken is not null &&
-                status.RefreshToken is not null &&
-                status.User is not null)
-            {
-                AuthCookieHelper.SetAuthCookies(Response, BuildAuthResponse(status));
-                status.AccessToken = string.Empty;
-                status.RefreshToken = string.Empty;
-            }
+            TrySetAuthCookies(status);
 
             return Ok(status);
         }
@@ -113,5 +107,23 @@ public class TelegramAuthController : ControllerBase
             Role = UserRole.Guest,
             CurrentMode = UserRole.Guest
         };
+    }
+
+    private static bool IsInvalidSessionId(string sessionId) =>
+        string.IsNullOrWhiteSpace(sessionId) || sessionId.Length != SessionIdLength;
+
+    private void TrySetAuthCookies(TelegramSessionStatus status)
+    {
+        if (status.Status != "verified" ||
+            status.AccessToken is null ||
+            status.RefreshToken is null ||
+            status.User is null)
+        {
+            return;
+        }
+
+        AuthCookieHelper.SetAuthCookies(Response, BuildAuthResponse(status));
+        status.AccessToken = string.Empty;
+        status.RefreshToken = string.Empty;
     }
 }
