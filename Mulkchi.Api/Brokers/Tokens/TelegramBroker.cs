@@ -5,20 +5,34 @@ namespace Mulkchi.Api.Brokers.Tokens;
 
 public class TelegramBroker : ITelegramBroker
 {
-    private readonly TelegramBotClient _botClient;
+    private readonly TelegramBotClient? _botClient;
     private readonly ILogger<TelegramBroker> _logger;
+    private readonly bool _isEnabled;
 
     public TelegramBroker(IConfiguration configuration, ILogger<TelegramBroker> logger)
     {
         _logger = logger;
-        var token = configuration["TelegramAuth:BotToken"]
-            ?? throw new InvalidOperationException("TelegramAuth:BotToken sozlanmagan");
+        var token = configuration["TelegramAuth:BotToken"];
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _isEnabled = false;
+            _logger.LogWarning("Telegram bot token topilmadi. Telegram xabarlari yuborilmaydi.");
+            return;
+        }
 
         _botClient = new TelegramBotClient(token);
+        _isEnabled = true;
     }
 
     public async Task SendMessageAsync(long chatId, string text)
     {
+        if (!_isEnabled || _botClient is null)
+        {
+            _logger.LogInformation("Telegram xabari yuborilmadi: bot o'chirilgan. ChatId: {ChatId}", chatId);
+            return;
+        }
+
         try
         {
             await _botClient.SendMessage(

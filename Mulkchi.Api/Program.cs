@@ -3,7 +3,6 @@ using Serilog.Events;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http.Features;
 using Mulkchi.Api.Brokers.Storages;
-using Mulkchi.Api.Workers;
 using Hangfire;
 
 namespace Mulkchi.Api;
@@ -22,8 +21,6 @@ public partial class Program
 
         var jwtSecret = builder.Configuration["MULKCHI_JWT_SECRET"]
             ?? builder.Configuration["JwtSettings:Secret"];
-        var telegramToken = builder.Configuration["MULKCHI_TELEGRAM_TOKEN"]
-            ?? builder.Configuration["TelegramAuth:BotToken"];
         var dbPassword = builder.Configuration["MULKCHI_DB_PASSWORD"];
         var connectionString = builder.Configuration["MULKCHI_DB_CONNECTION_STRING"]
             ?? builder.Configuration.GetConnectionString("DefaultConnection");
@@ -38,11 +35,6 @@ public partial class Program
             builder.Configuration["JwtSettings:Secret"] = jwtSecret;
         }
 
-        if (!string.IsNullOrWhiteSpace(telegramToken))
-        {
-            builder.Configuration["TelegramAuth:BotToken"] = telegramToken;
-        }
-
         if (!string.IsNullOrWhiteSpace(dbPassword))
         {
             builder.Configuration["MULKCHI_DB_PASSWORD"] = dbPassword;
@@ -51,11 +43,6 @@ public partial class Program
         if (string.IsNullOrEmpty(jwtSecret) || jwtSecret == "SET_IN_ENVIRONMENT")
         {
             throw new InvalidOperationException("JWT Secret not configured. Set MULKCHI_JWT_SECRET environment variable or configure JwtSettings:Secret in appsettings.");
-        }
-
-        if (string.IsNullOrEmpty(telegramToken) || telegramToken == "SET_IN_ENVIRONMENT")
-        {
-            throw new InvalidOperationException("Telegram Bot Token not configured. Set MULKCHI_TELEGRAM_TOKEN environment variable or configure TelegramAuth:BotToken in appsettings.");
         }
 
         if (!string.IsNullOrEmpty(dbPassword) && connectionString != null && connectionString.Contains("SET_IN_ENVIRONMENT"))
@@ -105,9 +92,6 @@ public partial class Program
         {
             options.LowercaseUrls = true;
         });
-
-        // Register Background Workers
-        builder.Services.AddHostedService<TelegramBotWorker>();
 
         var startup = new Startup(builder.Configuration, builder.Environment);
         startup.ConfigureServices(builder.Services);

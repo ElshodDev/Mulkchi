@@ -13,7 +13,6 @@ import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../core/services/toast.service';
 import { AuthStore } from '../../../core/stores/auth.store';
 import { GoogleLoginComponent } from '../../../shared/components/google-login/google-login.component';
-import { TelegramLoginComponent } from '../telegram-login/telegram-login.component';
 
 @Component({
   selector: 'app-login',
@@ -27,7 +26,6 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
     MatInputModule,
     MatProgressSpinnerModule,
     GoogleLoginComponent,
-    TelegramLoginComponent,
   ],
   template: `
     <section class="auth-shell">
@@ -99,8 +97,6 @@ import { TelegramLoginComponent } from '../telegram-login/telegram-login.compone
                 <app-google-login />
               }
 
-              <div class="separator"><span>yoki</span></div>
-              <app-telegram-login actionText="Telegram orqali" />
             </form>
           }
 
