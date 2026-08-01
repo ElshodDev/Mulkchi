@@ -9,6 +9,11 @@ namespace Mulkchi.Api.Services.Foundations.Auth;
 
 public class TelegramAuthService : ITelegramAuthService
 {
+    private const int SessionExpiryMinutes = 10;
+    private const string PendingStatus = "pending";
+    private const string VerifiedStatus = "verified";
+    private const string ExpiredStatus = "expired";
+
     private readonly IStorageBroker _storageBroker;
     private readonly ITelegramBroker _telegramBroker;
     private readonly ITokenBroker _tokenBroker;
@@ -49,14 +54,14 @@ public class TelegramAuthService : ITelegramAuthService
             Code = code,
             IsVerified = false,
             CreatedAt = DateTime.UtcNow,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(10)
+            ExpiresAt = DateTime.UtcNow.AddMinutes(SessionExpiryMinutes)
         };
 
         _sessions.TryAdd(sessionId, session);
 
         _ = Task.Run(async () =>
         {
-            await Task.Delay(TimeSpan.FromMinutes(10));
+            await Task.Delay(TimeSpan.FromMinutes(SessionExpiryMinutes));
             _sessions.TryRemove(sessionId, out _);
         });
 
@@ -76,20 +81,12 @@ public class TelegramAuthService : ITelegramAuthService
     public Task<TelegramSessionStatus> CheckSessionStatusAsync(string sessionId)
     {
         if (!_sessions.TryGetValue(sessionId, out var session))
-        {
-            return Task.FromResult(new TelegramSessionStatus
-            {
-                Status = "expired"
-            });
-        }
+            return Task.FromResult(CreateStatus(ExpiredStatus));
 
         if (DateTime.UtcNow > session.ExpiresAt)
         {
             _sessions.TryRemove(sessionId, out _);
-            return Task.FromResult(new TelegramSessionStatus
-            {
-                Status = "expired"
-            });
+            return Task.FromResult(CreateStatus(ExpiredStatus));
         }
 
         if (session.IsVerified && session.TelegramChatId.HasValue)
@@ -97,29 +94,11 @@ public class TelegramAuthService : ITelegramAuthService
             var user = session.User;
             if (user != null)
             {
-                var accessToken = _tokenBroker.GenerateToken(user);
-                var refreshToken = _tokenBroker.GenerateRefreshToken();
-
-                return Task.FromResult(new TelegramSessionStatus
-                {
-                    Status = "verified",
-                    AccessToken = accessToken,
-                    RefreshToken = refreshToken,
-                    User = new TelegramUserInfo
-                    {
-                        Id = user.Id,
-                        FullName = $"{user.FirstName} {user.LastName}",
-                        Username = user.Email ?? $"tg_{user.TelegramId}",
-                        TelegramId = user.TelegramId!.Value
-                    }
-                });
+                return Task.FromResult(CreateVerifiedStatus(user));
             }
         }
 
-        return Task.FromResult(new TelegramSessionStatus
-        {
-            Status = "pending"
-        });
+        return Task.FromResult(CreateStatus(PendingStatus));
     }
 
     public async Task HandleBotUpdateAsync(TelegramUpdate update)
@@ -155,8 +134,7 @@ public class TelegramAuthService : ITelegramAuthService
     {
         if (!_sessions.TryGetValue(sessionId, out var session))
         {
-            await _telegramBroker.SendMessageAsync(chatId,
-                "❌ Session eskirgan. Iltimos, saytda qayta urinib ko'ring.");
+            await SendSessionExpiredMessageAsync(chatId);
             return;
         }
 
@@ -164,42 +142,20 @@ public class TelegramAuthService : ITelegramAuthService
 
         if (existingUser != null)
         {
-            session.TelegramChatId = chatId;
-            session.IsVerified = true;
-            session.User = existingUser;
-
-            await _telegramBroker.SendMessageAsync(chatId,
-                $"✅ <b>Xush kelibsiz, {telegramUser.FirstName}!</b>\n\n" +
-                "Saytga qaytishingiz mumkin.");
+            CompleteSession(session, chatId, existingUser);
+            await SendWelcomeMessageAsync(chatId, telegramUser.FirstName);
 
             _logger.LogInformation("Telegram orqali mavjud user kirdi. UserId: {UserId}, TelegramId: {TelegramId}",
                 existingUser.Id, telegramUser.Id);
         }
         else
         {
-            var user = new User
-            {
-                Id = Guid.NewGuid(),
-                FirstName = telegramUser.FirstName,
-                LastName = telegramUser.LastName ?? string.Empty,
-                Email = $"tg_{chatId}@mulkchi.uz",
-                TelegramId = chatId,
-                Role = UserRole.Guest,
-                CurrentMode = UserRole.Guest,
-                CreatedDate = DateTimeOffset.UtcNow,
-                UpdatedDate = DateTimeOffset.UtcNow,
-                EmailConfirmed = true
-            };
+            var user = CreateTelegramGuestUser(chatId, telegramUser.FirstName, telegramUser.LastName ?? string.Empty);
 
             await _storageBroker.InsertUserAsync(user);
 
-            session.TelegramChatId = chatId;
-            session.IsVerified = true;
-            session.User = user;
-
-            await _telegramBroker.SendMessageAsync(chatId,
-                $"✅ <b>Xush kelibsiz, {telegramUser.FirstName}!</b>\n\n" +
-                "Saytga qaytishingiz mumkin.");
+            CompleteSession(session, chatId, user);
+            await SendWelcomeMessageAsync(chatId, telegramUser.FirstName);
 
             _logger.LogInformation("Telegram orqali yangi user yaratildi. SessionId: {SessionId}, UserId: {UserId}",
                 sessionId, user.Id);
@@ -213,36 +169,15 @@ public class TelegramAuthService : ITelegramAuthService
 
         if (session == null)
         {
-            await _telegramBroker.SendMessageAsync(chatId,
-                "❌ Noto'g'ri kod yoki session eskirgan.");
+            await _telegramBroker.SendMessageAsync(chatId, "❌ Noto'g'ri kod yoki session eskirgan.");
             return;
         }
 
-        var telegramUser = new TelegramUser
-        {
-            Id = chatId,
-            FirstName = "Telegram",
-            LastName = "User"
-        };
-
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            FirstName = telegramUser.FirstName,
-            LastName = telegramUser.LastName,
-            Email = $"tg_{chatId}@mulkchi.uz",
-            TelegramId = chatId,
-            Role = UserRole.Guest,
-            CurrentMode = UserRole.Guest,
-            CreatedDate = DateTimeOffset.UtcNow,
-            UpdatedDate = DateTimeOffset.UtcNow,
-            EmailConfirmed = true
-        };
+        var user = CreateTelegramGuestUser(chatId, "Telegram", "User");
 
         await _storageBroker.InsertUserAsync(user);
 
-        session.IsVerified = true;
-        session.User = user;
+        CompleteSession(session, chatId, user);
 
         await _telegramBroker.SendMessageAsync(chatId,
             "✅ <b>Ro'yxatdan o'tish muvaffaqiyatli!</b>\n\n" +
@@ -266,4 +201,51 @@ public class TelegramAuthService : ITelegramAuthService
     {
         return RandomNumberGenerator.GetInt32(100000, 999999).ToString();
     }
+
+    private TelegramSessionStatus CreateVerifiedStatus(User user) =>
+        new()
+        {
+            Status = VerifiedStatus,
+            AccessToken = _tokenBroker.GenerateToken(user),
+            RefreshToken = _tokenBroker.GenerateRefreshToken(),
+            User = new TelegramUserInfo
+            {
+                Id = user.Id,
+                FullName = $"{user.FirstName} {user.LastName}".Trim(),
+                Username = user.Email ?? $"tg_{user.TelegramId}",
+                TelegramId = user.TelegramId!.Value
+            }
+        };
+
+    private static TelegramSessionStatus CreateStatus(string status) => new() { Status = status };
+
+    private static User CreateTelegramGuestUser(long chatId, string firstName, string lastName) =>
+        new()
+        {
+            Id = Guid.NewGuid(),
+            FirstName = firstName,
+            LastName = lastName,
+            Email = $"tg_{chatId}@mulkchi.uz",
+            TelegramId = chatId,
+            Role = UserRole.Guest,
+            CurrentMode = UserRole.Guest,
+            CreatedDate = DateTimeOffset.UtcNow,
+            UpdatedDate = DateTimeOffset.UtcNow,
+            EmailConfirmed = true
+        };
+
+    private static void CompleteSession(TelegramSession session, long chatId, User user)
+    {
+        session.TelegramChatId = chatId;
+        session.IsVerified = true;
+        session.User = user;
+    }
+
+    private Task SendWelcomeMessageAsync(long chatId, string firstName) =>
+        _telegramBroker.SendMessageAsync(
+            chatId,
+            $"✅ <b>Xush kelibsiz, {firstName}!</b>\n\nSaytga qaytishingiz mumkin.");
+
+    private Task SendSessionExpiredMessageAsync(long chatId) =>
+        _telegramBroker.SendMessageAsync(chatId, "❌ Session eskirgan. Iltimos, saytda qayta urinib ko'ring.");
 }
