@@ -74,6 +74,17 @@ public partial class AiRecommendationService
             .Where(p => favoritePropertyIds.Contains(p.Id) || viewedPropertyIds.Contains(p.Id))
             .ToList();
 
+        // Determine user's target listing type (from request or historical behavior)
+        var preferredListingType = request.ListingType ?? (preferenceProperties.Any()
+            ? preferenceProperties.GroupBy(p => p.ListingType).OrderByDescending(g => g.Count()).First().Key
+            : (ListingType?)null);
+
+        if (preferredListingType.HasValue)
+        {
+            candidateProperties = candidateProperties.Where(p => p.ListingType == preferredListingType.Value).ToList();
+            preferenceProperties = preferenceProperties.Where(p => p.ListingType == preferredListingType.Value).ToList();
+        }
+
         decimal preferredPrice = preferenceProperties
             .Select(GetPrimaryPrice)
             .Where(p => p > 0)

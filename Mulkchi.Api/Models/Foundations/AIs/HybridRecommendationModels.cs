@@ -1,3 +1,5 @@
+using Mulkchi.Api.Models.Foundations.Properties;
+
 namespace Mulkchi.Api.Models.Foundations.AIs;
 
 public class HybridRecommendationRequest
@@ -7,6 +9,7 @@ public class HybridRecommendationRequest
     public double? Longitude { get; set; }
     public double RadiusKm { get; set; } = 10;
     public int Limit { get; set; } = 10;
+    public ListingType? ListingType { get; set; }
 }
 
 public class HybridRecommendationProperty

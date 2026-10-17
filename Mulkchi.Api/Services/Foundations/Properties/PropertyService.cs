@@ -453,12 +453,28 @@ public partial class PropertyService : IPropertyService
         if (searchParams.PropertyType.HasValue)
             query = query.Where(p => p.Type == searchParams.PropertyType.Value);
 
+        if (!string.IsNullOrWhiteSpace(searchParams.District))
+        {
+            string normalizedDistrict = searchParams.District.Trim();
+            query = query.Where(p => p.District != null && EF.Functions.Like(p.District, $"%{normalizedDistrict}%"));
+        }
+
         if (searchParams.HasWifi.HasValue && searchParams.HasWifi.Value)
             query = query.Where(p => p.HasWifi);
         if (searchParams.HasParking.HasValue && searchParams.HasParking.Value)
             query = query.Where(p => p.HasParking);
         if (searchParams.HasPool.HasValue && searchParams.HasPool.Value)
             query = query.Where(p => p.HasPool);
+        if (searchParams.HasMetroNearby.HasValue && searchParams.HasMetroNearby.Value)
+            query = query.Where(p => p.HasMetroNearby);
+        if (searchParams.HasFurniture.HasValue && searchParams.HasFurniture.Value)
+            query = query.Where(p => p.HasFurniture);
+        if (searchParams.IsRenovated.HasValue && searchParams.IsRenovated.Value)
+            query = query.Where(p => p.IsRenovated);
+        if (searchParams.RenovationLevel.HasValue)
+            query = query.Where(p => p.RenovationLevel == searchParams.RenovationLevel.Value);
+        if (searchParams.IsVerified.HasValue && searchParams.IsVerified.Value)
+            query = query.Where(p => p.IsVerified);
 
         if (searchParams.Latitude.HasValue && searchParams.Longitude.HasValue)
         {

@@ -73,6 +73,8 @@ public class PriceRecommendationRequest
     public bool HasElevator { get; set; }
     public float DistanceToCityCenter { get; set; }
     public string District { get; set; } = string.Empty;
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
     public BuildingType BuildingType { get; set; }
     public RenovationLevel RenovationLevel { get; set; }
     public ListingType ListingType { get; set; }
@@ -88,6 +90,8 @@ public class PriceRecommendationResponse
     public int BasedOnProperties { get; set; }
     public string Recommendation { get; set; } = string.Empty;
     public bool IsRuleBased { get; set; }
+    public decimal? AveragePricePerSquareMeter { get; set; }
+    public int? ComparableCount { get; set; }
 }
 
 public class PriceRange

@@ -5,9 +5,9 @@ services:
     image: postgres:16
     container_name: mulkchi_db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: mulkchi
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-mulkchi}
     ports:
       - "5432:5432"
     volumes:
@@ -28,7 +28,7 @@ services:
       - "5000:5000"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=mulkchi;Username=postgres;Password=password
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=${POSTGRES_DB:-mulkchi};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-password}
       - Redis__ConnectionString=redis:6379
     depends_on:
       - db

@@ -279,6 +279,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDashboardAnalyticsService, DashboardAnalyticsService>();
         services.AddScoped<IPriceRecommendationService, PriceRecommendationService>();
         services.AddScoped<ISemanticSearchService, SemanticSearchService>();
+        services.AddScoped<IPropertyFraudDetectionService, PropertyFraudDetectionService>();
         services.AddSingleton<Mulkchi.Api.Services.Foundations.ExchangeRates.IExchangeRateService, Mulkchi.Api.Services.Foundations.ExchangeRates.ExchangeRateService>();
 
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));

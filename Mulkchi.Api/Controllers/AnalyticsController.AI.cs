@@ -75,6 +75,26 @@ public partial class AnalyticsController : ControllerBase
             return StatusCode(500, new { message = "Internal server error." });
         }
     }
+
+    [HttpGet("fraud-risk/{propertyId:guid}")]
+    [AllowAnonymous]
+    public async Task<ActionResult<FraudAssessmentResult>> GetFraudRisk(Guid propertyId)
+    {
+        try
+        {
+            var riskAssessment = await this.propertyFraudDetectionService.AssessPropertyRiskByIdAsync(propertyId);
+            return Ok(riskAssessment);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = $"Property with ID '{propertyId}' not found." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unhandled error in {Controller}.{Method}", nameof(AnalyticsController), nameof(GetFraudRisk));
+            return StatusCode(500, new { message = "Internal server error." });
+        }
+    }
 }
 
 

@@ -55,9 +55,12 @@ public partial class Program
         if (!string.IsNullOrWhiteSpace(connectionString) && (connectionString.StartsWith("postgres://") || connectionString.StartsWith("postgresql://")))
         {
             var uri = new Uri(connectionString);
-            var userInfo = uri.UserInfo.Split(':');
+            var userInfo = uri.UserInfo.Split(new[] { ':' }, 2);
+            var username = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : "";
+            var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
             var dbName = uri.AbsolutePath.TrimStart('/');
-            connectionString = $"Host={uri.Host};Database={dbName};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true;";
+            var port = uri.Port > 0 ? uri.Port : 5432;
+            connectionString = $"Host={uri.Host};Port={port};Database={dbName};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true;";
             builder.Configuration["ConnectionStrings:DefaultConnection"] = connectionString;
             builder.Configuration["MULKCHI_DB_CONNECTION_STRING"] = connectionString;
         }
@@ -135,9 +138,12 @@ public partial class Program
             }
         }
 
-        if (app.Environment.IsDevelopment())
+        var randomizeMockLocations = builder.Configuration
+            .GetValue<bool>("Seed:RandomizeMockLocations", false);
+
+        if (app.Environment.IsDevelopment() && randomizeMockLocations)
         {
-            // Randomize existing properties locations to fix straight line bug
+            // Optional one-time dev seed helper: randomize existing mock properties locations
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<StorageBroker>();

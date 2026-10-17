@@ -29,6 +29,7 @@ public partial class AnalyticsController : ControllerBase
     private readonly IPropertyService propertyService;
     private readonly IBookingService bookingService;
     private readonly IDashboardAnalyticsService dashboardAnalyticsService;
+    private readonly IPropertyFraudDetectionService propertyFraudDetectionService;
     private readonly ILogger<AnalyticsController> _logger;
 
     public AnalyticsController(
@@ -37,6 +38,7 @@ public partial class AnalyticsController : ControllerBase
         IPropertyService propertyService,
         IBookingService bookingService,
         IDashboardAnalyticsService dashboardAnalyticsService,
+        IPropertyFraudDetectionService propertyFraudDetectionService,
         ILogger<AnalyticsController> logger)
     {
         this.analyticsService = analyticsService;
@@ -44,6 +46,7 @@ public partial class AnalyticsController : ControllerBase
         this.propertyService = propertyService;
         this.bookingService = bookingService;
         this.dashboardAnalyticsService = dashboardAnalyticsService;
+        this.propertyFraudDetectionService = propertyFraudDetectionService;
         _logger = logger;
     }
 
