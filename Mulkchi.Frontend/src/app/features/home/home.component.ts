@@ -63,12 +63,12 @@ import { SeoService } from '../../core/services/seo.service';
 
 
             <h1 class="text-5xl md:text-7xl font-extrabold leading-tight tracking-tight mb-6 animate-slide-up text-white" style="text-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-              Ma'lumotlar bazasiga asoslangan <br />
-              <span class="text-gradient">uy joy savdosi va ijarasi</span>
+              Orzuingizdagi uyni toping — <br />
+              <span class="text-gradient">tez, xavfsiz va adolatli narxda</span>
             </h1>
 
             <p class="hero-subtitle animate-slide-up-delay">
-              Zamonaviy texnologiyalar va sun'iy intellekt yordamida yaratilgan mukammal web platforma.
+              O'zbekiston bo'ylab 10 000+ e'lon. AI yordamida narx baholang, tasdiqlangan xostlarni toping va bir marta bosib aloqa qiling.
             </p>
 
             <!-- Search Panel -->

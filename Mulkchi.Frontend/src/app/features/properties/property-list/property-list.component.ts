@@ -707,7 +707,7 @@ export class PropertyListComponent implements OnInit {
     const labels = {
       uz: {
         allListings: 'Uy-joy savdosi va ijarasi',
-        heroSubtitle: "Ma'lumotlar bazasiga asoslangan zamonaviy web platforma",
+        heroSubtitle: "O'zbekiston bo'ylab 10 000+ e'lon — tez, xavfsiz va adolatli narxda",
         searchPlaceholder: 'Shahar, tuman yoki manzilni kiriting...',
         search: 'Qidirish',
         allTypes: 'Barcha turlar',
@@ -727,7 +727,7 @@ export class PropertyListComponent implements OnInit {
       },
       ru: {
         allListings: 'Продажа и аренда жилья',
-        heroSubtitle: 'Современная веб-платформа на основе баз данных',
+        heroSubtitle: 'Более 10 000 объявлений по Узбекистану — быстро, безопасно, по честным ценам',
         searchPlaceholder: 'Город, район или улица...',
         search: 'Поиск',
         allTypes: 'Все типы',
@@ -747,7 +747,7 @@ export class PropertyListComponent implements OnInit {
       },
       en: {
         allListings: 'All Listings',
-        heroSubtitle: 'Best offers across Uzbekistan',
+        heroSubtitle: '10,000+ listings across Uzbekistan — fast, safe & fairly priced',
         searchPlaceholder: 'City, district or street...',
         search: 'Search',
         allTypes: 'All types',
