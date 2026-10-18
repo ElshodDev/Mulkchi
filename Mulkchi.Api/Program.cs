@@ -98,6 +98,7 @@ public partial class Program
 
         var startup = new Startup(builder.Configuration, builder.Environment);
         startup.ConfigureServices(builder.Services);
+
         var app = builder.Build();
 
         app.Use(async (context, next) =>

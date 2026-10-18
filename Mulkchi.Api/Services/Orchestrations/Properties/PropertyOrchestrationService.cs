@@ -119,7 +119,7 @@ public class PropertyOrchestrationService : IPropertyOrchestrationService
                 if (user != null && user.TelegramId.HasValue && user.TelegramId.Value > 0)
                 {
                     string link = $"https://mulkchi.uz/properties/{property.Id}";
-                    string message = $"🔔 *Yangi e'lon topildi!*\n\nSiz qidirayotgan talablarga mos keladigan yangi uy saytga joylandi:\n\n📍 {property.City}, {property.District}\n💰 Narxi: {property.SalePrice ?? property.MonthlyRent} {property.Currency}\n🛏 Xonalar: {property.NumberOfBedrooms}\n\n👉 [E'lonni ko'rish]({link})";
+                    string message = $"🔔 <b>Yangi e'lon topildi!</b>\n\nSiz qidirayotgan talablarga mos keladigan yangi uy saytga joylandi:\n\n📍 {property.City}, {property.District}\n💰 Narxi: {property.SalePrice ?? property.MonthlyRent} {property.Currency}\n🛏 Xonalar: {property.NumberOfBedrooms}\n\n👉 <a href=\"{link}\">E'lonni ko'rish</a>";
                     await this.telegramBroker.SendMessageAsync(user.TelegramId.Value, message);
                 }
             }
@@ -144,7 +144,7 @@ public class PropertyOrchestrationService : IPropertyOrchestrationService
                 if (user != null && user.TelegramId.HasValue && user.TelegramId.Value > 0)
                 {
                     string link = $"https://mulkchi.uz/properties/{property.Id}";
-                    string message = $"🔥 *Narx arzonlashdi!*\n\nSiz yoqtirib qo'ygan e'lon narxi tushdi!\n\n📍 {property.Title}\n📉 Eski narx: ~{oldPrice}~\n💰 Yangi narx: *{newPrice}* {property.Currency}\n\n👉 [E'lonni ko'rish]({link})";
+                    string message = $"🔥 <b>Narx arzonlashdi!</b>\n\nSiz yoqtirib qo'ygan e'lon narxi tushdi!\n\n📍 {property.Title}\n📉 Eski narx: <s>{oldPrice:N0}</s> {property.Currency}\n💰 Yangi narx: <b>{newPrice:N0}</b> {property.Currency}\n\n👉 <a href=\"{link}\">E'lonni ko'rish</a>";
                     await this.telegramBroker.SendMessageAsync(user.TelegramId.Value, message);
                 }
             }

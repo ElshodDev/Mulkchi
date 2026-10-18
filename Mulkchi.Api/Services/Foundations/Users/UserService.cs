@@ -115,7 +115,7 @@ public partial class UserService : IUserService
         if (user is null)
             throw new NotFoundUserException(userId.Value);
 
-        string oldAvatar = user.AvatarUrl;
+        string? oldAvatar = user.AvatarUrl;
 
         string avatarUrl = await this.fileStorageBroker.UploadFileAsync(avatarFile, "avatars");
 

@@ -28,6 +28,7 @@ import { FavoritesService } from '../../../core/services/favorites.service';
 import { ImageOptimizationService } from '../../../core/services/image-optimization.service';
 import { PropertyService } from '../../../core/services/property.service';
 import { SeoService } from '../../../core/services/seo.service';
+import { AnalyticsService, PropertyFraudRiskReport } from '../../../core/services/analytics.service';
 import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ToastService } from '../../../core/services/toast.service';
 import {
@@ -108,6 +109,12 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
                   >
                   <span *ngIf="property()?.isVerified" class="badge verified"
                     ><mat-icon>verified</mat-icon> Tasdiqlangan</span
+                  >
+                  <span *ngIf="fraudReport()?.riskLevel === 'Low'" class="badge safe" title="Mulkchi AI: Xavfsizlik tekshiruvidan muvaffaqiyatli o'tgan"
+                    ><mat-icon>security</mat-icon> AI Xavfsiz</span
+                  >
+                  <span *ngIf="fraudReport()?.riskLevel === 'High' || fraudReport()?.riskLevel === 'Critical'" class="badge warning" [title]="fraudReport()?.recommendation"
+                    ><mat-icon>warning_amber</mat-icon> {{ fraudReport()?.riskLevel === 'Critical' ? 'Yuqori xavf' : 'Shubhali e\'lon' }}</span
                   >
                   <span
                     class="badge type"
@@ -620,6 +627,16 @@ import { BookingPanelComponent } from '../booking-panel/booking-panel.component'
       .badge.verified {
         background: color-mix(in srgb, var(--color-success) 15%, transparent);
         color: var(--color-success);
+      }
+      .badge.safe {
+        background: color-mix(in srgb, var(--color-success) 15%, transparent);
+        color: var(--color-success);
+        border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
+      }
+      .badge.warning {
+        background: color-mix(in srgb, var(--color-error) 15%, transparent);
+        color: var(--color-error);
+        border: 1px solid color-mix(in srgb, var(--color-error) 30%, transparent);
       }
       .badge.type {
         background: color-mix(in srgb, var(--color-info) 15%, transparent);
@@ -1656,9 +1673,10 @@ export class PropertyDetailComponent {
   private dialog = inject(MatDialog);
   private toastService = inject(ToastService);
   private platformId = inject(PLATFORM_ID);
-
   private imageOptimizationService = inject(ImageOptimizationService);
+  private analyticsService = inject(AnalyticsService);
 
+  fraudReport = signal<PropertyFraudRiskReport | null>(null);
   property = this.propertyService.currentProperty;
   loading = this.propertyService.loading;
   error = signal<string | null>(null);
@@ -2007,6 +2025,12 @@ export class PropertyDetailComponent {
           title: prop.title,
           description: prop.description ? prop.description.substring(0, 150) + '...' : 'Toshkentda zamonaviy ijara va savdo uylari',
           image: prop.images?.length ? this.getFullImageUrl(prop.images[0]) : undefined
+        });
+
+        // AI Fraud & Anomaly risk evaluation
+        this.analyticsService.getPropertyFraudRisk(id).subscribe({
+          next: (report) => this.fraudReport.set(report),
+          error: () => this.fraudReport.set(null),
         });
       },
       error: () => {

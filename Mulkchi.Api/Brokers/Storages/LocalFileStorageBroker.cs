@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Webp;
-using SixLabors.ImageSharp.Processing;
+using SkiaSharp;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -115,20 +113,50 @@ public class LocalFileStorageBroker : IFileStorageBroker
         string fileName = $"{baseName}-{variantSuffix}.webp";
         string filePath = Path.Combine(uploadsFolder, fileName);
 
-        using var stream = file.OpenReadStream();
-        using var image = await Image.LoadAsync(stream);
+        await using var stream = file.OpenReadStream();
+        using var original = SKBitmap.Decode(stream);
+
+        if (original == null)
+            throw new InvalidOperationException("Tasvirni o'qib bo'lmadi.");
+
+        SKBitmap bitmapToSave = original;
+        bool shouldDispose = false;
 
         if (targetWidth.HasValue && targetHeight.HasValue)
         {
-            image.Mutate(x => x.Resize(new ResizeOptions
+            float scale = Math.Max((float)targetWidth.Value / original.Width, (float)targetHeight.Value / original.Height);
+            int scaledWidth = (int)Math.Round(original.Width * scale);
+            int scaledHeight = (int)Math.Round(original.Height * scale);
+
+            var info = new SKImageInfo(targetWidth.Value, targetHeight.Value, original.ColorType, original.AlphaType);
+            var cropped = new SKBitmap(info);
+            using (var canvas = new SKCanvas(cropped))
             {
-                Size = new Size(targetWidth.Value, targetHeight.Value),
-                Mode = ResizeMode.Crop,
-            }));
+                int xOffset = (targetWidth.Value - scaledWidth) / 2;
+                int yOffset = (targetHeight.Value - scaledHeight) / 2;
+                var destRect = new SKRect(xOffset, yOffset, xOffset + scaledWidth, yOffset + scaledHeight);
+                using var paint = new SKPaint { IsAntialias = true };
+                canvas.DrawBitmap(original, destRect, paint);
+            }
+
+            bitmapToSave = cropped;
+            shouldDispose = true;
         }
 
-        var encoder = new WebpEncoder { Quality = quality };
-        await image.SaveAsync(filePath, encoder);
+        try
+        {
+            using var image = SKImage.FromBitmap(bitmapToSave);
+            using var data = image.Encode(SKEncodedImageFormat.Webp, quality);
+            await using var outStream = File.Create(filePath);
+            data.SaveTo(outStream);
+        }
+        finally
+        {
+            if (shouldDispose)
+            {
+                bitmapToSave.Dispose();
+            }
+        }
 
         string relativeFolder = Path.GetRelativePath(WebRootPath, uploadsFolder).Replace('\\', '/');
 

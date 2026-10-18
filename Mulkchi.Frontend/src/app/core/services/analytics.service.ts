@@ -277,6 +277,10 @@ export class AnalyticsService {
     return this.http.get<PropertyDealScore>(`${this.apiUrl}/property-deal-score/${propertyId}`);
   }
 
+  getPropertyFraudRisk(propertyId: string): Observable<PropertyFraudRiskReport> {
+    return this.http.get<PropertyFraudRiskReport>(`${this.apiUrl}/fraud-risk/${propertyId}`);
+  }
+
   getPriceHistory(propertyId: string): Observable<PriceHistoryItem[]> {
     return this.http.get<PriceHistoryItem[]>(`${this.apiUrl}/price-history/${propertyId}`);
   }
@@ -284,4 +288,16 @@ export class AnalyticsService {
   getHostDashboardStats(): Observable<HostDashboardStats> {
     return this.http.get<HostDashboardStats>(`${this.apiUrl}/host-dashboard`);
   }
+}
+
+export type FraudRiskLevel = 'Low' | 'Medium' | 'High' | 'Critical';
+
+export interface PropertyFraudRiskReport {
+  propertyId: string;
+  riskScore: number;
+  riskLevel: FraudRiskLevel;
+  flags: string[];
+  recommendation: string;
+  requiresManualReview: boolean;
+  evaluatedAt: string;
 }

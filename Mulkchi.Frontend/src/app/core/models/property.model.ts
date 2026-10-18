@@ -220,6 +220,11 @@ export interface PropertySearchParams {
   radiusKm?: number;
   sortBy?: string;
   region?: UzbekistanRegion;
+  district?: string;
+  hasMetroNearby?: boolean;
+  hasFurniture?: boolean;
+  isRenovated?: boolean;
+  renovationLevel?: string;
   isFeatured?: boolean;
   isVerified?: boolean;
   search?: string;

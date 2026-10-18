@@ -63,6 +63,8 @@ export interface AIPriceRequest {
   hasMetroNearby?: boolean;
   hasPool?: boolean;
   district?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface AIPriceResponse {
@@ -71,6 +73,8 @@ export interface AIPriceResponse {
   maxPrice: number;
   currency: string;
   pricePerSqm?: number;
+  averagePricePerSquareMeter?: number;
+  comparableCount?: number;
   marketAverage: number;
   comparisonPercentage: number;
   comparisonMessage: string;

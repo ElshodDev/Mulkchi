@@ -50,7 +50,7 @@ public partial class UserService
         Message = "Id is required."
     };
 
-    private static dynamic IsInvalid(string text) => new
+    private static dynamic IsInvalid(string? text) => new
     {
         Condition = string.IsNullOrWhiteSpace(text),
         Message = "Value is required."

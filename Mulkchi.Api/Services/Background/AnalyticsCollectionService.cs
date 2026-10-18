@@ -120,7 +120,7 @@ public class AnalyticsCollectionService : BackgroundService
         foreach (var location in locations)
         {
             var regionString = location.Region.ToString();
-            var district = location.District;
+            var district = location.District ?? string.Empty;
             var propertyType = location.Type.ToString();
 
             var properties = broker.Properties
@@ -228,7 +228,7 @@ public class AnalyticsCollectionService : BackgroundService
         foreach (var loc in districts)
         {
             var regionString = loc.Region.ToString();
-            var district = loc.District;
+            var district = loc.District ?? string.Empty;
 
             var properties = await broker.Properties
                 .Where(p => !p.DeletedDate.HasValue)

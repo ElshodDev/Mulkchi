@@ -1,5 +1,4 @@
-#nullable disable
-
+using System;
 using System.Text.Json.Serialization;
 
 namespace Mulkchi.Api.Models.Foundations.Users;
@@ -7,15 +6,15 @@ namespace Mulkchi.Api.Models.Foundations.Users;
 public class User
 {
     public Guid Id { get; set; }
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
-    public string Email { get; set; }
-    public string Phone { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? Phone { get; set; }
     [JsonIgnore]
-    public string PasswordHash { get; set; }
-    public string AvatarUrl { get; set; }
-    public string Bio { get; set; }
-    public string Address { get; set; }
+    public string PasswordHash { get; set; } = string.Empty;
+    public string? AvatarUrl { get; set; }
+    public string? Bio { get; set; }
+    public string? Address { get; set; }
     public DateTimeOffset? DateOfBirth { get; set; }
     public Gender Gender { get; set; }
     public bool IsVerified { get; set; }
@@ -32,7 +31,7 @@ public class User
     public DateTimeOffset? HostSince { get; set; }
     public DateTimeOffset? ModeSwitchedAt { get; set; } 
     public long? TelegramId { get; set; }
-    public string PreferredLanguage { get; set; }
+    public string? PreferredLanguage { get; set; }
     public DateTimeOffset CreatedDate { get; set; }
     public DateTimeOffset UpdatedDate { get; set; }
     public DateTimeOffset? DeletedDate { get; set; }

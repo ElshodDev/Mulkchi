@@ -7,8 +7,8 @@ namespace Mulkchi.Api.Models.Foundations.Properties;
 public class PropertyResponse
 {
     public Guid Id { get; set; }
-    public string Title { get; set; }
-    public string Description { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
     public PropertyType Type { get; set; }
     public PropertyCategory Category { get; set; }
     public PropertyStatus Status { get; set; }
@@ -31,10 +31,10 @@ public class PropertyResponse
     public UzbekistanRegion Region { get; set; }
     public BuildingType BuildingType { get; set; }
     public RenovationLevel RenovationLevel { get; set; }
-    public string City { get; set; }
-    public string District { get; set; }
-    public string Address { get; set; }
-    public string Mahalla { get; set; }
+    public string City { get; set; } = string.Empty;
+    public string? District { get; set; }
+    public string Address { get; set; } = string.Empty;
+    public string? Mahalla { get; set; }
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
     public bool HasWifi { get; set; }
